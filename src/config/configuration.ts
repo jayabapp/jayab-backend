@@ -1,0 +1,56 @@
+export default () => ({
+  server: {
+    baseUrl: process.env.BASE_URL,
+  },
+  database: {
+    url: process.env.DATABASE_URL,
+  },
+  redis: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    username: process.env.REDIS_USERNAME,
+    password: process.env.REDIS_PASSWORD,
+  },
+  settings: {},
+  config: { websiteUrl: process.env.WEBSITE_URL },
+  app: {
+    apiPrefix: 'api',
+  },
+  userAuth: {
+    secret: process.env.USER_AUTH_EXPIRE,
+    expire: process.env.USER_AUTH_EXPIRE,
+  },
+  auth: {
+    secret: process.env.USER_SECRET,
+    expire: process.env.USER_EXPIRE,
+    guestSecret: process.env.GUEST_SECRET,
+    guestExpire: process.env.GUEST_EXPIRE,
+  },
+  adminAuth: {
+    signinSecret: process.env.ADMIN_SIGNIN_SECRET,
+    secret: process.env.ADMIN_AUTH_SECRET,
+    expire: process.env.ADMIN_AUTH_EXPIRE,
+    nonce: process.env.ADMIN_PASS_NONCE,
+  },
+  sms: {
+    smsApiToken: process.env.SMS_IR_API_TOKEN,
+    verificationTemplateId: process.env.SMS_IR_VERIFY_TEMPLATE_ID,
+    orderStatusTemplateId: process.env.SMS_IR_ORDER_STATUS_TEMPLATE_ID,
+    newOrderTemplateId: process.env.SMS_IR_NEW_ORDER_TEMPLATE_ID,
+    sendUrl: 'https://api.sms.ir/v1/send/verify',
+    enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
+  },
+  project: {
+    maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,
+  },
+  payment: { paymentBaseUrl: process.env.PAYMENT_BASE_URL },
+  aws: {
+    bucket: process.env.BUCKET_NAME,
+    region: 'default',
+    fs1: {
+      endPoint: process.env.S3_FS1_ENDPOINT,
+      accessKey: process.env.S3_FS1_ACCESS_KEY,
+      secretKey: process.env.S3_FS1_SECRET_KEY,
+    },
+  },
+});

@@ -1,0 +1,615 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views", "fullTextSearch", "omitApi"]
+}
+
+// generator dbml {
+//   provider              = "prisma-dbml-generator"
+//   includeRelationFields = false
+//   outputName            = "b2c-erd.dbml"
+// }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Base {
+  id Int @id() @default(autoincrement())
+
+  @@map("generator_base")
+}
+
+model Otp {
+  id            Int      @id() @default(autoincrement())
+  mobile_number String   @unique() @db.VarChar(11)
+  attempts      Int      @default(0) @db.SmallInt
+  code          String
+  sms_send_at   DateTime @default(now())
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("otps")
+}
+
+// -------------------------------------------------------------------------- //
+//                                    ADMIN                                   //
+// -------------------------------------------------------------------------- //
+model Admin {
+  id            Int     @id() @default(autoincrement())
+  username      String  @unique @db.VarChar(64)
+  password      String  @db.VarChar
+  full_name     String  @db.VarChar(64)
+  mobile_number String  @unique @db.VarChar(11)
+  role_id       Int     @db.SmallInt
+  is_active     Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  role              AccessControlRole @relation(fields: [role_id], references: [id])
+  activities        AdminActivity[]
+  content_questions ContentQuestion[]
+
+  @@map("admins")
+}
+
+// --------------------------------- ACL --------------------------------- //
+model AccessControlModule {
+  id   Int    @id() @default(autoincrement())
+  key  String @unique @db.VarChar(64)
+  name String @db.VarChar(64)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  acl AccessControlList[]
+
+  @@map("access_control_modules")
+}
+
+model AccessControlRole {
+  id   Int     @id() @default(autoincrement())
+  name String  @unique @db.VarChar(64)
+  key  String? @unique
+  tree String?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  acl                      AccessControlList[]
+  admin                    Admin[]
+  notification_permissions AdminRoleNotificationPermission?
+
+  @@map("access_control_roles")
+}
+
+model AccessControlList {
+  id        Int     @id() @default(autoincrement())
+  module_id Int
+  role_id   Int
+  c         Boolean @default(false)
+  r         Boolean @default(false)
+  u         Boolean @default(false)
+  d         Boolean @default(false)
+  v         Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  module AccessControlModule @relation(fields: [module_id], references: [id])
+  role   AccessControlRole   @relation(fields: [role_id], references: [id])
+
+  @@unique([module_id, role_id])
+  @@map("access_control_list")
+}
+
+model AdminRoleNotificationPermission {
+  id          Int     @id() @default(autoincrement())
+  role_id     Int     @unique
+  permissions String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  role AccessControlRole? @relation(fields: [role_id], references: [id])
+
+  @@map("admin_role_notification_permissions")
+}
+
+// --------------------------------- ACL END --------------------------------- //
+
+// ----------------------------- ADMIN ACTIVITY ----------------------------- //
+model AdminActivity {
+  id Int @id() @default(autoincrement())
+
+  // user agent info
+  os          String? @db.VarChar(32)
+  browser     String? @db.VarChar(32)
+  browser_ver String? @db.VarChar(32)
+
+  // req & res info
+  ip_v4       String? @db.VarChar(16)
+  admin_id    Int     @db.Integer
+  module      String  @db.VarChar(32)
+  path        String  @db.VarChar
+  method      String  @db.VarChar(8)
+  className   String  @db.VarChar(128)
+  classMethod String  @db.VarChar(128)
+  param       Json?
+  query       Json?
+  body        Json?
+  result_id   Int?    @db.Integer
+  status_code Int     @db.Integer
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  admin Admin @relation(fields: [admin_id], references: [id])
+
+  @@map("admin_activities")
+}
+
+// ---------------------------------- ATTACHMENT ---------------------------------- //
+model Attachment {
+  id        Int     @id() @default(autoincrement())
+  user_id   Int?
+  admin_id  Int?
+  user_role String?
+  name      String  @db.VarChar
+  meta      String? @db.VarChar
+  thumbnail String?
+  type      Int     @default(1) // 1 -> image, 2 -> video, 3 -> audio
+  path      String
+  bucket    String
+  region    String?
+  end_point String
+  medium    String?
+  alt       String?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? @db.Timestamp(6)
+
+  content_attachment     ContentAttachment[]
+  content_categories     ContentCategory[]
+  content_feature_image  Content[]           @relation(name: "featureImage")
+  content_video          Content[]           @relation(name: "ContentVideo")
+  content_question_image ContentQuestion[]
+
+  banners         Banner[] @relation("Image")
+  banner_image_sm Banner[] @relation("ImageSm")
+
+  user_avatar          User?
+  category_image       Category?
+  submitted_form_items SubmittedFormItems[]
+
+  @@map("attachments")
+}
+
+// ----------------------------- CONTENT ------------------------------ //
+
+model ContentCategory {
+  id              Int     @id() @default(autoincrement())
+  title           String  @db.VarChar
+  slug            String  @unique
+  key             String  @unique @db.VarChar(64)
+  image_id        Int?    @db.Integer
+  dynamic_fields  Json?   @db.JsonB
+  parent_id       Int?
+  description     String? @db.Text
+  html            String? @db.Text
+  show_in_sitemap Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  parent    ContentCategory?  @relation("Parent", fields: [parent_id], references: [id])
+  child     ContentCategory[] @relation("Parent")
+  content   Content[]
+  image     Attachment?       @relation(fields: [image_id], references: [id])
+  questions ContentQuestion[]
+
+  @@map("content_categories")
+}
+
+model Content {
+  id               Int     @id() @default(autoincrement())
+  title            String  @db.VarChar
+  slug             String? @unique
+  key              String? @db.VarChar(64)
+  small_text       String?
+  full_text        String?
+  feature_image_id Int?
+  is_active        Boolean @default(true)
+  category_id      Int?    @db.Integer
+  order            Int?    @db.Integer
+  html             String? @db.Text
+  view_count       Int     @default(0)
+  link             String?
+  video_id         Int?
+  show_in_sitemap  Boolean @default(true)
+
+  fields      Json?               @db.JsonB
+  seo         Json?               @db.JsonB
+  form_id     Int?
+  attachments ContentAttachment[] //images
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  category       ContentCategory?  @relation(fields: [category_id], references: [id])
+  feature_image  Attachment?       @relation("featureImage", fields: [feature_image_id], references: [id])
+  video          Attachment?       @relation("ContentVideo", fields: [video_id], references: [id])
+  questions      ContentQuestion[]
+  forms          FormBuilder[]
+  submitted_form SubmittedForm[]
+
+  @@map("contents")
+}
+
+model ContentAttachment {
+  id            Int       @id() @default(autoincrement())
+  content_id    Int
+  attachment_id Int
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime? @db.Timestamp(6)
+
+  attachment Attachment @relation(fields: [attachment_id], references: [id])
+  content    Content    @relation(fields: [content_id], references: [id])
+
+  @@map("content_attachments")
+}
+
+model ContentQuestion {
+  id                  Int     @id() @default(autoincrement())
+  content_id          Int?
+  content_category_id Int?
+  question            String  @db.Text
+  answer              String? @db.Text
+  image_id            Int?    @db.Integer
+  admin_id            Int?    @db.Integer
+  rate                Int?
+  author_name         String?
+  mobile_number       String?
+  is_publish          Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  image            Attachment?      @relation(fields: [image_id], references: [id])
+  content          Content?         @relation(fields: [content_id], references: [id])
+  content_category ContentCategory? @relation(fields: [content_category_id], references: [id])
+  admin            Admin?           @relation(fields: [admin_id], references: [id])
+
+  @@map("content_questions")
+}
+
+// ---------------------------------- CITY ---------------------------------- //
+model City {
+  id        Int    @id() @default(autoincrement())
+  title     String @db.VarChar
+  parent_id Int?
+  parent    City?  @relation("Parent", fields: [parent_id], references: [id])
+  child     City[] @relation("Parent")
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? @db.Timestamp(6)
+
+  @@map("cities")
+}
+
+// --------------------------------- SETTINGS --------------------------------- //
+model Setting {
+  id         Int    @id() @default(autoincrement())
+  title      String
+  key        String
+  value      String
+  max        Int?
+  min        Int?
+  data_type  String @default("NUMBER")
+  sort_order Int?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@unique([key])
+  @@map("settings")
+}
+
+// --------------------------------- BANNER --------------------------------- //
+model Banner {
+  id          Int     @id() @default(autoincrement())
+  title       String
+  is_active   Boolean @default(true)
+  description String?
+  link        String?
+  category_id Int?
+  product_id  Int?
+  brand_id    Int?
+  position    String
+  sort_order  Int?
+  image_id    Int
+  image_sm_id Int?
+
+  image    Attachment  @relation("Image", fields: [image_id], references: [id])
+  image_sm Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
+  category Category?   @relation(fields: [category_id], references: [id])
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@map("banners")
+}
+
+// -------------------------------- CATEGORY -------------------------------- //
+model Category {
+  id                  Int     @id() @default(autoincrement())
+  parent_id           Int?
+  title               String  @db.VarChar
+  key                 String? @unique @db.VarChar
+  image_id            Int?    @unique
+  sort_order          Int?    @db.SmallInt
+  is_active           Boolean @default(true)
+  path                String
+  hex_color           String?
+  is_feature_category Boolean @default(false)
+  feature_title       String? //عنوان در صفحه اصلی
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? @db.Timestamp(6)
+
+  parent   Category?   @relation("ParentChild", fields: [parent_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  children Category[]  @relation("ParentChild")
+  image    Attachment? @relation(fields: [image_id], references: [id])
+  banners  Banner[]
+
+  @@map("categories")
+}
+
+// -------------------------------------------------------------------------- //
+//                                  ADMIN END                                 //
+// -------------------------------------------------------------------------- //
+
+// ---------------------------------- USER ---------------------------------- //
+model User {
+  id                   Int      @id() @default(autoincrement())
+  mobile_number        String   @unique @db.VarChar(11)
+  full_name            String?  @db.VarChar
+  avatar_id            Int?     @unique
+  fcm_token            String?
+  jwt_level            Int      @default(1)
+  notification_read_at DateTime @default(now())
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  avatar Attachment? @relation(fields: [avatar_id], references: [id])
+  // tickets         Ticket[]
+  // payments         Payment[]
+  // offer_codes      CustomerOfferCode[]
+  // turnovers        Turnover[]
+  // favorites        Favorite[]
+
+  @@map("users")
+}
+
+// --------------------------------- PAYMENT -------------------------------- //
+// model Payment {
+//   id              Int      @id() @default(autoincrement())
+//   user_id         Int
+//   amount          BigInt
+//   pay_from_wallet Int?
+//   gateway_key     String?
+//   authority       String
+//   ref_id          String?
+//   status          Int
+//   description     String?
+//   order_id        Int?
+//   reserve_id      Int?
+//   redirect_url    String?
+//   created_at      DateTime @default(now()) @db.Timestamp(6)
+//   updated_at      DateTime @updatedAt()
+
+//   user          User            @relation(fields: [user_id], references: [id])
+//   order         Order?          @relation("OrderPayments", fields: [order_id], references: [id])
+//   order_payment Order[]
+//   gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
+
+//   @@map("payments")
+// }
+
+// model PaymentGateway {
+//   id        Int     @id() @default(autoincrement())
+//   title     String
+//   logo      String
+//   key       String  @unique
+//   is_active Boolean @default(false)
+//   params    Json[]  @db.JsonB
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+//   updated_at DateTime @updatedAt()
+
+//   payment Payment[]
+
+//   @@map("payment_gateways")
+// }
+
+// model PaymentMethod {
+//   id                  Int     @id() @default(autoincrement())
+//   title               String
+//   key                 String?
+//   description         String? @db.Text
+//   percentage_increase Int     @db.SmallInt
+//   is_active           Boolean @default(false)
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+//   updated_at DateTime @updatedAt()
+
+//   @@map("payment_methods")
+// }
+
+// model Turnover {
+//   id                Int      @id() @default(autoincrement())
+//   user_id           Int?
+//   business_id       Int?
+//   turnoverable_id   Int?
+//   turnoverable_type String?
+//   amount            Int
+//   title             String
+//   description       String
+//   type              String
+//   created_at        DateTime @default(now()) @db.Timestamp(6)
+//   updated_at        DateTime @updatedAt()
+
+//   user     User?     @relation(fields: [user_id], references: [id])
+//   business Business? @relation(fields: [business_id], references: [id])
+
+//   @@map("turnovers")
+// }
+
+// ------------------------------- FAVORITE ------------------------------- //
+// model Favorite {
+//   id         Int @id() @default(autoincrement())
+//   product_id Int
+//   user_id    Int
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+
+//   product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+//   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+//   @@index([user_id])
+//   @@map("favorites")
+// }
+
+// // ------------------------------- CONTACT US ------------------------------- //
+// model ContactUs {
+//   id            Int     @id() @default(autoincrement())
+//   email         String? @db.VarChar()
+//   mobile_number String? @db.VarChar(11)
+//   full_name     String? @db.VarChar()
+//   title         String? @db.VarChar()
+//   body          String? @db.Text
+//   ip            String? @db.VarChar()
+//   type          String
+//   status        Int     @db.SmallInt
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+//   updated_at DateTime @updatedAt
+
+//   @@map("contact_us")
+// }
+
+// // ------------------------------ NOTIFICATION ------------------------------ //
+// model Notification {
+//   id      Int       @id() @default(autoincrement())
+//   user_id Int?      @db.Integer
+//   role    String?
+//   title   String    @db.Text
+//   body    String    @db.Text
+//   topic   String?   @db.VarChar()
+//   data    Json?     @db.JsonB
+//   seen_at DateTime?
+//   //user User? @relation(fields: [user_id], references: [id])
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+//   updated_at DateTime @updatedAt
+
+//   @@map("notifications")
+// }
+
+// --------------------------------- TICKET --------------------------------- //
+// model Ticket {
+//   id      Int    @id() @default(autoincrement())
+//   user_id Int
+//   title   String @db.VarChar
+//   message String @db.Text
+//   status  Int
+
+//   created_at DateTime  @default(now()) @db.Timestamp(6)
+//   updated_at DateTime  @updatedAt
+//   deleted_at DateTime?
+
+//   user    User            @relation(fields: [user_id], references: [id])
+//   replies TicketReplies[]
+
+//   @@map("tickets")
+// }
+
+// model TicketReplies {
+//   id        Int     @id() @default(autoincrement())
+//   ticket_id Int
+//   message   String  @db.Text
+//   by_admin  Boolean @default(false)
+
+//   created_at DateTime @default(now()) @db.Timestamp(6)
+//   updated_at DateTime @updatedAt
+
+//   ticket Ticket @relation(fields: [ticket_id], references: [id])
+
+//   @@map("ticket_replies")
+// }
+
+// -------------------------------- FORM BUILDER -------------------------------- //
+model FormBuilder {
+  id           Int     @id() @default(autoincrement())
+  title        String
+  type         String
+  content_id   Int?
+  options      Json    @default("[]") @db.JsonB
+  key          String?
+  sort_order   Int?
+  is_mandatory Boolean @default(true)
+  description  String?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  content Content? @relation(fields: [content_id], references: [id], onDelete: SetNull)
+
+  @@map("form_builder")
+}
+
+model SubmittedForm {
+  id            Int     @id() @default(autoincrement())
+  content_id    Int?
+  mobile_number String? @db.VarChar(11)
+  full_name     String? @db.VarChar()
+  ip            String? @db.VarChar()
+  status        Int     @db.SmallInt
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  submitted_form_items SubmittedFormItems[]
+  content              Content?             @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@map("submitted_forms")
+}
+
+model SubmittedFormItems {
+  id                Int     @id() @default(autoincrement())
+  submitted_form_id Int
+  title             String
+  value             String
+  type              String?
+
+  images Attachment[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  submitted_from SubmittedForm @relation(fields: [submitted_form_id], references: [id], onDelete: Cascade)
+
+  @@map("submitted_form_items")
+}

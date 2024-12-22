@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <!-- <link rel="preconnect" href="//fdn.fontcdn.ir">
+    <link rel="preconnect" href="//v1.fontapi.ir">
+    <link href="https://v1.fontapi.ir/css/Estedad" rel="stylesheet"> -->
+
+    <style>
+        @font-face {
+        font-family: 'iranyekan';
+        font-style: normal;
+        font-weight: 300;
+        src: url('/fonts/woff2/Estedad-Regular.woff2') format('woff2');
+      }
+
+      /* ------------------------------------      MEDIUM      ------------------------------------ */
+      @font-face {
+        font-family: 'iranyekan';
+        font-style: normal;
+        font-weight: 500;
+        src: url('/fonts/woff2/Estedad-Medium.woff2') format('woff2');
+      }
+
+      /* ------------------------------------       BOLD       ------------------------------------ */
+      @font-face {
+        font-family: 'iranyekan';
+        font-style: normal;
+        font-weight: 700;
+        src: url('/fonts/woff2/Estedad-ExtraBold.woff2') format('woff2');
+      }
+      body {
+        background-color: #f1f1f1;
+        color: white;
+        font-family: iranyekan, Verdana, Geneva, Tahoma, sans-serif;
+        width: 100%;
+        margin: auto;
+      }
+
+  .container {
+    width: 80%;
+    margin: auto;
+    margin-top: 100px;
+    text-align: center;
+    max-width: 400px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+  }
+
+  .box-1 {
+    background-color: #10b981;
+    /* padding: 20px; */
+    height: 300px;
+    font-size: 20px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .box-2 {
+    background-color: white;
+    padding: 12px;
+    color: black;
+    border-radius: 0 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #check-icon svg {
+    margin: 40px 0 20px 0;
+  }
+
+  
+  
+  h4 {
+    font-weight: 400;
+    font-size: 13px;
+  }
+
+  a {
+    background-color: #10b981;
+    color: white;
+    font-size: 14px;
+    margin: 30px;
+    border: 0;
+    width: 150px;
+    /* height: 50px; */
+    border-radius: 50px;
+    padding: 8px 12px;
+    text-decoration: none;
+  }
+
+  button:hover {
+    background-color: #34d399;
+    transition: 0.5s;
+    cursor: pointer;
+  }
+
+  .message-text {
+    text-align: right;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .title {
+        font-weight: 700;
+        font-size: 20px;
+        margin-top: 10px;
+  }
+
+  .hr-div {
+    border-top: 1px dashed #d4d4d4;
+    margin: 15px 0;
+    background: transparent;
+  }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="box-1">
+        <div id="check-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="70"
+            height="70"
+            fill="currentColor"
+            class="bi bi-check-square-fill"
+            viewBox="0 0 16 16"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm10.03 4.97a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"
+            />
+          </svg>
+          <div class="title"><%= status %></div>
+          <h4><%= message %></h4>
+        </div>
+      </div>
+
+      <div class="box-2">
+        <div class="">
+          <h4 class="message-text" style="direction: rtl;">شماره تراکنش: <%= RefID %></h4>
+          <div class="hr-div" >
+          <h4 id="amount" class="message-text">مبلغ: <%= amount %> تومان</h4>
+          <div class="hr-div" >
+        </div>
+        <a href="<%= redirect_url %>?status=success"><%= redirectButtonTitle %></a>
+      </div>
+    </div>
+  </body>
+</html>
