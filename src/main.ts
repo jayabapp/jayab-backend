@@ -55,7 +55,7 @@ async function bootstrap(): Promise<void> {
 
   if (process.env.NODE_ENV === 'development') {
     const config = new DocumentBuilder()
-      .setTitle('Kian Marketplace')
+      .setTitle('Jayab V2')
       .setDescription('The API and DTO - RESTfull')
       // .addServer(process.env.BASE_URL, 'Base Url')
       .setVersion('1.2')

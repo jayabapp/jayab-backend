@@ -18,6 +18,8 @@ export class AuthSharedService {
    */
   async createOtpCode(dto: CreateOTPDto, whom: 'admin' | 'user'): Promise<{ code: string }> {
     const { mobile_number } = dto;
+
+    /* -------------------------------------------------------------------------- */
     /**
      * find the otp record using the mobile number and the country code.
      * if the OTP verification code has expired, generate it again and send it.
@@ -25,6 +27,8 @@ export class AuthSharedService {
     const otpRecord = await this.db.otp.findFirst({ where: { mobile_number } });
     let finalCode: string = otpRecord?.code;
     let rand = '';
+
+    /* -------------------------------------------------------------------------- */
     if (whom == 'user') rand = random(1000, 9999).toString();
     else if (whom == 'admin')
       rand =
@@ -33,21 +37,20 @@ export class AuthSharedService {
           : '00000';
     else throw new BadRequestException();
 
+    /* -------------------------------------------------------------------------- */
     if (otpRecord) {
       /**
        * if sms sent from thirty seconds ago don't send again
        */
-      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) return { code: finalCode };
+      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) return { code: null };
 
       /**
        * check the expiration date of the verification code using the checkExpirationCode method.
        */
       const isExpired = this.checkTimeDifference(otpRecord.updated_at);
-      if (isExpired) {
-        finalCode = rand;
-      } else {
-        finalCode = otpRecord.code;
-      }
+      if (isExpired) finalCode = rand;
+      else finalCode = otpRecord.code;
+
       await this.db.otp.update({
         where: { id: otpRecord.id },
         data: { code: finalCode, sms_send_at: new Date() },

@@ -9,6 +9,7 @@ import { __baseDir } from 'src/config/settings';
 import { getB2cConfig } from 'src/config/b2c.config';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { UserRole } from 'src/common/interfaces/role.enum';
+import { random } from 'lodash';
 
 @Injectable()
 export class AuthUserService {
@@ -24,14 +25,25 @@ export class AuthUserService {
    * @returns
    */
   async findOrCreateUser(mobileNumber: string): Promise<User> {
+    /* -------------------------------------------------------------------------- */
     let user = await this.db.user.findFirst({
       where: { mobile_number: mobileNumber },
     });
 
-    if (!user)
+    /* -------------------------------------------------------------------------- */
+    /**
+     * create a new user if not found
+     */
+    if (!user) {
+      let referralCode: string;
+      do {
+        referralCode = `${random(10_000, 99_999)}`;
+      } while (await this.db.user.findUnique({ where: { referral_code: referralCode } }));
+
       user = await this.db.user.create({
-        data: { mobile_number: mobileNumber },
+        data: { mobile_number: mobileNumber, referral_code: referralCode },
       });
+    }
 
     return user;
   }
