@@ -186,6 +186,7 @@ model Attachment {
   banner_image_sm Banner[] @relation("ImageSm")
 
   user_profile_image   User?
+  owner_selfie_image   Owner?
   category_image       Category?
   submitted_form_items SubmittedFormItems[]
 
@@ -388,7 +389,7 @@ model User {
   full_name            String?     @db.VarChar
   profile_image_id     Int?        @unique
   // -------------------------------------------------------------------------- //
-  // owner_id             Int?        @unique()
+  owner_id             Int?        @unique()
   // advisor_id           Int?        @unique()
   // -------------------------------------------------------------------------- //
   referral_code        String?     @unique @db.VarChar()
@@ -404,6 +405,8 @@ model User {
   profile_image        Attachment? @relation(fields: [profile_image_id], references: [id])
   referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
   referrals            User[]      @relation("UserReferrals")
+  owner                Owner?      @relation("Owner", fields: [owner_id], references: [id])
+
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
@@ -411,6 +414,21 @@ model User {
   // favorites        Favorite[]
 
   @@map("users")
+}
+
+model Owner {
+  id              Int    @id() @default(autoincrement())
+  national_code   String @unique @db.VarChar(10)
+  selfie_image_id Int    @unique
+  status          Int    @db.SmallInt
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
+  user         User?      @relation("Owner")
+
+  @@map("owners")
 }
 
 // --------------------------------- PAYMENT -------------------------------- //
