@@ -10,5 +10,4 @@ export enum AttachmentAdminFolder {
 
 export enum AttachmentUserFolder {
   PROFILE = 'PROFILE',
-  FORM = 'FORM',
 }

@@ -41,52 +41,34 @@ export class AttachmentController {
   /* -------------------------------------------------------------------------- */
   /*                                    USER                                    */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({
-    description: 'آپلود عکس پروفایل - کاربر',
-    operationId: 'USER - Profile image uploader',
-  })
-  @ApiBearerAuth('user-jwt')
-  @UseGuards(UserJwtGuard)
-  @Post('attachments/profile')
-  @ApiImageFile('file', true)
-  async createProfileImage(
-    @Req() request: RequestType,
-    @UploadedFile(ParseFile) file: Express.Multer.File,
-  ): Promise<SuccessResponseArgs> {
-    const { user } = request;
-    const args: AttachmentImagePropsType = {
-      file,
-      folder: IMAGES_PROFILE_FOLDER,
-      resizeWidth: 256,
-      resizeMode: 'square',
-      userId: user.id,
-    };
-
-    const result = await this.attachmentService.createAttachment(args);
-    return { result };
-  }
 
   @ApiOperation({
     description: 'آپلود عکس - کاربر',
     operationId: 'USER - image uploader',
   })
+  @ApiBearerAuth('user-jwt')
+  @UseGuards(UserJwtGuard)
   @Post('attachments')
   @ApiImageFile('file', true)
   async uploadUserImageAttachment(
+    @Req() request: RequestType,
     @Query() createAttachmentUserDto: CreateAttachmentUserDto,
     @UploadedFile(ParseFile) file: Express.Multer.File,
   ): Promise<SuccessResponseArgs> {
+    const { user } = request;
     let args: AttachmentImagePropsType;
+
     switch (createAttachmentUserDto.type) {
-      case AttachmentUserFolder.FORM:
+      case AttachmentUserFolder.PROFILE:
         args = {
           file,
-          folder: FORM_FOLDER,
-          resizeWidth: 1024,
-          resizeMode: 'normal',
-          userId: null,
+          folder: IMAGES_PROFILE_FOLDER,
+          resizeWidth: 512,
+          resizeMode: 'square',
+          userId: user.id,
         };
         break;
+
       default:
         break;
     }
