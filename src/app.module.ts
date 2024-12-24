@@ -52,6 +52,7 @@ import { FormBuilderModule } from './form-builder/form-builder.module';
 import { ContentQuestionModule } from './content-question/content-question.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProfileModule } from './profile/profile.module';
+import { OwnerModule } from './owner/owner.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -112,6 +113,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     FormBuilderModule,
     SubmittedFormModule,
     ProfileModule,
+    OwnerModule,
     BaseModule,
   ],
   providers: [

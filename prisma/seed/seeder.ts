@@ -6,6 +6,7 @@ import { settingSeeder } from './setting.seeder';
 import { contentSeeder } from './content.seeder';
 import { paymentGatewaySeeder } from './payment-gateway.seeder';
 import { paymentMethodSeeder } from './payment-method.seeder';
+import { fakerSeeder } from './faker.seeder';
 const prisma = new PrismaClient();
 
 /**
@@ -26,6 +27,7 @@ const seeders = [
   'content',
   'gateway',
   'paymentMethod',
+  'faker',
 ];
 
 async function main(): Promise<void> {
@@ -76,6 +78,10 @@ async function main(): Promise<void> {
       await settingSeeder();
       await paymentGatewaySeeder();
       await paymentMethodSeeder();
+      break;
+
+    case 'faker':
+      await fakerSeeder();
       break;
   }
 

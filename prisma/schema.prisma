@@ -405,7 +405,7 @@ model User {
   profile_image        Attachment? @relation(fields: [profile_image_id], references: [id])
   referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
   referrals            User[]      @relation("UserReferrals")
-  owner                Owner?      @relation("Owner", fields: [owner_id], references: [id])
+  owner                Owner?      @relation(fields: [owner_id], references: [id])
 
   // tickets         Ticket[]
   // payments         Payment[]
@@ -426,7 +426,7 @@ model Owner {
   updated_at DateTime @updatedAt
 
   selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
-  user         User?      @relation("Owner")
+  user         User?
 
   @@map("owners")
 }
