@@ -185,7 +185,7 @@ model Attachment {
   banners         Banner[] @relation("Image")
   banner_image_sm Banner[] @relation("ImageSm")
 
-  user_avatar          User?
+  user_profile_image   User?
   category_image       Category?
   submitted_form_items SubmittedFormItems[]
 
@@ -380,19 +380,29 @@ model Category {
 // -------------------------------------------------------------------------- //
 
 // ---------------------------------- USER ---------------------------------- //
+// اگر کاربر در هر نقش نام و عکسش رو تغییر بده برای همه نقش ها اعمال میشه
 model User {
-  id                   Int      @id() @default(autoincrement())
-  mobile_number        String   @unique @db.VarChar(11)
-  full_name            String?  @db.VarChar
-  avatar_id            Int?     @unique
+  id                   Int         @id() @default(autoincrement())
+  mobile_number        String      @unique @db.VarChar(11)
+  full_name            String?     @db.VarChar
+  profile_image_id     Int?        @unique
+  // -------------------------------------------------------------------------- //
+  // owner_id             Int?        @unique()
+  // advisor_id           Int?        @unique()
+  // -------------------------------------------------------------------------- //
+  referral_code        String?     @unique @db.VarChar()
+  referrer_code        String?     @db.VarChar()
+  // -------------------------------------------------------------------------- //
   fcm_token            String?
-  jwt_level            Int      @default(1)
-  notification_read_at DateTime @default(now())
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  avatar Attachment? @relation(fields: [avatar_id], references: [id])
+  jwt_level            Int         @default(1)
+  notification_read_at DateTime    @default(now())
+  // -------------------------------------------------------------------------- //
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  // -------------------------------------------------------------------------- //
+  profile_image        Attachment? @relation(fields: [profile_image_id], references: [id])
+  referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
+  referrals            User[]      @relation("UserReferrals")
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
