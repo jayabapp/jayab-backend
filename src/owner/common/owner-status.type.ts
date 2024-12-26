@@ -7,12 +7,14 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
  * #84cc16
  * #14b8a6
  * #be123c
+ * #f97316
  */
 
 export enum OwnerStatus {
   PENDING = 10,
-  NOT_APPROVED = 20,
-  APPROVED = 100,
+  APPROVED = 20,
+  AUTO_CHECK_SERVICE_ERROR = 90,
+  REJECTED = 100,
 }
 
 export const OwnerStatusList: Array<EnumList> = [
@@ -27,8 +29,13 @@ export const OwnerStatusList: Array<EnumList> = [
     hex: '#84cc16',
   },
   {
-    id: OwnerStatus.NOT_APPROVED,
-    title: 'رد شده',
+    id: OwnerStatus.AUTO_CHECK_SERVICE_ERROR,
+    title: 'خطا در بررسی اتوماتیک',
+    hex: '#f97316',
+  },
+  {
+    id: OwnerStatus.REJECTED,
+    title: 'تایید نشده',
     hex: '#be123c',
   },
 ];

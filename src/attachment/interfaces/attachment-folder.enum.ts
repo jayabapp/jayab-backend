@@ -10,4 +10,5 @@ export enum AttachmentAdminFolder {
 
 export enum AttachmentUserFolder {
   PROFILE = 'PROFILE',
+  OWNER_SELFIE_IMAGE = 'OWNER_SELFIE_IMAGE',
 }

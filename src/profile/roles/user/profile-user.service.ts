@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
+import { Owner, Prisma, User } from '@prisma/client';
 import { UserType } from 'src/common/interfaces/user.interface';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
+import { RegisterOwnerUserDto } from './dto/register.dto';
+import { OwnerStatus } from 'src/owner/common/owner-status.type';
 
 @Injectable()
 export class ProfileUserService {
@@ -20,6 +22,20 @@ export class ProfileUserService {
       data: dto,
       include: { profile_image: true },
     });
+  }
+
+  /**
+   * register owner
+   * @param userId
+   * @param dto
+   * @returns
+   */
+  async registerOwner(userId: number, dto: RegisterOwnerUserDto): Promise<Owner> {
+    const owner = await this.db.owner.create({
+      data: { ...dto, status: OwnerStatus.PENDING, user: { connect: { id: userId } } },
+    });
+
+    return owner;
   }
 
   /**
@@ -53,7 +69,6 @@ export class ProfileUserService {
   }
 
   /* --------------------------------- HELPERS -------------------------------- */
-
   async findUserByMobile(mobile: string): Promise<User> {
     const user = await this.db.user.findFirst({ where: { mobile_number: mobile } });
     if (!user) throw new NotFoundException('NOT_FOUND');
@@ -78,4 +93,15 @@ export class ProfileUserService {
 
   //   return masked;
   // }
+
+  /**
+   *
+   * @param nationalCode
+   */
+  async validateNationalCodeWebService(owner: Owner): Promise<void> {
+    // TODO: web service
+
+    // update the owner status
+    await this.db.owner.update({ where: { id: owner.id }, data: { status: OwnerStatus.APPROVED } });
+  }
 }

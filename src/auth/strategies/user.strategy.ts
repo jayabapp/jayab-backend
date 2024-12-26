@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
@@ -17,9 +18,10 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     });
   }
 
-  public async validate(payload: { id: number; jwtLevel: number }): Promise<User> {
+  public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
     const user = await this.db.user.findFirst({
       where: { id: payload.id, jwt_level: payload.jwtLevel },
+      select: { id: true, mobile_number: true, owner_id: true },
     });
 
     if (!user) throw new UnauthorizedException();

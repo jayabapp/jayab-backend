@@ -1,13 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { Owner, Prisma } from "@prisma/client";
-import { PrismaService } from "src/prisma/prisma.service";
-import { CreateOwnerUserDto } from "./dto/create.dto";
-import { UpdateOwnerUserDto } from "./dto/update.dto";
-import { FindAllOwnerUserDto } from "./dto/find-all.dto";
-import {
-  type CursorPaginatedResult,
-  cursorPaginate,
-} from "src/common/helpers/cursor-paginator";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Owner, Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateOwnerUserDto } from './dto/create.dto';
+import { UpdateOwnerUserDto } from './dto/update.dto';
+import { FindAllOwnerUserDto } from './dto/find-all.dto';
+import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 
 @Injectable()
 export class OwnerUserService {
@@ -32,7 +29,7 @@ export class OwnerUserService {
     const list = await cursorPaginate()<Owner, Prisma.OwnerFindManyArgs>(
       this.db.owner,
       {},
-      { cursor: dto.cursor }
+      { cursor: dto.cursor },
     );
 
     return list;
@@ -48,8 +45,18 @@ export class OwnerUserService {
       where: { id: ownerId },
     });
 
-    if (!item) throw new NotFoundException("NOT_FOUND");
+    if (!item) throw new NotFoundException('NOT_FOUND');
 
+    return item;
+  }
+
+  /**
+   * find one by national code
+   * @param nationalCode
+   * @returns
+   */
+  async findOneByNationalCode(nationalCode: string): Promise<Owner> {
+    const item = await this.db.owner.findUnique({ where: { national_code: nationalCode } });
     return item;
   }
 

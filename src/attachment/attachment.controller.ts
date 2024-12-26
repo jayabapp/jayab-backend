@@ -21,6 +21,7 @@ import {
   IMAGES_PROFILE_FOLDER,
   CATEGORY_FOLDER,
   FORM_FOLDER,
+  IMAGES_OWNER_SELFIE_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
@@ -63,6 +64,16 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_PROFILE_FOLDER,
+          resizeWidth: 512,
+          resizeMode: 'square',
+          userId: user.id,
+        };
+        break;
+
+      case AttachmentUserFolder.OWNER_SELFIE_IMAGE:
+        args = {
+          file,
+          folder: IMAGES_OWNER_SELFIE_FOLDER,
           resizeWidth: 512,
           resizeMode: 'square',
           userId: user.id,
