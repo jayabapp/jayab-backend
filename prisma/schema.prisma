@@ -185,6 +185,7 @@ model Attachment {
   banners                     Banner[]             @relation("Image")
   banner_image_sm             Banner[]             @relation("ImageSm")
   advisor_national_card_image Advisor?             @relation("NationalCard")
+  advisor_document_image      Advisor?             @relation("DocumentImage")
   advisor                     Advisor[]            @relation("ProfileImage")
   user_profile_image          User?
   owner_selfie_image          Owner?
@@ -438,23 +439,31 @@ model Owner {
 model Advisor {
   id                     Int     @id() @default(autoincrement())
   national_code          String  @unique @db.VarChar(10)
-  national_card_image_id Int?    @unique
+  //
   tel                    String? @db.VarChar(11)
   area_code              String? @db.VarChar(3)
-  profile_image_id       Int
+  //
+  address                String  @db.Text
   cities                 City[]
-  rate                   Float?
-  status                 Int
-  statistics             Json    @default("{}")
+  //
   is_special             Boolean @default(false)
-  special_advisor_info   Json?
+  status                 Int     @db.SmallInt
   sort_order             Int?
+  //
+  profile_image_id       Int     @unique
+  national_card_image_id Int     @unique
+  document_image_id      Int     @unique
+  //
+  // rate                   Float?
+  // special_advisor_info   Json?
+  // statistics             Json    @default("{}")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  profile_image       Attachment  @relation("ProfileImage", fields: [profile_image_id], references: [id])
-  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  profile_image       Attachment @relation("ProfileImage", fields: [profile_image_id], references: [id])
+  national_card_image Attachment @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image      Attachment @relation("DocumentImage", fields: [document_image_id], references: [id])
   user                User?
   // rent_requests RentRequest[]
   // advisorNotes  AdvisorNote[]
