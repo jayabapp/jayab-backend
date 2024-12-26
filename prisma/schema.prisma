@@ -182,13 +182,14 @@ model Attachment {
   content_video          Content[]           @relation(name: "ContentVideo")
   content_question_image ContentQuestion[]
 
-  banners         Banner[] @relation("Image")
-  banner_image_sm Banner[] @relation("ImageSm")
-
-  user_profile_image   User?
-  owner_selfie_image   Owner?
-  category_image       Category?
-  submitted_form_items SubmittedFormItems[]
+  banners                     Banner[]             @relation("Image")
+  banner_image_sm             Banner[]             @relation("ImageSm")
+  advisor_national_card_image Advisor?             @relation("NationalCard")
+  advisor                     Advisor[]            @relation("ProfileImage")
+  user_profile_image          User?
+  owner_selfie_image          Owner?
+  category_image              Category?
+  submitted_form_items        SubmittedFormItems[]
 
   @@map("attachments")
 }
@@ -304,6 +305,8 @@ model City {
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
+  advisors Advisor[]
+
   @@map("cities")
 }
 
@@ -390,7 +393,7 @@ model User {
   profile_image_id     Int?        @unique
   // -------------------------------------------------------------------------- //
   owner_id             Int?        @unique()
-  // advisor_id           Int?        @unique()
+  advisor_id           Int?        @unique()
   // -------------------------------------------------------------------------- //
   referral_code        String?     @unique @db.VarChar()
   referrer_code        String?     @db.VarChar()
@@ -406,6 +409,7 @@ model User {
   referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
   referrals            User[]      @relation("UserReferrals")
   owner                Owner?      @relation(fields: [owner_id], references: [id])
+  advisor              Advisor?    @relation(fields: [advisor_id], references: [id])
 
   // tickets         Ticket[]
   // payments         Payment[]
@@ -429,6 +433,34 @@ model Owner {
   user         User?
 
   @@map("owners")
+}
+
+model Advisor {
+  id                     Int     @id() @default(autoincrement())
+  national_code          String  @unique @db.VarChar(10)
+  national_card_image_id Int?    @unique
+  tel                    String? @db.VarChar(11)
+  area_code              String? @db.VarChar(3)
+  profile_image_id       Int
+  cities                 City[]
+  rate                   Float?
+  status                 Int
+  statistics             Json    @default("{}")
+  is_special             Boolean @default(false)
+  special_advisor_info   Json?
+  sort_order             Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  profile_image       Attachment  @relation("ProfileImage", fields: [profile_image_id], references: [id])
+  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  user                User?
+  // rent_requests RentRequest[]
+  // advisorNotes  AdvisorNote[]
+  // banners       Banner[]
+
+  @@map("advisors")
 }
 
 // --------------------------------- PAYMENT -------------------------------- //

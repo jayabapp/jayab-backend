@@ -24,6 +24,7 @@ export class ProfileUserService {
     });
   }
 
+  /* -------------------------------------------------------------------------- */
   /**
    * register owner
    * @param userId
@@ -31,12 +32,27 @@ export class ProfileUserService {
    * @returns
    */
   async registerOwner(userId: number, dto: RegisterOwnerUserDto): Promise<Owner> {
+    const fullName = dto.full_name;
+    delete dto.full_name;
+
     const owner = await this.db.owner.create({
-      data: { ...dto, status: OwnerStatus.PENDING, user: { connect: { id: userId } } },
+      data: { ...dto, status: OwnerStatus.PENDING, user: { connect: { id: userId, full_name: fullName } } },
     });
 
     return owner;
   }
+
+  /**
+   *
+   * @param nationalCode
+   */
+  async validateNationalCodeWebService(owner: Owner): Promise<void> {
+    // TODO: web service
+
+    // update the owner status
+    await this.db.owner.update({ where: { id: owner.id }, data: { status: OwnerStatus.APPROVED } });
+  }
+  /* -------------------------------------------------------------------------- */
 
   /**
    * Get user profile
@@ -93,15 +109,4 @@ export class ProfileUserService {
 
   //   return masked;
   // }
-
-  /**
-   *
-   * @param nationalCode
-   */
-  async validateNationalCodeWebService(owner: Owner): Promise<void> {
-    // TODO: web service
-
-    // update the owner status
-    await this.db.owner.update({ where: { id: owner.id }, data: { status: OwnerStatus.APPROVED } });
-  }
 }
