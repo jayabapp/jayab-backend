@@ -6,5 +6,6 @@ import { CitySharedService } from './shared.service';
 @Module({
   imports: [AdminModule, UserModule],
   providers: [CitySharedService],
+  exports: [CitySharedService],
 })
 export class CityModule {}

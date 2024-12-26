@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Owner, Prisma, User } from '@prisma/client';
+import { Advisor, Owner, Prisma, User } from '@prisma/client';
 import { UserType } from 'src/common/interfaces/user.interface';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
-import { RegisterOwnerUserDto } from './dto/register.dto';
+import { RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerStatus } from 'src/owner/common/owner-status.type';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 
 @Injectable()
 export class ProfileUserService {
@@ -53,6 +54,27 @@ export class ProfileUserService {
     await this.db.owner.update({ where: { id: owner.id }, data: { status: OwnerStatus.APPROVED } });
   }
   /* -------------------------------------------------------------------------- */
+  /**
+   * register owner
+   * @param userId
+   * @param dto
+   * @returns
+   */
+  async registerAdvisor(userId: number, dto: RegisterAdvisorUserDto): Promise<Advisor> {
+    const fullName = dto.full_name;
+    delete dto.full_name;
+
+    const owner = await this.db.advisor.create({
+      data: {
+        ...dto,
+        status: AdvisorStatus.PENDING,
+        cities: { connect: dto.cityIds.map((e) => ({ id: e })) },
+        user: { connect: { id: userId, full_name: fullName } },
+      },
+    });
+
+    return owner;
+  }
 
   /**
    * Get user profile

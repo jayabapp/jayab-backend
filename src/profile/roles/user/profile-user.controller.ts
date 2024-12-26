@@ -17,8 +17,10 @@ import { AttachmentService } from 'src/attachment/attachment.service';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
 import { ProfileUserService } from './profile-user.service';
 import { PROFILE_USER_ROUTE_GROUP } from 'src/profile/common/route-group.constant';
-import { RegisterOwnerUserDto } from './dto/register.dto';
+import { RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerUserService } from 'src/owner/roles/user/user.service';
+import { AdvisorUserService } from 'src/advisor/roles/user/user.service';
+import { CitySharedService } from 'src/city/shared.service';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -29,6 +31,8 @@ export class ProfileUserController {
     private readonly profileUserService: ProfileUserService,
     private readonly attachmentService: AttachmentService,
     private readonly ownerUserService: OwnerUserService,
+    private readonly advisorUserService: AdvisorUserService,
+    private readonly citySharedService: CitySharedService,
   ) {}
 
   @ApiOperation({ operationId: 'Get user profile' })
@@ -66,12 +70,12 @@ export class ProfileUserController {
 
     /* -------------------------------------------------------------------------- */
     // check duplicate request
-    if (user.owner_id) throw new BadRequestException('REGISTER_OWNER1');
+    if (user.owner_id) throw new BadRequestException('REGISTER1');
 
     /* -------------------------------------------------------------------------- */
     // check the national code repetition
     const nationalCodeIsInUse = await this.ownerUserService.findOneByNationalCode(dto.national_code);
-    if (nationalCodeIsInUse) throw new ConflictException('REGISTER_OWNER2');
+    if (nationalCodeIsInUse) throw new ConflictException('REGISTER2');
 
     /* -------------------------------------------------------------------------- */
     // check selfie image
@@ -84,6 +88,43 @@ export class ProfileUserController {
     /* -------------------------------------------------------------------------- */
     // TODO: validate the national code
     await this.profileUserService.validateNationalCodeWebService(owner);
+
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Register advisor' })
+  @Put('register/advisor')
+  async registerAdvisor(
+    @Req() request: RequestType,
+    @Body() dto: RegisterAdvisorUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = request.user;
+
+    /* -------------------------------------------------------------------------- */
+    // check duplicate request
+    if (user.advisor_id) throw new BadRequestException('REGISTER1');
+
+    /* -------------------------------------------------------------------------- */
+    // check the national code repetition
+    const nationalCodeIsInUse = await this.advisorUserService.findOneByNationalCode(dto.national_code);
+    if (nationalCodeIsInUse) throw new ConflictException('REGISTER2');
+
+    /* -------------------------------------------------------------------------- */
+    // check images
+    const images = [dto.profile_image_id, dto.document_image_id, dto.national_card_image_id];
+    await this.attachmentService.validateFileOwner(images, user.id, 1);
+
+    /* -------------------------------------------------------------------------- */
+    // check cities
+    await this.citySharedService.checkCitiesExist(dto.cityIds);
+
+    // /* -------------------------------------------------------------------------- */
+    // // create
+    // const owner = await this.profileUserService.registerOwner(user.id, dto);
+
+    // /* -------------------------------------------------------------------------- */
+    // // TODO: validate the national code
+    // await this.profileUserService.validateNationalCodeWebService(owner);
 
     return { messageCode: 'CREATE' };
   }
