@@ -39,6 +39,10 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
         query = { ...query, user: { full_name: { contains: filters.full_name } } };
         break;
 
+      case 'status':
+        query = { ...query, status: +filters.status };
+        break;
+
       default:
         break;
     }
