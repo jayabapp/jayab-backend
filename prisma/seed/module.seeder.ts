@@ -51,6 +51,7 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'اعلانات', key: 'notifications' },
     { name: 'آدرس های کاربر', key: 'user-addresses' },
     { name: 'مشاوران', key: 'advisors' },
+    { name: 'مالکان', key: 'owners' },
   ];
 
   return data;

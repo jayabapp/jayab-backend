@@ -1,14 +1,13 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllAdvisorAdminDto } from 'src/advisor/roles/admin/dto/find-all.dto';
+import { FindAllUserAdminDto } from 'src/user/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
  * @param dto
  * @returns
  */
-export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.AdvisorWhereInput => {
+export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereInput => {
   if (!filters) return {};
 
   /**
@@ -20,7 +19,7 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
   const fields = Object.keys(filters).filter((e) => filters[e]);
 
   // eslint-disable-next-line
-  let query: Prisma.AdvisorWhereInput = {};
+  let query: Prisma.UserWhereInput = {};
 
   for (const field of fields) {
     /**
@@ -31,16 +30,11 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
 
     //query
     switch (field) {
+      // case 'full_name':
+      //   query = { ...query, full_name: { contains: filters.full_name, mode: 'insensitive' } };
+      //   break;
       case 'mobile_number':
-        query = { ...query, user: { mobile_number: { contains: filters.mobile_number } } };
-        break;
-
-      case 'ref_code':
-        query = { ...query, user: { referral_code: { contains: filters.referral_code } } };
-        break;
-
-      case 'fullname':
-        query = { ...query, user: { full_name: { contains: filters.full_name } } };
+        query = { ...query, mobile_number: { contains: filters.mobile_number, mode: 'insensitive' } };
         break;
 
       default:

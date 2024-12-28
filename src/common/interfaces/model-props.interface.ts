@@ -14,7 +14,7 @@ export type FilterProps = {
 };
 
 /* ---------------------------------- TABLE --------------------------------- */
-export type EnumList = { title: string; id: string | number; hex: string; sub_title?: string };
+export type EnumList = { title: string; id: string | number | boolean; hex: string; sub_title?: string };
 
 export type Column = {
   id: number;

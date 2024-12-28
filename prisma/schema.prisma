@@ -398,6 +398,7 @@ model User {
   // -------------------------------------------------------------------------- //
   owner_id             Int?        @unique()
   advisor_id           Int?        @unique()
+  is_banned            Boolean     @default(false)
   // -------------------------------------------------------------------------- //
   referral_code        String?     @unique @db.VarChar()
   referrer_code        String?     @db.VarChar()
