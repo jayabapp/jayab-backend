@@ -182,12 +182,14 @@ model Attachment {
   content_video          Content[]           @relation(name: "ContentVideo")
   content_question_image ContentQuestion[]
 
-  banners         Banner[] @relation("Image")
-  banner_image_sm Banner[] @relation("ImageSm")
-
-  user_avatar          User?
-  category_image       Category?
-  submitted_form_items SubmittedFormItems[]
+  banners                     Banner[]             @relation("Image")
+  banner_image_sm             Banner[]             @relation("ImageSm")
+  advisor_national_card_image Advisor?             @relation("NationalCard")
+  advisor_document_image      Advisor?             @relation("DocumentImage")
+  user_profile_image          User?
+  owner_selfie_image          Owner?
+  category_image              Category?
+  submitted_form_items        SubmittedFormItems[]
 
   @@map("attachments")
 }
@@ -293,15 +295,21 @@ model ContentQuestion {
 
 // ---------------------------------- CITY ---------------------------------- //
 model City {
-  id        Int    @id() @default(autoincrement())
-  title     String @db.VarChar
-  parent_id Int?
-  parent    City?  @relation("Parent", fields: [parent_id], references: [id])
-  child     City[] @relation("Parent")
+  id         Int     @id() @default(autoincrement())
+  title      String  @db.VarChar
+  parent_id  Int?
+  sort_order Int?
+  slug       String?
+  tel_prefix String?
+  parent     City?   @relation("Parent", fields: [parent_id], references: [id])
+  child      City[]  @relation("Parent")
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
+  // User       User[]
+  Advisor    Advisor?  @relation(fields: [advisorId], references: [id])
+  advisorId  Int?
 
   @@map("cities")
 }
@@ -380,19 +388,33 @@ model Category {
 // -------------------------------------------------------------------------- //
 
 // ---------------------------------- USER ---------------------------------- //
+
+// اگر کاربر در هر نقش نام و عکسش رو تغییر بده برای همه نقش ها اعمال میشه
 model User {
-  id                   Int      @id() @default(autoincrement())
-  mobile_number        String   @unique @db.VarChar(11)
-  full_name            String?  @db.VarChar
-  avatar_id            Int?     @unique
+  id                   Int         @id() @default(autoincrement())
+  mobile_number        String      @unique @db.VarChar(11)
+  full_name            String?     @db.VarChar
+  profile_image_id     Int?        @unique
+  // -------------------------------------------------------------------------- //
+  owner_id             Int?        @unique()
+  advisor_id           Int?        @unique()
+  // -------------------------------------------------------------------------- //
+  referral_code        String?     @unique @db.VarChar()
+  referrer_code        String?     @db.VarChar()
+  // -------------------------------------------------------------------------- //
   fcm_token            String?
-  jwt_level            Int      @default(1)
-  notification_read_at DateTime @default(now())
+  jwt_level            Int         @default(1)
+  notification_read_at DateTime    @default(now())
+  // -------------------------------------------------------------------------- //
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  // -------------------------------------------------------------------------- //
+  profile_image        Attachment? @relation(fields: [profile_image_id], references: [id])
+  referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
+  referrals            User[]      @relation("UserReferrals")
+  owner                Owner?      @relation(fields: [owner_id], references: [id])
+  advisor              Advisor?    @relation(fields: [advisor_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  avatar Attachment? @relation(fields: [avatar_id], references: [id])
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
@@ -400,6 +422,55 @@ model User {
   // favorites        Favorite[]
 
   @@map("users")
+}
+
+model Owner {
+  id              Int    @id() @default(autoincrement())
+  national_code   String @unique @db.VarChar(10)
+  selfie_image_id Int    @unique
+  status          Int    @db.SmallInt
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
+  user         User?
+
+  @@map("owners")
+}
+
+model Advisor {
+  id                     Int     @id() @default(autoincrement())
+  national_code          String? @unique @db.VarChar(10)
+  //
+  tel                    String? @db.VarChar(11)
+  area_code              String? @db.VarChar(3)
+  //
+  address                String? @db.Text
+  cities                 City[]
+  //
+  is_special             Boolean @default(false)
+  status                 Int     @db.SmallInt
+  sort_order             Int?
+  //
+  national_card_image_id Int?    @unique
+  document_image_id      Int?    @unique
+  //
+  // rate                   Float?
+  // special_advisor_info   Json?
+  // statistics             Json    @default("{}")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image      Attachment? @relation("DocumentImage", fields: [document_image_id], references: [id])
+  user                User?
+  // rent_requests RentRequest[]
+  // advisorNotes  AdvisorNote[]
+  // banners       Banner[]
+
+  @@map("advisors")
 }
 
 // --------------------------------- PAYMENT -------------------------------- //
@@ -509,23 +580,22 @@ model User {
 //   @@map("contact_us")
 // }
 
-// // ------------------------------ NOTIFICATION ------------------------------ //
-// model Notification {
-//   id      Int       @id() @default(autoincrement())
-//   user_id Int?      @db.Integer
-//   role    String?
-//   title   String    @db.Text
-//   body    String    @db.Text
-//   topic   String?   @db.VarChar()
-//   data    Json?     @db.JsonB
-//   seen_at DateTime?
-//   //user User? @relation(fields: [user_id], references: [id])
+// ------------------------------ NOTIFICATION ------------------------------ //
+model Notification {
+  id      Int       @id() @default(autoincrement())
+  user_id Int?      @db.Integer
+  role    String?
+  title   String    @db.Text
+  body    String    @db.Text
+  topic   String?   @db.VarChar()
+  data    Json?     @db.JsonB
+  seen_at DateTime?
 
-//   created_at DateTime @default(now()) @db.Timestamp(6)
-//   updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
 
-//   @@map("notifications")
-// }
+  @@map("notifications")
+}
 
 // --------------------------------- TICKET --------------------------------- //
 // model Ticket {

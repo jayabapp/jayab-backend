@@ -18,6 +18,9 @@ export const IMAGES_FOLDER = `${appName}/images`;
 export const IMAGES_USER_FOLDER = `${appName}/images/users`;
 
 export const IMAGES_PROFILE_FOLDER = `${appName}/images/profiles`;
+export const IMAGES_OWNER_SELFIE_FOLDER = `${appName}/images/owner-selfies`;
+export const IMAGES_ADVISOR_NATIONAL_CARD_FOLDER = `${appName}/images/owner-national-cards`;
+export const IMAGES_ADVISOR_DOCUMENT_FOLDER = `${appName}/images/owner-documents`;
 
 export const PROFILE_FOLDER = `${appName}/images/profile`;
 

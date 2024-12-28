@@ -1,7 +1,8 @@
 import { User, AccessControlRole, Admin } from '@prisma/client';
 import { Request } from 'express';
 
-export type UserType = User & { accessToken: string };
+export type PartialUser = { id: number; mobile_number: string; owner_id: number; advisor_id: number };
+export type UserType = PartialUser & { accessToken: string };
 export type RequestType = Request & { user: UserType; interceptor_data?: any };
 
 export type AdminType = Admin & { role: AccessControlRole };
