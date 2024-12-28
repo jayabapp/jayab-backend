@@ -196,6 +196,7 @@ const PROPS = {
   economic_code: 'کد اقتصادی',
   registration_number: 'شماره ثبت',
   contact_number: 'شماره تماس',
+  admin_description: 'توضیحات مدیر',
 };
 
 /* ------------------------------- Decorators ------------------------------- */

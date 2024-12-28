@@ -22,6 +22,9 @@ import {
   tablePropsBuilder,
 } from 'src/advisor/common/helpers/model-props-builder.helper';
 import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
+import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
+import { AdminType } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class AdvisorAdminService {
@@ -50,10 +53,14 @@ export class AdvisorAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.AdvisorWhereInput, page: number, perPage = 50): Promise<PaginatedResult<Advisor>> {
+  async findAll(
+    filters: Prisma.AdvisorWhereInput,
+    page: number,
+    perPage = 50,
+  ): Promise<PaginatedResult<Advisor>> {
     const list = await paginate()<Advisor, Prisma.AdvisorFindManyArgs>(
       this.db.advisor,
-      { where: filters },
+      { where: filters, include: { user: { include: { profile_image: true } } } },
       { page, perPage },
     );
 
@@ -67,7 +74,14 @@ export class AdvisorAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.advisor.findUnique({ where: { id } });
+    const item = await this.db.advisor.findUnique({
+      where: { id },
+      include: {
+        document_image: true,
+        national_card_image: true,
+        user: { include: { profile_image: true } },
+      },
+    });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
@@ -97,11 +111,19 @@ export class AdvisorAdminService {
    * @param dto
    * @returns
    */
-  async update(id: number, dto: UpdateAdvisorAdminDto): Promise<Advisor> {
-    const item = await this.db.advisor.update({
-      where: { id },
-      data: dto,
-    });
+  async update(admin: AdminType, id: number, dto: UpdatePartialAdvisorAdminDto): Promise<Advisor> {
+    let updateData: Prisma.AdvisorUpdateInput = { status: dto.status };
+    const adminDscr: AdminDescription = {
+      description: dto.admin_description || '',
+      status: AdvisorStatusList.find((e) => e.id === dto.status)?.title,
+      admin_name: admin.full_name,
+      admin_id: admin.id,
+      admin_role: admin.role.name,
+      created_at: new Date(),
+    };
+    updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
+
+    const item = await this.db.advisor.update({ where: { id }, data: updateData });
 
     return item;
   }

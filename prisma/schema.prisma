@@ -452,6 +452,7 @@ model Advisor {
   //
   is_special             Boolean @default(false)
   status                 Int     @db.SmallInt
+  admin_descriptions     Json[]  @db.JsonB
   sort_order             Int?
   //
   national_card_image_id Int?    @unique

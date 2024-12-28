@@ -35,11 +35,7 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
         query = { ...query, user: { mobile_number: { contains: filters.mobile_number } } };
         break;
 
-      case 'ref_code':
-        query = { ...query, user: { referral_code: { contains: filters.referral_code } } };
-        break;
-
-      case 'fullname':
+      case 'full_name':
         query = { ...query, user: { full_name: { contains: filters.full_name } } };
         break;
 

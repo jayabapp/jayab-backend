@@ -25,6 +25,7 @@ import { UpdateAdvisorAdminDto } from './dto/update.dto';
 import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
+import { AdminRequestType } from 'src/common/interfaces/user.interface';
 
 @ApiTags('👨‍💻 Advisor - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -83,11 +84,13 @@ export class AdvisorAdminController {
   @ApiOperation({ operationId: 'Update', description: '' })
   @Put(':id')
   async update(
+    @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateAdvisorAdminDto,
+    @Body() dto: UpdatePartialAdvisorAdminDto,
   ): Promise<SuccessResponseArgs> {
+    const admin = req.user;
     await this.advisorAdminService.findById(id);
-    const result = await this.advisorAdminService.update(id, dto);
+    const result = await this.advisorAdminService.update(admin, id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -95,17 +98,20 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Partial', description: '' })
-  @Patch(':id/update-partial')
-  async updatePartial(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePartialAdvisorAdminDto,
-  ): Promise<SuccessResponseArgs> {
-    await this.advisorAdminService.findById(id);
-    const result = await this.advisorAdminService.updatePartial(id, dto);
+  // @ApiOperation({ operationId: 'Update Partial', description: '' })
+  // @Patch(':id/update-partial')
+  // async updatePartial(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   // @Body() dto: UpdatePartialAdvisorAdminDto,
+  // ): Promise<SuccessResponseArgs> {
+  //   console.log('here');
 
-    return { result, messageCode: 'UPDATE' };
-  }
+  //   return;
+  //   await this.advisorAdminService.findById(id);
+  //   // const result = await this.advisorAdminService.updatePartial(id, dto);
+
+  //   // return { result, messageCode: 'UPDATE' };
+  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
