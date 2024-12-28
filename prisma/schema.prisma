@@ -186,7 +186,6 @@ model Attachment {
   banner_image_sm             Banner[]             @relation("ImageSm")
   advisor_national_card_image Advisor?             @relation("NationalCard")
   advisor_document_image      Advisor?             @relation("DocumentImage")
-  advisor                     Advisor[]            @relation("ProfileImage")
   user_profile_image          User?
   owner_selfie_image          Owner?
   category_image              Category?
@@ -296,17 +295,21 @@ model ContentQuestion {
 
 // ---------------------------------- CITY ---------------------------------- //
 model City {
-  id        Int    @id() @default(autoincrement())
-  title     String @db.VarChar
-  parent_id Int?
-  parent    City?  @relation("Parent", fields: [parent_id], references: [id])
-  child     City[] @relation("Parent")
+  id         Int     @id() @default(autoincrement())
+  title      String  @db.VarChar
+  parent_id  Int?
+  sort_order Int?
+  slug       String?
+  tel_prefix String?
+  parent     City?   @relation("Parent", fields: [parent_id], references: [id])
+  child      City[]  @relation("Parent")
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
-
-  advisors Advisor[]
+  // User       User[]
+  Advisor    Advisor?  @relation(fields: [advisorId], references: [id])
+  advisorId  Int?
 
   @@map("cities")
 }
@@ -438,21 +441,20 @@ model Owner {
 
 model Advisor {
   id                     Int     @id() @default(autoincrement())
-  national_code          String  @unique @db.VarChar(10)
+  national_code          String? @unique @db.VarChar(10)
   //
   tel                    String? @db.VarChar(11)
   area_code              String? @db.VarChar(3)
   //
-  address                String  @db.Text
+  address                String? @db.Text
   cities                 City[]
   //
   is_special             Boolean @default(false)
   status                 Int     @db.SmallInt
   sort_order             Int?
   //
-  profile_image_id       Int     @unique
-  national_card_image_id Int     @unique
-  document_image_id      Int     @unique
+  national_card_image_id Int?    @unique
+  document_image_id      Int?    @unique
   //
   // rate                   Float?
   // special_advisor_info   Json?
@@ -461,9 +463,8 @@ model Advisor {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  profile_image       Attachment @relation("ProfileImage", fields: [profile_image_id], references: [id])
-  national_card_image Attachment @relation("NationalCard", fields: [national_card_image_id], references: [id])
-  document_image      Attachment @relation("DocumentImage", fields: [document_image_id], references: [id])
+  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image      Attachment? @relation("DocumentImage", fields: [document_image_id], references: [id])
   user                User?
   // rent_requests RentRequest[]
   // advisorNotes  AdvisorNote[]

@@ -69,6 +69,11 @@ export class RegisterAdvisorUserDto {
   @_IsNotEmpty()
   cityIds: number[];
 
+  @ApiProperty({ required: true, default: false })
+  @_IsBoolean()
+  @_IsNotEmpty()
+  is_special: boolean;
+
   /* -------------------------------------------------------------------------- */
   // images
   @ApiProperty({ required: true, default: 1 })

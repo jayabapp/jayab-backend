@@ -22,6 +22,8 @@ import {
   CATEGORY_FOLDER,
   FORM_FOLDER,
   IMAGES_OWNER_SELFIE_FOLDER,
+  IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
+  IMAGES_ADVISOR_DOCUMENT_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
@@ -76,6 +78,26 @@ export class AttachmentController {
           folder: IMAGES_OWNER_SELFIE_FOLDER,
           resizeWidth: 512,
           resizeMode: 'square',
+          userId: user.id,
+        };
+        break;
+
+      case AttachmentUserFolder.ADVISOR_NATIONAL_CARD_IMAGE:
+        args = {
+          file,
+          folder: IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
+          resizeWidth: 1024,
+          resizeMode: 'normal',
+          userId: user.id,
+        };
+        break;
+
+      case AttachmentUserFolder.ADVISOR_DOCUMENT_IMAGE:
+        args = {
+          file,
+          folder: IMAGES_ADVISOR_DOCUMENT_FOLDER,
+          resizeWidth: 1024,
+          resizeMode: 'normal',
           userId: user.id,
         };
         break;

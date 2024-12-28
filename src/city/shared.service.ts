@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { City } from '@prisma/client';
 
@@ -10,10 +10,10 @@ export class CitySharedService {
    * Get provinces
    * @returns
    */
-  async findParent(): Promise<Array<Partial<City>>> {
+  async findParents(): Promise<Array<Partial<City>>> {
     const cities = await this.db.city.findMany({
       where: { parent_id: null },
-      orderBy: { id: 'asc' },
+      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
       select: {
         id: true,
         title: true,
@@ -27,16 +27,51 @@ export class CitySharedService {
    * @param parentId
    * @returns
    */
-  async findChilds(parentId: number): Promise<Array<Partial<City>>> {
+  async findChildren(parentId: number): Promise<Array<Partial<City>>> {
     const cities = await this.db.city.findMany({
       where: { parent_id: parentId },
-      orderBy: { id: 'asc' },
+      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      select: {
+        id: true,
+        title: true,
+        child: {
+          select: {
+            id: true,
+            title: true,
+          },
+          orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+        },
+      },
+    });
+    return cities;
+  }
+
+  /**
+   * Get Cities by parent id
+   * @param parentId
+   * @returns
+   */
+  async findCities(): Promise<Array<Partial<City>>> {
+    const cities = await this.db.city.findMany({
+      where: { parent_id: { not: null } },
+      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
       select: {
         id: true,
         title: true,
       },
     });
     return cities;
+  }
+
+  /**
+   *
+   * @param id
+   * @returns
+   */
+  async findOne(id: number): Promise<City> {
+    const city = await this.db.city.findUnique({ where: { id }, include: { parent: true } });
+    if (!city) throw new NotFoundException('NOT_FOUND');
+    return city;
   }
 
   async checkCitiesExist(cityIds: number[]): Promise<void> {

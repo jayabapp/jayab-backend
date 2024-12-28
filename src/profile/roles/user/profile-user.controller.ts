@@ -105,26 +105,19 @@ export class ProfileUserController {
     if (user.advisor_id) throw new BadRequestException('REGISTER1');
 
     /* -------------------------------------------------------------------------- */
-    // check the national code repetition
-    const nationalCodeIsInUse = await this.advisorUserService.findOneByNationalCode(dto.national_code);
-    if (nationalCodeIsInUse) throw new ConflictException('REGISTER2');
+    // check the national code repetition, images and cities
+    if (dto.is_special) {
+      const nationalCodeIsInUse = await this.advisorUserService.findOneByNationalCode(dto.national_code);
+      if (nationalCodeIsInUse) throw new ConflictException('REGISTER2');
+
+      const images = [dto.profile_image_id, dto.document_image_id, dto.national_card_image_id];
+      await this.attachmentService.validateFileOwner(images, user.id, 1);
+
+      await this.citySharedService.checkCitiesExist(dto.cityIds);
+    }
 
     /* -------------------------------------------------------------------------- */
-    // check images
-    const images = [dto.profile_image_id, dto.document_image_id, dto.national_card_image_id];
-    await this.attachmentService.validateFileOwner(images, user.id, 1);
-
-    /* -------------------------------------------------------------------------- */
-    // check cities
-    await this.citySharedService.checkCitiesExist(dto.cityIds);
-
-    // /* -------------------------------------------------------------------------- */
-    // // create
-    // const owner = await this.profileUserService.registerOwner(user.id, dto);
-
-    // /* -------------------------------------------------------------------------- */
-    // // TODO: validate the national code
-    // await this.profileUserService.validateNationalCodeWebService(owner);
+    const owner = await this.profileUserService.registerAdvisor(user.id, dto);
 
     return { messageCode: 'CREATE' };
   }

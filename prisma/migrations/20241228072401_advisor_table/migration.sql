@@ -10,16 +10,15 @@ ALTER TABLE "users" ADD COLUMN     "advisor_id" INTEGER;
 -- CreateTable
 CREATE TABLE "advisors" (
     "id" SERIAL NOT NULL,
-    "national_code" VARCHAR(10) NOT NULL,
+    "national_code" VARCHAR(10),
     "tel" VARCHAR(11),
     "area_code" VARCHAR(3),
-    "address" TEXT NOT NULL,
+    "address" TEXT,
     "is_special" BOOLEAN NOT NULL DEFAULT false,
     "status" SMALLINT NOT NULL,
     "sort_order" INTEGER,
-    "profile_image_id" INTEGER NOT NULL,
-    "national_card_image_id" INTEGER NOT NULL,
-    "document_image_id" INTEGER NOT NULL,
+    "national_card_image_id" INTEGER,
+    "document_image_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -34,9 +33,6 @@ CREATE TABLE "_AdvisorToCity" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "advisors_national_code_key" ON "advisors"("national_code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "advisors_profile_image_id_key" ON "advisors"("profile_image_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "advisors_national_card_image_id_key" ON "advisors"("national_card_image_id");
@@ -57,13 +53,10 @@ CREATE UNIQUE INDEX "users_advisor_id_key" ON "users"("advisor_id");
 ALTER TABLE "users" ADD CONSTRAINT "users_advisor_id_fkey" FOREIGN KEY ("advisor_id") REFERENCES "advisors"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "advisors" ADD CONSTRAINT "advisors_profile_image_id_fkey" FOREIGN KEY ("profile_image_id") REFERENCES "attachments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "advisors" ADD CONSTRAINT "advisors_national_card_image_id_fkey" FOREIGN KEY ("national_card_image_id") REFERENCES "attachments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "advisors" ADD CONSTRAINT "advisors_national_card_image_id_fkey" FOREIGN KEY ("national_card_image_id") REFERENCES "attachments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "advisors" ADD CONSTRAINT "advisors_document_image_id_fkey" FOREIGN KEY ("document_image_id") REFERENCES "attachments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "advisors" ADD CONSTRAINT "advisors_document_image_id_fkey" FOREIGN KEY ("document_image_id") REFERENCES "attachments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_AdvisorToCity" ADD CONSTRAINT "_AdvisorToCity_A_fkey" FOREIGN KEY ("A") REFERENCES "advisors"("id") ON DELETE CASCADE ON UPDATE CASCADE;

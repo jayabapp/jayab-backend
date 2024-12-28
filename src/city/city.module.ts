@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AdminModule } from './roles/admin/admin.module';
-import { UserModule } from './roles/user/user.module';
+import { CityAdminModule } from './roles/admin/city-admin.module';
+import { CityUserModule } from './roles/user/user.module';
 import { CitySharedService } from './shared.service';
 
 @Module({
-  imports: [AdminModule, UserModule],
+  imports: [CityAdminModule, CityUserModule],
   providers: [CitySharedService],
   exports: [CitySharedService],
 })

@@ -36,8 +36,11 @@ export class ProfileUserService {
     const fullName = dto.full_name;
     delete dto.full_name;
 
-    const owner = await this.db.owner.create({
-      data: { ...dto, status: OwnerStatus.PENDING, user: { connect: { id: userId, full_name: fullName } } },
+    const owner = await this.db.owner.create({ data: { ...dto, status: OwnerStatus.PENDING } });
+
+    await this.db.user.update({
+      where: { id: userId },
+      data: { id: userId, full_name: fullName, profile_image_id: dto.selfie_image_id, owner_id: owner.id },
     });
 
     return owner;
@@ -55,7 +58,7 @@ export class ProfileUserService {
   }
   /* -------------------------------------------------------------------------- */
   /**
-   * register owner
+   * register advisor
    * @param userId
    * @param dto
    * @returns
@@ -63,17 +66,32 @@ export class ProfileUserService {
   async registerAdvisor(userId: number, dto: RegisterAdvisorUserDto): Promise<Advisor> {
     const fullName = dto.full_name;
     delete dto.full_name;
+    let data: Prisma.AdvisorUncheckedCreateInput = { status: AdvisorStatus.PENDING };
 
-    const owner = await this.db.advisor.create({
-      data: {
-        ...dto,
-        status: AdvisorStatus.PENDING,
-        cities: { connect: dto.cityIds.map((e) => ({ id: e })) },
-        user: { connect: { id: userId, full_name: fullName } },
-      },
+    if (dto.is_special) {
+      const cityIds = dto.cityIds.map((e) => ({ id: e }));
+      delete dto.cityIds;
+      delete dto.profile_image_id;
+      data = { ...data, ...dto, cities: { connect: cityIds } };
+    }
+
+    const newAdvisor = await this.db.$transaction(async (tx) => {
+      const advisor = await tx.advisor.create({ data });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          id: userId,
+          full_name: fullName,
+          profile_image_id: dto.profile_image_id,
+          advisor_id: advisor.id,
+        },
+      });
+
+      return advisor;
     });
 
-    return owner;
+    return newAdvisor;
   }
 
   /**
