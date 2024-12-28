@@ -44,18 +44,21 @@ export class ProfileUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update profile' })
-  @Put()
-  async updateProfile(
-    @Req() request: RequestType,
-    @Body() dto: UpdateProfileDto,
-  ): Promise<SuccessResponseArgs> {
-    const user = request.user;
-    if (dto.profile_image_id)
-      await this.attachmentService.validateFileOwner([dto.profile_image_id], user.id, 1);
-    await this.profileUserService.updateProfile(user.id, dto);
-    return { messageCode: 'UPDATE' };
-  }
+  /* -------------------------------------------------------------------------- */
+  /*                                  REGISTER                                  */
+  /* -------------------------------------------------------------------------- */
+  // @ApiOperation({ operationId: 'Update profile' })
+  // @Put()
+  // async updateProfile(
+  //   @Req() request: RequestType,
+  //   @Body() dto: UpdateProfileDto,
+  // ): Promise<SuccessResponseArgs> {
+  //   const user = request.user;
+  //   if (dto.profile_image_id)
+  //     await this.attachmentService.validateFileOwner([dto.profile_image_id], user.id, 1);
+  //   await this.profileUserService.updateProfile(user.id, dto);
+  //   return { messageCode: 'UPDATE' };
+  // }
 
   /**
    * ابتدا مالکو ایجاد میکنیم و سپس صحت آن را بررسی میکنیم
@@ -122,6 +125,9 @@ export class ProfileUserController {
     return { messageCode: 'CREATE' };
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                   UPDATE                                   */
+  /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update fcm' })
   @Patch('update-fcm')
   async updateFcm(@Req() request: RequestType, @Body() dto: UpdateFcmDto): Promise<SuccessResponseArgs> {
