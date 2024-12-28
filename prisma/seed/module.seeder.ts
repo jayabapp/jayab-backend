@@ -50,8 +50,8 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'روش پرداخت', key: 'payment-methods' },
     { name: 'اعلانات', key: 'notifications' },
     { name: 'آدرس های کاربر', key: 'user-addresses' },
-   { name: 'مشاوران', key: 'advisors'},
- ];
+    { name: 'مشاوران', key: 'advisors' },
+  ];
 
   return data;
 };

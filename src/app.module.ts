@@ -54,6 +54,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { ProfileModule } from './profile/profile.module';
 import { OwnerModule } from './owner/owner.module';
 import { AdvisorModule } from './advisor/advisor.module';
+import { NotificationModule } from './notification/notification.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -116,7 +117,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     ProfileModule,
     OwnerModule,
     AdvisorModule,
-    AdvisorModule,
+    NotificationModule,
     BaseModule,
   ],
   providers: [
