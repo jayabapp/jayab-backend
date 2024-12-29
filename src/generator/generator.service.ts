@@ -71,6 +71,11 @@ export class GeneratorService {
     await this.createDto(model, role);
 
     /* -------------------------------------------------------------------------- */
+    /*                                ADMIN FILTER                                */
+    /* -------------------------------------------------------------------------- */
+    if (role == GeneratorRole.ADMIN) await this.copyAdminFilter(destination, model);
+
+    /* -------------------------------------------------------------------------- */
     /*                                 APP MODULE                                 */
     /* -------------------------------------------------------------------------- */
     await this.fixAppModule(model);
@@ -219,8 +224,8 @@ export class GeneratorService {
     const modDest = (await this.fileExists(destination + '/base.module.ts'))
       ? destination + '/base.module.ts'
       : (await this.fileExists(destination + `/${kebabCaseModel}.module.ts`))
-      ? destination + `/${kebabCaseModel}.module.ts`
-      : '';
+        ? destination + `/${kebabCaseModel}.module.ts`
+        : '';
 
     if (modDest) {
       mod = await fs.readFile(modDest, {
@@ -230,8 +235,33 @@ export class GeneratorService {
 
     if (mod) {
       let newMod = mod;
-      newMod =
-        role === GeneratorRole.ADMIN ? mod.replace(/\/\/@admin /g, ``) : mod.replace(/\/\/@user /g, ``);
+
+      switch (role) {
+        case GeneratorRole.ADMIN:
+          newMod = mod.replace(/\/\/@admin /g, ``);
+          break;
+
+        case GeneratorRole.USER:
+          newMod = mod.replace(/\/\/@user /g, ``);
+          break;
+
+        case GeneratorRole.CUSTOMER:
+          newMod = mod.replace(/\/\/@customer /g, ``);
+          break;
+
+        case GeneratorRole.EMPLOYEE:
+          newMod = mod.replace(/\/\/@employee /g, ``);
+          break;
+
+        case GeneratorRole.MANAGER:
+          console.log('here');
+          
+          newMod = mod.replace(/\/\/@manager /g, ``);
+          break;
+
+        default:
+          break;
+      }
 
       newMod = newMod.replace(/Base/g, `${pascalCaseModel}`);
       await fs.writeFile(modDest, newMod);
@@ -272,8 +302,8 @@ export class GeneratorService {
 
     let newAppModule = '';
 
-    if (appModule.indexOf(`${pascalCaseModel}Module,`) < 0) console.log('here 1');
-    newAppModule = appModule.replace('BaseModule,', `${pascalCaseModel}Module,\n    BaseModule,`);
+    if (appModule.indexOf(`${pascalCaseModel}Module,`) < 0)
+      newAppModule = appModule.replace('BaseModule,', `${pascalCaseModel}Module,\n    BaseModule,`);
 
     if (appModule.indexOf(`import { ${pascalCaseModel}Module }`) < 0)
       newAppModule = newAppModule.replace(
@@ -362,12 +392,36 @@ export class Update${pascalCaseModel}${role}Dto extends Create${pascalCaseModel}
       __baseDir + `/src/${kebabCaseModel}/roles/${role.toLowerCase()}/dto/update-partial.dto.ts`;
     const isUpdatePartialDestExist = await this.fileExists(updatePartialDest);
     if (isUpdatePartialDestExist) {
-      const updatePartialText = await fs.readFile(updatePartialDest, { encoding: 'utf-8' });
+      const updatePartialText = await fs.readFile(updatePartialDest, {
+        encoding: 'utf-8',
+      });
       const newUpdatePartialText = updatePartialText.replace(/Base/g, `${pascalCaseModel}`);
       await fs.writeFile(updatePartialDest, newUpdatePartialText);
     }
     `✨ The "${pascalCaseModel}" ${role} dto generated`;
     return;
+  }
+
+  /**
+   *
+   * @param destination
+   * @param model
+   * @param role
+   */
+  async copyAdminFilter(destination: string, model: string): Promise<void> {
+    const { pascalCaseModel, camelCaseModel, kebabCaseModel } = this.createModelCases(model);
+
+    const filter = await fs.readFile(destination + `/common/helpers/filter-validator.helper.ts`, {
+      encoding: 'utf-8',
+    });
+
+    let newFilteer = filter.replace(/Base/g, `${pascalCaseModel}`);
+    newFilteer = newFilteer.replace(/__base/g, `${kebabCaseModel}`);
+    newFilteer = newFilteer.replace(/base/g, `${camelCaseModel}`);
+
+    await fs.writeFile(destination + `/common/helpers/filter-validator.helper.ts`, newFilteer);
+
+    console.log(`✨ The "${pascalCaseModel}" admin filter generated`);
   }
 
   /**
@@ -467,8 +521,9 @@ export class Update${pascalCaseModel}${role}Dto extends Create${pascalCaseModel}
 
       default:
         if (type === 'Int') return 1;
-        else if (type === 'Float') return 40.456;
-        else return LOREM_IPSUM_TITLE;
+        if (type === 'Float') return 40.456;
+
+        return LOREM_IPSUM_TITLE;
     }
   }
 }
