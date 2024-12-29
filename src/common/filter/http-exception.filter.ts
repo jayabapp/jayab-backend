@@ -171,4 +171,6 @@ const failedMessages = {
 
   USER1: 'این شماره موبایل در سامانه وجود دارد',
   USER2: '',
+
+  PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
 };

@@ -18,6 +18,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
+import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -34,14 +35,17 @@ export class PropertyOwnerController {
     return { result, messageCode: 'CREATE' };
   }
 
-  // @ApiOperation({ operationId: 'Create', description: '' })
-  // @Post()
-  // async updateInit(
-  //   @Req() req: RequestType,
-  //   @Body() dto: CreatePropertyOwnerDto,
-  // ): Promise<SuccessResponseArgs> {
-  //   const user = req.user;
-  //   const result = await this.propertyOwnerService.updateInit(user.owner_id, dto);
-  //   return { result, messageCode: 'CREATE' };
-  // }
+  @ApiOperation({ operationId: 'Create', description: '' })
+  @Post(':propertyId')
+  async updateInit(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyStepOneOwnerDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user;
+
+    const property = await this.propertyOwnerService.findOne(propertyId, user.owner_id);
+    const result = await this.propertyOwnerService.updateInit(property, dto);
+    return { result, messageCode: 'CREATE' };
+  }
 }

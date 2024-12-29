@@ -9,6 +9,7 @@ import { random } from 'lodash';
 import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
+import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -65,30 +66,34 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateInit(ownerId: number, dto: CreatePropertyOwnerDto): Promise<void> {
+  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     /* -------------------------------------------------------------------------- */
     // data without options
     let data: object = {
       // province_id: dto.province_id,
       // region_id: dto.region_id || null,
-      city_id: dto.city_id,
-      title: dto.title,
-      land_area: dto.land_area,
-      building_area: dto.building_area,
-      floors: dto.floors,
-      floor: dto.floor,
-      unit_per_floor: dto.unit_per_floor,
-      construction_year: dto.construction_year,
-      address: dto.address,
+      // city_id: dto.city_id,
+      // title: dto.title,
+      // land_area: dto.land_area,
+      // building_area: dto.building_area,
+      // floors: dto.floors,
+      // floor: dto.floor,
+      // unit_per_floor: dto.unit_per_floor,
+      // construction_year: dto.construction_year,
+      // address: dto.address,
     };
+
+    // do not update status in edit
+    if (property.status == PropertyStatuses.INIT)
+      data = { ...data, status_step: PropertyStatuses.IN_PROCESS };
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options
-    // const query: OptionConnect[] = await this.deleteAndCreateNewOption(id, dto, [
-    //   PropertyOptionGroup.PROPERTY_TYPE,
-    //   PropertyOptionGroup.OWNERSHIP,
-    //   PropertyOptionGroup.BUILDING_DIRECTION,
-    // ]);
+    const query: OptionConnect[] = await this.deleteAndCreateNewOption(property.id, dto, [
+      PropertyOptionGroup.PROPERTY_TYPE,
+      PropertyOptionGroup.OWNERSHIP,
+      PropertyOptionGroup.BUILDING_DIRECTION,
+    ]);
 
     /* -------------------------------------------------------------------------- */
     // const newProperty = await this.db.property.create({
@@ -97,6 +102,9 @@ export class PropertyOwnerService {
     // return newProperty;
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                    FETCH                                   */
+  /* -------------------------------------------------------------------------- */
   /**
    * find all Property
    * @param dto
@@ -117,12 +125,12 @@ export class PropertyOwnerService {
    * @param propertyId
    * @returns
    */
-  async findOne(propertyId: number): Promise<Property> {
+  async findOne(propertyId: number, ownerId: number): Promise<Property> {
     const item = await this.db.property.findFirst({
-      where: { id: propertyId },
+      where: { id: propertyId, owner_id: ownerId },
     });
 
-    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
     return item;
   }
