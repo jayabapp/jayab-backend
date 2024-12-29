@@ -1,119 +1,124 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, Validate } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
+  _Length,
+  _Min,
+  _Max,
 } from 'src/common/pipes/validator-translate.pipe';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import moment from 'moment-jalaali';
+import { IsExist } from 'src/common/validators/is-exists.validator';
 
-export class CreatePropertyUserDto {
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
+export class CreatePropertyOwnerDto {
+  @ApiProperty({ required: true, title: 'نوع ملک' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PROPERTY_TYPE])
   @_IsNotEmpty()
-  code: number
-        
+  property_type: number;
 
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  owner_id: number
-        
-
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, title: 'اسم ملک' })
   @_IsString()
-  @IsOptional()
-  title: string
-        
+  @_Length(2, 100)
+  @_IsNotEmpty()
+  title: string;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'متراژ زمین' })
   @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  land_area: number
-        
+  @_Max(100000)
+  @_Min(0)
+  @_IsNotEmpty()
+  land_area: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'متراژ زیربنا' })
   @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  building_area: number
-        
+  @_Max(100000)
+  @_Min(10)
+  @_IsNotEmpty()
+  building_area: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'طبقات' })
+  @Transform(({ value }) => {
+    if (value) return value;
+    else return 1;
+  })
   @_IsInt()
-  @Type(() => Number)
+  @_Max(20)
+  @_Min(1)
   @IsOptional()
-  floors: number
-        
+  floors: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'طبقه' })
+  @Transform(({ value }) => {
+    if (value) return value;
+    else return 0;
+  })
   @_IsInt()
-  @Type(() => Number)
+  @_Max(20)
+  @_Min(0)
   @IsOptional()
-  unit_per_floor: number
-        
+  floor: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'تعداد واحد در طبقه' })
+  @Transform(({ value }) => {
+    if (value) return value;
+    else return 1;
+  })
   @_IsInt()
-  @Type(() => Number)
+  @_Max(10)
+  @_Min(1)
   @IsOptional()
-  floor: number
-        
+  unit_per_floor: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'سال ساخت' })
   @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  construction_year: number
-        
+  @_Max(moment().jYear())
+  @_Min(1300)
+  @_IsNotEmpty()
+  construction_year: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: true, title: 'جهت ساختمان' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.BUILDING_DIRECTION])
+  @_IsNotEmpty()
+  building_direction: number;
+
+  @ApiProperty({ required: true, title: 'نوع مالکیت' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.OWNERSHIP])
+  @_IsNotEmpty()
+  ownership: number;
+
+  // @ApiProperty({ required: true, title: 'کشور' })
+  // @_IsInt()
+  // @Validate(IsExist, ['city', 'id'])
+  // @_IsNotEmpty()
+  // country_id: number;
+
+  // @ApiProperty({ title: 'محله' })
+  // @_IsInt()
+  // @Validate(IsExist, ['city', 'id'])
+  // @IsOptional()
+  // region_id: number;
+
+  // @ApiProperty({ required: true, title: 'استان' })
+  // @_IsInt()
+  // @Validate(IsExist, ['city', 'id'])
+  // @_IsNotEmpty()
+  // province_id: number;
+
+  @ApiProperty({ required: true, title: 'شهر' })
   @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  city_id: number
-        
+  @Validate(IsExist, ['city', 'id'])
+  @_IsNotEmpty()
+  city_id: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, title: 'آدرس' })
   @_IsString()
-  @IsOptional()
-  address: string
-        
-
-  @ApiProperty({ required: false, default: 40.456 })
-  @_IsNumber()
-  @Type(() => Number)
-  @IsOptional()
-  lat: number
-        
-
-  @ApiProperty({ required: false, default: 40.456 })
-  @_IsNumber()
-  @Type(() => Number)
-  @IsOptional()
-  lng: number
-        
-
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
+  @_Length(5, 256)
   @_IsNotEmpty()
-  status: number
-        
-
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsBoolean()
-  @_IsNotEmpty()
-  is_chat_enabled: boolean
-        
-
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsBoolean()
-  @_IsNotEmpty()
-  is_location_visible: boolean
+  address: string;
 }

@@ -304,13 +304,15 @@ model City {
   parent     City?   @relation("Parent", fields: [parent_id], references: [id])
   child      City[]  @relation("Parent")
 
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
-  deleted_at    DateTime?  @db.Timestamp(6)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  deleted_at        DateTime?  @db.Timestamp(6)
   // User       User[]
-  advisor       Advisor?   @relation(fields: [advisorId], references: [id])
-  advisorId     Int?
-  property_city Property[] @relation("PropertyCity")
+  advisor           Advisor?   @relation(fields: [advisorId], references: [id])
+  advisorId         Int?
+  property_city     Property[] @relation("PropertyCity")
+  Property_province Property[] @relation("PropertyProvince")
+  Property_region   Property[] @relation("PropertyRegion")
 
   @@map("cities")
 }
@@ -480,8 +482,8 @@ model Advisor {
 
 // -------------------------------- PROPERTY -------------------------------- //
 model Property {
-  id                  Int     @id() @default(autoincrement())
-  code                Int
+  id                  Int      @id() @default(autoincrement())
+  code                String   @unique
   owner_id            Int
   title               String?
   land_area           Int?
@@ -490,8 +492,8 @@ model Property {
   unit_per_floor      Int?
   floor               Int?
   construction_year   Int?
-  // region_id           Int?
-  // province_id         Int?
+  region_id           Int?
+  province_id         Int?
   city_id             Int?
   address             String?
   lat                 Float?
@@ -504,7 +506,7 @@ model Property {
   // std_capacity        Int?
   // max_capacity        Int?
   // canceling_type      CANCELING_TYPE?
-  status              Int     @db.SmallInt
+  status              Int      @db.SmallInt
   // subscription_id     Int?            @unique
   // statistics          Json            @default("{}")
   // advisor_commission  Int             @default(5) @db.SmallInt
@@ -512,8 +514,8 @@ model Property {
   // calendar_updated_at DateTime?
   // rate                Float?
   // rate_count               Int       @default(0)
-  is_chat_enabled     Boolean
-  is_location_visible Boolean
+  is_chat_enabled     Boolean?
+  is_location_visible Boolean?
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
@@ -521,8 +523,8 @@ model Property {
 
   owner            Owner               @relation(fields: [owner_id], references: [id])
   property_options OptionsOnProperty[]
-  // region                City?                  @relation("PropertyRegion", fields: [region_id], references: [id])
-  // province              City?                  @relation("PropertyProvince", fields: [province_id], references: [id])
+  region           City?               @relation("PropertyRegion", fields: [region_id], references: [id])
+  province         City?               @relation("PropertyProvince", fields: [province_id], references: [id])
   city             City?               @relation("PropertyCity", fields: [city_id], references: [id])
   // bedrooms              PropertyBedroom?
   // feature_image         Attachment?            @relation("FeatureImage", fields: [feature_image_id], references: [id])

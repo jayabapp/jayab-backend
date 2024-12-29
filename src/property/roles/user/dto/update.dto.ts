@@ -1,3 +1,3 @@
-import { CreatePropertyUserDto } from './create.dto';
+import { CreatePropertyOwnerDto } from './create.dto';
 
-export class UpdatePropertyUserDto extends CreatePropertyUserDto {}
+export class UpdatePropertyUserDto extends CreatePropertyOwnerDto {}
