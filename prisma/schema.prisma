@@ -426,10 +426,11 @@ model User {
 }
 
 model Owner {
-  id              Int    @id() @default(autoincrement())
-  national_code   String @unique @db.VarChar(10)
-  selfie_image_id Int    @unique
-  status          Int    @db.SmallInt
+  id                 Int    @id() @default(autoincrement())
+  national_code      String @unique @db.VarChar(10)
+  selfie_image_id    Int    @unique
+  status             Int    @db.SmallInt
+  admin_descriptions Json[] @db.JsonB
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

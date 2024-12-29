@@ -120,6 +120,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     AdvisorModule,
     NotificationModule,
     UserModule,
+    OwnerModule,
     BaseModule,
   ],
   providers: [

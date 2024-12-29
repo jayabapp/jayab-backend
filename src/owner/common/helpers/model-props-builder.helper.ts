@@ -1,4 +1,4 @@
-import { AccessControlList, Owner, Prisma } from '@prisma/client';
+import { AccessControlList, Attachment, Owner, Prisma, User } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -9,12 +9,13 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { OwnerStatus, OwnerStatusList } from '../owner-status.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  user = 'user',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.OwnerScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -24,24 +25,52 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: Owner): Array<ShowProps> => {
+export const showPropsBuilder = (
+  item: Owner & { user: User & { profile_image: Attachment } },
+): Array<ShowProps> => {
+  const statuses = OwnerStatusList.filter((e) => e.id !== OwnerStatus.AUTO_CHECK_SERVICE_ERROR);
   const props: Array<ShowProps> = [
-    // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
-    //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
-    /* ----------------------------------- REF ---------------------------------- */
-    // the ids must be hidden in ref
-    // ---- single ref
-    // {state: 'category',title: 'دسته بندی اصلی',value: item.category,type: 'object',nestedKey: 'title',},
-    // {state: 'category_id',ref: 'category',value: item.category.id,type: 'chip',isHidden: true,},
-    // ---- multi ref
-    // { state: 'media', title: 'عکس های ملک', value: item.media, type: 'image' },
-    // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',value: { lat: item.lat, lng: item.lng },title: 'موقعیت جغرافیایی',},
-    /* --------------------------------- SWITCH --------------------------------- */
-    // { state: 'is_active', type: 'boolean', value: item.is_acitve, title: 'وضعیت' },
+    { state: 'status_list', title: 'لیست وضعیت ها', value: statuses, isHidden: true },
+    {
+      state: 'admin_descriptions',
+      title: 'توضیحات ادمین',
+      value: item.admin_descriptions,
+      type: 'string',
+      isEditable: false,
+      isHidden: true,
+    },
+    { state: 'id', title: 'شناسه', value: item.id, type: 'string' },
+    {
+      state: 'status',
+      title: 'وضعیت',
+      value: OwnerStatusList.find((e) => e.id == item.status),
+      type: 'chip',
+    },
+    { type: 'break' },
+    {
+      state: 'full_name',
+      title: 'نام و نام خانوادگی',
+      value: item.user.full_name,
+      type: 'string',
+      route: `/users/edit/${item.user.id}`,
+    },
+    {
+      state: 'mobile_number',
+      title: 'موبایل',
+      value: item.user.mobile_number,
+      type: 'string',
+    },
+    { type: 'break' },
+    { state: 'created_at', title: 'تاریخ ثبت نام', value: item.created_at, type: 'date' },
+    { state: 'updated_at', title: 'تاریخ به روز رسانی', value: item.updated_at, type: 'date' },
+    { type: 'divider' },
+    {
+      state: 'profile_image',
+      title: 'تصویر پروفایل',
+      value: item.user.profile_image,
+      type: 'image',
+      isEditable: false,
+    },
   ];
 
   return props;
@@ -99,21 +128,14 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'owner',
-    modelTitle: 'بیس',
+    modelTitle: 'مالک',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
-
-      /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 10, title: 'تصویر', key: 'user', cellType: 'image', nestedKey: 'image' },
+      { id: 20, title: 'نام و نام خانوادگی', key: 'user', cellType: 'object', nestedKey: 'full_name' },
+      { id: 30, title: 'موبایل', key: 'user', cellType: 'object', nestedKey: 'mobile_number' },
+      { id: 80, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: OwnerStatusList },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -126,12 +148,9 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
-    {
-      title: '',
-      state: 'user_id',
-      type: 'input',
-      isHidden: true,
-    },
+    { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
+    { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
+    { title: '', state: 'status', type: 'select', isHidden: true },
   ];
 
   return filterProps;
@@ -145,11 +164,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

@@ -32,8 +32,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     /* -------------------------------------------------------------------------- */
     /*                                   LOGGER                                   */
     /* -------------------------------------------------------------------------- */
-    console.log({ exception });
-    console.log(exception.stack);
 
     console.log('/* -------------------------------------------------------------------------- */');
     let data = `[${request.method}]: ${request.url} - ${statusCode}`;
