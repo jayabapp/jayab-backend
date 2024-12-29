@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
-  // Delete,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -110,12 +110,12 @@ export class PropertyOptionAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyOptionAdminService.findById(id);
-  //   await this.propertyOptionAdminService.remove(id);
+  @ApiOperation({ operationId: 'Remove', description: '' })
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    await this.propertyOptionAdminService.findById(id);
+    await this.propertyOptionAdminService.remove(id);
 
-  //   return { messageCode: 'DELETE' };
-  // }
+    return { messageCode: 'DELETE' };
+  }
 }

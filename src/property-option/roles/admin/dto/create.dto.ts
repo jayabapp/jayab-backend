@@ -1,36 +1,39 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
+  _IsEnum,
+  _Max,
+  _Length,
 } from 'src/common/pipes/validator-translate.pipe';
-import { Type } from 'class-transformer';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 
 export class CreatePropertyOptionAdminDto {
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, default: 'عنوان' })
+  @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
-  title: string
-        
+  title: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, default: 'توضیحات' })
+  @_Length(0, 256)
   @_IsString()
   @IsOptional()
-  description: string
-        
+  description?: string;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
+  @ApiProperty({ required: true })
+  @_IsEnum(PropertyOptionGroup)
   @_IsNotEmpty()
-  group: string
-        
+  group: PropertyOptionGroup;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ default: 'ترتیب' })
   @_IsInt()
-  @Type(() => Number)
+  @Transform(({ value }) => value || 0)
   @IsOptional()
-  sort: number
+  sort?: number;
 }
