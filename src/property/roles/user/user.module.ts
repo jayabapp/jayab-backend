@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
-import { PropertyUserService } from './user/user.service';
-import { PropertyOwnerController } from './owner/owner.controller';
-import { PropertyUserController } from './user/user.controller';
-import { PropertyOwnerService } from './owner/owner.service';
+import { PropertyUserService } from './user.service';
+import { PropertyUserController } from './user.controller';
 
 @Module({
-  controllers: [PropertyUserController, PropertyOwnerController],
-  providers: [PropertyUserService, PropertyOwnerService],
+  controllers: [PropertyUserController],
+  providers: [PropertyUserService],
 })
 export class PropertyUserModule {}

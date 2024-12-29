@@ -98,17 +98,17 @@ export class CreatePropertyOwnerDto {
   // @_IsNotEmpty()
   // country_id: number;
 
-  // @ApiProperty({ title: 'محله' })
-  // @_IsInt()
-  // @Validate(IsExist, ['city', 'id'])
-  // @IsOptional()
-  // region_id: number;
+  @ApiProperty({ title: 'محله' })
+  @_IsInt()
+  @Validate(IsExist, ['city', 'id'])
+  @IsOptional()
+  region_id: number;
 
-  // @ApiProperty({ required: true, title: 'استان' })
-  // @_IsInt()
-  // @Validate(IsExist, ['city', 'id'])
-  // @_IsNotEmpty()
-  // province_id: number;
+  @ApiProperty({ required: true, title: 'استان' })
+  @_IsInt()
+  @Validate(IsExist, ['city', 'id'])
+  @_IsNotEmpty()
+  province_id: number;
 
   @ApiProperty({ required: true, title: 'شهر' })
   @_IsInt()

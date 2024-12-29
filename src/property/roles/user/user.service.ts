@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatePropertyOwnerDto } from '../dto/create.dto';
-import { UpdatePropertyUserDto } from '../dto/update.dto';
-import { FindAllPropertyUserDto } from '../dto/find-all.dto';
+import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { PropertyStatuses } from 'src/property/common/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';

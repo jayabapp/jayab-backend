@@ -15,8 +15,7 @@ import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { OwnerGuard } from 'src/auth/guards/owner.guard';
-import { FindAllPropertyUserDto } from '../dto/find-all.dto';
+import { FindAllPropertyUserDto } from './dto/find-all.dto';
 
 @ApiTags('Property - USER')
 @UseGuards(UserJwtGuard)
