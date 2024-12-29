@@ -111,8 +111,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: PropertyOptionGroupList },
       { id: 30, title: 'ترتیب', key: 'sort', cellType: 'number' },
-      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };

@@ -16,6 +16,7 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
  * #f59e0b
  * #10b981
  * #6366f1
+ * #22d3ee
  */
 
 export enum PropertyOptionGroup {
@@ -33,6 +34,7 @@ export enum PropertyOptionGroup {
   PET = 'PET', // شرایط ورود حیوان خانگی
   PARTY = 'PARTY', // شرایط برگزاری مراسم
   BUILDING_DIRECTION = 'BUILDING_DIRECTION', //جهت ساختمان
+  OWNERSHIP_TYPE = 'OWNERSHIP_TYPE', //نوع مالکیت
 }
 
 export const PropertyOptionGroupList: Array<EnumList> = [
@@ -105,5 +107,10 @@ export const PropertyOptionGroupList: Array<EnumList> = [
     id: PropertyOptionGroup.BUILDING_DIRECTION,
     title: 'جهت ساختمان',
     hex: '#6366f1',
+  },
+  {
+    id: PropertyOptionGroup.OWNERSHIP_TYPE,
+    title: 'نوع مالکیت',
+    hex: '#22d3ee',
   },
 ];

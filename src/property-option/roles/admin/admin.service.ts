@@ -50,10 +50,14 @@ export class PropertyOptionAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.PropertyOptionWhereInput, page: number, perPage = 50): Promise<PaginatedResult<PropertyOption>> {
+  async findAll(
+    filters: Prisma.PropertyOptionWhereInput,
+    page: number,
+    perPage = 50,
+  ): Promise<PaginatedResult<PropertyOption>> {
     const list = await paginate()<PropertyOption, Prisma.PropertyOptionFindManyArgs>(
       this.db.propertyOption,
-      { where: filters },
+      { where: filters, orderBy: { sort: { sort: 'asc', nulls: 'last' } } },
       { page, perPage },
     );
 

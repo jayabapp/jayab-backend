@@ -245,20 +245,6 @@ export class GeneratorService {
           newMod = mod.replace(/\/\/@user /g, ``);
           break;
 
-        case GeneratorRole.CUSTOMER:
-          newMod = mod.replace(/\/\/@customer /g, ``);
-          break;
-
-        case GeneratorRole.EMPLOYEE:
-          newMod = mod.replace(/\/\/@employee /g, ``);
-          break;
-
-        case GeneratorRole.MANAGER:
-          console.log('here');
-          
-          newMod = mod.replace(/\/\/@manager /g, ``);
-          break;
-
         default:
           break;
       }

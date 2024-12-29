@@ -304,12 +304,13 @@ model City {
   parent     City?   @relation("Parent", fields: [parent_id], references: [id])
   child      City[]  @relation("Parent")
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?  @db.Timestamp(6)
   // User       User[]
-  Advisor    Advisor?  @relation(fields: [advisorId], references: [id])
-  advisorId  Int?
+  advisor       Advisor?   @relation(fields: [advisorId], references: [id])
+  advisorId     Int?
+  property_city Property[] @relation("PropertyCity")
 
   @@map("cities")
 }
@@ -437,7 +438,7 @@ model Owner {
 
   selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
   user         User?
-  // properties   Property[]
+  properties   Property[]
 
   @@map("owners")
 }
@@ -478,71 +479,84 @@ model Advisor {
 }
 
 // -------------------------------- PROPERTY -------------------------------- //
-// model Property {
-//   id       Int     @id() @default(autoincrement())
-//   code     Int
-//   owner_id Int
-//   title    String?
-//   // land_area           Int?
-//   // building_area       Int?
-//   // floors              Int?
-//   // unit_per_floor      Int?
-//   // floor               Int?
-//   // construction_year   Int?
-//   // // country_id        Int?
-//   // province_id         Int?
-//   // city_id             Int?
-//   // region_id           Int?
-//   // address             String?
-//   // lat                 Float?
-//   // lng                 Float?
-//   // feature_image_id    Int?
-//   // attachments         Attachment[]    @relation("Property")
-//   // temp_attachments    Attachment[]    @relation("Property_Temp")
-//   // video_id            Int?
-//   // has_pool            Boolean?
-//   // std_capacity        Int?
-//   // max_capacity        Int?
-//   // canceling_type      CANCELING_TYPE?
-//   // status_step         Int
-//   // subscription_id     Int?            @unique
-//   // statistics          Json            @default("{}")
-//   // advisor_commission  Int             @default(5) @db.SmallInt
-//   // is_auto_approve     Boolean         @default(true)
-//   // calendar_updated_at DateTime?
-//   // rate                Float?
+model Property {
+  id                  Int     @id() @default(autoincrement())
+  code                Int
+  owner_id            Int
+  title               String?
+  land_area           Int?
+  building_area       Int?
+  floors              Int?
+  unit_per_floor      Int?
+  floor               Int?
+  construction_year   Int?
+  // region_id           Int?
+  // province_id         Int?
+  city_id             Int?
+  address             String?
+  lat                 Float?
+  lng                 Float?
+  // feature_image_id    Int?
+  // attachments         Attachment[]    @relation("Property")
+  // temp_attachments    Attachment[]    @relation("Property_Temp")
+  // video_id            Int?
+  // has_pool            Boolean?
+  // std_capacity        Int?
+  // max_capacity        Int?
+  // canceling_type      CANCELING_TYPE?
+  status              Int     @db.SmallInt
+  // subscription_id     Int?            @unique
+  // statistics          Json            @default("{}")
+  // advisor_commission  Int             @default(5) @db.SmallInt
+  // is_auto_approve     Boolean         @default(true)
+  // calendar_updated_at DateTime?
+  // rate                Float?
+  // rate_count               Int       @default(0)
+  is_chat_enabled     Boolean
+  is_location_visible Boolean
 
-//   created_at DateTime  @default(now()) @db.Timestamp(6)
-//   updated_at DateTime  @updatedAt
-//   deleted_at DateTime?
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
-//   owner Owner @relation(fields: [owner_id], references: [id])
-//   // property_options      OptionsOnProperty[]
-//   // status                Status                 @relation(fields: [status_step], references: [step])
-//   // province              City?                  @relation("PropertyProvince", fields: [province_id], references: [id])
-//   // city                  City?                  @relation("PropertyCity", fields: [city_id], references: [id])
-//   // region                City?                  @relation("PropertyRegion", fields: [region_id], references: [id])
-//   // bedrooms              PropertyBedroom?
-//   // feature_image         Attachment?            @relation("FeatureImage", fields: [feature_image_id], references: [id])
-//   // video                 Attachment?            @relation("Video", fields: [video_id], references: [id])
-//   // daily_price           PropertyDailyPrice?
-//   // hourly_price          PropertyHourlyPrice?
-//   // monthly_price         PropertyMonthlyPrice?
-//   // yearly_price          PropertyYearlyPrice?
-//   // description           PropertyDescription?
-//   // propertyCalendarNotes PropertyCalendarNote[]
-//   // propertyReservedDays  PropertyReservedDays[]
-//   // owner_rent_request    OwnerRentRequest[]
-//   // property_authorize    PropertyAuthorized?
-//   // banners               Banner[]
-//   // Attachment            Attachment?            @relation(fields: [attachmentId], references: [id])
-//   // attachmentId          Int?
-//   // subscription          Subscription?          @relation(fields: [subscription_id], references: [id])
-//   // rent_request          RentRequest[]
+  owner            Owner               @relation(fields: [owner_id], references: [id])
+  property_options OptionsOnProperty[]
+  // region                City?                  @relation("PropertyRegion", fields: [region_id], references: [id])
+  // province              City?                  @relation("PropertyProvince", fields: [province_id], references: [id])
+  city             City?               @relation("PropertyCity", fields: [city_id], references: [id])
+  // bedrooms              PropertyBedroom?
+  // feature_image         Attachment?            @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  // video                 Attachment?            @relation("Video", fields: [video_id], references: [id])
+  // daily_price           PropertyDailyPrice?
+  // hourly_price          PropertyHourlyPrice?
+  // monthly_price         PropertyMonthlyPrice?
+  // yearly_price          PropertyYearlyPrice?
+  // description           PropertyDescription?
+  // propertyCalendarNotes PropertyCalendarNote[]
+  // propertyReservedDays  PropertyReservedDays[]
+  // owner_rent_request    OwnerRentRequest[]
+  // property_authorize    PropertyAuthorized?
+  // banners               Banner[]
+  // Attachment            Attachment?            @relation(fields: [attachmentId], references: [id])
+  // attachmentId          Int?
+  // subscription          Subscription?          @relation(fields: [subscription_id], references: [id])
+  // rent_request          RentRequest[]
 
-//   // @@index([id, code, advisor_commission, calendar_updated_at])
-//   @@map("properties")
-// }
+  // @@index([id, code, advisor_commission, calendar_updated_at])
+  @@map("properties")
+}
+
+model OptionsOnProperty {
+  property_id Int
+  option_id   Int
+  assigned_at DateTime @default(now()) @db.Timestamp(6)
+
+  property Property       @relation(fields: [property_id], references: [id])
+  option   PropertyOption @relation(fields: [option_id], references: [id])
+
+  @@id([property_id, option_id])
+  @@map("options_on_property")
+}
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //
 model PropertyOption {
@@ -556,7 +570,7 @@ model PropertyOption {
   deleted_at  DateTime? @db.Timestamp(6)
 
   // rent_requests OptionsOnRentRequest[]
-  // properties    OptionsOnProperty[]
+  properties OptionsOnProperty[]
   // rent_request_options RentRequest[]
 
   @@map("property_options")

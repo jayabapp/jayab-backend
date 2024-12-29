@@ -57,6 +57,7 @@ import { AdvisorModule } from './advisor/advisor.module';
 import { NotificationModule } from './notification/notification.module';
 import { UserModule } from './user/user.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
+import { PropertyModule } from './property/property.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -123,6 +124,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     UserModule,
     OwnerModule,
     PropertyOptionModule,
+    PropertyModule,
     BaseModule,
   ],
   providers: [
