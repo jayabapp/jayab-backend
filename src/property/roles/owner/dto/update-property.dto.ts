@@ -227,89 +227,89 @@ export class UpdatePropertyEnvOwnerDto {
   neighborhood: number;
 
   @ApiProperty({ title: 'توضیحات بافت' })
-  @IsOptional()
   @_IsString()
   @_MaxLength(200)
+  @IsOptional()
   pattern_dscr: string;
 
   @ApiProperty({ title: 'توضیحات فاصله' })
-  @IsOptional()
   @_IsString()
   @_MaxLength(200)
+  @IsOptional()
   distance_dscr: string;
 }
 
-// export class UpdatePropertyBedroomOwnerDto {
-//   @ApiProperty({ required: true, title: 'تعداد اتاق' })
-//   @_IsNotEmpty()
-//   @_IsArray()
-//   @IsNumber({}, { each: true })
-//   @Max(10, { each: true })
-//   bedrooms: number[];
+export class UpdatePropertyBedroomOwnerDto {
+  @ApiProperty({ required: true, title: 'تعداد اتاق', default: [1, 2] })
+  @_IsArray()
+  @IsNumber({}, { each: true })
+  @Max(10, { each: true })
+  @_IsNotEmpty()
+  bedrooms: number[];
 
-//   @ApiProperty({ required: true, title: 'رخت خواب اضافه' })
-//   @_IsNotEmpty()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   additional_bed: number;
+  @ApiProperty({ required: true, title: 'رخت خواب اضافه' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @_IsNotEmpty()
+  additional_bed: number;
 
-//   @ApiProperty({ required: true, title: 'اتاق خواب مستر' })
-//   @_IsNotEmpty()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   master_room: number;
+  @ApiProperty({ required: true, title: 'اتاق خواب مستر' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @_IsNotEmpty()
+  master_room: number;
 
-//   @ApiProperty({ required: true, title: 'مبل تخت خواب شو' })
-//   @_IsNotEmpty()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   sofa_bed: number;
+  @ApiProperty({ required: true, title: 'مبل تخت خواب شو' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @_IsNotEmpty()
+  sofa_bed: number;
 
-//   @ApiProperty({ title: 'سرویس فرنگی' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   wc: number;
+  @ApiProperty({ title: 'سرویس فرنگی' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  wc: number;
 
-//   @ApiProperty({ title: 'ایرانی' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   wc_ir: number;
+  @ApiProperty({ title: 'ایرانی' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  wc_ir: number;
 
-//   @ApiProperty({ title: 'حمام در اتاق' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   bathroom_master: number;
+  @ApiProperty({ title: 'حمام در اتاق' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  bathroom_master: number;
 
-//   @ApiProperty({ title: 'مشترک' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   bathroom_general: number;
+  @ApiProperty({ title: 'مشترک' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  bathroom_general: number;
 
-//   @ApiProperty({ title: '' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   bathroom_in_wc: number;
+  @ApiProperty({ title: '' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  bathroom_in_wc: number;
 
-//   @ApiProperty({ title: 'حمام با وان' })
-//   @IsOptional()
-//   @_IsInt()
-//   @_Min(0)
-//   @_Max(10)
-//   bathroom_tub: number;
-// }
+  @ApiProperty({ title: 'حمام با وان' })
+  @_IsInt()
+  @_Min(0)
+  @_Max(10)
+  @IsOptional()
+  bathroom_tub: number;
+}
 
 // export class UpdatePropertyFacilityOwnerDto {
 //   @ApiProperty({ required: true, title: 'سرمایش' })

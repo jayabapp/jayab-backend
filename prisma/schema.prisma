@@ -531,7 +531,7 @@ model Property {
   video            Attachment?          @relation("Video", fields: [video_id], references: [id])
   attachments      Attachment[]         @relation("Property")
   temp_attachments Attachment[]         @relation("Property_Temp")
-  // bedrooms              PropertyBedroom?
+  bedrooms         PropertyBedroom?
   // daily_price           PropertyDailyPrice?
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
@@ -581,6 +581,29 @@ model PropertyDescription {
   property Property @relation(fields: [property_id], references: [id])
 
   @@map("property_descriptions")
+}
+
+model PropertyBedroom {
+  id               Int   @id() @default(autoincrement())
+  property_id      Int   @unique()
+  bedrooms         Int[] //lenght of this field shawn bedrooms count
+  additional_bed   Int
+  master_room      Int
+  sofa_bed         Int
+  wc               Int?  @default(0)
+  wc_ir            Int?  @default(0)
+  bathroom_master  Int?  @default(0)
+  bathroom_general Int?  @default(0)
+  bathroom_in_wc   Int?  @default(0)
+  bathroom_tub     Int?  @default(0)
+  total_bedrooms   Int   @default(0)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_bedrooms")
 }
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //

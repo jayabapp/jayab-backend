@@ -22,6 +22,7 @@ import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import {
+  UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
@@ -103,6 +104,17 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyEnvOwnerDto,
   ) {
     const result = await this.propertyOwnerService.updateEnvironment(propertyId, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: bedroom' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/bedroom')
+  async updateBedroom(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyBedroomOwnerDto,
+  ) {
+    const result = await this.propertyOwnerService.updateBedroom(propertyId, dto);
     return { result, messageCode: 'CREATE' };
   }
 }

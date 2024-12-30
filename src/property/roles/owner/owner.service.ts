@@ -10,6 +10,7 @@ import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
 import {
+  UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
@@ -30,10 +31,29 @@ export class PropertyOwnerService {
     // const activeSubscription = await this.subscriptionService.findPlanByRole(user);
     // if (!activeSubscription) throw new NotAcceptableException('OWNER_SUB1');
 
+    const include: Prisma.PropertyInclude = {
+      province: { select: { title: true } },
+      city: { select: { title: true } },
+      region: { select: { title: true } },
+      feature_image: { select: { name: true, thumbnail: true } },
+      // daily_price: true,
+      // hourly_price: true,
+      // monthly_price: true,
+      // yearly_price: true,
+      description: true,
+      property_options: { include: { option: true } },
+      attachments: { where: { type: 1 } },
+      bedrooms: true,
+      // property_authorize: true,
+      // propertyReservedDays: { where: { timestamp: this.dayHelper.todayUnix() } },
+      // propertyReservedDays: { where: { AND: [{ timestamp: { gte: from } }, { timestamp: { lt: to } }] } },
+    };
+
     /* -------------------------------------------------------------------------- */
     // check the init property, if exist return this
     const initProp = await this.db.property.findFirst({
       where: { owner_id: ownerId, status: { in: InProgressReserveStatus } },
+      include,
     });
     if (initProp) return initProp;
 
@@ -57,6 +77,7 @@ export class PropertyOwnerService {
     // create new property
     const newProp = await this.db.property.create({
       data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
+      include,
       // data: { owner_id: user.owner_id, status: PropertyStatuses.INIT, statistics: propertyStatistics },
     });
 
@@ -177,6 +198,24 @@ export class PropertyOwnerService {
     });
 
     // return updatedProperty;
+  }
+
+  /**
+   * Update Bedroom and Bathroom data
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updateBedroom(id: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
+    const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0; //+ dto.master_room ?? 0;
+
+    const upsertPropertyBedroom = await this.db.propertyBedroom.upsert({
+      where: { property_id: id },
+      update: { ...dto, total_bedrooms },
+      create: { ...dto, property_id: id, total_bedrooms },
+    });
+
+    // return  upsertPropertyBedroom
   }
 
   /* -------------------------------------------------------------------------- */
