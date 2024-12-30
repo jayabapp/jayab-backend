@@ -22,6 +22,7 @@ import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import {
+  UpdatePropertyEnvOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
   UpdatePropertyStepOneOwnerDto,
@@ -43,7 +44,7 @@ export class PropertyOwnerController {
   ) {}
 
   @ApiOperation({ operationId: 'Get last init prop', description: '' })
-  @Get()
+  @Get('init')
   async getLastInit(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const user = req.user;
     const result = await this.propertyOwnerService.findLastInitProp(user.owner_id);
@@ -52,7 +53,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Create', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Post(':propertyId')
+  @Put(':propertyId')
   async create(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -91,6 +92,17 @@ export class PropertyOwnerController {
 
     //
     const result = await this.propertyOwnerService.updateMedia(propertyId, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: environment' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/environment')
+  async updateEnvironment(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyEnvOwnerDto,
+  ) {
+    const result = await this.propertyOwnerService.updateEnvironment(propertyId, dto);
     return { result, messageCode: 'CREATE' };
   }
 }

@@ -210,34 +210,34 @@ export class UpdatePropertyMediaOwnerDto {
   // video_id: number;
 }
 
-// export class UpdatePropertyEnvOwnerDto {
-//   @ApiProperty({ required: true, title: 'بافت محیط' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PATTERN])
-//   @_IsNotEmpty()
-//   pattern: number;
+export class UpdatePropertyEnvOwnerDto {
+  @ApiProperty({ required: true, title: 'بافت محیط' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PATTERN])
+  @_IsNotEmpty()
+  pattern: number;
 
-//   @ApiProperty({ required: true, title: 'مسیر دسترسی' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ACCESS])
-//   @IsOptional()
-//   access: number;
+  @ApiProperty({ required: true, title: 'مسیر دسترسی' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ACCESS])
+  @IsOptional()
+  access: number;
 
-//   @ApiProperty({ required: true, title: 'همسایگی' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.NEIGHBORHOOD])
-//   @IsOptional()
-//   neighborhood: number;
+  @ApiProperty({ required: true, title: 'همسایگی' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.NEIGHBORHOOD])
+  @IsOptional()
+  neighborhood: number;
 
-//   @ApiProperty({ title: 'توضیحات بافت' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(200)
-//   pattern_dscr: string;
+  @ApiProperty({ title: 'توضیحات بافت' })
+  @IsOptional()
+  @_IsString()
+  @_MaxLength(200)
+  pattern_dscr: string;
 
-//   @ApiProperty({ title: 'توضیحات فاصله' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(200)
-//   distance_dscr: string;
-// }
+  @ApiProperty({ title: 'توضیحات فاصله' })
+  @IsOptional()
+  @_IsString()
+  @_MaxLength(200)
+  distance_dscr: string;
+}
 
 // export class UpdatePropertyBedroomOwnerDto {
 //   @ApiProperty({ required: true, title: 'تعداد اتاق' })

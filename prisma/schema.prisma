@@ -522,21 +522,21 @@ model Property {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 
-  owner            Owner               @relation(fields: [owner_id], references: [id])
+  owner            Owner                @relation(fields: [owner_id], references: [id])
   property_options OptionsOnProperty[]
-  region           City?               @relation("PropertyRegion", fields: [region_id], references: [id])
-  province         City?               @relation("PropertyProvince", fields: [province_id], references: [id])
-  city             City?               @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image    Attachment?         @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video            Attachment?         @relation("Video", fields: [video_id], references: [id])
-  attachments      Attachment[]        @relation("Property")
-  temp_attachments Attachment[]        @relation("Property_Temp")
+  region           City?                @relation("PropertyRegion", fields: [region_id], references: [id])
+  province         City?                @relation("PropertyProvince", fields: [province_id], references: [id])
+  city             City?                @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image    Attachment?          @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video            Attachment?          @relation("Video", fields: [video_id], references: [id])
+  attachments      Attachment[]         @relation("Property")
+  temp_attachments Attachment[]         @relation("Property_Temp")
   // bedrooms              PropertyBedroom?
   // daily_price           PropertyDailyPrice?
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
-  // description           PropertyDescription?
+  description      PropertyDescription?
   // propertyCalendarNotes PropertyCalendarNote[]
   // propertyReservedDays  PropertyReservedDays[]
   // owner_rent_request    OwnerRentRequest[]
@@ -559,6 +559,28 @@ model OptionsOnProperty {
 
   @@id([property_id, option_id])
   @@map("options_on_property")
+}
+
+model PropertyDescription {
+  id            Int     @id() @default(autoincrement())
+  property_id   Int     @unique()
+  property_dscr String?
+  pattern_dscr  String?
+  distance_dscr String?
+  facility_dscr String?
+  guest_dscr    String?
+  pet_dscr      String?
+  party_dscr    String?
+  doc_dscr      String?
+  other_dscr    String?
+  ad_dscr       String?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_descriptions")
 }
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //

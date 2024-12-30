@@ -10,6 +10,7 @@ import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
 import {
+  UpdatePropertyEnvOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
   UpdatePropertyStepOneOwnerDto,
@@ -68,7 +69,7 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<Property> {
+  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     /* -------------------------------------------------------------------------- */
     // data without options
     let data: Prisma.PropertyUncheckedUpdateInput = {
@@ -104,7 +105,7 @@ export class PropertyOwnerService {
       data: { ...data, property_options: { create: options } },
     });
 
-    return prop;
+    // return prop;
   }
 
   /**
@@ -113,16 +114,13 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateLocation(
-    propertyId: number,
-    dto: UpdatePropertyLocationOwnerDto,
-  ): Promise<{ lat: number; lng: number }> {
+  async updateLocation(propertyId: number, dto: UpdatePropertyLocationOwnerDto): Promise<void> {
     const prop = await this.db.property.update({
       where: { id: propertyId },
       data: { lat: Number(dto.lat.toFixed(6)), lng: Number(dto.lng.toFixed(6)) },
     });
 
-    return { lat: prop.lat, lng: prop.lng };
+    // return { lat: prop.lat, lng: prop.lng };
   }
 
   /**
@@ -132,7 +130,7 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateMedia(propertyId: number, dto: UpdatePropertyMediaOwnerDto) {
+  async updateMedia(propertyId: number, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
     let attachments = [];
     dto.images.map((e) => attachments.push({ id: e }));
 
@@ -148,7 +146,37 @@ export class PropertyOwnerService {
       },
     });
 
-    return updatedProperty;
+    // return updatedProperty;
+  }
+
+  /**
+   * Update Environment data
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updateEnvironment(propertyId: number, dto: UpdatePropertyEnvOwnerDto): Promise<void> {
+    // CREATE OPTIONS RELATION - DELETE OLD OPTION
+    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+      PropertyOptionGroup.PATTERN,
+      PropertyOptionGroup.ACCESS,
+      PropertyOptionGroup.NEIGHBORHOOD,
+    ]);
+
+    const updatedProperty = await this.db.property.update({
+      where: { id: propertyId },
+      data: { property_options: { create: query } },
+    });
+
+    const data = { distance_dscr: dto.distance_dscr, pattern_dscr: dto.pattern_dscr };
+
+    await this.db.propertyDescription.upsert({
+      where: { property_id: propertyId },
+      update: data,
+      create: { property_id: propertyId, ...data },
+    });
+
+    // return updatedProperty;
   }
 
   /* -------------------------------------------------------------------------- */
