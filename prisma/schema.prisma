@@ -505,18 +505,17 @@ model Property {
   video_id            Int?
   is_chat_enabled     Boolean?
   is_location_visible Boolean?
-  status              Int      @db.SmallInt
-  // has_pool            Boolean?
-  // std_capacity        Int?
-  // max_capacity        Int?
+  has_pool            Boolean?
+  std_capacity        Int?
+  max_capacity        Int?
   // canceling_type      CANCELING_TYPE?
   // subscription_id     Int?            @unique
   // statistics          Json            @default("{}")
-  // advisor_commission  Int             @default(5) @db.SmallInt
-  // is_auto_approve     Boolean         @default(true)
+  advisor_commission  Int      @default(5) @db.SmallInt
   // calendar_updated_at DateTime?
   // rate                Float?
   // rate_count               Int       @default(0)
+  status              Int      @db.SmallInt
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
@@ -532,7 +531,7 @@ model Property {
   attachments      Attachment[]         @relation("Property")
   temp_attachments Attachment[]         @relation("Property_Temp")
   bedrooms         PropertyBedroom?
-  // daily_price           PropertyDailyPrice?
+  daily_price      PropertyDailyPrice?
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
@@ -604,6 +603,26 @@ model PropertyBedroom {
   property Property @relation(fields: [property_id], references: [id])
 
   @@map("property_bedrooms")
+}
+
+model PropertyDailyPrice {
+  id                Int  @id() @default(autoincrement())
+  property_id       Int  @unique()
+  normal            Int
+  wednesday         Int
+  thursday          Int
+  friday            Int
+  peak              Int
+  cleaning          Int? @default(0)
+  additional_person Int
+  today_offer       Int?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_daily_prices")
 }
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //

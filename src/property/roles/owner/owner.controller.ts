@@ -24,15 +24,17 @@ import { RequestType } from 'src/common/interfaces/user.interface';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
+  UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
+  UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
 } from './dto/update-property.dto';
+import { AttachmentService } from 'src/attachment/attachment.service';
 import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
-} from 'src/property/interceptors/owner-property.interceptor';
-import { AttachmentService } from 'src/attachment/attachment.service';
+} from 'src/property/common/interceptors/owner-property.interceptor';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -115,6 +117,28 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyBedroomOwnerDto,
   ) {
     const result = await this.propertyOwnerService.updateBedroom(propertyId, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: facility' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/facility')
+  updateFacility(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyFacilityOwnerDto,
+  ) {
+    const result = this.propertyOwnerService.updateFacility(propertyId, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: price' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/price')
+  updatePrices(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyPriceOwnerDto,
+  ) {
+    const result = this.propertyOwnerService.updatePrices(propertyId, dto);
     return { result, messageCode: 'CREATE' };
   }
 }

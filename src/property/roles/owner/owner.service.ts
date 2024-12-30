@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/property-status.type';
+import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { random } from 'lodash';
@@ -12,10 +12,13 @@ import { CreatePropertyOwnerDto } from './dto/create.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
+  UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
+  UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
 } from './dto/update-property.dto';
+import { RentType } from 'src/property/common/types/property-rent-types.type copy';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -202,20 +205,86 @@ export class PropertyOwnerService {
 
   /**
    * Update Bedroom and Bathroom data
-   * @param id
+   * @param propertyId
    * @param dto
    * @returns
    */
-  async updateBedroom(id: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
+  async updateBedroom(propertyId: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
     const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0; //+ dto.master_room ?? 0;
 
     const upsertPropertyBedroom = await this.db.propertyBedroom.upsert({
-      where: { property_id: id },
+      where: { property_id: propertyId },
       update: { ...dto, total_bedrooms },
-      create: { ...dto, property_id: id, total_bedrooms },
+      create: { ...dto, property_id: propertyId, total_bedrooms },
     });
 
     // return  upsertPropertyBedroom
+  }
+
+  /**
+   * Facility
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateFacility(propertyId: number, dto: UpdatePropertyFacilityOwnerDto): Promise<void> {
+    // CREATE OPTIONS RELATION - DELETE OLD OPTION
+    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+      PropertyOptionGroup.POOL_TYPE,
+      PropertyOptionGroup.ENTERTAINMENT,
+      PropertyOptionGroup.KITCHEN,
+      PropertyOptionGroup.COOL_HEAT,
+      PropertyOptionGroup.WELFARE,
+    ]);
+
+    const updatedProperty = await this.db.property.update({
+      where: { id: propertyId },
+      data: { property_options: { create: query }, has_pool: dto.has_pool },
+    });
+
+    // UPDATE DESCRIPTION
+    const queryData = { facility_dscr: dto.facility_dscr };
+
+    await this.db.propertyDescription.upsert({
+      where: { property_id: propertyId },
+      update: queryData,
+      create: { property_id: propertyId, ...queryData },
+    });
+
+    // return updatedProperty;
+  }
+
+  /**
+   * Prices and Capacity
+   * @param propertyId
+   * @param dto
+   */
+  async updatePrices(propertyId: number, dto: UpdatePropertyPriceOwnerDto): Promise<void> {
+    await this.db.property.update({
+      where: { id: propertyId },
+      data: {
+        std_capacity: dto.std_capacity,
+        max_capacity: dto.max_capacity,
+        advisor_commission: dto.advisor_commission,
+      },
+    });
+
+    // DAILY
+    const dailyQueryData = {
+      normal: dto.normal,
+      wednesday: dto.wednesday,
+      thursday: dto.thursday,
+      friday: dto.friday,
+      peak: dto.peak,
+      cleaning: dto.cleaning,
+      additional_person: dto.additional_person,
+    };
+
+    await this.db.propertyDailyPrice.upsert({
+      where: { property_id: propertyId },
+      update: dailyQueryData,
+      create: { ...dailyQueryData, property_id: propertyId },
+    });
   }
 
   /* -------------------------------------------------------------------------- */
