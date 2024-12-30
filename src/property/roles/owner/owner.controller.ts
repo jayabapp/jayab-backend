@@ -10,6 +10,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
@@ -19,6 +20,10 @@ import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
+import {
+  OwnerUpdatePropertyInterceptor,
+  PropertyInterceptorData,
+} from 'src/property/interceptors/owner-property.interceptor';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -27,25 +32,25 @@ import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
 export class PropertyOwnerController {
   constructor(private readonly propertyOwnerService: PropertyOwnerService) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
-  @Post()
-  async create(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+  @ApiOperation({ operationId: 'Get last init prop', description: '' })
+  @Get()
+  async getLastInit(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const result = await this.propertyOwnerService.create(user.owner_id);
-    return { result, messageCode: 'CREATE' };
+    const result = await this.propertyOwnerService.findLastInitProp(user.owner_id);
+    return { result };
   }
 
   @ApiOperation({ operationId: 'Create', description: '' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Post(':propertyId')
-  async updateInit(
+  async create(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyStepOneOwnerDto,
   ): Promise<SuccessResponseArgs> {
-    const user = req.user;
-
-    const property = await this.propertyOwnerService.findOne(propertyId, user.owner_id);
+    const property = req.interceptor_data as PropertyInterceptorData;
     const result = await this.propertyOwnerService.updateInit(property, dto);
+
     return { result, messageCode: 'CREATE' };
   }
 }

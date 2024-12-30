@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { PropertyStatuses } from 'src/property/common/property-status.type';
+import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { random } from 'lodash';
@@ -21,19 +21,16 @@ export class PropertyOwnerService {
    * @param ownerId
    * @returns
    */
-  async create(ownerId: number): Promise<any> {
+  async findLastInitProp(ownerId: number): Promise<Property> {
     // const activeSubscription = await this.subscriptionService.findPlanByRole(user);
     // if (!activeSubscription) throw new NotAcceptableException('OWNER_SUB1');
 
     /* -------------------------------------------------------------------------- */
     // check the init property, if exist return this
-    const hasInitProp = await this.db.property.findFirst({
-      where: {
-        owner_id: ownerId,
-        status: { in: [PropertyStatuses.INIT, PropertyStatuses.IN_PROCESS] },
-      },
+    const initProp = await this.db.property.findFirst({
+      where: { owner_id: ownerId, status: { in: InProgressReserveStatus } },
     });
-    if (hasInitProp) return { data: hasInitProp };
+    if (initProp) return initProp;
 
     /* -------------------------------------------------------------------------- */
     // property statistics
@@ -58,34 +55,36 @@ export class PropertyOwnerService {
       // data: { owner_id: user.owner_id, status: PropertyStatuses.INIT, statistics: propertyStatistics },
     });
 
-    return { data: newProp };
+    return newProp;
   }
 
   /**
    * update init
+   * @param property
    * @param dto
    * @returns
    */
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     /* -------------------------------------------------------------------------- */
     // data without options
-    let data: object = {
-      // province_id: dto.province_id,
-      // region_id: dto.region_id || null,
-      // city_id: dto.city_id,
-      // title: dto.title,
-      // land_area: dto.land_area,
-      // building_area: dto.building_area,
-      // floors: dto.floors,
-      // floor: dto.floor,
-      // unit_per_floor: dto.unit_per_floor,
-      // construction_year: dto.construction_year,
-      // address: dto.address,
+    let data: Prisma.PropertyUncheckedUpdateInput = {
+      province_id: dto.province_id,
+      region_id: dto.region_id || null,
+      city_id: dto.city_id,
+      title: dto.title,
+      land_area: dto.land_area,
+      building_area: dto.building_area,
+      floors: dto.floors,
+      floor: dto.floor,
+      unit_per_floor: dto.unit_per_floor,
+      construction_year: dto.construction_year,
+      address: dto.address,
+      is_chat_enabled: dto.is_chat_enabled,
+      is_location_visible: dto.is_location_visible,
     };
 
     // do not update status in edit
-    if (property.status == PropertyStatuses.INIT)
-      data = { ...data, status_step: PropertyStatuses.IN_PROCESS };
+    if (property.status == PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options
@@ -96,10 +95,15 @@ export class PropertyOwnerService {
     ]);
 
     /* -------------------------------------------------------------------------- */
-    // const newProperty = await this.db.property.create({
-    //   data: { ...dto, owner_id: ownerId, status: PropertyStatuses.IN_PROCESS },
-    // });
-    // return newProperty;
+    await this.db.property.update({
+      where: { id: property.id },
+      data: {
+        ...data,
+        property_options: {
+          create: query,
+        },
+      },
+    });
   }
 
   /* -------------------------------------------------------------------------- */
@@ -163,21 +167,21 @@ export class PropertyOwnerService {
   /* -------------------------------------------------------------------------- */
   /**
    *
-   * @param id
+   * @param propertyId
    * @param dto
    * @param groups
    * @returns
    */
   async deleteAndCreateNewOption(
-    id: number,
+    propertyId: number,
     dto: any,
     groups: PropertyOptionGroup[],
   ): Promise<OptionConnect[]> {
     /* -------------------------------------------------------------------------- */
     // delete old records
-    await this.db.optionsOnProperty.deleteMany({
+    const a = await this.db.optionsOnProperty.deleteMany({
       where: {
-        property_id: id,
+        property_id: propertyId,
         option: {
           group: {
             in: groups,

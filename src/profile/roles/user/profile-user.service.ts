@@ -129,8 +129,11 @@ export class ProfileUserService {
         status: true,
         admin_descriptions: true,
         national_code: true,
-        selfie_image: true,
         created_at: true,
+        user: {
+          select: { full_name: true },
+        },
+        selfie_image: true,
       },
     });
 

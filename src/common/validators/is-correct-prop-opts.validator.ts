@@ -25,7 +25,9 @@ export class IsCorrectPropertyOption implements ValidatorConstraintInterface {
     }
 
     const group: PropertyOptionGroup = validationArguments.constraints[0];
+
     const formattedValue = Array.isArray(value) ? value : [value];
+
     const queryCount = await this.db.propertyOption.count({
       where: { id: { in: formattedValue }, group: group },
     });

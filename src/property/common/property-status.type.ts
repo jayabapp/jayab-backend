@@ -55,3 +55,19 @@ export const PropertyStatusesList: Array<EnumList> = [
     hex: '#f43f5e',
   },
 ];
+
+/* -------------------------------------------------------------------------- */
+
+/*  */
+export const InProgressReserveStatus = [PropertyStatuses.INIT, PropertyStatuses.IN_PROCESS];
+// export const CompletedReserveStatus = [PropertyStatuses.FINISHED, PropertyStatuses.WAITING_FOR_REVIEW];
+// export const CanceledReserveStatus = [PropertyStatuses.CANCELED_BY_MANAGER];
+
+/*  */
+// export const TotalReserveStatus = [
+//   PropertyStatuses.PENDING,
+//   PropertyStatuses.RESERVED,
+//   PropertyStatuses.CANCELED_BY_MANAGER,
+//   PropertyStatuses.WAITING_FOR_REVIEW,
+//   PropertyStatuses.FINISHED,
+// ];

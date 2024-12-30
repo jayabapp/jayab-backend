@@ -173,4 +173,5 @@ const failedMessages = {
   USER2: '',
 
   PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
+  PROPERTY_INTERCEPTOR1: 'شناسه ملک اشتباه است',
 };

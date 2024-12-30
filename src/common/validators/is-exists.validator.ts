@@ -14,9 +14,12 @@ export class IsExist implements ValidatorConstraintInterface {
 
     const repository = validationArguments.constraints[0] as string;
     const pathToProperty = validationArguments.constraints[1];
+    const additionalQuery = validationArguments.constraints[2] || {};
+
     const entity: unknown = await this.db[repository].findFirst({
       where: {
-        [pathToProperty ? pathToProperty : validationArguments.property]: value,
+        [pathToProperty ?? validationArguments.property]: value,
+        ...additionalQuery,
       },
     });
 
