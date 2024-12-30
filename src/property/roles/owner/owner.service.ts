@@ -9,7 +9,7 @@ import { random } from 'lodash';
 import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
-import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
+import { UpdatePropertyLocationOwnerDto, UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -64,7 +64,7 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
+  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<Property> {
     /* -------------------------------------------------------------------------- */
     // data without options
     let data: Prisma.PropertyUncheckedUpdateInput = {
@@ -95,10 +95,30 @@ export class PropertyOwnerService {
     ]);
 
     /* -------------------------------------------------------------------------- */
-    await this.db.property.update({
+    const prop = await this.db.property.update({
       where: { id: property.id },
       data: { ...data, property_options: { create: options } },
     });
+
+    return prop;
+  }
+
+  /**
+   * Update location
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updateLocation(
+    id: number,
+    dto: UpdatePropertyLocationOwnerDto,
+  ): Promise<{ lat: number; lng: number }> {
+    const prop = await this.db.property.update({
+      where: { id },
+      data: { lat: Number(dto.lat.toFixed(6)), lng: Number(dto.lng.toFixed(6)) },
+    });
+
+    return { lat: prop.lat, lng: prop.lng };
   }
 
   /* -------------------------------------------------------------------------- */

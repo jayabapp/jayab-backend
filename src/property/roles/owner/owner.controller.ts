@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -19,7 +20,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
-import { UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
+import { UpdatePropertyLocationOwnerDto, UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
 import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
@@ -50,6 +51,17 @@ export class PropertyOwnerController {
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
     const result = await this.propertyOwnerService.updateInit(property, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: location' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/location')
+  async updateLocation(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyLocationOwnerDto,
+  ) {
+    const result = await this.propertyOwnerService.updateLocation(propertyId, dto);
     return { result, messageCode: 'CREATE' };
   }
 }

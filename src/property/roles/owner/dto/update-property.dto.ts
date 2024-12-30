@@ -176,21 +176,21 @@ export class UpdatePropertyStepOneOwnerDto {
   is_location_visible: boolean;
 }
 
-// export class UpdatePropertyLocationDto {
-//   @ApiProperty({ required: true, title: 'عرض جغرافیایی' })
-//   @_IsNumber()
-//   @_IsLatitude()
-//   @_IsNotEmpty()
-//   lat: number;
+export class UpdatePropertyLocationOwnerDto {
+  @ApiProperty({ required: true, title: 'عرض جغرافیایی', default: 35.771329 })
+  @_IsNumber()
+  @_IsLatitude()
+  @_IsNotEmpty()
+  lat: number;
 
-//   @ApiProperty({ required: true, title: 'طول جغرافیایی' })
-//   @_IsNumber()
-//   @_IsLongitude()
-//   @_IsNotEmpty()
-//   lng: number;
-// }
+  @ApiProperty({ required: true, title: 'طول جغرافیایی', default: 51.377648 })
+  @_IsNumber()
+  @_IsLongitude()
+  @_IsNotEmpty()
+  lng: number;
+}
 
-// export class UpdatePropertyMediaDto {
+// export class UpdatePropertyMediaOwnerDto {
 //   @ApiProperty({ required: true, title: 'تصاویر' })
 //   @_ArrayMaxSize(30)
 //   @_ArrayMinSize(4)
@@ -204,7 +204,7 @@ export class UpdatePropertyStepOneOwnerDto {
 //   video_id: number;
 // }
 
-// export class UpdatePropertyEnvDto {
+// export class UpdatePropertyEnvOwnerDto {
 //   @ApiProperty({ required: true, title: 'بافت محیط' })
 //   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PATTERN])
 //   @_IsNotEmpty()
@@ -233,7 +233,7 @@ export class UpdatePropertyStepOneOwnerDto {
 //   distance_dscr: string;
 // }
 
-// export class UpdatePropertyBedroomDto {
+// export class UpdatePropertyBedroomOwnerDto {
 //   @ApiProperty({ required: true, title: 'تعداد اتاق' })
 //   @_IsNotEmpty()
 //   @_IsArray()
@@ -305,7 +305,7 @@ export class UpdatePropertyStepOneOwnerDto {
 //   bathroom_tub: number;
 // }
 
-// export class UpdatePropertyFacilityDto {
+// export class UpdatePropertyFacilityOwnerDto {
 //   @ApiProperty({ required: true, title: 'سرمایش' })
 //   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.COOL_HEAT])
 //   @_ArrayNotEmpty()
@@ -351,7 +351,7 @@ export class UpdatePropertyStepOneOwnerDto {
 //   facility_dscr: string;
 // }
 
-// export class UpdatePropertyPriceDto {
+// export class UpdatePropertyPriceOwnerDto {
 //   @ApiProperty({ required: true, title: 'تایید خودکار', default: true })
 //   @_IsBoolean()
 //   @IsOptional()
@@ -488,7 +488,7 @@ export class UpdatePropertyStepOneOwnerDto {
 //   deposit: number;
 // }
 
-// export class UpdatePropertyTermsDto {
+// export class UpdatePropertyTermsOwnerDto {
 //   @ApiProperty({ required: true })
 //   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
 //   @_ArrayNotEmpty()
