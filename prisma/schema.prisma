@@ -176,12 +176,15 @@ model Attachment {
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
-  content_attachment     ContentAttachment[]
-  content_categories     ContentCategory[]
-  content_feature_image  Content[]           @relation(name: "featureImage")
-  content_video          Content[]           @relation(name: "ContentVideo")
-  content_question_image ContentQuestion[]
-
+  content_attachment          ContentAttachment[]
+  content_categories          ContentCategory[]
+  content_feature_image       Content[]            @relation(name: "featureImage")
+  content_video               Content[]            @relation(name: "ContentVideo")
+  content_question_image      ContentQuestion[]
+  property                    Property[]           @relation("Property")
+  property_temp               Property[]           @relation("Property_Temp")
+  feature_image               Property[]           @relation("FeatureImage")
+  property_video              Property[]           @relation("Video")
   banners                     Banner[]             @relation("Image")
   banner_image_sm             Banner[]             @relation("ImageSm")
   advisor_national_card_image Advisor?             @relation("NationalCard")
@@ -304,12 +307,15 @@ model City {
   parent     City?   @relation("Parent", fields: [parent_id], references: [id])
   child      City[]  @relation("Parent")
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  deleted_at        DateTime?  @db.Timestamp(6)
   // User       User[]
-  Advisor    Advisor?  @relation(fields: [advisorId], references: [id])
-  advisorId  Int?
+  advisor           Advisor?   @relation(fields: [advisorId], references: [id])
+  advisorId         Int?
+  property_city     Property[] @relation("PropertyCity")
+  Property_province Property[] @relation("PropertyProvince")
+  Property_region   Property[] @relation("PropertyRegion")
 
   @@map("cities")
 }
@@ -426,16 +432,18 @@ model User {
 }
 
 model Owner {
-  id              Int    @id() @default(autoincrement())
-  national_code   String @unique @db.VarChar(10)
-  selfie_image_id Int    @unique
-  status          Int    @db.SmallInt
+  id                 Int    @id() @default(autoincrement())
+  national_code      String @unique @db.VarChar(10)
+  selfie_image_id    Int    @unique
+  status             Int    @db.SmallInt
+  admin_descriptions Json[] @db.JsonB
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
   user         User?
+  properties   Property[]
 
   @@map("owners")
 }
@@ -473,6 +481,147 @@ model Advisor {
   // banners       Banner[]
 
   @@map("advisors")
+}
+
+// -------------------------------- PROPERTY -------------------------------- //
+model Property {
+  id                  Int      @id() @default(autoincrement())
+  code                String   @unique
+  owner_id            Int
+  title               String?
+  land_area           Int?
+  building_area       Int?
+  floors              Int?
+  unit_per_floor      Int?
+  floor               Int?
+  construction_year   Int?
+  region_id           Int?
+  province_id         Int?
+  city_id             Int?
+  address             String?
+  lat                 Float?
+  lng                 Float?
+  feature_image_id    Int?
+  video_id            Int?
+  is_chat_enabled     Boolean?
+  is_location_visible Boolean?
+  status              Int      @db.SmallInt
+  // has_pool            Boolean?
+  // std_capacity        Int?
+  // max_capacity        Int?
+  // canceling_type      CANCELING_TYPE?
+  // subscription_id     Int?            @unique
+  // statistics          Json            @default("{}")
+  // advisor_commission  Int             @default(5) @db.SmallInt
+  // is_auto_approve     Boolean         @default(true)
+  // calendar_updated_at DateTime?
+  // rate                Float?
+  // rate_count               Int       @default(0)
+
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  owner            Owner                @relation(fields: [owner_id], references: [id])
+  property_options OptionsOnProperty[]
+  region           City?                @relation("PropertyRegion", fields: [region_id], references: [id])
+  province         City?                @relation("PropertyProvince", fields: [province_id], references: [id])
+  city             City?                @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image    Attachment?          @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video            Attachment?          @relation("Video", fields: [video_id], references: [id])
+  attachments      Attachment[]         @relation("Property")
+  temp_attachments Attachment[]         @relation("Property_Temp")
+  bedrooms         PropertyBedroom?
+  // daily_price           PropertyDailyPrice?
+  // hourly_price          PropertyHourlyPrice?
+  // monthly_price         PropertyMonthlyPrice?
+  // yearly_price          PropertyYearlyPrice?
+  description      PropertyDescription?
+  // propertyCalendarNotes PropertyCalendarNote[]
+  // propertyReservedDays  PropertyReservedDays[]
+  // owner_rent_request    OwnerRentRequest[]
+  // property_authorize    PropertyAuthorized?
+  // banners               Banner[]
+  // subscription          Subscription?          @relation(fields: [subscription_id], references: [id])
+  // rent_request          RentRequest[]
+
+  // @@index([id, code, advisor_commission, calendar_updated_at])
+  @@map("properties")
+}
+
+model OptionsOnProperty {
+  property_id Int
+  option_id   Int
+  assigned_at DateTime @default(now()) @db.Timestamp(6)
+
+  property Property       @relation(fields: [property_id], references: [id])
+  option   PropertyOption @relation(fields: [option_id], references: [id])
+
+  @@id([property_id, option_id])
+  @@map("options_on_property")
+}
+
+model PropertyDescription {
+  id            Int     @id() @default(autoincrement())
+  property_id   Int     @unique()
+  property_dscr String?
+  pattern_dscr  String?
+  distance_dscr String?
+  facility_dscr String?
+  guest_dscr    String?
+  pet_dscr      String?
+  party_dscr    String?
+  doc_dscr      String?
+  other_dscr    String?
+  ad_dscr       String?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_descriptions")
+}
+
+model PropertyBedroom {
+  id               Int   @id() @default(autoincrement())
+  property_id      Int   @unique()
+  bedrooms         Int[] //lenght of this field shawn bedrooms count
+  additional_bed   Int
+  master_room      Int
+  sofa_bed         Int
+  wc               Int?  @default(0)
+  wc_ir            Int?  @default(0)
+  bathroom_master  Int?  @default(0)
+  bathroom_general Int?  @default(0)
+  bathroom_in_wc   Int?  @default(0)
+  bathroom_tub     Int?  @default(0)
+  total_bedrooms   Int   @default(0)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_bedrooms")
+}
+
+// ---------------------------- PROPERTY OPTIONS ---------------------------- //
+model PropertyOption {
+  id          Int       @id() @default(autoincrement())
+  title       String    @db.VarChar
+  description String?   @db.VarChar(256)
+  group       String
+  sort        Int?
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime  @updatedAt
+  deleted_at  DateTime? @db.Timestamp(6)
+
+  // rent_requests OptionsOnRentRequest[]
+  properties OptionsOnProperty[]
+  // rent_request_options RentRequest[]
+
+  @@map("property_options")
 }
 
 // --------------------------------- PAYMENT -------------------------------- //

@@ -1,0 +1,320 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Property, Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/property-status.type';
+import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { random } from 'lodash';
+import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
+import { UpdatePropertyOwnerDto } from './dto/update.dto';
+import { CreatePropertyOwnerDto } from './dto/create.dto';
+import {
+  UpdatePropertyBedroomOwnerDto,
+  UpdatePropertyEnvOwnerDto,
+  UpdatePropertyLocationOwnerDto,
+  UpdatePropertyMediaOwnerDto,
+  UpdatePropertyStepOneOwnerDto,
+} from './dto/update-property.dto';
+
+@Injectable()
+export class PropertyOwnerService {
+  constructor(private readonly db: PrismaService) {}
+
+  /**
+   * Create a property with init status
+   * If exist return this
+   * @param ownerId
+   * @returns
+   */
+  async findLastInitProp(ownerId: number): Promise<Property> {
+    // const activeSubscription = await this.subscriptionService.findPlanByRole(user);
+    // if (!activeSubscription) throw new NotAcceptableException('OWNER_SUB1');
+
+    const include: Prisma.PropertyInclude = {
+      province: { select: { title: true } },
+      city: { select: { title: true } },
+      region: { select: { title: true } },
+      feature_image: { select: { name: true, thumbnail: true } },
+      // daily_price: true,
+      // hourly_price: true,
+      // monthly_price: true,
+      // yearly_price: true,
+      description: true,
+      property_options: { include: { option: true } },
+      attachments: { where: { type: 1 } },
+      bedrooms: true,
+      // property_authorize: true,
+      // propertyReservedDays: { where: { timestamp: this.dayHelper.todayUnix() } },
+      // propertyReservedDays: { where: { AND: [{ timestamp: { gte: from } }, { timestamp: { lt: to } }] } },
+    };
+
+    /* -------------------------------------------------------------------------- */
+    // check the init property, if exist return this
+    const initProp = await this.db.property.findFirst({
+      where: { owner_id: ownerId, status: { in: InProgressReserveStatus } },
+      include,
+    });
+    if (initProp) return initProp;
+
+    /* -------------------------------------------------------------------------- */
+    // property statistics
+    // const propertyStatistics: PropertyStatisticType = {
+    //   approved_rent: 0,
+    //   approved_direct_rent: 0,
+    //   approved_agreement: 0,
+    //   approved_direct_agreement: 0,
+    // };
+
+    /* -------------------------------------------------------------------------- */
+    // generate a random unique code
+    let code: string;
+    do {
+      code = `${random(10_000, 99_999).toString()}`;
+    } while (await this.db.property.findUnique({ where: { code } }));
+
+    /* -------------------------------------------------------------------------- */
+    // create new property
+    const newProp = await this.db.property.create({
+      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
+      include,
+      // data: { owner_id: user.owner_id, status: PropertyStatuses.INIT, statistics: propertyStatistics },
+    });
+
+    return newProp;
+  }
+
+  /**
+   * update init
+   * @param property
+   * @param dto
+   * @returns
+   */
+  async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
+    /* -------------------------------------------------------------------------- */
+    // data without options
+    let data: Prisma.PropertyUncheckedUpdateInput = {
+      province_id: dto.province_id,
+      region_id: dto.region_id || null,
+      city_id: dto.city_id,
+      title: dto.title,
+      land_area: dto.land_area,
+      building_area: dto.building_area,
+      floors: dto.floors,
+      floor: dto.floor,
+      unit_per_floor: dto.unit_per_floor,
+      construction_year: dto.construction_year,
+      address: dto.address,
+      is_chat_enabled: dto.is_chat_enabled,
+      is_location_visible: dto.is_location_visible,
+    };
+
+    // do not update status in edit
+    if (property.status == PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
+
+    /* -------------------------------------------------------------------------- */
+    // create options relations - delete old options
+    const options: OptionConnect[] = await this.deleteAndCreateNewOption(property.id, dto, [
+      PropertyOptionGroup.PROPERTY_TYPE,
+      PropertyOptionGroup.OWNERSHIP,
+      PropertyOptionGroup.BUILDING_DIRECTION,
+    ]);
+
+    /* -------------------------------------------------------------------------- */
+    const prop = await this.db.property.update({
+      where: { id: property.id },
+      data: { ...data, property_options: { create: options } },
+    });
+
+    // return prop;
+  }
+
+  /**
+   * Update location
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateLocation(propertyId: number, dto: UpdatePropertyLocationOwnerDto): Promise<void> {
+    const prop = await this.db.property.update({
+      where: { id: propertyId },
+      data: { lat: Number(dto.lat.toFixed(6)), lng: Number(dto.lng.toFixed(6)) },
+    });
+
+    // return { lat: prop.lat, lng: prop.lng };
+  }
+
+  /**
+   * Update images and video
+   * @param user
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateMedia(propertyId: number, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
+    let attachments = [];
+    dto.images.map((e) => attachments.push({ id: e }));
+
+    // delete all attachments
+    await this.db.property.update({ where: { id: propertyId }, data: { attachments: { set: [] } } });
+
+    const updatedProperty = await this.db.property.update({
+      where: { id: propertyId },
+      data: {
+        attachments: { connect: attachments },
+        feature_image_id: dto.feature_image_id,
+        // video_id: dto.video_id || null,
+      },
+    });
+
+    // return updatedProperty;
+  }
+
+  /**
+   * Update Environment data
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updateEnvironment(propertyId: number, dto: UpdatePropertyEnvOwnerDto): Promise<void> {
+    // CREATE OPTIONS RELATION - DELETE OLD OPTION
+    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+      PropertyOptionGroup.PATTERN,
+      PropertyOptionGroup.ACCESS,
+      PropertyOptionGroup.NEIGHBORHOOD,
+    ]);
+
+    const updatedProperty = await this.db.property.update({
+      where: { id: propertyId },
+      data: { property_options: { create: query } },
+    });
+
+    const data = { distance_dscr: dto.distance_dscr, pattern_dscr: dto.pattern_dscr };
+
+    await this.db.propertyDescription.upsert({
+      where: { property_id: propertyId },
+      update: data,
+      create: { property_id: propertyId, ...data },
+    });
+
+    // return updatedProperty;
+  }
+
+  /**
+   * Update Bedroom and Bathroom data
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updateBedroom(id: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
+    const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0; //+ dto.master_room ?? 0;
+
+    const upsertPropertyBedroom = await this.db.propertyBedroom.upsert({
+      where: { property_id: id },
+      update: { ...dto, total_bedrooms },
+      create: { ...dto, property_id: id, total_bedrooms },
+    });
+
+    // return  upsertPropertyBedroom
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    FETCH                                   */
+  /* -------------------------------------------------------------------------- */
+  /**
+   * find all Property
+   * @param dto
+   * @returns
+   */
+  async findAll(dto: FindAllPropertyOwnerDto): Promise<CursorPaginatedResult<Property>> {
+    const list = await cursorPaginate()<Property, Prisma.PropertyFindManyArgs>(
+      this.db.property,
+      {},
+      { cursor: dto.cursor },
+    );
+
+    return list;
+  }
+
+  /**
+   * find one property
+   * @param propertyId
+   * @returns
+   */
+  async findOne(propertyId: number, ownerId: number): Promise<Property> {
+    const item = await this.db.property.findFirst({
+      where: { id: propertyId, owner_id: ownerId },
+    });
+
+    if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
+
+    return item;
+  }
+
+  /**
+   * update
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async update(propertyId: number, dto: UpdatePropertyOwnerDto): Promise<Property> {
+    const item = await this.db.property.update({
+      where: { id: propertyId },
+      data: dto,
+    });
+
+    return item;
+  }
+
+  // /**
+  //  * remove
+  //  * @param propertyId
+  //  */
+  // async remove(propertyId: number): Promise<void> {
+  //   await this.db.property.delete({ where: { id: propertyId } });
+  // }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   HELPER                                   */
+  /* -------------------------------------------------------------------------- */
+  /**
+   *
+   * @param propertyId
+   * @param dto
+   * @param groups
+   * @returns
+   */
+  async deleteAndCreateNewOption(
+    propertyId: number,
+    dto: any,
+    groups: PropertyOptionGroup[],
+  ): Promise<OptionConnect[]> {
+    /* -------------------------------------------------------------------------- */
+    // delete old records
+    const a = await this.db.optionsOnProperty.deleteMany({
+      where: {
+        property_id: propertyId,
+        option: {
+          group: {
+            in: groups,
+          },
+        },
+      },
+    });
+
+    /* -------------------------------------------------------------------------- */
+    // create new data
+    let optionsQuery = [];
+    for (const e of groups) {
+      const data = dto[e.toLowerCase()];
+      if (!data) continue;
+      if (Array.isArray(data)) data.map((v) => optionsQuery.push({ option: { connect: { id: v } } }));
+      else
+        optionsQuery.push({
+          option: { connect: { id: data } },
+        });
+    }
+
+    return optionsQuery;
+  }
+}

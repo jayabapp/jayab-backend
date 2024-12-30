@@ -56,7 +56,10 @@ import { OwnerModule } from './owner/owner.module';
 import { AdvisorModule } from './advisor/advisor.module';
 import { NotificationModule } from './notification/notification.module';
 import { UserModule } from './user/user.module';
+import { PropertyOptionModule } from './property-option/property-option.module';
+import { PropertyModule } from './property/property.module';
 import { BaseModule as BaseModule } from './__base/base.module';
+import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 
 @Module({
   imports: [
@@ -120,6 +123,9 @@ import { BaseModule as BaseModule } from './__base/base.module';
     AdvisorModule,
     NotificationModule,
     UserModule,
+    OwnerModule,
+    PropertyOptionModule,
+    PropertyModule,
     BaseModule,
   ],
   providers: [
@@ -131,6 +137,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     IsParentCategory,
     IsSubCategory,
     AppClusterService,
+    IsCorrectPropertyOption,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

@@ -107,7 +107,33 @@ export class ProfileUserService {
         mobile_number: true,
         full_name: true,
         profile_image: true,
+        owner_id: true,
+        advisor_id: true,
         created_at: true,
+      },
+    });
+
+    return data;
+  }
+
+  /**
+   * Get user profile
+   * @param userId
+   * @returns
+   */
+  async findOwnerProfile(userId: number): Promise<Partial<User>> {
+    const data = await this.db.owner.findFirst({
+      where: { user: { id: userId } },
+      select: {
+        id: true,
+        status: true,
+        admin_descriptions: true,
+        national_code: true,
+        created_at: true,
+        user: {
+          select: { full_name: true },
+        },
+        selfie_image: true,
       },
     });
 

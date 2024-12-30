@@ -32,8 +32,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     /* -------------------------------------------------------------------------- */
     /*                                   LOGGER                                   */
     /* -------------------------------------------------------------------------- */
-    console.log({ exception });
-    console.log(exception.stack);
 
     console.log('/* -------------------------------------------------------------------------- */');
     let data = `[${request.method}]: ${request.url} - ${statusCode}`;
@@ -173,4 +171,8 @@ const failedMessages = {
 
   USER1: 'این شماره موبایل در سامانه وجود دارد',
   USER2: '',
+
+  PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
+  PROPERTY_INTERCEPTOR1: 'شناسه ملک اشتباه است',
+  PROPERTY_IMAGES1: 'عکس شاخص اشتباه است',
 };
