@@ -154,7 +154,7 @@ export class UpdatePropertyStepOneOwnerDto {
 
   @ApiProperty({ title: 'محله' })
   @_IsInt()
-  @Validate(IsExist, ['city', 'id'])
+  @Validate(IsExist, ['city', 'id', { parent_id: { not: null } }])
   @IsOptional()
   region_id: number;
 

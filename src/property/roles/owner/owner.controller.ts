@@ -50,7 +50,6 @@ export class PropertyOwnerController {
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
     const result = await this.propertyOwnerService.updateInit(property, dto);
-
     return { result, messageCode: 'CREATE' };
   }
 }

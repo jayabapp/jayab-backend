@@ -88,7 +88,7 @@ export class PropertyOwnerService {
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options
-    const query: OptionConnect[] = await this.deleteAndCreateNewOption(property.id, dto, [
+    const options: OptionConnect[] = await this.deleteAndCreateNewOption(property.id, dto, [
       PropertyOptionGroup.PROPERTY_TYPE,
       PropertyOptionGroup.OWNERSHIP,
       PropertyOptionGroup.BUILDING_DIRECTION,
@@ -97,12 +97,7 @@ export class PropertyOwnerService {
     /* -------------------------------------------------------------------------- */
     await this.db.property.update({
       where: { id: property.id },
-      data: {
-        ...data,
-        property_options: {
-          create: query,
-        },
-      },
+      data: { ...data, property_options: { create: options } },
     });
   }
 
