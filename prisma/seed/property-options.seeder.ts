@@ -43,6 +43,10 @@ const data = (): Prisma.PropertyOptionCreateInput[] => {
       description: 'این ملک غیر دربست است و برخی فضاها با میزبان یا مهمان دیگر مشترک است',
       group: PropertyOptionGroup.OWNERSHIP,
     },
+    {
+      title: 'سرایدار مقیم',
+      group: PropertyOptionGroup.OWNERSHIP,
+    },
   ];
   return options;
 };

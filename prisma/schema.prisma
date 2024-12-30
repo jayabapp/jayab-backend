@@ -176,12 +176,15 @@ model Attachment {
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
-  content_attachment     ContentAttachment[]
-  content_categories     ContentCategory[]
-  content_feature_image  Content[]           @relation(name: "featureImage")
-  content_video          Content[]           @relation(name: "ContentVideo")
-  content_question_image ContentQuestion[]
-
+  content_attachment          ContentAttachment[]
+  content_categories          ContentCategory[]
+  content_feature_image       Content[]            @relation(name: "featureImage")
+  content_video               Content[]            @relation(name: "ContentVideo")
+  content_question_image      ContentQuestion[]
+  property                    Property[]           @relation("Property")
+  property_temp               Property[]           @relation("Property_Temp")
+  feature_image               Property[]           @relation("FeatureImage")
+  property_video              Property[]           @relation("Video")
   banners                     Banner[]             @relation("Image")
   banner_image_sm             Banner[]             @relation("ImageSm")
   advisor_national_card_image Advisor?             @relation("NationalCard")
@@ -498,15 +501,15 @@ model Property {
   address             String?
   lat                 Float?
   lng                 Float?
-  // feature_image_id    Int?
-  // attachments         Attachment[]    @relation("Property")
-  // temp_attachments    Attachment[]    @relation("Property_Temp")
-  // video_id            Int?
+  feature_image_id    Int?
+  video_id            Int?
+  is_chat_enabled     Boolean?
+  is_location_visible Boolean?
+  status              Int      @db.SmallInt
   // has_pool            Boolean?
   // std_capacity        Int?
   // max_capacity        Int?
   // canceling_type      CANCELING_TYPE?
-  status              Int      @db.SmallInt
   // subscription_id     Int?            @unique
   // statistics          Json            @default("{}")
   // advisor_commission  Int             @default(5) @db.SmallInt
@@ -514,8 +517,6 @@ model Property {
   // calendar_updated_at DateTime?
   // rate                Float?
   // rate_count               Int       @default(0)
-  is_chat_enabled     Boolean?
-  is_location_visible Boolean?
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
@@ -526,9 +527,11 @@ model Property {
   region           City?               @relation("PropertyRegion", fields: [region_id], references: [id])
   province         City?               @relation("PropertyProvince", fields: [province_id], references: [id])
   city             City?               @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image    Attachment?         @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video            Attachment?         @relation("Video", fields: [video_id], references: [id])
+  attachments      Attachment[]        @relation("Property")
+  temp_attachments Attachment[]        @relation("Property_Temp")
   // bedrooms              PropertyBedroom?
-  // feature_image         Attachment?            @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  // video                 Attachment?            @relation("Video", fields: [video_id], references: [id])
   // daily_price           PropertyDailyPrice?
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
@@ -539,8 +542,6 @@ model Property {
   // owner_rent_request    OwnerRentRequest[]
   // property_authorize    PropertyAuthorized?
   // banners               Banner[]
-  // Attachment            Attachment?            @relation(fields: [attachmentId], references: [id])
-  // attachmentId          Int?
   // subscription          Subscription?          @relation(fields: [subscription_id], references: [id])
   // rent_request          RentRequest[]
 

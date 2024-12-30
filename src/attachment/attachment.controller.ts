@@ -8,6 +8,7 @@ import {
   BadRequestException,
   Delete,
   Param,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiImageFile, ApiVideoFile } from './helpers/api-file.decorator';
@@ -24,6 +25,8 @@ import {
   IMAGES_OWNER_SELFIE_FOLDER,
   IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
   IMAGES_ADVISOR_DOCUMENT_FOLDER,
+  IMAGES_OWNER_PROPERTY_FOLDER,
+  VIDEOS_OWNER_PROPERTY_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
@@ -32,6 +35,7 @@ import { CreateAttachmentAdminDto } from './dto/create-attachment-admin.dto';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 import { AttachmentImagePropsType } from './interfaces/attachment-props.type';
 import { CreateAttachmentUserDto } from './dto/create-attachment-user.dto';
+import { OwnerGuard } from 'src/auth/guards/owner.guard';
 
 @ApiTags('📎 Attachment')
 @Controller()
@@ -96,6 +100,17 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_ADVISOR_DOCUMENT_FOLDER,
+          resizeWidth: 1024,
+          resizeMode: 'normal',
+          userId: user.id,
+        };
+        break;
+
+      case AttachmentUserFolder.OWNER_PROPERTY_IMAGE:
+        if (!user.owner_id) throw new UnprocessableEntityException('FORBIDDEN');
+        args = {
+          file,
+          folder: IMAGES_OWNER_PROPERTY_FOLDER,
           resizeWidth: 1024,
           resizeMode: 'normal',
           userId: user.id,

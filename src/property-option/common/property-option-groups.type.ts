@@ -34,7 +34,6 @@ export enum PropertyOptionGroup {
   PET = 'PET', // شرایط ورود حیوان خانگی
   PARTY = 'PARTY', // شرایط برگزاری مراسم
   BUILDING_DIRECTION = 'BUILDING_DIRECTION', //جهت ساختمان
-  OWNERSHIP_TYPE = 'OWNERSHIP_TYPE', //نوع مالکیت
 }
 
 export const PropertyOptionGroupList: Array<EnumList> = [
@@ -107,10 +106,5 @@ export const PropertyOptionGroupList: Array<EnumList> = [
     id: PropertyOptionGroup.BUILDING_DIRECTION,
     title: 'جهت ساختمان',
     hex: '#6366f1',
-  },
-  {
-    id: PropertyOptionGroup.OWNERSHIP_TYPE,
-    title: 'نوع مالکیت',
-    hex: '#22d3ee',
   },
 ];

@@ -9,7 +9,11 @@ import { random } from 'lodash';
 import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
-import { UpdatePropertyLocationOwnerDto, UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
+import {
+  UpdatePropertyLocationOwnerDto,
+  UpdatePropertyMediaOwnerDto,
+  UpdatePropertyStepOneOwnerDto,
+} from './dto/update-property.dto';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -105,20 +109,46 @@ export class PropertyOwnerService {
 
   /**
    * Update location
-   * @param id
+   * @param propertyId
    * @param dto
    * @returns
    */
   async updateLocation(
-    id: number,
+    propertyId: number,
     dto: UpdatePropertyLocationOwnerDto,
   ): Promise<{ lat: number; lng: number }> {
     const prop = await this.db.property.update({
-      where: { id },
+      where: { id: propertyId },
       data: { lat: Number(dto.lat.toFixed(6)), lng: Number(dto.lng.toFixed(6)) },
     });
 
     return { lat: prop.lat, lng: prop.lng };
+  }
+
+  /**
+   * Update images and video
+   * @param user
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateMedia(propertyId: number, dto: UpdatePropertyMediaOwnerDto) {
+    let attachments = [];
+    dto.images.map((e) => attachments.push({ id: e }));
+
+    // delete all attachments
+    await this.db.property.update({ where: { id: propertyId }, data: { attachments: { set: [] } } });
+
+    const updatedProperty = await this.db.property.update({
+      where: { id: propertyId },
+      data: {
+        attachments: { connect: attachments },
+        feature_image_id: dto.feature_image_id,
+        // video_id: dto.video_id || null,
+      },
+    });
+
+    return updatedProperty;
   }
 
   /* -------------------------------------------------------------------------- */

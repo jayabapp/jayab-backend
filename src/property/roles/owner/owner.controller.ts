@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   // Delete,
@@ -20,18 +21,26 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
-import { UpdatePropertyLocationOwnerDto, UpdatePropertyStepOneOwnerDto } from './dto/update-property.dto';
+import {
+  UpdatePropertyLocationOwnerDto,
+  UpdatePropertyMediaOwnerDto,
+  UpdatePropertyStepOneOwnerDto,
+} from './dto/update-property.dto';
 import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
 } from 'src/property/interceptors/owner-property.interceptor';
+import { AttachmentService } from 'src/attachment/attachment.service';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
 @ApiBearerAuth('user-jwt')
 @Controller(OWNER_ROUTE_GROUP)
 export class PropertyOwnerController {
-  constructor(private readonly propertyOwnerService: PropertyOwnerService) {}
+  constructor(
+    private readonly propertyOwnerService: PropertyOwnerService,
+    private readonly attachmentService: AttachmentService,
+  ) {}
 
   @ApiOperation({ operationId: 'Get last init prop', description: '' })
   @Get()
@@ -62,6 +71,26 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyLocationOwnerDto,
   ) {
     const result = await this.propertyOwnerService.updateLocation(propertyId, dto);
+    return { result, messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: media' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/media')
+  async updateMedia(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyMediaOwnerDto,
+  ) {
+    const user = req.user;
+
+    // check images and video
+    await this.attachmentService.validateFileOwner(dto.images, user.id, 1);
+    if (!dto.images.includes(dto.feature_image_id)) throw new BadRequestException('PROPERTY_IMAGES1');
+    // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
+
+    //
+    const result = await this.propertyOwnerService.updateMedia(propertyId, dto);
     return { result, messageCode: 'CREATE' };
   }
 }

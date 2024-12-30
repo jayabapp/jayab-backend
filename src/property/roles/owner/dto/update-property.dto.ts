@@ -190,19 +190,25 @@ export class UpdatePropertyLocationOwnerDto {
   lng: number;
 }
 
-// export class UpdatePropertyMediaOwnerDto {
-//   @ApiProperty({ required: true, title: 'تصاویر' })
-//   @_ArrayMaxSize(30)
-//   @_ArrayMinSize(4)
-//   @IsNumber({}, { each: true })
-//   @_ArrayNotEmpty()
-//   images: number[];
+export class UpdatePropertyMediaOwnerDto {
+  @ApiProperty({ required: true, title: 'تصاویر', default: [1] })
+  @_ArrayMaxSize(30)
+  @_ArrayMinSize(4)
+  @IsNumber({}, { each: true })
+  @_ArrayNotEmpty()
+  images: number[];
 
-//   @ApiProperty({ required: true, title: 'ویدیو' })
-//   @_IsInt()
-//   @IsOptional()
-//   video_id: number;
-// }
+  @ApiProperty({ required: true, default: 1 })
+  @_Min(1)
+  @_IsInt()
+  @_IsNotEmpty()
+  feature_image_id: number;
+
+  // @ApiProperty({ required: true, title: 'ویدیو' })
+  // @_IsInt()
+  // @IsOptional()
+  // video_id: number;
+}
 
 // export class UpdatePropertyEnvOwnerDto {
 //   @ApiProperty({ required: true, title: 'بافت محیط' })
