@@ -36,9 +36,10 @@ import moment from 'moment-jalaali';
 import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
 import { IsExist } from 'src/common/validators/is-exists.validator';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { RentType } from 'src/property/common/types/property-rent-types.type copy';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
 import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
 import { IsPrice } from 'src/common/validators/price-validator.decorator';
+import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
 
 export class DayDto {
   @_IsNotEmpty()
@@ -440,67 +441,81 @@ export class UpdatePropertyPriceOwnerDto {
   additional_person: number;
 }
 
-// export class UpdatePropertyTermsOwnerDto {
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
-//   @_ArrayNotEmpty()
-//   guest_type: number[];
+export class UpdatePropertyTermsOwnerDto {
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
+  @_ArrayNotEmpty()
+  guest_type: number[];
 
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
-//   @_IsNotEmpty()
-//   pet: number;
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
+  @_IsNotEmpty()
+  pet: number;
 
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
-//   @_IsNotEmpty()
-//   party: number;
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
+  @_IsNotEmpty()
+  party: number;
 
-//   @ApiProperty({ required: true })
-//   @_IsNotEmpty()
-//   @_IsEnum(CANCELING_TYPE)
-//   @Transform(({ value }) => value?.toUpperCase())
-//   canceling_type: CANCELING_TYPE;
+  @ApiProperty({ required: true, enum: CancelingType })
+  @_IsEnum(CancelingType)
+  @Transform(({ value }) => value?.toUpperCase())
+  @_IsNotEmpty()
+  canceling_type: CancelingType;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   guest_dscr: string;
+  @ApiProperty({ required: true, default: 14 })
+  @_Max(23)
+  @_Min(0)
+  @Type(() => Number)
+  @_IsNotEmpty()
+  check_in_hour: number;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   pet_dscr: string;
+  @ApiProperty({ required: true, default: 12 })
+  @_Max(23)
+  @_Min(0)
+  @Type(() => Number)
+  @_IsNotEmpty()
+  check_out_hour: number;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   party_dscr: string;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  guest_dscr: string;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   doc_dscr: string;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  pet_dscr: string;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   other_dscr: string;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  party_dscr: string;
 
-//   @ApiProperty({ title: 'توضیحات تبلیغاتی' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   ad_dscr: string;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  doc_dscr: string;
 
-//   @ApiProperty({ title: 'توضیحات ملک' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(1000)
-//   property_dscr: string;
-// }
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  other_dscr: string;
+
+  @ApiProperty({ title: 'توضیحات تبلیغاتی', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  ad_dscr: string;
+
+  @ApiProperty({ title: 'توضیحات ملک', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(1000)
+  @IsOptional()
+  property_dscr: string;
+}

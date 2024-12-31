@@ -1,7 +1,7 @@
 import { ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { ValidationArguments } from 'class-validator/types/validation/ValidationArguments';
 import { Injectable } from '@nestjs/common';
-import { RentType } from 'src/property/common/types/property-rent-types.type copy';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
 
 @Injectable()
 @ValidatorConstraint({ name: 'IsPrice', async: true })

@@ -508,14 +508,16 @@ model Property {
   has_pool            Boolean?
   std_capacity        Int?
   max_capacity        Int?
-  // canceling_type      CANCELING_TYPE?
+  canceling_type      String?
+  advisor_commission  Int      @default(0) @db.SmallInt
+  check_in_hour       Int?     @db.SmallInt
+  check_out_hour      Int?     @db.SmallInt
+  status              Int      @db.SmallInt
+  // calendar_updated_at DateTime?
   // subscription_id     Int?            @unique
   // statistics          Json            @default("{}")
-  advisor_commission  Int      @default(5) @db.SmallInt
-  // calendar_updated_at DateTime?
   // rate                Float?
   // rate_count               Int       @default(0)
-  status              Int      @db.SmallInt
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt

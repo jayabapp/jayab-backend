@@ -29,6 +29,7 @@ import {
   UpdatePropertyMediaOwnerDto,
   UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
+  UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
 import { AttachmentService } from 'src/attachment/attachment.service';
 import {
@@ -63,8 +64,8 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyStepOneOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
-    const result = await this.propertyOwnerService.updateInit(property, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateInit(property, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: location' })
@@ -74,8 +75,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyLocationOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateLocation(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateLocation(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: media' })
@@ -94,8 +95,8 @@ export class PropertyOwnerController {
     // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
 
     //
-    const result = await this.propertyOwnerService.updateMedia(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateMedia(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: environment' })
@@ -105,8 +106,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyEnvOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateEnvironment(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateEnvironment(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: bedroom' })
@@ -116,8 +117,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyBedroomOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateBedroom(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateBedroom(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: facility' })
@@ -127,8 +128,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyFacilityOwnerDto,
   ) {
-    const result = this.propertyOwnerService.updateFacility(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    this.propertyOwnerService.updateFacility(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: price' })
@@ -138,7 +139,21 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyPriceOwnerDto,
   ) {
-    const result = this.propertyOwnerService.updatePrices(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    this.propertyOwnerService.updatePrices(propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: terms' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/terms')
+  async updateTerms(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyTermsOwnerDto,
+  ) {
+    const { user } = req;
+    const property = req.interceptor_data as PropertyInterceptorData;
+    await this.propertyOwnerService.updateTerms(property, dto);
+    return { messageCode: 'CREATE' };
   }
 }

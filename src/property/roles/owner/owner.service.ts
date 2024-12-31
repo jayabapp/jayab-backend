@@ -17,8 +17,10 @@ import {
   UpdatePropertyMediaOwnerDto,
   UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
+  UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { RentType } from 'src/property/common/types/property-rent-types.type copy';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
+import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -284,6 +286,64 @@ export class PropertyOwnerService {
       where: { property_id: propertyId },
       update: dailyQueryData,
       create: { ...dailyQueryData, property_id: propertyId },
+    });
+  }
+
+  /**
+   * Update canceling and other terms - Last step
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateTerms(property: PropertyInterceptorData, dto: UpdatePropertyTermsOwnerDto) {
+    const propertyId = property.id;
+
+    /* -------------------------------------------------------------------------- */
+    /**
+     * Options: delete old options and create new ones
+     */
+    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+      PropertyOptionGroup.GUEST_TYPE,
+      PropertyOptionGroup.PET,
+      PropertyOptionGroup.PARTY,
+    ]);
+
+    /* -------------------------------------------------------------------------- */
+    /**
+     * Transaction: Property, Description, Subscription
+     */
+    this.db.$transaction(async (tx) => {
+      const property = await tx.property.findUnique({ where: { id: propertyId } });
+      await tx.property.update({
+        where: { id: propertyId },
+        data: {
+          canceling_type: dto.canceling_type,
+          status: property.status == PropertyStatuses.IN_PROCESS ? PropertyStatuses.WAITING : property.status, //skip update in edit
+          property_options: { create: query },
+          check_in_hour: dto.check_in_hour,
+          check_out_hour: dto.check_out_hour,
+        },
+      });
+
+      /* -------------------------------------------------------------------------- */
+      /**
+       * Description: UPDATE
+       */
+      const queryData = {
+        guest_dscr: dto.guest_dscr,
+        pet_dscr: dto.pet_dscr,
+        party_dscr: dto.party_dscr,
+        doc_dscr: dto.doc_dscr,
+        other_dscr: dto.other_dscr,
+        ad_dscr: dto.ad_dscr,
+        property_dscr: dto.property_dscr,
+      };
+
+      await tx.propertyDescription.upsert({
+        where: { property_id: propertyId },
+        update: queryData,
+        create: { property_id: propertyId, ...queryData },
+      });
     });
   }
 
