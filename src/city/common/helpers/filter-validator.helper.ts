@@ -15,7 +15,7 @@ export const filterValidator = (filters: object): object | undefined => {
    * filter field keys must be in items operators array
    */
   const items = filterPropsBuilder();
-  const fields = Object.keys(filters).filter((e) => filters[e]);
+  const fields = Object.keys(filters);
 
   let query: Prisma.CityWhereInput = {};
 

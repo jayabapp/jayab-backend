@@ -23,11 +23,4 @@ export class CityUserController {
     const result = await this.citySharedService.findChildren(parentId);
     return { result };
   }
-
-  @ApiOperation({ operationId: 'Find Cities', description: '' })
-  @Get('provinces/cities')
-  async findCities(): Promise<SuccessResponseArgs> {
-    const result = await this.citySharedService.findCities();
-    return { result };
-  }
 }

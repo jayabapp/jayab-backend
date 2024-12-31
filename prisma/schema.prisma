@@ -193,6 +193,7 @@ model Attachment {
   owner_selfie_image          Owner?
   category_image              Category?
   submitted_form_items        SubmittedFormItems[]
+  city                        City[]
 
   @@map("attachments")
 }
@@ -303,19 +304,22 @@ model City {
   parent_id  Int?
   sort_order Int?
   slug       String?
+  slug_fa    String?
   tel_prefix String?
+  image_id   Int?
   parent     City?   @relation("Parent", fields: [parent_id], references: [id])
   child      City[]  @relation("Parent")
 
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
-  deleted_at        DateTime?  @db.Timestamp(6)
-  // User       User[]
-  advisor           Advisor?   @relation(fields: [advisorId], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? @db.Timestamp(6)
+
+  image             Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
+  advisor           Advisor?    @relation(fields: [advisorId], references: [id])
   advisorId         Int?
-  property_city     Property[] @relation("PropertyCity")
-  Property_province Property[] @relation("PropertyProvince")
-  Property_region   Property[] @relation("PropertyRegion")
+  property_city     Property[]  @relation("PropertyCity")
+  Property_province Property[]  @relation("PropertyProvince")
+  Property_region   Property[]  @relation("PropertyRegion")
 
   @@map("cities")
 }

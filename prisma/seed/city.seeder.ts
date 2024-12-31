@@ -7,24 +7,40 @@ import cities from '../../src/city/common/constant/cities.json';
 /*                                    SEED                                    */
 /* -------------------------------------------------------------------------- */
 
-const createData = (): Prisma.CityCreateInput[] => {
+const createProvinceData = (): Prisma.CityCreateInput[] => {
   const data: Prisma.CityCreateManyInput[] = [];
 
   for (const province of provinces) {
-    const c = cities
-      .filter((e) => e.province_id == province.id)
-      .map((e) => ({ title: e.name, slug: e.slug }));
+    // const c = cities
+    //   .filter((e) => e.province_id == province.id)
+    //   .map((e) => ({ title: e.name, slug: e.slug }));
     const rec: Prisma.CityCreateInput = {
       title: province.name,
       tel_prefix: province.tel_prefix,
       slug: province.slug,
-      sort_order: province.name == 'تهران' ? 1 : province.name == 'البرز' ? 2 : null,
-      child: {
-        createMany: {
-          data: c,
-          skipDuplicates: true,
-        },
-      },
+      slug_fa: province.slug_fa,
+      sort_order: province.sort_order || null,
+      // child: {
+      //   createMany: {
+      //     data: c,
+      //     skipDuplicates: true,
+      //   },
+      // },
+    };
+    data.push(rec);
+  }
+
+  return data;
+};
+
+const createCityData = (): Prisma.CityCreateInput[] => {
+  const data: Prisma.CityCreateManyInput[] = [];
+
+  for (const city of cities) {
+    const rec: Prisma.CityUncheckedCreateInput = {
+      title: city.title,
+      slug: city.slug,
+      parent_id: city.province_id,
     };
     data.push(rec);
   }
@@ -41,18 +57,16 @@ export async function citySeeder(): Promise<void> {
   const citiesCount = await prisma.city.count();
 
   if (citiesCount == 0) {
-    // const list = createData();
+    const provincesList = createProvinceData();
+    const citiesList = createCityData();
 
-    // const iranCountry = await prisma.city.create({
-    //   data: { title: 'ایران', tel_prefix: '+98', slug: 'ایران', sort_order: 1 },
-    // });
+    for (const item of provincesList) {
+      await prisma.city.create({ data: item });
+    }
 
-    // for (const item of list) {
-    //   await prisma.city.create({ data: { ...item, parent: { connect: { id: iranCountry.id } } } });
-    // }
-
-    await prisma.city.create({ data: { title: 'تهران', child: { create: { title: 'تهران' } } } });
-    await prisma.city.create({ data: { title: 'البرز', child: { create: { title: 'کرج' } } } });
+    for (const item of citiesList) {
+      await prisma.city.create({ data: item });
+    }
   }
   console.timeEnd('✅ City');
 }

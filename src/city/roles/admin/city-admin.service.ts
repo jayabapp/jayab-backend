@@ -79,23 +79,6 @@ export class CityAdminService {
   }
 
   /**
-   * search cities
-   * q
-   * @returns
-   */
-  async searchCities(title: string): Promise<Partial<City>[]> {
-    const list = await this.db.city.findMany({
-      where: { title: { contains: title }, parent_id: { not: null } },
-      select: {
-        id: true,
-        title: true,
-      },
-    });
-
-    return list;
-  }
-
-  /**
    * Get all parents
    *
    * @returns

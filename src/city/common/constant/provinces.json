@@ -2,187 +2,222 @@
   {
     "id": 1,
     "name": "آذربایجان شرقی",
-    "slug": "آذربایجان-شرقی",
+    "slug": "azerbaijaneast",
+    "slug_fa": "آذربایجان-شرقی",
     "tel_prefix": "041"
   },
   {
     "id": 2,
     "name": "آذربایجان غربی",
-    "slug": "آذربایجان-غربی",
+    "slug": "azerbaijanwest",
+    "slug_fa": "آذربایجان-غربی",
     "tel_prefix": "044"
   },
   {
     "id": 3,
     "name": "اردبیل",
-    "slug": "اردبیل",
+    "slug": "ardabilp",
+    "slug_fa": "اردبیل",
     "tel_prefix": "045"
   },
   {
     "id": 4,
     "name": "اصفهان",
-    "slug": "اصفهان",
+    "slug": "isfahanp",
+    "slug_fa": "اصفهان",
     "tel_prefix": "031"
   },
   {
     "id": 5,
     "name": "البرز",
-    "slug": "البرز",
-    "tel_prefix": "026"
+    "slug": "alborzp",
+    "slug_fa": "البرز",
+    "tel_prefix": "026",
+    "sort_order": 1
   },
   {
     "id": 6,
     "name": "ایلام",
-    "slug": "ایلام",
+    "slug": "ilamp",
+    "slug_fa": "ایلام",
     "tel_prefix": "084"
   },
   {
     "id": 7,
     "name": "بوشهر",
-    "slug": "بوشهر",
+    "slug": "bushehrp",
+    "slug_fa": "بوشهر",
     "tel_prefix": "077"
   },
   {
     "id": 8,
     "name": "تهران",
-    "slug": "تهران",
-    "tel_prefix": "021"
+    "slug": "tehranp",
+    "slug_fa": "تهران",
+    "tel_prefix": "021",
+    "sort_order": 4
   },
   {
     "id": 9,
     "name": "چهارمحال و بختیاری",
-    "slug": "چهارمحال-بختیاری",
+    "slug": "chaharmahaalbakhtiari",
+    "slug_fa": "چهارمحال-بختیاری",
     "tel_prefix": "038"
   },
   {
     "id": 10,
     "name": "خراسان جنوبی",
-    "slug": "خراسان-جنوبی",
+    "slug": "khorasansouth",
+    "slug_fa": "خراسان-جنوبی",
     "tel_prefix": "056"
   },
   {
     "id": 11,
     "name": "خراسان رضوی",
-    "slug": "خراسان-رضوی",
+    "slug": "khorasanrazavi",
+    "slug_fa": "خراسان-رضوی",
     "tel_prefix": "051"
   },
   {
     "id": 12,
     "name": "خراسان شمالی",
-    "slug": "خراسان-شمالی",
+    "slug": "khorasannorth",
+    "slug_fa": "خراسان-شمالی",
     "tel_prefix": "058"
   },
   {
     "id": 13,
     "name": "خوزستان",
-    "slug": "خوزستان",
+    "slug": "khuzestan",
+    "slug_fa": "خوزستان",
     "tel_prefix": "061"
   },
   {
     "id": 14,
     "name": "زنجان",
-    "slug": "زنجان",
+    "slug": "zanjanp",
+    "slug_fa": "زنجان",
     "tel_prefix": "024"
   },
   {
     "id": 15,
     "name": "سمنان",
-    "slug": "سمنان",
+    "slug": "semnanp",
+    "slug_fa": "سمنان",
     "tel_prefix": "023"
   },
   {
     "id": 16,
     "name": "سیستان و بلوچستان",
-    "slug": "سیستان-بلوچستان",
+    "slug": "sistanbaluchestan",
+    "slug_fa": "سیستان-بلوچستان",
     "tel_prefix": "054"
   },
   {
     "id": 17,
     "name": "فارس",
-    "slug": "فارس",
+    "slug": "fars",
+    "slug_fa": "فارس",
     "tel_prefix": "071"
   },
   {
     "id": 18,
     "name": "قزوین",
-    "slug": "قزوین",
+    "slug": "qazvinp",
+    "slug_fa": "قزوین",
     "tel_prefix": "028"
   },
   {
     "id": 19,
     "name": "قم",
-    "slug": "قم",
+    "slug": "qomp",
+    "slug_fa": "قم",
     "tel_prefix": "025"
   },
   {
     "id": 20,
     "name": "کردستان",
-    "slug": "کردستان",
+    "slug": "kurdistan",
+    "slug_fa": "کردستان",
     "tel_prefix": "087"
   },
   {
     "id": 21,
     "name": "کرمان",
-    "slug": "کرمان",
+    "slug": "kermanp",
+    "slug_fa": "کرمان",
     "tel_prefix": "034"
   },
   {
     "id": 22,
     "name": "کرمانشاه",
-    "slug": "کرمانشاه",
+    "slug": "kermanshahp",
+    "slug_fa": "کرمانشاه",
     "tel_prefix": "083"
   },
   {
     "id": 23,
     "name": "کهگیلویه و بویراحمد",
-    "slug": "کهگیلویه-بویراحمد",
+    "slug": "kohgiluyehboyerahmad",
+    "slug_fa": "کهگیلویه-بویراحمد",
     "tel_prefix": "074"
   },
   {
     "id": 24,
     "name": "گلستان",
-    "slug": "گلستان",
+    "slug": "golestan",
+    "slug_fa": "گلستان",
     "tel_prefix": "017"
   },
   {
     "id": 25,
     "name": "لرستان",
-    "slug": "لرستان",
+    "slug": "lorestan",
+    "slug_fa": "لرستان",
     "tel_prefix": "066"
   },
   {
     "id": 26,
     "name": "گیلان",
-    "slug": "گیلان",
-    "tel_prefix": "013"
+    "slug": "gilan",
+    "slug_fa": "گیلان",
+    "tel_prefix": "013",
+    "sort_order": 2
   },
   {
     "id": 27,
     "name": "مازندران",
-    "slug": "مازندران",
-    "tel_prefix": "011"
+    "slug": "mazandaran",
+    "slug_fa": "مازندران",
+    "tel_prefix": "011",
+    "sort_order": 3
   },
   {
     "id": 28,
     "name": "مرکزی",
-    "slug": "مرکزی",
+    "slug": "markazi",
+    "slug_fa": "مرکزی",
     "tel_prefix": "086"
   },
   {
     "id": 29,
     "name": "هرمزگان",
-    "slug": "هرمزگان",
+    "slug": "hormozgan",
+    "slug_fa": "هرمزگان",
     "tel_prefix": "076"
   },
   {
     "id": 30,
     "name": "همدان",
-    "slug": "همدان",
+    "slug": "hamadanp",
+    "slug_fa": "همدان",
     "tel_prefix": "081"
   },
   {
     "id": 31,
     "name": "یزد",
-    "slug": "یزد",
+    "slug": "yazdp",
+    "slug_fa": "یزد",
     "tel_prefix": "035"
   }
 ]

@@ -55,13 +55,6 @@ export class CityAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Search' })
-  @Get('search')
-  async search(@Query('title') title: string): Promise<SuccessResponseArgs> {
-    const result = await this.cityAdminService.searchCities(title);
-    return { result };
-  }
-
   @ApiOperation({ operationId: 'Create', summary: 'ساخت کتگوری و ساب کتگوری در صورت وجود شناسه پرنت' })
   @Post()
   async create(@Body() createCityAdminDto: CreateCityAdminDto): Promise<SuccessResponseArgs> {
@@ -172,7 +165,8 @@ export class CityAdminController {
      * Check parent id
      */
     const city = await this.cityAdminService.findById(cityId);
-    if (city.parent_id && !dto.parent_id) throw new BadRequestException('COMMON4');
+    // if (city.parent_id && !dto.parent_id) throw new BadRequestException('COMMON4');
+    if (city.parent_id && !dto.parent_id) dto.parent_id = city.parent_id;
 
     /**
      * Find city by id
