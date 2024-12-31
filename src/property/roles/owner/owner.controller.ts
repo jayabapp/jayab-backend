@@ -37,6 +37,7 @@ import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
 } from 'src/property/common/interceptors/owner-property.interceptor';
+import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -50,9 +51,12 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Get last init prop', description: '' })
   @Get('init')
-  async getLastInit(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+  async getLastInit(
+    @Req() req: RequestType,
+    @Query() dto: FindLastInitPropertyOwnerDto,
+  ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const result = await this.propertyOwnerService.findLastInitProp(user.owner_id);
+    const result = await this.propertyOwnerService.findLastInitProp(user.owner_id, dto.property_id);
     return { result };
   }
 

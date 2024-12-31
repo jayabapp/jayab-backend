@@ -34,9 +34,13 @@ export class PropertyOwnerService {
    * @param ownerId
    * @returns
    */
-  async findLastInitProp(ownerId: number): Promise<Property> {
+  async findLastInitProp(ownerId: number, propertyId?: number): Promise<Property> {
     // const activeSubscription = await this.subscriptionService.findPlanByRole(user);
     // if (!activeSubscription) throw new NotAcceptableException('OWNER_SUB1');
+
+    let query: Prisma.PropertyWhereInput = { owner_id: ownerId };
+    if (propertyId) query = { ...query, id: propertyId };
+    else query = { ...query, status: { in: InProgressReserveStatus } };
 
     const include: Prisma.PropertyInclude = {
       province: { select: { title: true } },
@@ -55,10 +59,8 @@ export class PropertyOwnerService {
 
     /* -------------------------------------------------------------------------- */
     // check the init property, if exist return this
-    const initProp = await this.db.property.findFirst({
-      where: { owner_id: ownerId, status: { in: InProgressReserveStatus } },
-      include,
-    });
+    const initProp = await this.db.property.findFirst({ where: query, include });
+    if (propertyId && !initProp) throw new NotFoundException('PROPERTY_NOT_FOUND');
     if (initProp) return initProp;
 
     /* -------------------------------------------------------------------------- */
