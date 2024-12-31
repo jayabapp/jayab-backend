@@ -661,6 +661,25 @@ model PropertyOption {
   @@map("property_options")
 }
 
+// ---------------------------- SUBSCRIPTION PLAN --------------------------- //
+model SubscriptionPlan {
+  id                  Int       @id() @default(autoincrement())
+  group               String
+  title               String    @db.VarChar
+  duration            Int
+  price               Int
+  price_with_discount Int?
+  is_active           Boolean   @default(true)
+  sort                Int?      @default(1)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime? @db.Timestamp(6)
+
+  // payments Payment[]
+
+  @@map("subscription_plans")
+}
+
 // --------------------------------- PAYMENT -------------------------------- //
 // model Payment {
 //   id              Int      @id() @default(autoincrement())

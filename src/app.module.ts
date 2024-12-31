@@ -58,6 +58,7 @@ import { NotificationModule } from './notification/notification.module';
 import { UserModule } from './user/user.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyModule } from './property/property.module';
+import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 
@@ -126,6 +127,7 @@ import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opt
     OwnerModule,
     PropertyOptionModule,
     PropertyModule,
+    SubscriptionPlanModule,
     BaseModule,
   ],
   providers: [
