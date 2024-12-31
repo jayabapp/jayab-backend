@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma } from '@prisma/client';
+import { Property, Prisma, Owner, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -15,12 +15,14 @@ import {
   UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
+  UpdatePropertyOwnerAssistantOwnerDto,
   UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -41,10 +43,7 @@ export class PropertyOwnerService {
       city: { select: { title: true } },
       region: { select: { title: true } },
       feature_image: { select: { name: true, thumbnail: true } },
-      // daily_price: true,
-      // hourly_price: true,
-      // monthly_price: true,
-      // yearly_price: true,
+      daily_price: true,
       description: true,
       property_options: { include: { option: true } },
       attachments: { where: { type: 1 } },
@@ -344,6 +343,47 @@ export class PropertyOwnerService {
         update: queryData,
         create: { property_id: propertyId, ...queryData },
       });
+    });
+  }
+
+  /**
+   * Update canceling and other terms - Last step
+   * @param user
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateAssistant(user: PartialUser, propertyId: number, dto: UpdatePropertyOwnerAssistantOwnerDto) {
+    let data: Prisma.PropertyOwnerAssistantUncheckedCreateInput = {
+      property_id: propertyId,
+      owner_mobile_number: user.mobile_number,
+      assistant_mobile_number: dto.assistant_mobile,
+      assistant_full_name: dto.assistant_full_name,
+    };
+
+    switch (dto.show_mobile_type) {
+      // نمایش شماره مالک بر روی آگهی
+      case 1:
+        data = { ...data, assistant_mobile_number: null, assistant_full_name: null };
+        break;
+
+      // نمایش شماره دستیار بر روی آگهی
+      case 2:
+        data = { ...data, owner_mobile_number: null };
+        break;
+
+      // نمایش هر دو شماره بر روی آگهی - که حالت دیفالت رو همین در نظر گرفتیم
+      case 3:
+        break;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /**
+     * Transaction: Delete, Create Assistants
+     */
+    this.db.$transaction(async (tx) => {
+      await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
+      await tx.propertyOwnerAssistant.create({ data });
     });
   }
 

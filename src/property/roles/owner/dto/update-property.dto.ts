@@ -26,7 +26,9 @@ import {
   _IsLongitude,
   _IsNotEmpty,
   _IsNumber,
+  _IsNumberString,
   _IsString,
+  _Length,
   _Max,
   _MaxLength,
   _Min,
@@ -40,6 +42,7 @@ import { RentType } from 'src/property/common/types/property-rent-types.type';
 import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
 import { IsPrice } from 'src/common/validators/price-validator.decorator';
 import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
+import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
 export class DayDto {
   @_IsNotEmpty()
@@ -518,4 +521,24 @@ export class UpdatePropertyTermsOwnerDto {
   @_MaxLength(1000)
   @IsOptional()
   property_dscr: string;
+}
+
+export class UpdatePropertyOwnerAssistantOwnerDto {
+  @ApiProperty({ required: true, default: 'نام تستی' })
+  @_Length(1, 128)
+  @_IsString()
+  @_IsNotEmpty()
+  assistant_full_name: string;
+
+  @ApiProperty({ required: true, default: '09120000000' })
+  @_IsNumberString()
+  @Validate(IsMobileNumber)
+  @_IsNotEmpty()
+  assistant_mobile: string;
+
+  @ApiProperty({ required: true, enum: [1, 2, 4], default: 1 })
+  @_IsEnum([1, 2, 3])
+  @_IsInt()
+  @_IsNotEmpty()
+  show_mobile_type: number;
 }

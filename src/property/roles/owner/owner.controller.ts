@@ -27,6 +27,7 @@ import {
   UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
+  UpdatePropertyOwnerAssistantOwnerDto,
   UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
@@ -140,6 +141,19 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyPriceOwnerDto,
   ) {
     this.propertyOwnerService.updatePrices(propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: assistant' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/assistants')
+  async updateAssistant(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyOwnerAssistantOwnerDto,
+  ) {
+    const { user } = req;
+    await this.propertyOwnerService.updateAssistant(user, propertyId, dto);
     return { messageCode: 'CREATE' };
   }
 
