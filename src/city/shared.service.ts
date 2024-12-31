@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { City } from '@prisma/client';
+import { City, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CitySharedService {
@@ -17,8 +17,31 @@ export class CitySharedService {
       select: {
         id: true,
         title: true,
+        image: true,
+        child: {
+          select: { id: true, title: true },
+          take: 5,
+        },
       },
     });
+    return cities;
+  }
+
+  async findAll(q: string): Promise<Array<Partial<City>>> {
+    let query: Prisma.CityWhereInput = {};
+    if (!q) return [];
+    if (q) query = { ...query, title: { contains: q } };
+
+    const cities = await this.db.city.findMany({
+      where: query,
+      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      select: {
+        id: true,
+        title: true,
+        parent: { select: { title: true } },
+      },
+    });
+
     return cities;
   }
 
@@ -34,13 +57,14 @@ export class CitySharedService {
       select: {
         id: true,
         title: true,
-        child: {
-          select: {
-            id: true,
-            title: true,
-          },
-          orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
-        },
+        image: true,
+        // child: {
+        //   select: {
+        //     id: true,
+        //     title: true,
+        //   },
+        //   orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+        // },
       },
     });
     return cities;
