@@ -290,7 +290,48 @@ export class PropertyOwnerService {
 
   /**
    * Update canceling and other terms - Last step
+   * @param user
    * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateAssistant(user: PartialUser, propertyId: number, dto: UpdatePropertyOwnerAssistantOwnerDto) {
+    let data: Prisma.PropertyOwnerAssistantUncheckedCreateInput = {
+      property_id: propertyId,
+      owner_mobile_number: user.mobile_number,
+      assistant_mobile_number: dto.assistant_mobile,
+      assistant_full_name: dto.assistant_full_name,
+    };
+
+    switch (dto.show_mobile_type) {
+      // نمایش شماره مالک بر روی آگهی
+      case 1:
+        data = { ...data, assistant_mobile_number: null, assistant_full_name: null };
+        break;
+
+      // نمایش شماره دستیار بر روی آگهی
+      case 2:
+        data = { ...data, owner_mobile_number: null };
+        break;
+
+      // نمایش هر دو شماره بر روی آگهی - که حالت دیفالت رو همین در نظر گرفتیم
+      case 3:
+        break;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /**
+     * Transaction: Delete, Create Assistants
+     */
+    this.db.$transaction(async (tx) => {
+      await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
+      await tx.propertyOwnerAssistant.create({ data });
+    });
+  }
+
+  /**
+   * Update canceling and other terms - Last step
+   * @param property
    * @param dto
    * @returns
    */
@@ -343,47 +384,6 @@ export class PropertyOwnerService {
         update: queryData,
         create: { property_id: propertyId, ...queryData },
       });
-    });
-  }
-
-  /**
-   * Update canceling and other terms - Last step
-   * @param user
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
-  async updateAssistant(user: PartialUser, propertyId: number, dto: UpdatePropertyOwnerAssistantOwnerDto) {
-    let data: Prisma.PropertyOwnerAssistantUncheckedCreateInput = {
-      property_id: propertyId,
-      owner_mobile_number: user.mobile_number,
-      assistant_mobile_number: dto.assistant_mobile,
-      assistant_full_name: dto.assistant_full_name,
-    };
-
-    switch (dto.show_mobile_type) {
-      // نمایش شماره مالک بر روی آگهی
-      case 1:
-        data = { ...data, assistant_mobile_number: null, assistant_full_name: null };
-        break;
-
-      // نمایش شماره دستیار بر روی آگهی
-      case 2:
-        data = { ...data, owner_mobile_number: null };
-        break;
-
-      // نمایش هر دو شماره بر روی آگهی - که حالت دیفالت رو همین در نظر گرفتیم
-      case 3:
-        break;
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /**
-     * Transaction: Delete, Create Assistants
-     */
-    this.db.$transaction(async (tx) => {
-      await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
-      await tx.propertyOwnerAssistant.create({ data });
     });
   }
 
