@@ -666,6 +666,7 @@ model SubscriptionPlan {
   id                  Int       @id() @default(autoincrement())
   group               String
   title               String    @db.VarChar
+  description         String?   @db.Text
   duration            Int
   price               Int
   price_with_discount Int?
@@ -683,27 +684,26 @@ model SubscriptionPlan {
 
 // --------------------------------- PAYMENT -------------------------------- //
 model Payment {
-  id              Int      @id() @default(autoincrement())
-  user_id         Int?
-  advisor_id      Int?
-  subscription_id Int?
-  gateway_key     String?
-  amount          Int
-  pay_by_wallet   Int?
-  pay_by_gateway  Int?
-  debt            Int?
-  gate            String
-  authority       String
-  ref_id          String?
-  type            String
-  status          Int
-  description     String?
-  redirect_url    String?
-  created_at      DateTime @default(now()) @db.Timestamp(6)
-  updated_at      DateTime @updatedAt()
+  id             Int      @id() @default(autoincrement())
+  user_id        Int?
+  advisor_id     Int?
+  gateway_key    String?
+  amount         Int
+  pay_by_wallet  Int?
+  pay_by_gateway Int?
+  debt           Int?
+  gate           String
+  authority      String
+  ref_id         String?
+  type           String
+  status         Int
+  description    String?
+  redirect_url   String?
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  updated_at     DateTime @updatedAt()
 
-  gateway      PaymentGateway? @relation(fields: [gateway_key], references: [key])
-  subscription Subscription?   @relation(fields: [subscription_id], references: [id])
+  gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
+  subscriptions Subscription[]
 
   @@map("payments")
 }
@@ -929,7 +929,7 @@ model Subscription {
 
   // advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
   property Property? @relation(fields: [property_id], references: [id])
-  payments Payment[]
+  payment  Payment?  @relation(fields: [payment_id], references: [id])
 
   @@map("subscriptions")
 }

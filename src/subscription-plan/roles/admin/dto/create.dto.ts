@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -42,6 +43,12 @@ class CommonDto {
   @_IsInt()
   @_IsNotEmpty()
   sort: number;
+
+  @ApiProperty({ required: true, default: 'تعداد روز پکیج' })
+  @_Length(0, 1024)
+  @_IsString()
+  @IsOptional()
+  description: string;
 }
 export class CreateSubscriptionPlanAdminDto extends CommonDto {
   @ApiProperty({ required: true, default: 'گروه' })

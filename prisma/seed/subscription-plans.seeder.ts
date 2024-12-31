@@ -23,6 +23,8 @@ const data = (): Prisma.SubscriptionPlanCreateInput[] => {
       title: 'نردبان',
       group: SubscriptionPlanGroup.PROPERTY,
       price: 100_000,
+      description:
+        'با نردبان آگهی ملک شما در بالای لیست ملک ها قرار میگیرد و به عنوان اولین آگهی در آن شهر و استان نمایش داده میشود.',
       is_promote: true,
       is_active: true,
     },

@@ -34,7 +34,7 @@ export const showPropsBuilder = (item: SubscriptionPlan): Array<ShowProps> => {
       value: SubscriptionPlanGroupList.find((e) => e.id == item.group),
       type: 'chip',
     },
-    { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean' },
+    { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean', isEditable: false },
     { type: 'break' },
     { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
     { state: 'sort', title: 'ترتیب', value: item.sort, type: 'number' },
@@ -46,6 +46,12 @@ export const showPropsBuilder = (item: SubscriptionPlan): Array<ShowProps> => {
       title: '(تومان) قیمت با تخفیف',
       value: item.price_with_discount,
       type: 'number',
+    },
+    {
+      state: 'description',
+      title: 'توضیحات',
+      value: item.description,
+      type: 'longString',
     },
   ];
 
@@ -94,8 +100,8 @@ export const createPropsBuilder = (): Array<CreateProps> => {
     {
       state: 'is_active',
       type: 'switch',
-      title: 'فعال',
-      options: { isMandatory: true },
+      title: 'فعال (غیر قابل تغییر)',
+      options: { isMandatory: true, disabled: true },
     },
     { type: 'break' },
     {
@@ -140,6 +146,13 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       selectItems: SubscriptionPlanGroupList,
       options: { isMandatory: true },
     },
+    { type: 'break' },
+    {
+      state: 'description',
+      type: 'textarea',
+      title: 'توضیحات',
+      options: { maxLength: 128, keyboard: 'text' },
+    },
   ];
 
   return createProps;
@@ -183,10 +196,10 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
     if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
     // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
