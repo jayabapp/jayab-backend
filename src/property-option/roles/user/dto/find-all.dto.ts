@@ -7,6 +7,7 @@ export class FindAllPropertyOptionUserDto {
   @ApiProperty({
     required: true,
     example: ['PROPERTY_TYPE', 'ACCESS'],
+    enum: PropertyOptionGroup,
     type: String,
     isArray: true,
   })
