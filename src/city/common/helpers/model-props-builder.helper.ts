@@ -1,4 +1,4 @@
-import { AccessControlList, Prisma, City } from '@prisma/client';
+import { AccessControlList, Prisma, City, Attachment } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -22,7 +22,7 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: City): Array<ShowProps> => {
+export const showPropsBuilder = (item: City & { image: Attachment }): Array<ShowProps> => {
   const props: Array<ShowProps> = [
     {
       state: 'title',
@@ -31,10 +31,30 @@ export const showPropsBuilder = (item: City): Array<ShowProps> => {
       type: 'string',
     },
     {
+      state: 'slug',
+      title: 'اسلاگ',
+      value: item.slug,
+      type: 'string',
+    },
+    {
       state: 'sort_order',
       title: 'ترتیب نمایش',
       value: item.sort_order,
       type: 'string',
+    },
+    {
+      state: 'image',
+      title: 'تصویر',
+      value: item.image,
+      type: 'image',
+    },
+    {
+      state: 'image_id',
+      title: '',
+      value: item.image_id,
+      ref: 'image',
+      type: 'image',
+      isHidden: true,
     },
   ];
 
@@ -69,10 +89,23 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       options: { maxLength: 256, isMandatory: true, placeholder: 'تهران', keyboard: 'text' },
     },
     {
+      state: 'slug',
+      type: 'input',
+      title: 'اسلاگ انگلیسی',
+      options: { maxLength: 512, isMandatory: true, placeholder: 'tehran' },
+    },
+    {
       state: 'sort_order',
       type: 'input',
       title: 'ترتیب نمایش',
       options: { placeholder: 'مثلا: 1', keyboard: 'number', titleHint: '(اختیاری)' },
+    },
+    { type: 'divider' },
+    {
+      state: 'image_id',
+      type: 'image',
+      title: 'تصویر',
+      options: { titleHint: '(اختیاری)' },
     },
   ];
 

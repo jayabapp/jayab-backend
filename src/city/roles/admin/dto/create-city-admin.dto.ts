@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsOptional, Validate } from 'class-validator';
 import {
   _MinLength,
@@ -27,4 +28,16 @@ export class CreateCityAdminDto {
   @_IsInt()
   @IsOptional()
   sort_order: number;
+
+  @ApiProperty({ required: true, default: '' })
+  @_IsString()
+  @_IsNotEmpty()
+  slug: string;
+
+  @ApiProperty({ required: false, default: 1 })
+  @Type(() => Number)
+  @Validate(IsExist, ['attachment', 'id'])
+  @_IsInt()
+  @IsOptional()
+  image_id: number;
 }

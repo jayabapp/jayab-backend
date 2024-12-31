@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { CreateCityAdminDto } from './dto/create-city-admin.dto';
 import { UpdateCityAdminDto } from './dto/update-city-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -7,6 +12,7 @@ import { createPropsBuilder, showPropsBuilder } from 'src/city/common/helpers/mo
 import { CreateProps, ShowAction, ShowProps } from 'src/common/interfaces/model-props.interface';
 import { isEmpty, isInteger } from 'lodash';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { hasPersianLetter } from 'src/common/helpers/persian-regex';
 
 export type RecursiveCity = City & { parent: RecursiveCity | null };
 
@@ -20,8 +26,14 @@ export class CityAdminService {
    * @param dto
    * @returns
    */
-  async create(dto: CreateCityAdminDto): Promise<void> {
-    await this.db.city.create({ data: dto });
+  async create(dto: CreateCityAdminDto): Promise<City> {
+    const isDuplicatedSlug = await this.db.city.findFirst({ where: { slug: dto.slug } });
+    if (isDuplicatedSlug) throw new BadRequestException('CITY2');
+
+    if (hasPersianLetter(dto.slug)) throw new UnprocessableEntityException('CITY3');
+
+    const city = await this.db.city.create({ data: dto });
+    return city;
   }
 
   /**
@@ -111,16 +123,18 @@ export class CityAdminService {
        * If the city does not have a parent ID, it means that it is the parent city
        */
       where: { parent_id: null },
-      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
       include: {
         parent: true,
+        image: true,
         child: {
           where: { deleted_at: null },
-          orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+          orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
           include: {
+            image: true,
             child: {
               where: { deleted_at: null },
-              orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+              orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
             },
           },
         },
@@ -179,7 +193,7 @@ export class CityAdminService {
    * @returns
    */
   async findOne(cityId: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const city = await this.db.city.findUnique({ where: { id: cityId } });
+    const city = await this.db.city.findUnique({ where: { id: cityId }, include: { image: true } });
     if (!city) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(city);

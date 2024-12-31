@@ -58,15 +58,6 @@ export class CityAdminController {
   @ApiOperation({ operationId: 'Create', summary: 'ساخت کتگوری و ساب کتگوری در صورت وجود شناسه پرنت' })
   @Post()
   async create(@Body() createCityAdminDto: CreateCityAdminDto): Promise<SuccessResponseArgs> {
-    /**
-     * Check parent id
-     */
-    // const parentCity = await this.cityAdminService.findById(createCityAdminDto.parent_id);
-    // if (parentCity.parent_id) throw new BadRequestException('COMMON4');
-
-    /**
-     * Create city
-     */
     const result = await this.cityAdminService.create(createCityAdminDto);
 
     return { result, messageCode: 'CREATE' };
@@ -80,57 +71,6 @@ export class CityAdminController {
   //   return { result };
   // }
 
-  @ApiOperation({ operationId: 'Find All', description: 'دریافت همه دسته بندی ها' })
-  @ApiQuery({
-    name: 'filters',
-    required: false,
-    type: 'string',
-    example: 'filters[title][contains]=titleName',
-    description: 'filters[field][operator]=value',
-  })
-  @Get()
-  async findAll(@Query() dto: FindAllCityAdminDto): Promise<SuccessResponseArgs> {
-    if (typeof dto.filters === 'string') {
-      const parsedFilters = qs.parse(dto.filters, {
-        parameterLimit: 10, // Adjust this limit as needed
-      });
-
-      dto.filters = parsedFilters.filters;
-    }
-
-    const filters = filterValidator(dto.filters);
-    if (!filters) throw new BadRequestException('FILTER1');
-
-    const result = await this.cityAdminService.findAll(filters, dto.page, dto.per_page);
-
-    return { result };
-  }
-
-  @ApiOperation({ operationId: 'Find All Parents', description: 'دریافت همه دسته بندی های والد' })
-  @ApiQuery({
-    name: 'filters',
-    required: false,
-    type: 'string',
-    example: 'filters[title][contains]=titleName',
-    description: 'filters[field][operator]=value',
-  })
-  @Get('parents-with-query')
-  async findAllParents(@Query() dto: FindAllCityAdminDto): Promise<SuccessResponseArgs> {
-    if (typeof dto.filters === 'string') {
-      const parsedFilters = qs.parse(dto.filters, {
-        parameterLimit: 10, // Adjust this limit as needed
-      });
-
-      dto.filters = parsedFilters.filters;
-    }
-
-    const filters = filterValidator(dto.filters);
-    if (!filters) throw new BadRequestException('FILTER1');
-
-    const result = await this.cityAdminService.findParents([], filters);
-
-    return { result: { data: result } };
-  }
   @ApiOperation({ operationId: 'Find one city', summary: 'دریافت دسته بندی' })
   @Get(':cityId')
   async findOne(@Param('cityId', ParseIntPipe) cityId: number): Promise<SuccessResponseArgs> {
