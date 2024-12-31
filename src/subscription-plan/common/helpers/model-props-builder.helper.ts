@@ -9,6 +9,7 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { SubscriptionPlanGroup, SubscriptionPlanGroupList } from '../subscription-plan-group.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -26,22 +27,26 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 export const showPropsBuilder = (item: SubscriptionPlan): Array<ShowProps> => {
   const props: Array<ShowProps> = [
-    // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
-    //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
-    /* ----------------------------------- REF ---------------------------------- */
-    // the ids must be hidden in ref
-    // ---- single ref
-    // {state: 'category',title: 'دسته بندی اصلی',value: item.category,type: 'object',nestedKey: 'title',},
-    // {state: 'category_id',ref: 'category',value: item.category.id,type: 'chip',isHidden: true,},
-    // ---- multi ref
-    // { state: 'media', title: 'عکس های ملک', value: item.media, type: 'image' },
-    // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',value: { lat: item.lat, lng: item.lng },title: 'موقعیت جغرافیایی',},
-    /* --------------------------------- SWITCH --------------------------------- */
-    // { state: 'is_active', type: 'boolean', value: item.is_acitve, title: 'وضعیت' },
+    { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
+    {
+      state: 'group',
+      title: 'گروه',
+      value: SubscriptionPlanGroupList.find((e) => e.id == item.group),
+      type: 'chip',
+    },
+    { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean' },
+    { type: 'break' },
+    { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
+    { state: 'sort', title: 'ترتیب', value: item.sort, type: 'number' },
+    { type: 'break' },
+    { state: 'duration', title: 'مدت زمان', value: item.duration, type: 'number' },
+    { state: 'price', title: 'قیمت (تومان)', value: item.price, type: 'number' },
+    {
+      state: 'price_with_discount',
+      title: '(تومان) قیمت با تخفیف',
+      value: item.price_with_discount,
+      type: 'number',
+    },
   ];
 
   return props;
@@ -68,26 +73,73 @@ export const showActionBuilder = (item: SubscriptionPlan): Array<ShowAction> => 
 /* -------------------------------------------------------------------------- */
 export const createPropsBuilder = (): Array<CreateProps> => {
   const createProps: Array<CreateProps> = [
-    /* ---------------------------------- IMAGE --------------------------------- */
-    // {state: 'image_id',type: 'image',title: 'تصویر اصلی',options: { isMandatory: true, titleHint: 'تنها یک عکس میتوانید آپلود کنید' },},
-    /* ------------------------------ MULTI IMAGES ------------------------------ */
-    // {state: 'media_ids',type: 'image',title: 'تصاویر ملک',options: { isMandatory: true, titleHint: 'آپلود حداقل یک مورد الزامی است', multiImage: true },},
-    /* ---------------------------------- TEXT ---------------------------------- */
-    // {state: 'title',type: 'input',title: 'عنوان',options: { maxLength: 100, isMandatory: true, placeholder: 'کد تخفیف تابستانه', keyboard: 'text' },},
-    /* --------------------------------- NUMBER --------------------------------- */
-    // {state: 'percentage',type: 'input',title: 'درصد تخفیف',options: { isMandatory: true, keyboard: 'number', convertToText: true,hint: 'سقف استفاده از تخفیف' },},
-    /* ---------------------------------- DATE ---------------------------------- */
-    // {state: 'start_at',type: 'date',title: 'تاریخ شروع کد تخفیف',options: { keyboard: 'number', isMandatory: true, convertToText: true },},
-    /* --------------------------------- SELECT --------------------------------- */
-    // {state: 'category_id',type: 'select',title: 'دسته بندی اصلی',selectItems: parentCategories,options: { isMandatory: true },},
-    /* ------------------------------ MULTI SELECT ------------------------------ */
-    // {state: 'tag_ids',type: 'multiSelect',title: 'تگ ها',selectItems: tags,options: {},},
-    /* -------------------------------- TEXT AREA ------------------------------- */
-    // {state: 'description',type: 'textarea',title: 'توضیحات',options: { keyboard: 'text', maxLength: 300 },},
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',title: 'موقعیت جغرافیایی',options: { isMandatory: true },},
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
+    {
+      state: 'title',
+      type: 'input',
+      title: 'عنوان',
+      options: { maxLength: 128, isMandatory: true, placeholder: 'یک ماهه', keyboard: 'text' },
+    },
+    {
+      state: 'duration',
+      type: 'input',
+      title: 'مدت زمان',
+      options: {
+        isMandatory: true,
+        placeholder: '30',
+        keyboard: 'number',
+        unit: 'روز',
+        hint: 'از ۱ تا ۳۶۵ روز',
+      },
+    },
+    {
+      state: 'is_active',
+      type: 'switch',
+      title: 'فعال',
+      options: { isMandatory: true },
+    },
+    { type: 'break' },
+    {
+      state: 'price',
+      type: 'input',
+      title: 'قیمت',
+      options: {
+        isMandatory: true,
+        placeholder: '100000',
+        keyboard: 'number',
+        unit: 'تومان',
+        hint: 'از صفر تا ۱۰۰ میلیون تومان',
+      },
+    },
+    {
+      state: 'price_with_discount',
+      type: 'input',
+      title: 'قیمت با تخفیف',
+      options: {
+        isMandatory: true,
+        placeholder: '100000',
+        keyboard: 'number',
+        unit: 'تومان',
+        hint: 'از صفر تا ۱۰۰ میلیون تومان',
+      },
+    },
+    { type: 'break' },
+    {
+      state: 'sort',
+      type: 'input',
+      title: 'ترتیب',
+      options: {
+        isMandatory: true,
+        placeholder: '5',
+        keyboard: 'number',
+      },
+    },
+    {
+      state: 'group',
+      type: 'select',
+      title: 'گروه',
+      selectItems: SubscriptionPlanGroupList,
+      options: { isMandatory: true },
+    },
   ];
 
   return createProps;
@@ -99,21 +151,14 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'subscriptionPlan',
-    modelTitle: 'بیس',
+    modelTitle: 'پلن',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
-
-      /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
+      { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: SubscriptionPlanGroupList },
+      { id: 30, title: 'قیمت (تومان)	', key: 'price', cellType: 'number' },
+      { id: 40, title: 'فعال بودن', key: 'is_active', cellType: 'boolean' },
+      { id: 50, title: 'مدت زمان (روز)	', key: 'duration', cellType: 'number' },
     ],
     availableActions,
   };
@@ -125,14 +170,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /*                                   FILTER                                   */
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
-  const filterProps: Array<ModifiedFilterProps> = [
-    {
-      title: '',
-      state: 'user_id',
-      type: 'input',
-      isHidden: true,
-    },
-  ];
+  const filterProps: Array<ModifiedFilterProps> = [];
 
   return filterProps;
 };
@@ -149,7 +187,7 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
     if (act === 'show' && rbac.r) availableActions.push('show');
     if (act === 'edit' && rbac.u) availableActions.push('edit');
     if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

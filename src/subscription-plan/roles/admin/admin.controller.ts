@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
-  // Delete,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -13,11 +13,10 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { ADMIN_ROUTE_GROUP } from 'src/subscription-plan/common/route-group.constant';
 import { filterValidator } from 'src/subscription-plan/common/helpers/filter-validator.helper';
-import qs from 'qs';
 import { SubscriptionPlanAdminService } from './admin.service';
 import { CreateSubscriptionPlanAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
@@ -107,15 +106,22 @@ export class SubscriptionPlanAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.subscriptionPlanAdminService.findById(id);
-  //   await this.subscriptionPlanAdminService.remove(id);
+  @ApiOperation({ operationId: 'Delete', description: '' })
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    await this.subscriptionPlanAdminService.findById(id);
+    await this.subscriptionPlanAdminService.remove(id);
+    return { messageCode: 'DELETE' };
+  }
 
-  //   return { messageCode: 'DELETE' };
-  // }
+  /* --------------------------- USER SUBSCRIPTIONS --------------------------- */
+  //  @Post('subscriptions')
+  //  findAllUserSubscriptions(@Query('page',ParseIntPipe) page:number,@Body() dto:SearchSubscriptions) {
+  //    return this.subscriptionPlansService.findAllUserSubscriptions(page,dto);
+  //  }
+
+  //  @Get('subscriptions/:id')
+  //  findOneUserSubscriptions(@Param('id',ParseIntPipe) id:number) {
+  //    return this.subscriptionPlansService.findOneUserSubscription(id);
+  //  }
 }

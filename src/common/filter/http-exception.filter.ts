@@ -175,4 +175,6 @@ const failedMessages = {
   PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
   PROPERTY_INTERCEPTOR1: 'شناسه ملک اشتباه است',
   PROPERTY_IMAGES1: 'عکس شاخص اشتباه است',
+
+  SUBSCRIPTION_PLAN_NOT_FOUND: 'پلن مورد نظر یافت نشد',
 };

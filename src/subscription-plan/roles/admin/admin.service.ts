@@ -50,7 +50,11 @@ export class SubscriptionPlanAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.SubscriptionPlanWhereInput, page: number, perPage = 50): Promise<PaginatedResult<SubscriptionPlan>> {
+  async findAll(
+    filters: Prisma.SubscriptionPlanWhereInput,
+    page: number,
+    perPage = 50,
+  ): Promise<PaginatedResult<SubscriptionPlan>> {
     const list = await paginate()<SubscriptionPlan, Prisma.SubscriptionPlanFindManyArgs>(
       this.db.subscriptionPlan,
       { where: filters },
@@ -68,7 +72,7 @@ export class SubscriptionPlanAdminService {
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
     const item = await this.db.subscriptionPlan.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (!item) throw new NotFoundException('SUBSCRIPTION_PLAN_NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
