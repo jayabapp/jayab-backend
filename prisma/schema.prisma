@@ -671,6 +671,7 @@ model SubscriptionPlan {
   price_with_discount Int?
   is_active           Boolean   @default(true)
   sort                Int?      @default(1)
+  is_promote          Boolean   @default(false)
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime? @db.Timestamp(6)
