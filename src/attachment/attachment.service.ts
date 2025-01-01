@@ -268,11 +268,11 @@ export class AttachmentService {
     if (userId) query = { ...query, user_id: userId };
     if (type) query = { ...query, type: type ?? 1 };
 
-    const attachmentsCount = await this.db.attachment.findMany({
+    const attachmentsCount = await this.db.attachment.count({
       where: query,
     });
 
-    if (attachmentsCount.length == files.length) return true;
+    if (attachmentsCount === files.length) return true;
     else throw new BadRequestException('AUTH3');
   }
 

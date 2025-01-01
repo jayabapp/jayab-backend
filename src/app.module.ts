@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MulterModule } from '@nestjs/platform-express';
@@ -26,7 +26,7 @@ import { IsNotExist } from './common/validators/is-not-exists.validator';
 import { GeneratorModule } from './generator/generator.module';
 import { CommandModule } from 'nestjs-command';
 import { IsSubCategory } from './common/validators/is-sub-category.validator';
-// import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { CategoryModule } from './category/category.module';
 import { IsParentCategory } from './common/validators/is-parent-category.validator';
 import { FirebaseModule } from './firebase/firebase.module';
@@ -83,16 +83,17 @@ import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opt
         limit: 50,
       },
     ]),
-    // RedisModule.forRootAsync({
-    //   inject: [ConfigService],
-    //   useFactory: (config: ConfigService) => ({
-    //     config: {
-    //       host: config.get('redis.host'),
-    //       port: config.get('redis.port'),
-    //       password: config.get('redis.password'),
-    //     },
-    //   }),
-    // }),
+    RedisModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        config: {
+          host: config.get('redis.host'),
+          port: config.get('redis.port'),
+          password: config.get('redis.password'),
+          keyPrefix: 'jayab',
+        },
+      }),
+    }),
     {
       ...HttpModule.register({}),
       global: true,

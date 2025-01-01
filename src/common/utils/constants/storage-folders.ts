@@ -36,6 +36,7 @@ export const STORE_LOGO_USER_FOLDER = `${appName}/images/stores`;
 
 export const FORM_FOLDER = `${appName}/images/forms`;
 
+export const CHAT_MEDIA_FOLDER = 'images/chat_media';
 /**
  * if using local storage (not S3) uncomment this const
  */

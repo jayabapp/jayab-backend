@@ -2,13 +2,15 @@ import {
   WebSocketGateway,
   OnGatewayConnection,
   WebSocketServer,
-  MessageBody,
   SubscribeMessage,
   ConnectedSocket,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { SocketService } from './socket.service';
 import { verifySocketToken } from './common/socket.strategy';
+import { SocketEvents } from './common/socket-event.enum';
+import { SocketEventChatIsTypingData } from './common/socket-data.type';
 
 @WebSocketGateway()
 export class SocketGateway implements OnGatewayConnection {
@@ -38,8 +40,11 @@ export class SocketGateway implements OnGatewayConnection {
     await this.socketService.handleDisconnect(socket);
   }
 
-  @SubscribeMessage('events')
-  handleEvent(@ConnectedSocket() socket: Socket, @MessageBody() data: string): void {
-    this.socketService.handleEvent(socket, data);
+  @SubscribeMessage(SocketEvents.CHAT_IS_TYPING)
+  async handleEvent(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: SocketEventChatIsTypingData,
+  ): Promise<void> {
+    await this.socketService.emitIsTyping(data);
   }
 }

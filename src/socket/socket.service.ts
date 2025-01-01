@@ -2,14 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
 import { PrismaService } from 'src/prisma/prisma.service';
 import Crypto from 'crypto-js';
-import { Admin } from '@prisma/client';
-import { first, isEmpty } from 'lodash';
+import {
+  Admin,
+  Attachment,
+  MessengerChatroom,
+  MessengerMessages,
+  MessengerParticipant,
+} from '@prisma/client';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import Redis from 'ioredis';
+import { userCacheStatusKey, adminCacheStatusKey } from 'src/common/helpers/redis.helper';
 import { SocketEvents } from './common/socket-event.enum';
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
 import { UserRole } from 'src/common/interfaces/role.enum';
-// import { InjectRedis } from '@liaoliaots/nestjs-redis';
-// import Redis from 'ioredis';
-import { adminCacheStatusKey, userCacheStatusKey } from 'src/common/helpers/redis.helper';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { SocketEventChatIsTypingData } from './common/socket-data.type';
+import { first, isEmpty } from 'lodash';
+import { MessengerMessagesResType } from 'src/chat/serializer/messager-message.serializer';
+import { PartialParticipant } from 'src/chat/common/chat.interface';
 
 export type SocketEmitEvent = {
   name: SocketEvents;
@@ -23,7 +32,7 @@ export type SocketEmitEvent = {
 export class SocketService {
   constructor(
     private readonly db: PrismaService,
-    // @InjectRedis() private readonly redis: Redis,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
   public socket: Server;
 
@@ -32,40 +41,40 @@ export class SocketService {
    * @param socket
    */
   async handleConnection(payload: TokenPayload, socket: Socket): Promise<void> {
-    const { role, id } = payload;
-    let key: string;
-
     console.log(`\n--------------------- SOCKET ---------------------`);
-    console.log(`🚀 Client (${role}: ${id}) Connected`);
+    console.log('🚀 Client Connected');
     console.log('🆔 Socket id: ', socket.id);
 
     /* -------------------------------------------------------------------------- */
     // check the role and connect the user
+    const { role, id } = payload;
+    let key: string;
+
     switch (role) {
       case UserRole.ADMIN:
-        socket.join(this.createRoomKey(id));
+        socket.join(this.createRoomKey(id, UserRole.ADMIN));
 
         // set the user status (online, offline)
-        // key = adminCacheStatusKey(id, socket.id);
-        // await this.redis.set(key, id);
-        // console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
+        key = adminCacheStatusKey(id, socket.id);
+        await this.redis.set(key, id);
+        console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
         break;
 
-      // case UserRole.USER:
-      //   socket.join(this.createRoomKey(id));
+      case UserRole.USER:
+        socket.join(this.createRoomKey(id, UserRole.USER));
 
-      //   set the user status (online, offline)
-      //   key = userCacheStatusKey(id, socket.id);
-      //   await this.redis.set(key, id);
-      //   console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
-      //   break;
+        // set the user status (online, offline)
+        key = userCacheStatusKey(id, socket.id);
+        await this.redis.set(key, id);
+        console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
+        break;
 
       default:
         break;
     }
 
     /* ------------------------------ LOG FOR TEST ------------------------------ */
-    // await this.fetchRedisDataForTest(key);
+    await this.fetchRedisDataForTest(key);
 
     /* -------------------------------------------------------------------------- */
     socket.emit(SocketEvents.CLIENT_CONNECTED, { socket_id: socket.id });
@@ -77,87 +86,124 @@ export class SocketService {
    * @param socket
    */
   async handleDisconnect(socket: Socket): Promise<void> {
-    // const key = first(await this.redis.keys(`*status:${socket.id}`));
+    const key = first(await this.redis.keys(`*status:${socket.id}`));
 
     console.log('\n--------------------- SOCKET ---------------------');
     console.log('🚀 Client Disconnected');
     console.log('🆔 Socket id: ', socket.id);
-    // console.log('🔑 Redis key: ', key);
+    console.log('🔑 Redis key: ', key);
 
-    // if (key) {
-    //   const userId = parseInt(key.split(':')[1]);
-    //   const role = key.split(':')[0];
+    if (key) {
+      const userId = parseInt(key.split(':')[1]);
+      const role = key.split(':')[0];
 
-    //   // del all the redis keys
-    //   const keys = await this.redis.keys(`${role}:${userId}:status*`);
-    //   !isEmpty(keys) && (await this.redis.del(keys));
+      // del all the redis keys
+      const keys = await this.redis.keys(`${role}:${userId}:status*`);
+      !isEmpty(keys) && (await this.redis.del(keys));
 
-    //   socket.broadcast.emit(SocketEvents.USER_STATUS, { user_id: userId, role, is_online: false });
-    // }
+      socket.broadcast.emit(SocketEvents.USER_STATUS, { user_id: userId, role, is_online: false });
+    }
 
     socket.disconnect();
 
     /* ------------------------------ LOG FOR TEST ------------------------------ */
-    // await this.fetchRedisDataForTest(key);
+    await this.fetchRedisDataForTest(key);
   }
 
-  /**
-   *
-   * @param ids
-   * @param event
-   * @returns
-   */
-  emit(ids: number[], event: SocketEmitEvent): void {
-    for (const id of ids) {
-      this.socket.in(this.createRoomKey(id)).emit(event.name, event);
-    }
+  /* -------------------------------------------------------------------------- */
+  /*                                EMIT METHODS                                */
+  /* -------------------------------------------------------------------------- */
 
+  emit(ids: number[], event: SocketEmitEvent, role = UserRole.USER): void {
+    for (const id of ids) {
+      this.socket.in(this.createRoomKey(id, role)).emit(event.name, event);
+    }
     return;
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                    CHAT                                    */
+  /* -------------------------------------------------------------------------- */
   /**
-   * emit to panel admin
    * @param alert
    * @returns
    */
-  async emitToAdmins(alert: {
-    event?: string;
-    eventData?: number;
-    id: number;
-    type: 'success' | 'error' | 'warn' | 'info';
-    title: string;
-    body: string;
-    route?: string;
-  }): Promise<void> {
-    return;
+  async emitNewChatMessage(
+    chatroomId: string,
+    recipient: PartialParticipant, // for socket key to emit
+    msg: MessengerMessagesResType,
+  ): Promise<void> {
+    /* -------------------------------------------------------------------------- */
+    console.log({ recipient });
+
+    // create key
+    const key = this.createRoomKey(recipient.user_id, recipient.role as UserRole);
+
+    /* -------------------------------------------------------------------------- */
+    // emit
+    this.socket.to(key).emit(SocketEvents.CHAT_NEW_MESSAGE, {
+      chatroom_id: chatroomId,
+      message: msg,
+    });
+  }
+
+  /**
+   * @param alert
+   * @returns
+   */
+  async emitDeleteMessage(
+    chatroomId: string,
+    recipientId: number, // for socket key to emit
+  ): Promise<void> {
+    /* -------------------------------------------------------------------------- */
+    // create key
+    const key = this.createRoomKey(recipientId, UserRole.USER);
+
+    /* -------------------------------------------------------------------------- */
+    // emit
+    this.socket.to(key).emit(SocketEvents.CHAT_MESSAGE_DELETED, { chatroom_id: chatroomId });
   }
 
   /**
    *
-   * @param connectedSocket
    * @param data
+   * @returns
    */
-  handleEvent(connectedSocket: Socket, data): void {
-    switch (data?.event) {
-      case 'adminHandshake':
-        connectedSocket.join(this.createRoomKey(data.adminId));
-        break;
+  async emitIsTyping(data: SocketEventChatIsTypingData): Promise<void> {
+    const chatroom = await this.db.messengerChatroom.findUnique({
+      where: { uuid: data.chatroom_id },
+      select: { participants: true },
+    });
+    if (!chatroom) return;
 
-      default:
-        break;
+    const self = chatroom.participants.find((e) => e?.id === data.participant_id);
+    const recipient = chatroom.participants.find((e) => e?.id !== data.participant_id);
+
+    if (!self) return;
+
+    if (recipient) {
+      /* -------------------------------------------------------------------------- */
+      // create key
+      const key = this.createRoomKey(recipient.user_id, recipient.role as UserRole);
+
+      /* -------------------------------------------------------------------------- */
+      // emit
+      this.socket
+        .to(key)
+        .emit(SocketEvents.CHAT_IS_TYPING, { chatroom_id: data.chatroom_id, is_typing: data.is_typing });
     }
   }
 
   /* -------------------------------------------------------------------------- */
   /*                                   HELPER                                   */
   /* -------------------------------------------------------------------------- */
-  createRoomKey(id: number): string {
-    const roomKey = Crypto.SHA1(`${id}::+jdkUDu7sff@7OOk`).toString();
+  createRoomKey(id: number, role: UserRole): string {
+    const roomKey = Crypto.SHA1(`${id}::${role}::jd&kUDu7sff@7OOk`).toString();
     return roomKey;
   }
 
   async fetchRedisDataForTest(key: string): Promise<void> {
-    // const data = await this.redis.get(key);
-    // console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
+    const data = await this.redis.get(key);
+    console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
   }
 }

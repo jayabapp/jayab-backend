@@ -9,9 +9,9 @@ export async function verifySocketToken(socket: Socket): Promise<TokenPayload> {
     if (!token) return;
 
     // verify token
-    const secret = process.env.ADMIN_AUTH_SECRET;
+    const secret = process.env.SOCKET_SECRET;
     const payload: any = verify(token, secret);
-
+    
     return payload;
   } catch (error) {
     console.log(`\n--------------------- SOCKET ---------------------`);
