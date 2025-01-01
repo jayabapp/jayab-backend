@@ -59,9 +59,10 @@ import { UserModule } from './user/user.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyModule } from './property/property.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
-import { BaseModule as BaseModule } from './__base/base.module';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 import { IsPrice } from './common/validators/price-validator.decorator';
+import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
+import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { IsPrice } from './common/validators/price-validator.decorator';
     PropertyOptionModule,
     PropertyModule,
     SubscriptionPlanModule,
+    PaymentGatewayModule,
     BaseModule,
   ],
   providers: [
