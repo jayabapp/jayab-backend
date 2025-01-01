@@ -72,9 +72,9 @@ async function main(): Promise<void> {
       await paymentGatewaySeeder();
       break;
 
-    case 'paymentMethod':
-      await paymentMethodSeeder();
-      break;
+    // case 'paymentMethod':
+    //   await paymentMethodSeeder();
+    //   break;
 
     case 'city':
       await citySeeder();

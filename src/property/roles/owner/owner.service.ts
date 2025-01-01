@@ -411,10 +411,10 @@ export class PropertyOwnerService {
     user: PartialUser,
     property: PropertyInterceptorData,
     dto: PaySubscriptionPropertyOwnerDto,
-  ): Promise<any> {
+  ): Promise<string> {
     /* -------------------------------------------------------------------------- */
     // اگر دفعه اولیست ک اشتراک خریداری میشود، اجازه خرید نردبان را ندارد
-    const isFirstSubscription = !!property.subscription_expired_at;
+    const isFirstSubscription = !property.subscription_expired_at;
 
     /* -------------------------------------------------------------------------- */
     /**
@@ -423,7 +423,7 @@ export class PropertyOwnerService {
     let subscription: SubscriptionPlan;
     let promote: SubscriptionPlan;
 
-    const url = await this.db.$transaction(async (tx) => {
+    const pay = await this.db.$transaction(async (tx) => {
       /* -------------------------------------------------------------------------- */
       /** promote */
       if (dto.promote_id) {
@@ -443,34 +443,46 @@ export class PropertyOwnerService {
 
       /* -------------------------------------------------------------------------- */
       /** payment */
-      const amount = subscription?.price + promote?.price;
+      let amount = 0;
+      if (subscription) amount += subscription?.price_with_discount || subscription?.price;
+      if (promote) amount += promote?.price_with_discount || promote?.price;
+
       const pay = await this.paymentUserService.create(user, amount, dto.redirect_url, dto.gateway, tx);
 
-      await tx.subscription.create({
-        data: {
-          property_id: property.id,
-          is_promote: true,
-          payment_id: pay.payment.id,
-          title: promote.title,
-          duration: promote.duration,
-          price: promote.price,
-          status: PropertySubscription.WAITING,
-        },
+      // حذف تمام درخواست پرداخت های پرداخت نشده
+      await tx.subscription.deleteMany({
+        where: { property_id: property.id, status: PropertySubscription.WAITING },
       });
 
-      await tx.subscription.create({
-        data: {
-          property_id: property.id,
-          payment_id: pay.payment.id,
-          title: subscription.title,
-          duration: subscription.duration,
-          price: subscription.price,
-          status: PropertySubscription.WAITING,
-        },
-      });
+      if (promote)
+        await tx.subscription.create({
+          data: {
+            property_id: property.id,
+            is_promote: true,
+            payment_id: pay.payment.id,
+            title: promote.title,
+            duration: promote.duration,
+            price: promote.price,
+            status: PropertySubscription.WAITING,
+          },
+        });
+
+      if (subscription)
+        await tx.subscription.create({
+          data: {
+            property_id: property.id,
+            payment_id: pay.payment.id,
+            title: subscription.title,
+            duration: subscription.duration,
+            price: subscription.price,
+            status: PropertySubscription.WAITING,
+          },
+        });
+
+      return pay;
     });
 
-    return url;
+    return pay.paymentUrl;
   }
 
   /* -------------------------------------------------------------------------- */

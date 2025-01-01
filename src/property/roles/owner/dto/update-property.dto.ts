@@ -467,15 +467,15 @@ export class UpdatePropertyTermsOwnerDto {
   canceling_type: CancelingType;
 
   @ApiProperty({ required: true, default: 14 })
-  @_Max(23)
-  @_Min(0)
+  @_Max(24)
+  @_Min(1)
   @Type(() => Number)
   @_IsNotEmpty()
   check_in_hour: number;
 
   @ApiProperty({ required: true, default: 12 })
-  @_Max(23)
-  @_Min(0)
+  @_Max(24)
+  @_Min(1)
   @Type(() => Number)
   @_IsNotEmpty()
   check_out_hour: number;
