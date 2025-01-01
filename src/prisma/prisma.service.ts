@@ -1,7 +1,15 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 
-const ModelsWithSoftDelete = ['City', 'Category', 'OfferCode', 'FormBuilder', 'Property', 'PropertyOption'];
+const ModelsWithSoftDelete = [
+  'City',
+  'Category',
+  'OfferCode',
+  'FormBuilder',
+  'Property',
+  'PropertyOption',
+  'SubscriptionPlan',
+];
 
 const prisma = new PrismaClient().$extends({
   model: {

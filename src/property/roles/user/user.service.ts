@@ -3,7 +3,7 @@ import { Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { PropertyStatuses } from 'src/property/common/property-status.type';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 
 @Injectable()

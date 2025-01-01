@@ -20,19 +20,26 @@ import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
-import { RequestType } from 'src/common/interfaces/user.interface';
+import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
+  UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
   UpdatePropertyMediaOwnerDto,
+  UpdatePropertyOwnerAssistantOwnerDto,
+  UpdatePropertyPriceOwnerDto,
   UpdatePropertyStepOneOwnerDto,
+  UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
+import { AttachmentService } from 'src/attachment/attachment.service';
 import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
-} from 'src/property/interceptors/owner-property.interceptor';
-import { AttachmentService } from 'src/attachment/attachment.service';
+} from 'src/property/common/interceptors/owner-property.interceptor';
+import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import { User } from '@prisma/client';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -46,9 +53,12 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Get last init prop', description: '' })
   @Get('init')
-  async getLastInit(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+  async getLastInit(
+    @Req() req: RequestType,
+    @Query() dto: FindLastInitPropertyOwnerDto,
+  ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const result = await this.propertyOwnerService.findLastInitProp(user.owner_id);
+    const result = await this.propertyOwnerService.findLastInitProp(user.owner_id, dto.property_id);
     return { result };
   }
 
@@ -61,8 +71,8 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyStepOneOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
-    const result = await this.propertyOwnerService.updateInit(property, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateInit(property, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: location' })
@@ -72,8 +82,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyLocationOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateLocation(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateLocation(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: media' })
@@ -92,8 +102,8 @@ export class PropertyOwnerController {
     // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
 
     //
-    const result = await this.propertyOwnerService.updateMedia(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateMedia(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: environment' })
@@ -103,8 +113,8 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyEnvOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateEnvironment(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateEnvironment(propertyId, dto);
+    return { messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Update property: bedroom' })
@@ -114,7 +124,72 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyBedroomOwnerDto,
   ) {
-    const result = await this.propertyOwnerService.updateBedroom(propertyId, dto);
-    return { result, messageCode: 'CREATE' };
+    await this.propertyOwnerService.updateBedroom(propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: facility' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/facility')
+  updateFacility(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyFacilityOwnerDto,
+  ) {
+    this.propertyOwnerService.updateFacility(propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: price' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/price')
+  updatePrices(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyPriceOwnerDto,
+  ) {
+    this.propertyOwnerService.updatePrices(propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: assistant' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/assistants')
+  async updateAssistant(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyOwnerAssistantOwnerDto,
+  ) {
+    const { user } = req;
+    await this.propertyOwnerService.updateAssistant(user, propertyId, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update property: terms' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/terms')
+  async updateTerms(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyTermsOwnerDto,
+  ) {
+    const { user } = req;
+    const property = req.interceptor_data as PropertyInterceptorData;
+    await this.propertyOwnerService.updateTerms(property, dto);
+    return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Pay Subscription' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/pay-subscription')
+  async paySubscription(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: PaySubscriptionPropertyOwnerDto,
+  ) {
+    const user = req.user as PartialUser;
+    const property = req.interceptor_data as PropertyInterceptorData;
+
+    //
+    const result = await this.propertyOwnerService.paySubscription(user, property, dto);
+    return { result };
   }
 }

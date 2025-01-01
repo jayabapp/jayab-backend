@@ -431,7 +431,7 @@ model User {
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
-  // turnovers        Turnover[]
+  turnovers Turnover[]
   // favorites        Favorite[]
 
   black_list MessengerBlackList[]
@@ -487,75 +487,80 @@ model Advisor {
   // rent_requests RentRequest[]
   // advisorNotes  AdvisorNote[]
   // banners       Banner[]
+  // subscriptions       Subscription[]
 
   @@map("advisors")
 }
 
 // -------------------------------- PROPERTY -------------------------------- //
 model Property {
-  id                  Int      @id() @default(autoincrement())
-  code                String   @unique
-  owner_id            Int
-  title               String?
-  land_area           Int?
-  building_area       Int?
-  floors              Int?
-  unit_per_floor      Int?
-  floor               Int?
-  construction_year   Int?
-  region_id           Int?
-  province_id         Int?
-  city_id             Int?
-  address             String?
-  lat                 Float?
-  lng                 Float?
-  feature_image_id    Int?
-  video_id            Int?
-  is_chat_enabled     Boolean?
-  is_location_visible Boolean?
-  status              Int      @db.SmallInt
-  // has_pool            Boolean?
-  // std_capacity        Int?
-  // max_capacity        Int?
-  // canceling_type      CANCELING_TYPE?
-  // subscription_id     Int?            @unique
-  // statistics          Json            @default("{}")
-  // advisor_commission  Int             @default(5) @db.SmallInt
-  // is_auto_approve     Boolean         @default(true)
+  id                      Int       @id() @default(autoincrement())
+  code                    String    @unique
+  owner_id                Int
+  title                   String?
+  land_area               Int?
+  building_area           Int?
+  floors                  Int?
+  unit_per_floor          Int?
+  floor                   Int?
+  construction_year       Int?
+  region_id               Int?
+  province_id             Int?
+  city_id                 Int?
+  address                 String?
+  lat                     Float?
+  lng                     Float?
+  feature_image_id        Int?
+  video_id                Int?
+  is_chat_enabled         Boolean?
+  is_location_visible     Boolean?
+  has_pool                Boolean?
+  std_capacity            Int?
+  max_capacity            Int?
+  canceling_type          String?
+  advisor_commission      Int       @default(0) @db.SmallInt
+  check_in_hour           Int?      @db.SmallInt
+  check_out_hour          Int?      @db.SmallInt
+  subscription_expired_at DateTime?
+  sort_order              BigInt    @default(0) // timestamp - promote
+  contact_type            Int       @default(1) @db.SmallInt
+  status                  Int       @db.SmallInt
   // calendar_updated_at DateTime?
+  // statistics          Json            @default("{}")
   // rate                Float?
   // rate_count               Int       @default(0)
+  created_at              DateTime  @default(now()) @db.Timestamp(6)
+  updated_at              DateTime  @updatedAt
+  deleted_at              DateTime?
 
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-
-  owner            Owner                @relation(fields: [owner_id], references: [id])
+  // -------------------------------------------------------------------------- //
+  owner            Owner                    @relation(fields: [owner_id], references: [id])
   property_options OptionsOnProperty[]
-  region           City?                @relation("PropertyRegion", fields: [region_id], references: [id])
-  province         City?                @relation("PropertyProvince", fields: [province_id], references: [id])
-  city             City?                @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image    Attachment?          @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video            Attachment?          @relation("Video", fields: [video_id], references: [id])
-  attachments      Attachment[]         @relation("Property")
-  temp_attachments Attachment[]         @relation("Property_Temp")
+  region           City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
+  province         City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
+  city             City?                    @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image    Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video            Attachment?              @relation("Video", fields: [video_id], references: [id])
+  attachments      Attachment[]             @relation("Property")
+  temp_attachments Attachment[]             @relation("Property_Temp")
   bedrooms         PropertyBedroom?
-  // daily_price           PropertyDailyPrice?
+  daily_price      PropertyDailyPrice?
+  assistants       PropertyOwnerAssistant[]
+  description      PropertyDescription?
+  // propertyCalendarNotes PropertyCalendarNote[]
+  // property_authorize    PropertyAuthorized?
+  // banners               Banner[]
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
-  description      PropertyDescription?
-  // propertyCalendarNotes PropertyCalendarNote[]
-  // propertyReservedDays  PropertyReservedDays[]
-  // owner_rent_request    OwnerRentRequest[]
-  // property_authorize    PropertyAuthorized?
-  // banners               Banner[]
-  // subscription          Subscription?          @relation(fields: [subscription_id], references: [id])
-  // rent_request          RentRequest[]
+  subscriptions    Subscription[]
+  payments         Payment[]
 
   chatrooms MessengerChatroom[]
 
   // @@index([id, code, advisor_commission, calendar_updated_at])
+  @@index([id, code, advisor_commission])
+  @@index([sort_order])
   @@map("properties")
 }
 
@@ -616,6 +621,41 @@ model PropertyBedroom {
   @@map("property_bedrooms")
 }
 
+model PropertyDailyPrice {
+  id                Int  @id() @default(autoincrement())
+  property_id       Int  @unique()
+  normal            Int
+  wednesday         Int
+  thursday          Int
+  friday            Int
+  peak              Int
+  cleaning          Int? @default(0)
+  additional_person Int
+  today_offer       Int?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_daily_prices")
+}
+
+model PropertyOwnerAssistant {
+  id                      Int     @id() @default(autoincrement())
+  property_id             Int
+  owner_mobile_number     String? @db.VarChar(11)
+  assistant_mobile_number String? @db.VarChar(11)
+  assistant_full_name     String?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@map("property_owner_assistants")
+}
+
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //
 model PropertyOption {
   id          Int       @id() @default(autoincrement())
@@ -634,46 +674,89 @@ model PropertyOption {
   @@map("property_options")
 }
 
+// ---------------------------- SUBSCRIPTION PLAN --------------------------- //
+model SubscriptionPlan {
+  id                  Int       @id() @default(autoincrement())
+  group               String
+  title               String    @db.VarChar
+  description         String?   @db.Text
+  duration            Int
+  price               Int
+  price_with_discount Int?
+  is_active           Boolean   @default(true)
+  sort                Int?      @default(1)
+  is_promote          Boolean   @default(false)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime? @db.Timestamp(6)
+
+  // payments Payment[]
+
+  @@map("subscription_plans")
+}
+
 // --------------------------------- PAYMENT -------------------------------- //
-// model Payment {
-//   id              Int      @id() @default(autoincrement())
-//   user_id         Int
-//   amount          BigInt
-//   pay_from_wallet Int?
-//   gateway_key     String?
-//   authority       String
-//   ref_id          String?
-//   status          Int
-//   description     String?
-//   order_id        Int?
-//   reserve_id      Int?
-//   redirect_url    String?
-//   created_at      DateTime @default(now()) @db.Timestamp(6)
-//   updated_at      DateTime @updatedAt()
+model Payment {
+  id             Int      @id() @default(autoincrement())
+  property_id    Int?
+  user_id        Int?
+  advisor_id     Int?
+  gateway_key    String?
+  amount         Int
+  pay_by_wallet  Int?
+  pay_by_gateway Int?
+  debt           Int?
+  gate           String
+  authority      String
+  ref_id         String?
+  type           String
+  status         Int
+  description    String?
+  redirect_url   String?
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  updated_at     DateTime @updatedAt()
 
-//   user          User            @relation(fields: [user_id], references: [id])
-//   order         Order?          @relation("OrderPayments", fields: [order_id], references: [id])
-//   order_payment Order[]
-//   gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
+  gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
+  property      Property?       @relation(fields: [property_id], references: [id])
+  subscriptions Subscription[]
 
-//   @@map("payments")
-// }
+  @@map("payments")
+}
 
-// model PaymentGateway {
-//   id        Int     @id() @default(autoincrement())
-//   title     String
-//   logo      String
-//   key       String  @unique
-//   is_active Boolean @default(false)
-//   params    Json[]  @db.JsonB
+model PaymentGateway {
+  id        Int     @id() @default(autoincrement())
+  title     String
+  logo      String
+  key       String  @unique
+  is_active Boolean @default(false)
+  params    Json[]  @db.JsonB
 
-//   created_at DateTime @default(now()) @db.Timestamp(6)
-//   updated_at DateTime @updatedAt()
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt()
 
-//   payment Payment[]
+  payment Payment[]
 
-//   @@map("payment_gateways")
-// }
+  @@map("payment_gateways")
+}
+
+// -------------------------------- TURNOVER -------------------------------- //
+model Turnover {
+  id                Int      @id() @default(autoincrement())
+  user_id           Int?
+  turnoverable_id   Int?
+  turnoverable_type String?
+  amount            Int
+  title             String
+  description       String
+  type              String
+  balance           Int?
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @updatedAt()
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("turnovers")
+}
 
 // model PaymentMethod {
 //   id                  Int     @id() @default(autoincrement())
@@ -936,4 +1019,25 @@ model MessengerBlackList {
 
   @@unique([blocked_id, blocker_id])
   @@map("messenger_black_list")
+}
+
+// ---------------------------------- SUBSCRIPTION ---------------------------------- //
+model Subscription {
+  id          Int      @id() @default(autoincrement())
+  property_id Int?
+  // advisor_id  Int?
+  is_promote  Boolean  @default(false)
+  title       String
+  duration    Int?
+  price       Int?
+  payment_id  Int?
+  status      Int      @db.SmallInt
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt
+
+  // advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
+  property Property? @relation(fields: [property_id], references: [id])
+  payment  Payment?  @relation(fields: [payment_id], references: [id])
+
+  @@map("subscriptions")
 }

@@ -26,7 +26,9 @@ import {
   _IsLongitude,
   _IsNotEmpty,
   _IsNumber,
+  _IsNumberString,
   _IsString,
+  _Length,
   _Max,
   _MaxLength,
   _Min,
@@ -36,6 +38,11 @@ import moment from 'moment-jalaali';
 import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
 import { IsExist } from 'src/common/validators/is-exists.validator';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
+import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
+import { IsPrice } from 'src/common/validators/price-validator.decorator';
+import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
+import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
 export class DayDto {
   @_IsNotEmpty()
@@ -311,250 +318,227 @@ export class UpdatePropertyBedroomOwnerDto {
   bathroom_tub: number;
 }
 
-// export class UpdatePropertyFacilityOwnerDto {
-//   @ApiProperty({ required: true, title: 'سرمایش' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.COOL_HEAT])
-//   @_ArrayNotEmpty()
-//   cool_heat: number[];
+export class UpdatePropertyFacilityOwnerDto {
+  @ApiProperty({ required: true, title: 'سرمایش' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.COOL_HEAT])
+  @_ArrayNotEmpty()
+  cool_heat: number[];
 
-//   @ApiProperty({ required: true, title: 'رفاهی' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.WELFARE])
-//   // @_ArrayNotEmpty()
-//   @IsOptional()
-//   welfare: number[];
+  @ApiProperty({ required: true, title: 'رفاهی' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.WELFARE])
+  // @_ArrayNotEmpty()
+  @IsOptional()
+  welfare: number[];
 
-//   @ApiProperty({ required: true, title: 'تفریحی' })
-//   @IsOptional()
-//   // @_ArrayNotEmpty()
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ENTERTAINMENT])
-//   entertainment: number[];
+  @ApiProperty({ required: true, title: 'تفریحی' })
+  // @_ArrayNotEmpty()
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ENTERTAINMENT])
+  @IsOptional()
+  entertainment: number[];
 
-//   @ApiProperty({ required: true, title: 'آشپزخانه' })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.KITCHEN])
-//   // @_ArrayNotEmpty()
-//   @IsOptional()
-//   kitchen: number[];
+  @ApiProperty({ required: true, title: 'آشپزخانه' })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.KITCHEN])
+  // @_ArrayNotEmpty()
+  @IsOptional()
+  kitchen: number[];
 
-//   @ApiProperty({ required: true, title: 'استخر دارد؟' })
-//   @_IsBoolean()
-//   @_IsNotEmpty()
-//   has_pool: boolean;
+  @ApiProperty({ required: true, title: 'استخر دارد؟' })
+  @_IsBoolean()
+  @_IsNotEmpty()
+  has_pool: boolean;
 
-//   @ApiProperty({ required: true, title: 'استخر' })
-//   @ValidateIf((e) => e.has_pool == true)
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.POOL_TYPE])
-//   @_ArrayNotEmpty()
-//   @Transform((params) => {
-//     if (!params.obj.has_pool) return [];
-//     else return params.value;
-//   })
-//   pool_type: number[];
+  @ApiProperty({ required: true, title: 'استخر' })
+  @ValidateIf((e) => e.has_pool == true)
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.POOL_TYPE])
+  @Transform((params) => {
+    if (!params.obj.has_pool) return [];
+    else return params.value;
+  })
+  @_ArrayNotEmpty()
+  pool_type: number[];
 
-//   @ApiProperty({ title: 'توضیحات امکانات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(200)
-//   facility_dscr: string;
-// }
+  @ApiProperty({ title: 'توضیحات امکانات' })
+  @_IsString()
+  @_MaxLength(200)
+  @IsOptional()
+  facility_dscr: string;
+}
 
-// export class UpdatePropertyPriceOwnerDto {
-//   @ApiProperty({ required: true, title: 'تایید خودکار', default: true })
-//   @_IsBoolean()
-//   @IsOptional()
-//   is_auto_approve: boolean;
+export class UpdatePropertyPriceOwnerDto {
+  @ApiProperty({ required: true, title: 'ظرفیت', default: 2 })
+  @_IsInt()
+  @_Max(100)
+  @_Min(1)
+  @_IsNotEmpty()
+  std_capacity: number;
 
-//   @ApiProperty({ required: true, title: 'ظرفیت', default: 2 })
-//   @_IsNotEmpty()
-//   @_IsInt()
-//   @_Max(100)
-//   @_Min(1)
-//   std_capacity: number;
+  @ApiProperty({ required: true, title: 'ظرفیت حداکثر', default: 6 })
+  @_IsInt()
+  @_Max(100)
+  @_Min(1)
+  @_IsNotEmpty()
+  max_capacity: number;
 
-//   @ApiProperty({ required: true, title: 'ظرفیت حداکثر', default: 6 })
-//   @_IsNotEmpty()
-//   @_IsInt()
-//   @_Max(100)
-//   @_Min(1)
-//   max_capacity: number;
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @_IsInt()
+  @_Max(50)
+  @_Min(0)
+  @_IsNotEmpty()
+  advisor_commission: number;
 
-//   @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
-//   @_IsInt()
-//   @_Max(50)
-//   @_Min(5)
-//   @_IsNotEmpty()
-//   advisor_commission: number;
+  // @ApiProperty({ enum: RentType, required: true, title: 'نوع اجاره', default: [RentType.DAILY] })
+  // // @Transform(({ value }) => value.map(e=> e.toUpperCase()))
+  // @_IsArray()
+  // @IsEnum(RentType, { each: true })
+  // @ArrayContains([RentType.DAILY])
+  // @_IsNotEmpty()
+  // rent_type: RentType[];
 
-//   @ApiProperty({ enum: RentType, required: true, title: 'نوع اجاره', default: [RentType.DAILY] })
-//   // @Transform(({ value }) => value.map(e=> e.toUpperCase()))
-//   @_IsNotEmpty()
-//   @_IsArray()
-//   @IsEnum(RentType, { each: true })
-//   @ArrayContains([RentType.DAILY])
-//   rent_type: RentType[];
+  //DAILY
+  @ApiProperty({ required: true, title: 'عادی', default: 1000000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  normal: number;
 
-//   //DAILY
-//   @ApiProperty({ required: true, title: 'عادی', default: 1000000 })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.DAILY])
-//   normal: number;
+  @ApiProperty({ required: true, title: 'چهارشنبه', default: 1500000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  wednesday: number;
 
-//   @ApiProperty({ required: true, title: 'چهارشنبه', default: 1500000 })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.DAILY])
-//   wednesday: number;
+  @ApiProperty({ required: true, title: 'پنج شنبه', default: 2500000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  thursday: number;
 
-//   @ApiProperty({ required: true, title: 'پنج شنبه', default: 2500000 })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.DAILY])
-//   thursday: number;
+  @ApiProperty({ required: true, title: 'جمعه', default: 2000000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  friday: number;
 
-//   @ApiProperty({ required: true, title: 'جمعه', default: 2000000 })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.DAILY])
-//   friday: number;
+  @ApiProperty({ required: true, title: 'ایام پیک', default: 3000000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  peak: number;
 
-//   @ApiProperty({ required: true, title: 'ایام پیک', default: 3000000 })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.DAILY])
-//   peak: number;
+  @ApiProperty({ required: true, title: 'هزینه نظافت', default: 200000 })
+  @Transform(({ value }) => {
+    if (value) return normalizePropertyPrice(value, true);
+    else return 0;
+  })
+  @Validate(IsPrice, [RentType.DAILY, 5000000, 0])
+  @_IsNotEmpty()
+  cleaning: number;
 
-//   @ApiProperty({ required: true, title: 'هزینه نظافت', default: 200000 })
-//   @Transform(({ value }) => {
-//     if (value) return normalizePropertyPrice(value, true);
-//     else return 0;
-//   })
-//   @IsOptional()
-//   @Validate(IsPrice, [RentType.DAILY, 5000000, 0])
-//   cleaning: number;
+  @ApiProperty({ required: true, title: 'نفر اضافه و سه سال به بالا', default: 200000 })
+  @Transform(({ value }) => {
+    if (value) return normalizePropertyPrice(value, true);
+    else return 0;
+  })
+  @Validate(IsPrice, [RentType.DAILY, 5000000, 0])
+  @_IsNotEmpty()
+  additional_person: number;
+}
 
-//   @ApiProperty({ required: true, title: 'نفر اضافه و سه سال به بالا', default: 200000 })
-//   @Transform(({ value }) => {
-//     if (value) return normalizePropertyPrice(value, true);
-//     else return 0;
-//   })
-//   @Validate(IsPrice, [RentType.DAILY, 5000000, 0])
-//   additional_person: number;
+export class UpdatePropertyTermsOwnerDto {
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
+  @_ArrayNotEmpty()
+  guest_type: number[];
 
-//   //HOURLY
-//   @ApiProperty({ required: true, title: 'عادی' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_normal: number;
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
+  @_IsNotEmpty()
+  pet: number;
 
-//   @ApiProperty({ required: true, title: 'چهارشنبه' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_wednesday: number;
+  @ApiProperty({ required: true })
+  @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
+  @_IsNotEmpty()
+  party: number;
 
-//   @ApiProperty({ required: true, title: 'پنج شنبه' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_thursday: number;
+  @ApiProperty({ required: true, enum: CancelingType })
+  @_IsEnum(CancelingType)
+  @Transform(({ value }) => value?.toUpperCase())
+  @_IsNotEmpty()
+  canceling_type: CancelingType;
 
-//   @ApiProperty({ required: true, title: 'جمعه' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_friday: number;
+  @ApiProperty({ required: true, default: 14 })
+  @_Max(24)
+  @_Min(1)
+  @Type(() => Number)
+  @_IsNotEmpty()
+  check_in_hour: number;
 
-//   @ApiProperty({ required: true, title: 'ایام پیک' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_peak: number;
+  @ApiProperty({ required: true, default: 12 })
+  @_Max(24)
+  @_Min(1)
+  @Type(() => Number)
+  @_IsNotEmpty()
+  check_out_hour: number;
 
-//   @ApiProperty({ required: true, title: 'هزینه نظافت' })
-//   @Transform(({ value }) => {
-//     if (value) return normalizePropertyPrice(value, true);
-//     else return 0;
-//   })
-//   @IsOptional()
-//   @Validate(IsPrice, [RentType.HOURLY, 5000000, 0])
-//   h_cleaning: number;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  guest_dscr: string;
 
-//   @ApiProperty({ required: true, title: 'نفر اضافه و سه سال به بالا' })
-//   @Transform(({ value }) => {
-//     if (value) return normalizePropertyPrice(value, true);
-//     else return 0;
-//   })
-//   @Validate(IsPrice, [RentType.HOURLY])
-//   h_additional_person: number;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  pet_dscr: string;
 
-//   @ApiProperty({ required: true, title: 'اجاره یک ماه' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.MONTHLY])
-//   one_month_rent: number;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  party_dscr: string;
 
-//   @ApiProperty({ required: true, title: 'قیمت رهن' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.YEARLY])
-//   rent: number;
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  doc_dscr: string;
 
-//   @ApiProperty({ required: true, title: 'قیمت اجاره ماهانه' })
-//   @Transform((e) => normalizePropertyPrice(e.value))
-//   @Validate(IsPrice, [RentType.YEARLY, 9000000000])
-//   deposit: number;
-// }
+  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  other_dscr: string;
 
-// export class UpdatePropertyTermsOwnerDto {
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
-//   @_ArrayNotEmpty()
-//   guest_type: number[];
+  @ApiProperty({ title: 'توضیحات تبلیغاتی', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(800)
+  @IsOptional()
+  ad_dscr: string;
 
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
-//   @_IsNotEmpty()
-//   pet: number;
+  @ApiProperty({ title: 'توضیحات ملک', default: 'توضیحات تستی' })
+  @_IsString()
+  @_MaxLength(1000)
+  @IsOptional()
+  property_dscr: string;
+}
 
-//   @ApiProperty({ required: true })
-//   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
-//   @_IsNotEmpty()
-//   party: number;
+export class UpdatePropertyOwnerAssistantOwnerDto {
+  @ApiProperty({ required: true, default: 'نام تستی' })
+  @_Length(1, 128)
+  @_IsString()
+  @IsOptional()
+  assistant_full_name: string;
 
-//   @ApiProperty({ required: true })
-//   @_IsNotEmpty()
-//   @_IsEnum(CANCELING_TYPE)
-//   @Transform(({ value }) => value?.toUpperCase())
-//   canceling_type: CANCELING_TYPE;
+  @ApiProperty({ required: true, default: '09120000000' })
+  @_IsNumberString()
+  @Validate(IsMobileNumber)
+  @IsOptional()
+  assistant_mobile: string;
 
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   guest_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   pet_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   party_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   doc_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   other_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات تبلیغاتی' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(800)
-//   ad_dscr: string;
-
-//   @ApiProperty({ title: 'توضیحات ملک' })
-//   @IsOptional()
-//   @_IsString()
-//   @_MaxLength(1000)
-//   property_dscr: string;
-// }
+  @ApiProperty({ required: true, enum: [1, 2, 4], default: 1 })
+  @_IsEnum([1, 2, 3])
+  @_IsInt()
+  @_IsNotEmpty()
+  show_mobile_type: number;
+}

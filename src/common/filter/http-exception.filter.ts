@@ -181,4 +181,11 @@ const failedMessages = {
   PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
   PROPERTY_INTERCEPTOR1: 'شناسه ملک اشتباه است',
   PROPERTY_IMAGES1: 'عکس شاخص اشتباه است',
+  PROPERTY_SUB1: 'نمی توانید نردبان را فعال کنید',
+  PROPERTY_SUB2: 'برای فعال کردن نردبان باید حداقل ۲ روز از زمان انتشار آگهی گذشته باشد',
+  PROPERTY_SUB3: 'انتخاب اشتراک اجباری است',
+  PROPERTY_SUB4: 'اشتراک قبلا خریداری شده است',
+
+  SUBSCRIPTION_PLAN_NOT_FOUND: 'پلن مورد نظر یافت نشد',
+  SUBSCRIPTION_PLAN_NOT_FOUND2: 'پلن انتخاب شده اشتباه است',
 };

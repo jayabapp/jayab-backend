@@ -7,7 +7,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { InProgressReserveStatus } from '../common/property-status.type';
 import { Property } from '@prisma/client';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 
