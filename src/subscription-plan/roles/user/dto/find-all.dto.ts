@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { _IsEnum, _IsNotEmpty } from 'src/common/pipes/validator-translate.pipe';
+import { Type } from 'class-transformer';
+import { IsOptional } from 'class-validator';
+import { _IsEnum, _IsInt, _IsNotEmpty, _Min } from 'src/common/pipes/validator-translate.pipe';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
 export class FindAllSubscriptionPlanUserDto {
@@ -7,4 +9,11 @@ export class FindAllSubscriptionPlanUserDto {
   @_IsEnum(SubscriptionPlanGroup)
   @_IsNotEmpty()
   type: SubscriptionPlanGroup;
+
+  @ApiProperty({ required: false, default: 1 })
+  @_Min(1)
+  @_IsInt()
+  @Type(() => Number)
+  @IsOptional()
+  property_id: number;
 }
