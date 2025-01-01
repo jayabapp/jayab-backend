@@ -527,13 +527,13 @@ export class UpdatePropertyOwnerAssistantOwnerDto {
   @ApiProperty({ required: true, default: 'نام تستی' })
   @_Length(1, 128)
   @_IsString()
-  @_IsNotEmpty()
+  @IsOptional()
   assistant_full_name: string;
 
   @ApiProperty({ required: true, default: '09120000000' })
   @_IsNumberString()
   @Validate(IsMobileNumber)
-  @_IsNotEmpty()
+  @IsOptional()
   assistant_mobile: string;
 
   @ApiProperty({ required: true, enum: [1, 2, 4], default: 1 })

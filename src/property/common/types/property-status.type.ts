@@ -45,8 +45,13 @@ export const PropertyStatusesList: Array<EnumList> = [
     hex: '#eab308 ',
   },
   {
+    id: PropertyStatuses.PUBLISHED,
+    title: 'منتشر شده',
+    hex: '#22c55e',
+  },
+  {
     id: PropertyStatuses.REJECTED,
-    title: 'مسیر دسترسی',
+    title: 'تایید نشده',
     hex: '#be123c',
   },
   {

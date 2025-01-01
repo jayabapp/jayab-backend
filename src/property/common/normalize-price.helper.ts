@@ -8,7 +8,8 @@
  */
 export const normalizePropertyPrice = (price: number, force = false): number => {
   const roundingDegree = 100000;
-  if (!price) return 0;
+  price = +price;
+  if (!price || Number.isNaN(price)) return 0;
   if (price < roundingDegree && !force) return price;
 
   const n = Math.floor(price / roundingDegree) * roundingDegree;

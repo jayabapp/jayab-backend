@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, Owner, User } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Property, Prisma, Owner, User, SubscriptionPlan } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -23,10 +23,19 @@ import {
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import moment from 'moment-jalaali';
+import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
+import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
+import { PaymentUserService } from 'src/payment/roles/user/user.service';
 
 @Injectable()
 export class PropertyOwnerService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly subscriptionPlanUserService: SubscriptionPlanUserService,
+    private readonly paymentUserService: PaymentUserService,
+  ) {}
 
   /**
    * Create a property with init status
@@ -51,6 +60,9 @@ export class PropertyOwnerService {
       description: true,
       property_options: { include: { option: true } },
       attachments: { where: { type: 1 } },
+      assistants: {
+        select: { assistant_full_name: true, assistant_mobile_number: true, owner_mobile_number: true },
+      },
       bedrooms: true,
       // property_authorize: true,
       // propertyReservedDays: { where: { timestamp: this.dayHelper.todayUnix() } },
@@ -82,7 +94,7 @@ export class PropertyOwnerService {
     /* -------------------------------------------------------------------------- */
     // create new property
     const newProp = await this.db.property.create({
-      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
+      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code, sort_order: Date.now() },
       include,
       // data: { owner_id: user.owner_id, status: PropertyStatuses.INIT, statistics: propertyStatistics },
     });
@@ -301,8 +313,8 @@ export class PropertyOwnerService {
     let data: Prisma.PropertyOwnerAssistantUncheckedCreateInput = {
       property_id: propertyId,
       owner_mobile_number: user.mobile_number,
-      assistant_mobile_number: dto.assistant_mobile,
-      assistant_full_name: dto.assistant_full_name,
+      assistant_mobile_number: dto?.assistant_mobile,
+      assistant_full_name: dto?.assistant_full_name,
     };
 
     switch (dto.show_mobile_type) {
@@ -328,6 +340,7 @@ export class PropertyOwnerService {
     this.db.$transaction(async (tx) => {
       await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
       await tx.propertyOwnerAssistant.create({ data });
+      await tx.property.update({ where: { id: propertyId }, data: { contact_type: dto.show_mobile_type } });
     });
   }
 
@@ -387,6 +400,77 @@ export class PropertyOwnerService {
         create: { property_id: propertyId, ...queryData },
       });
     });
+  }
+
+  /**
+   *
+   * @param property
+   * @param dto
+   */
+  async paySubscription(
+    user: PartialUser,
+    property: PropertyInterceptorData,
+    dto: PaySubscriptionPropertyOwnerDto,
+  ): Promise<any> {
+    /* -------------------------------------------------------------------------- */
+    // اگر دفعه اولیست ک اشتراک خریداری میشود، اجازه خرید نردبان را ندارد
+    const isFirstSubscription = !!property.subscription_expired_at;
+
+    /* -------------------------------------------------------------------------- */
+    /**
+     * Transaction: payment, promote, subscription
+     */
+    let subscription: SubscriptionPlan;
+    let promote: SubscriptionPlan;
+
+    const url = await this.db.$transaction(async (tx) => {
+      /* -------------------------------------------------------------------------- */
+      /** promote */
+      if (dto.promote_id) {
+        if (isFirstSubscription) throw new BadRequestException('PROPERTY_SUB1');
+
+        promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
+          dto.promote_id,
+          property.sort_order,
+        );
+      }
+
+      /* -------------------------------------------------------------------------- */
+      /** subscription */
+      if (isFirstSubscription && !dto.subscription_id) throw new BadRequestException('PROPERTY_SUB3');
+      else if (dto.subscription_id)
+        subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
+
+      /* -------------------------------------------------------------------------- */
+      /** payment */
+      const amount = subscription?.price + promote?.price;
+      const pay = await this.paymentUserService.create(user, amount, dto.redirect_url, dto.gateway, tx);
+
+      await tx.subscription.create({
+        data: {
+          property_id: property.id,
+          is_promote: true,
+          payment_id: pay.payment.id,
+          title: promote.title,
+          duration: promote.duration,
+          price: promote.price,
+          status: PropertySubscription.WAITING,
+        },
+      });
+
+      await tx.subscription.create({
+        data: {
+          property_id: property.id,
+          payment_id: pay.payment.id,
+          title: subscription.title,
+          duration: subscription.duration,
+          price: subscription.price,
+          status: PropertySubscription.WAITING,
+        },
+      });
+    });
+
+    return url;
   }
 
   /* -------------------------------------------------------------------------- */

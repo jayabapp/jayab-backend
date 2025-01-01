@@ -20,7 +20,7 @@ import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { PropertyOwnerService } from './owner.service';
-import { RequestType } from 'src/common/interfaces/user.interface';
+import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -38,6 +38,8 @@ import {
   PropertyInterceptorData,
 } from 'src/property/common/interceptors/owner-property.interceptor';
 import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import { User } from '@prisma/client';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -173,5 +175,21 @@ export class PropertyOwnerController {
     const property = req.interceptor_data as PropertyInterceptorData;
     await this.propertyOwnerService.updateTerms(property, dto);
     return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Pay Subscription' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/pay-subscription')
+  async paySubscription(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: PaySubscriptionPropertyOwnerDto,
+  ) {
+    const user = req.user as PartialUser;
+    const property = req.interceptor_data as PropertyInterceptorData;
+
+    //
+    const result = await this.propertyOwnerService.paySubscription(user, property, dto);
+    return { result };
   }
 }

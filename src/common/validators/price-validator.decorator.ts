@@ -10,14 +10,13 @@ export class IsPrice implements ValidatorConstraintInterface {
     const MAX_PRICE = validationArguments.constraints[1] ?? 1000000000;
     const MIN_PRICE = validationArguments.constraints[2] ?? 200000;
 
-    const rentType: RentType[] = validationArguments?.object['rent_type'] ?? [];
-    const type = Array.isArray(validationArguments.constraints)
-      ? validationArguments.constraints[0]
-      : undefined;
-    const intValue = parseInt(`${value}`);
-
-    if (!rentType?.includes(type)) return true; //check type - validate if
+    // const rentType: RentType[] = validationArguments?.object['rent_type'] ?? [];
+    // const type = Array.isArray(validationArguments.constraints)
+    //   ? validationArguments.constraints[0]
+    //   : undefined;
+    // if (!rentType?.includes(type)) return true; //check type - validate if
     // if (!intValue) return false;
+    const intValue = parseInt(`${value}`);
     if (typeof intValue !== 'number' && !Number.isInteger(intValue)) return false;
     if (intValue > MAX_PRICE || intValue < MIN_PRICE) return false;
     return true;

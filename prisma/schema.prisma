@@ -514,7 +514,8 @@ model Property {
   check_in_hour           Int?      @db.SmallInt
   check_out_hour          Int?      @db.SmallInt
   subscription_expired_at DateTime?
-  promoted_at             DateTime?
+  sort_order              BigInt    @default(0) // timestamp - promote
+  contact_type            Int       @default(1) @db.SmallInt
   status                  Int       @db.SmallInt
   // calendar_updated_at DateTime?
   // statistics          Json            @default("{}")
@@ -548,6 +549,7 @@ model Property {
 
   // @@index([id, code, advisor_commission, calendar_updated_at])
   @@index([id, code, advisor_commission])
+  @@index([sort_order])
   @@map("properties")
 }
 

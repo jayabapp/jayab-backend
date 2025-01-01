@@ -1,24 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriptionPlan, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSubscriptionPlanUserDto } from './dto/create.dto';
-import { UpdateSubscriptionPlanUserDto } from './dto/update.dto';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class SubscriptionPlanUserService {
   constructor(private readonly db: PrismaService) {}
-
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
-  async create(dto: CreateSubscriptionPlanUserDto): Promise<SubscriptionPlan> {
-    const newSubscriptionPlan = await this.db.subscriptionPlan.create({ data: dto });
-    return newSubscriptionPlan;
-  }
 
   /**
    * find all SubscriptionPlan
@@ -46,36 +34,30 @@ export class SubscriptionPlanUserService {
    * @param subscriptionPlanId
    * @returns
    */
-  async findOne(subscriptionPlanId: number): Promise<SubscriptionPlan> {
+  async findOne(subscriptionPlanId: number, isPromote = false): Promise<SubscriptionPlan> {
     const item = await this.db.subscriptionPlan.findFirst({
       where: { id: subscriptionPlanId },
     });
 
-    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (!item) throw new NotFoundException('SUBSCRIPTION_PLAN_NOT_FOUND');
+    if (isPromote && !item.is_promote) throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND2');
 
     return item;
   }
 
   /**
-   * update
+   *
    * @param subscriptionPlanId
-   * @param dto
-   * @returns
+   * @param propertySortOrder
    */
-  async update(subscriptionPlanId: number, dto: UpdateSubscriptionPlanUserDto): Promise<SubscriptionPlan> {
-    const item = await this.db.subscriptionPlan.update({
-      where: { id: subscriptionPlanId },
-      data: dto,
-    });
+  async checkCanBuyPromote(subscriptionPlanId: number, propertySortOrder: BigInt): Promise<SubscriptionPlan> {
+    //
+    const timestamp = Number(propertySortOrder);
+    const twoDaysAgo = moment().subtract(2, 'days');
+    if (moment(timestamp).isBefore(twoDaysAgo)) throw new BadRequestException('PROPERTY_SUB2');
 
-    return item;
+    //
+    const promote = await this.findOne(subscriptionPlanId, true);
+    return promote;
   }
-
-  // /**
-  //  * remove
-  //  * @param subscriptionPlanId
-  //  */
-  // async remove(subscriptionPlanId: number): Promise<void> {
-  //   await this.db.subscriptionPlan.delete({ where: { id: subscriptionPlanId } });
-  // }
 }
