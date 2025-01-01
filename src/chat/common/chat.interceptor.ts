@@ -16,7 +16,6 @@ export class FindOneChatInterceptor implements NestInterceptor {
 
     const userId = request.user.id;
     const isAdmin = request.user?.role_id;
-    const recipientRole = isAdmin ? UserRole.USER : UserRole.ADMIN;
 
     const chatroomId = request.params?.chatroomId;
     if (!chatroomId) throw new BadRequestException('CHAT1');
@@ -28,7 +27,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
         id: true,
         uuid: true,
         created_at: true,
-        property: { select: { id: true, status: true } },
+        // property: { select: { id: true, status: true } },
         participants: {
           where: { deleted_at: null },
           select: { id: true, user_id: true, role: true, message_read_at: true },
@@ -40,8 +39,8 @@ export class FindOneChatInterceptor implements NestInterceptor {
     if (!item) throw new BadRequestException('CHAT0');
 
     //ممکنه ای دی کاربر و ادمین یکی باشه در نتیجه رول هم باید چک بشه
-    const sender = item.participants.find((e) => e.user_id === userId && e.role !== recipientRole);
-    const recipient = item.participants.find((e) => e.role === recipientRole);
+    const sender = item.participants.find((e) => e.user_id === userId);
+    const recipient = item.participants.find((e) => e.user_id !== userId);
 
     if (!sender) throw new BadRequestException('CHAT3');
 

@@ -33,6 +33,7 @@ import Redis from 'ioredis';
 import { first } from 'lodash';
 import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { BlockParticipantUserDto } from './dto/blacklist.dto';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -52,7 +53,7 @@ export class ChatUserController {
    */
   @ApiOperation({ operationId: 'Create Or Find Chatroom' })
   @Post()
-  async createOrFind(
+  async findOrCreate(
     @Req() request: RequestType,
     @Body() dto: CreateChatUserDto,
   ): Promise<SuccessResponseArgs> {
@@ -64,7 +65,7 @@ export class ChatUserController {
 
     /* -------------------------------------------------------------------------- */
     // create chatroom
-    const chatroomId = await this.sharedChatService.create(user.id, dto);
+    const chatroomId = await this.sharedChatService.findOrCreate(user.id, dto);
 
     /* -------------------------------------------------------------------------- */
     return { result: { chatroom_id: chatroomId } };
@@ -129,9 +130,9 @@ export class ChatUserController {
       isRecipientOnline = !!first(await this.redis.keys(`${recipient.role}:${recipient.user_id}:status*`));
     }
 
-    const unreadCount = await this.sharedChatService.unreadCountInChatroom(
-      chatroom.id,
-      chatroom.participants.self,
+    const isBlocked = await this.sharedChatService.checkIsBlocked(
+      chatroom.participants.recipient.participant_id,
+      chatroom.participants.self.participant_id,
     );
 
     const result = {
@@ -139,7 +140,7 @@ export class ChatUserController {
       self: chatroom.participants.self,
       recipient: chatroom.participants.recipient,
       is_recipient_online: isRecipientOnline,
-      unread_count: unreadCount,
+      is_blocked: isBlocked,
     };
 
     return { result };
@@ -219,6 +220,20 @@ export class ChatUserController {
   async unreadCount(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
     await this.sharedChatService.unreadCount(user.id);
+
+    return {};
+  }
+
+  @ApiOperation({ operationId: 'Black List' })
+  @UseInterceptors(FindOneChatInterceptor)
+  @Post(':chatroomId/blacklist')
+  async blacklist(
+    @Req() request: RequestType,
+    @Param('chatroomId') chatroomId: string,
+    @Body() dto: BlockParticipantUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = request.user;
+    await this.sharedChatService.blacklist(dto, user.id);
 
     return {};
   }

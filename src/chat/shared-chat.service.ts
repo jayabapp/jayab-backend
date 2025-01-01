@@ -9,6 +9,7 @@ import { UserRole } from 'src/common/interfaces/role.enum';
 import moment from 'moment-jalaali';
 import { PartialParticipant } from './common/chat.interface';
 import { v7 as uuid } from 'uuid';
+import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
 
 @Injectable()
 export class SharedChatService {
@@ -23,7 +24,13 @@ export class SharedChatService {
    * @param dto
    * @returns
    */
-  async create(userId: number, dto: CreateChatUserDto): Promise<string> {
+  async findOrCreate(userId: number, dto: CreateChatUserDto): Promise<string> {
+    const part = await this.db.messengerParticipant.findFirst({
+      where: { user_id: userId, chatroom: { property_id: dto?.property_id } },
+      select: { chatroom: { select: { uuid: true } } },
+    });
+    if (part) return part.chatroom.uuid;
+
     const newRoom = await this.db.messengerChatroom.create({
       data: {
         property_id: dto?.property_id,
@@ -119,7 +126,9 @@ export class SharedChatService {
    */
   async canCreateChat(userId: number, dto: CreateChatUserDto): Promise<boolean> {
     //limitation logic
-    if (false) throw new BadRequestException('CHAT3');
+
+    const property = await this.db.property.findFirst({ where: { id: dto.property_id } });
+    if (!property) throw new BadRequestException('CHAT5');
 
     return true;
   }
@@ -210,5 +219,47 @@ export class SharedChatService {
     });
 
     return;
+  }
+
+  /**
+   * create or delete blacklist according to action
+   * @param dto
+   * @param userId
+   * @returns
+   */
+  async blacklist(dto: BlockParticipantUserDto, userId: number): Promise<void> {
+    if (dto.action === 1)
+      await this.db.messengerBlackList.upsert({
+        where: { blocked_id_blocker_id: { blocked_id: dto.target_participant_id, blocker_id: userId } },
+        create: {
+          blocked_id: dto.target_participant_id,
+          blocker_id: userId,
+        },
+        update: {},
+      });
+    else if (dto.action === 0) {
+      const prev = await this.db.messengerBlackList.findUnique({
+        where: { blocked_id_blocker_id: { blocked_id: dto.target_participant_id, blocker_id: userId } },
+      });
+      if (!prev) throw new BadRequestException('CHAT6');
+
+      await this.db.messengerBlackList.delete({ where: { id: prev.id } });
+    }
+
+    return;
+  }
+
+  /**
+   * بررسی اینکه آیا یک کاربر توسط کاربر دیگر بلاک شده است یا خیر
+   * @param blockedId
+   * @param blockerId
+   * @returns
+   */
+  async checkIsBlocked(blockedId: number, blockerId: number): Promise<boolean> {
+    const isBlocked = await this.db.messengerBlackList.findFirst({
+      where: { blocked_id: blockedId, blocker_id: blockerId },
+    });
+
+    return !!isBlocked;
   }
 }
