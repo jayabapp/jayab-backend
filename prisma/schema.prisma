@@ -546,6 +546,7 @@ model Property {
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
   subscriptions    Subscription[]
+  payments         Payment[]
 
   // @@index([id, code, advisor_commission, calendar_updated_at])
   @@index([id, code, advisor_commission])
@@ -687,6 +688,7 @@ model SubscriptionPlan {
 // --------------------------------- PAYMENT -------------------------------- //
 model Payment {
   id             Int      @id() @default(autoincrement())
+  property_id    Int?
   user_id        Int?
   advisor_id     Int?
   gateway_key    String?
@@ -705,6 +707,7 @@ model Payment {
   updated_at     DateTime @updatedAt()
 
   gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
+  property      Property?       @relation(fields: [property_id], references: [id])
   subscriptions Subscription[]
 
   @@map("payments")

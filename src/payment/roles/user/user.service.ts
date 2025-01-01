@@ -4,7 +4,7 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Payment, Prisma, User } from '@prisma/client';
+import { Payment, Prisma, Property, Subscription, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CommonStatuses } from 'src/common/interfaces/common-status.interface';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
@@ -18,6 +18,10 @@ import { ConfigService } from '@nestjs/config';
 import { MD5 } from 'crypto-js';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
+import { first } from 'lodash';
+import { endOfDate } from 'src/common/helpers/date.helper';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class PaymentUserService {
@@ -102,174 +106,102 @@ export class PaymentUserService {
     }
   }
 
-  // async paymentCallback(payment: Payment & { order: Order & { offer_code: OfferCode } }): Promise<Payment> {
-  //   const gateway = payment.gateway_key as PaymentGatewayEnum;
-  //   let isVerified = false;
-  //   console.log({ gateway, payment });
+  async subscriptionPaymentCallback(payment: Payment): Promise<Payment> {
+    const gateway = payment.gateway_key as PaymentGatewayEnum;
+    let isVerified = false;
 
-  //   if (payment.pay_from_wallet > 0) isVerified = true;
-  //   else
-  //     switch (gateway) {
-  //       case PaymentGatewayEnum.SANDBOX:
-  //         isVerified = true;
-  //         break;
+    switch (gateway) {
+      case PaymentGatewayEnum.SANDBOX:
+        isVerified = true;
+        break;
 
-  //       case PaymentGatewayEnum.ZARINPAL:
-  //         const res = await this.zarinpalService.verify(payment);
-  //         isVerified = res?.isValid;
-  //         break;
+      case PaymentGatewayEnum.ZARINPAL:
+        const res = await this.zarinpalService.verify(payment);
+        isVerified = res?.isValid;
+        break;
 
-  //       default:
-  //         break;
-  //     }
+      default:
+        break;
+    }
 
-  //   if (!isVerified) return;
+    if (!isVerified) return;
 
-  //   /* ----------------------------- PAYMENT PROCESS ---------------------------- */
-  //   // پس از آپدیت وضعیت پرداخت اگر در پرداخت هزینه از کیف پول کاربر استفاده شده بود مقدار آن از کیف پول کاربر کم میشود و سفارش به حالت در حال پردازش قرار میگیرد
-  //   const updatedPayment = await this.db.$transaction(async (tx) => {
-  //     const refId = uuidv7();
-  //     const turnoverableType = 'order';
-  //     const descriptionType = 'سفارش';
-  //     const turnoverableId = payment.order_id;
-  //     const paymentAmount = Number(payment.amount) / 10; //convert IRR to IRT
+    /* ----------------------------- PAYMENT PROCESS ---------------------------- */
+    const updatedPayment = await this.db.$transaction(async (tx) => {
+      const refId = uuidv7();
 
-  //     // update payment
-  //     const item = await tx.payment.update({
-  //       where: { id: payment.id },
-  //       include: { order: true },
-  //       data: { status: CommonStatuses.APPROVED, ref_id: refId },
-  //     });
+      // update payment
+      const item = await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatuses.APPROVED,
+          ref_id: refId,
+          subscriptions: {
+            updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
+          },
+        },
+        include: {
+          subscriptions: {
+            select: {
+              property: { select: { id: true, subscription_expired_at: true } },
+              is_promote: true,
+              duration: true,
+            },
+          },
+        },
+      });
 
-  //     // کد تخفیف فقط در سفارش قابل استفاده است
-  //     let orderOfferCode: OfferCode | null = null;
-  //     if (payment?.order?.offer_code) orderOfferCode = payment.order.offer_code;
+      const property = first(item.subscriptions)?.property;
 
-  //     /* -------------------------------------------------------------------------- */
-  //     /*                             UPDATE USER WALLET                             */
-  //     /* -------------------------------------------------------------------------- */
-  //     // اگر مقدار پرداخت از کیف پول بزرگتر از صفر باشد یعنی مبلغ از کیف پول پرداخت شده است
-  //     if (item.pay_from_wallet && item.pay_from_wallet > 0) {
-  //       // ایجاد تراکنش برای پرداخت از کیف پول
-  //       await this.db.client.turnover.createWithBalanceUpdate({
-  //         user_id: item.user_id,
-  //         amount: -item.pay_from_wallet,
-  //         title: '',
-  //         description: `کسر از کیف پول برای ${descriptionType} شماره ${turnoverableId}`,
-  //         type:
-  //           turnoverableType === 'order'
-  //             ? TurnoverType.PAY_ORDER_BY_WALLET
-  //             : TurnoverType.PAY_RESERVE_BY_WALLET,
-  //         turnoverable_id: turnoverableId,
-  //         turnoverable_type: turnoverableType,
-  //       });
-  //     }
+      for (const e of item.subscriptions) {
+        if (e?.is_promote) {
+          await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
+        } else {
+          const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+          const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
 
-  //     /* -------------------------------------------------------------------------- */
-  //     /*                                UPDATE ORDER                                */
-  //     /* -------------------------------------------------------------------------- */
-  //     const updatedOrder = await tx.order.update({
-  //       where: { id: item.order_id },
-  //       data: { status: OrderStatuses.IN_PROCESS, payment_id: item.id },
-  //       include: { items: { select: { business_product_price_id: true, quantity: true } } },
-  //     });
+          //
+          await tx.property.update({
+            where: { id: property.id },
+            data: { subscription_expired_at: newExpDate },
+          });
+        }
+      }
 
-  //     /**
-  //      * decrement product stock
-  //      */
-  //     for (const e of updatedOrder.items) {
-  //       await tx.businessProductPrice.update({
-  //         where: { id: e.business_product_price_id },
-  //         data: { stock: { decrement: e.quantity } },
-  //       });
-  //     }
-  //     /* -------------------------------------------------------------------------- */
-  //     /*                                  TURNOVER                                  */
-  //     /* -------------------------------------------------------------------------- */
-  //     if (item.amount > 0 && !item.pay_from_wallet) {
-  //       // ایجاد تراکنش برای پرداخت از طریق درگاه
-  //       await this.db.client.turnover.createWithBalanceUpdate({
-  //         user_id: item.user_id,
-  //         amount: paymentAmount,
-  //         title: '',
-  //         description: `افزایش موجودی برای ${descriptionType} شماره ${turnoverableId}`,
-  //         type: TurnoverType.GATEWAY_PAYMENT,
-  //         turnoverable_id: turnoverableId,
-  //         turnoverable_type: turnoverableType,
-  //       });
+      return item;
+    });
 
-  //       // ایجاد تراکنش برای پرداخت هزینه سفارش یا رزرو
-  //       await this.db.client.turnover.createWithBalanceUpdate({
-  //         user_id: item.user_id,
-  //         amount: -paymentAmount,
-  //         title: '',
-  //         description: `پرداخت مبلغ برای ${descriptionType} شماره ${turnoverableId}`,
-  //         type: turnoverableType === 'order' ? TurnoverType.PAY_ORDER : TurnoverType.PAY_RESERVE,
-  //         turnoverable_id: turnoverableId,
-  //         turnoverable_type: turnoverableType,
-  //       });
-  //     }
+    /* -------------------------------------------------------------------------- */
+    /* SEND NOTIFICATION */
+    // await this.notificationSharedService.createNotification({
+    //   user: { id: null, role: UserRole.ADMIN },
+    //   mustSendNotif: true,
+    //   notification: {
+    //     title: 'سفارش جدید',
+    //     body: `یک سفارش جدید ثبت شده`,
+    //   },
+    //   notificationType: NotificationTypes.NEW_ORDER,
+    //   notificationableId: updatedPayment?.order_id?.toString(),
+    // });
 
-  //     // بررسی کد تخفیف
-  //     // اگر کد تخفیف به صورت عمومی باشد جدید برای کاربر استفاده میکنیم
-  //     // اگر اختصاصی باشد فقط آپدیت میکنیم
-  //     // بررسی های لازم برای کد تخفیف در مرحله قبل از پرداخت انجام میشود
-  //     if (orderOfferCode) {
-  //       // اگر کد عمومی باشد یک رکورد جدید ایجاد میکنیم
-  //       if (orderOfferCode.is_public) {
-  //         await tx.customerOfferCode.create({
-  //           data: { customer_id: payment.user_id, offer_code_id: orderOfferCode.id, used_at: new Date() },
-  //         });
-  //       } else {
-  //         // اگر اختصاصی باشد رکورد مورد نظر را آپدیت میکنیم
-  //         await tx.customerOfferCode.update({
-  //           where: {
-  //             offer_code_id_customer_id: {
-  //               offer_code_id: orderOfferCode.id,
-  //               customer_id: payment.user_id,
-  //             },
-  //           },
-  //           data: { used_at: new Date() },
-  //         });
-  //       }
-  //     }
+    return updatedPayment;
+  }
 
-  //     return item;
-  //   });
+  async checkAuthority(authority: string): Promise<{ payment: Payment; isValid: boolean } | undefined> {
+    const payment = await this.db.payment.findFirst({
+      where: { authority },
+      include: { subscriptions: true, property: true },
+    });
 
-  //   /* -------------------------------------------------------------------------- */
-  //   /* SEND NOTIFICATION */
-  //   await this.notificationSharedService.createNotification({
-  //     user: { id: null, role: UserRole.ADMIN },
-  //     mustSendNotif: true,
-  //     notification: {
-  //       title: 'سفارش جدید',
-  //       body: `یک سفارش جدید ثبت شده`,
-  //     },
-  //     notificationType: NotificationTypes.NEW_ORDER,
-  //     notificationableId: updatedPayment?.order_id?.toString(),
-  //   });
+    if (payment?.status !== PaymentStatuses.INIT) {
+      if (payment) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
+      return { payment, isValid: false };
+    }
 
-  //   return updatedPayment;
-  // }
+    return { payment, isValid: true };
+  }
 
-  // async checkAuthority(
-  //   authority: string,
-  // ): Promise<(Payment & { order: Order & { offer_code: OfferCode } }) | undefined> {
-  //   const payment = await this.db.payment.findFirst({
-  //     where: { authority },
-  //     include: { order: { include: { offer_code: true } } },
-  //   });
-
-  //   if (!payment || payment.status !== CommonStatuses.INIT) return;
-
-  //   /* ------------------------------ CHECK PAYMENT ----------------------------- */
-  //   // سفارش یا رزرو فقط در حالت اولیه قابل تسویه است
-  //   if (payment.order_id) {
-  //     const order = await this.db.order.findUnique({ where: { id: payment.order_id } });
-  //     if (order.status !== OrderStatuses.INIT || order.payment_id) return;
-  //   }
-
-  //   return payment;
-  // }
+  async updatePaymentStatus(paymentId: number, status: PaymentStatuses): Promise<Payment> {
+    return await this.db.payment.update({ where: { id: paymentId }, data: { status } });
+  }
 }

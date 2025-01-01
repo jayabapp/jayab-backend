@@ -1,8 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriptionPlan, Prisma } from '@prisma/client';
+import { SubscriptionPlan, Prisma, Property } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 import moment from 'moment-jalaali';
+import {
+  CannotBuySubscriptionStatuses,
+  PropertyStatuses,
+} from 'src/property/common/types/property-status.type';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -50,9 +54,12 @@ export class SubscriptionPlanUserService {
    * @param subscriptionPlanId
    * @param propertySortOrder
    */
-  async checkCanBuyPromote(subscriptionPlanId: number, propertySortOrder: BigInt): Promise<SubscriptionPlan> {
+  async checkCanBuyPromote(subscriptionPlanId: number, property: Property): Promise<SubscriptionPlan> {
+    if (CannotBuySubscriptionStatuses.includes(property.status))
+      throw new BadRequestException('PROPERTY_SUB1');
+
     //
-    const timestamp = Number(propertySortOrder);
+    const timestamp = Number(property.sort_order);
     const twoDaysAgo = moment().subtract(2, 'days');
     if (moment(timestamp).isBefore(twoDaysAgo)) throw new BadRequestException('PROPERTY_SUB2');
 

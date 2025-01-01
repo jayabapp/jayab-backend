@@ -412,35 +412,34 @@ export class PropertyOwnerService {
     property: PropertyInterceptorData,
     dto: PaySubscriptionPropertyOwnerDto,
   ): Promise<string> {
+    let subscription: SubscriptionPlan;
+    let promote: SubscriptionPlan;
+
     /* -------------------------------------------------------------------------- */
+    /** */
+    await this.checkCanBuySubscriptionForFirstTime(property);
+
+    /* -------------------------------------------------------------------------- */
+    /** promote */
     // اگر دفعه اولیست ک اشتراک خریداری میشود، اجازه خرید نردبان را ندارد
-    const isFirstSubscription = !property.subscription_expired_at;
+    if (dto.promote_id)
+      promote = await this.subscriptionPlanUserService.checkCanBuyPromote(dto.promote_id, property);
+
+    /* -------------------------------------------------------------------------- */
+    /** subscription */
+    // اولین پرداخت باید پرداخت اشتراک باشد
+    if (!property.subscription_expired_at && !dto.subscription_id)
+      throw new BadRequestException('PROPERTY_SUB3');
+
+    if (dto.subscription_id)
+      subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
 
     /* -------------------------------------------------------------------------- */
     /**
      * Transaction: payment, promote, subscription
      */
-    let subscription: SubscriptionPlan;
-    let promote: SubscriptionPlan;
 
     const pay = await this.db.$transaction(async (tx) => {
-      /* -------------------------------------------------------------------------- */
-      /** promote */
-      if (dto.promote_id) {
-        if (isFirstSubscription) throw new BadRequestException('PROPERTY_SUB1');
-
-        promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
-          dto.promote_id,
-          property.sort_order,
-        );
-      }
-
-      /* -------------------------------------------------------------------------- */
-      /** subscription */
-      if (isFirstSubscription && !dto.subscription_id) throw new BadRequestException('PROPERTY_SUB3');
-      else if (dto.subscription_id)
-        subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
-
       /* -------------------------------------------------------------------------- */
       /** payment */
       let amount = 0;
@@ -583,5 +582,19 @@ export class PropertyOwnerService {
     }
 
     return optionsQuery;
+  }
+
+  /**
+   *
+   * @param property
+   */
+  async checkCanBuySubscriptionForFirstTime(property: Property): Promise<void> {
+    // در مرحله ثبت ملک فقط یکبار اشتراک میتوان خرید کرد
+    const firstSub = await this.db.subscription.findFirst({
+      where: { property_id: property.id, status: PropertySubscription.SUCCESS },
+    });
+
+    if (property.status == PropertyStatuses.WAITING && firstSub)
+      throw new BadRequestException('PROPERTY_SUB4');
   }
 }

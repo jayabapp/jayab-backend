@@ -68,6 +68,12 @@ export const InProgressReserveStatus = [PropertyStatuses.INIT, PropertyStatuses.
 // export const CompletedReserveStatus = [PropertyStatuses.FINISHED, PropertyStatuses.WAITING_FOR_REVIEW];
 // export const CanceledReserveStatus = [PropertyStatuses.CANCELED_BY_MANAGER];
 
+export const CannotBuySubscriptionStatuses = [
+  PropertyStatuses.INIT,
+  PropertyStatuses.IN_PROCESS,
+  PropertyStatuses.WAITING,
+];
+
 /*  */
 // export const TotalReserveStatus = [
 //   PropertyStatuses.PENDING,
