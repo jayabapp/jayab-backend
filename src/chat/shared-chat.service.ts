@@ -33,10 +33,12 @@ export class SharedChatService {
 
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id },
-      select: { owner: { select: { user: { select: { id: true } } } } },
+      select: { is_chat_enabled: true, owner: { select: { user: { select: { id: true } } } } },
     });
 
     if (!property) throw new BadRequestException('CHAT5');
+
+    if (!property.is_chat_enabled) throw new BadRequestException('CHAT8');
 
     const ownerUserId = property.owner.user.id;
     if (ownerUserId === userId) throw new BadRequestException('CHAT7');

@@ -65,26 +65,26 @@ export class DayDto {
 }
 
 export class UpdatePropertyStepOneOwnerDto {
-  @ApiProperty({ required: true, title: 'نوع ملک' })
+  @ApiProperty({ required: true, title: 'نوع ملک', default: 7 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PROPERTY_TYPE])
   @_IsNotEmpty()
   property_type: number;
 
-  @ApiProperty({ required: true, title: 'اسم ملک' })
+  @ApiProperty({ required: true, title: 'اسم ملک', default: 'ویلا کردان یک' })
   @_IsString()
   @_MaxLength(100)
   @_MinLength(2)
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, title: 'متراژ زمین' })
+  @ApiProperty({ required: true, title: 'متراژ زمین', default: 1000 })
   @_IsInt()
   @_Max(100000)
   @_Min(0)
   @_IsNotEmpty()
   land_area: number;
 
-  @ApiProperty({ required: true, title: 'متراژ زیربنا', default: 10 })
+  @ApiProperty({ required: true, title: 'متراژ زیربنا', default: 120 })
   @_IsInt()
   @_Max(100000)
   @_Min(10)
@@ -124,19 +124,19 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   unit_per_floor: number;
 
-  @ApiProperty({ required: true, title: 'سال ساخت', default: 1300 })
+  @ApiProperty({ required: true, title: 'سال ساخت', default: 1390 })
   @_IsInt()
   @_Max(moment().jYear())
   @_Min(1300)
   @_IsNotEmpty()
   construction_year: number;
 
-  @ApiProperty({ required: true, title: 'جهت ساختمان' })
+  @ApiProperty({ required: true, title: 'جهت ساختمان', default: 25 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.BUILDING_DIRECTION])
   @_IsNotEmpty()
   building_direction: number;
 
-  @ApiProperty({ required: true, title: 'نوع مالکیت' })
+  @ApiProperty({ required: true, title: 'نوع مالکیت', default: 26 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.OWNERSHIP])
   @_IsNotEmpty()
   ownership: number;
@@ -147,13 +147,13 @@ export class UpdatePropertyStepOneOwnerDto {
   // @_IsNotEmpty()
   // country_id: number;
 
-  @ApiProperty({ required: true, title: 'استان' })
+  @ApiProperty({ required: true, title: 'استان', default: 5 })
   @_IsInt()
   @Validate(IsExist, ['city', 'id', { parent_id: null }])
   @_IsNotEmpty()
   province_id: number;
 
-  @ApiProperty({ required: true, title: 'شهر' })
+  @ApiProperty({ required: true, title: 'شهر', default: 147 })
   @_IsInt()
   @Validate(IsExist, ['city', 'id', { parent_id: { not: null } }])
   @_IsNotEmpty()
@@ -165,7 +165,7 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   region_id: number;
 
-  @ApiProperty({ required: true, title: 'آدرس' })
+  @ApiProperty({ required: true, title: 'آدرس', default: 'آدرس تست تست آدرس تست' })
   @_IsString()
   @_MaxLength(200)
   @_MinLength(5)
@@ -200,7 +200,7 @@ export class UpdatePropertyLocationOwnerDto {
 export class UpdatePropertyMediaOwnerDto {
   @ApiProperty({ required: true, title: 'تصاویر', default: [1] })
   @_ArrayMaxSize(30)
-  @_ArrayMinSize(4)
+  // @_ArrayMinSize(4) //TODO:uncomment
   @IsNumber({}, { each: true })
   @_ArrayNotEmpty()
   images: number[];
@@ -218,17 +218,17 @@ export class UpdatePropertyMediaOwnerDto {
 }
 
 export class UpdatePropertyEnvOwnerDto {
-  @ApiProperty({ required: true, title: 'بافت محیط' })
+  @ApiProperty({ required: true, title: 'بافت محیط', default: 11 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PATTERN])
   @_IsNotEmpty()
   pattern: number;
 
-  @ApiProperty({ required: true, title: 'مسیر دسترسی' })
+  @ApiProperty({ required: true, title: 'مسیر دسترسی', default: 10 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ACCESS])
   @IsOptional()
   access: number;
 
-  @ApiProperty({ required: true, title: 'همسایگی' })
+  @ApiProperty({ required: true, title: 'همسایگی', default: 14 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.NEIGHBORHOOD])
   @IsOptional()
   neighborhood: number;
@@ -319,35 +319,35 @@ export class UpdatePropertyBedroomOwnerDto {
 }
 
 export class UpdatePropertyFacilityOwnerDto {
-  @ApiProperty({ required: true, title: 'سرمایش' })
+  @ApiProperty({ required: true, title: 'سرمایش', default: [17] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.COOL_HEAT])
   @_ArrayNotEmpty()
   cool_heat: number[];
 
-  @ApiProperty({ required: true, title: 'رفاهی' })
+  @ApiProperty({ required: true, title: 'رفاهی', default: [19] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.WELFARE])
   // @_ArrayNotEmpty()
   @IsOptional()
   welfare: number[];
 
-  @ApiProperty({ required: true, title: 'تفریحی' })
+  @ApiProperty({ required: true, title: 'تفریحی', default: [1, 2] })
   // @_ArrayNotEmpty()
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ENTERTAINMENT])
   @IsOptional()
   entertainment: number[];
 
-  @ApiProperty({ required: true, title: 'آشپزخانه' })
+  @ApiProperty({ required: true, title: 'آشپزخانه', default: [15] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.KITCHEN])
   // @_ArrayNotEmpty()
   @IsOptional()
   kitchen: number[];
 
-  @ApiProperty({ required: true, title: 'استخر دارد؟' })
+  @ApiProperty({ required: true, title: 'استخر دارد؟', default: true })
   @_IsBoolean()
   @_IsNotEmpty()
   has_pool: boolean;
 
-  @ApiProperty({ required: true, title: 'استخر' })
+  @ApiProperty({ required: true, title: 'استخر', default: [29] })
   @ValidateIf((e) => e.has_pool == true)
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.POOL_TYPE])
   @Transform((params) => {
@@ -445,17 +445,17 @@ export class UpdatePropertyPriceOwnerDto {
 }
 
 export class UpdatePropertyTermsOwnerDto {
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: true, default: [4] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
   @_ArrayNotEmpty()
   guest_type: number[];
 
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: true, default: 21 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
   @_IsNotEmpty()
   pet: number;
 
-  @ApiProperty({ required: true })
+  @ApiProperty({ required: true, default: 23 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
   @_IsNotEmpty()
   party: number;

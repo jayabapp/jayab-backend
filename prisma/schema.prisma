@@ -212,6 +212,7 @@ model ContentCategory {
   description     String? @db.Text
   html            String? @db.Text
   show_in_sitemap Boolean @default(true)
+  seo             Json?   @db.JsonB
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

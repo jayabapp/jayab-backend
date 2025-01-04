@@ -100,6 +100,14 @@ export const showPropsBuilder = (
       type: 'list',
     },
     {
+      state: 'seo',
+      title: '',
+      value: item.seo,
+      type: 'object',
+      isHidden: true,
+    },
+    { type: 'divider' },
+    {
       state: 'html',
       title: 'html',
       value: item.html,

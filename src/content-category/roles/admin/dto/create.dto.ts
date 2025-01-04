@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsAlpha, IsOptional, Validate } from 'class-validator';
+import { IsAlpha, IsObject, IsOptional, Validate } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -49,4 +49,9 @@ export class CreateContentCategoryAdminDto {
   @_IsBoolean()
   @_IsNotEmpty()
   show_in_sitemap: boolean;
+
+  @ApiProperty({ title: 'فیلدهای seo' })
+  @IsOptional()
+  @IsObject()
+  seo: object;
 }

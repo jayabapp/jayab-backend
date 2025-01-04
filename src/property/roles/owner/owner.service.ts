@@ -128,7 +128,7 @@ export class PropertyOwnerService {
     };
 
     // do not update status in edit
-    if (property.status == PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
+    if (property.status === PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options
@@ -594,7 +594,7 @@ export class PropertyOwnerService {
       where: { property_id: property.id, status: PropertySubscription.SUCCESS },
     });
 
-    if (property.status == PropertyStatuses.WAITING && firstSub)
+    if (property.status === PropertyStatuses.WAITING && firstSub)
       throw new BadRequestException('PROPERTY_SUB4');
   }
 }

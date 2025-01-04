@@ -47,6 +47,18 @@ const data = (): Prisma.PropertyOptionCreateInput[] => {
       title: 'سرایدار مقیم',
       group: PropertyOptionGroup.OWNERSHIP,
     },
+    {
+      title: 'روباز',
+      group: PropertyOptionGroup.POOL_TYPE,
+    },
+    {
+      title: 'آب گرم',
+      group: PropertyOptionGroup.POOL_TYPE,
+    },
+    {
+      title: 'داخل واحد',
+      group: PropertyOptionGroup.POOL_TYPE,
+    },
   ];
   return options;
 };

@@ -22,6 +22,7 @@ import { PropertySubscription } from 'src/property/common/types/property-subscri
 import { first } from 'lodash';
 import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 
 @Injectable()
 export class PaymentUserService {
@@ -66,6 +67,7 @@ export class PaymentUserService {
             .substring(0, 12);
 
           paymentUrl = `${this.config.get('payment.paymentBaseUrl')}/payments/callback/?Authority=${authority}`;
+
           break;
 
         case PaymentGatewayEnum.ZARINPAL:
@@ -87,7 +89,7 @@ export class PaymentUserService {
         pay_by_gateway: payByGateway,
         pay_by_wallet: 0,
         description: 'پرداخت هزینه',
-        gate: PaymentGatewayEnum.ZARINPAL,
+        gate: gateway,
         authority,
         redirect_url: redirectUrl,
         status: PaymentStatuses.INIT,
@@ -126,6 +128,8 @@ export class PaymentUserService {
 
     if (!isVerified) return;
 
+    console.log({ isVerified });
+
     /* ----------------------------- PAYMENT PROCESS ---------------------------- */
     const updatedPayment = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
@@ -153,6 +157,8 @@ export class PaymentUserService {
 
       const property = first(item.subscriptions)?.property;
 
+      console.log({ item, property });
+
       for (const e of item.subscriptions) {
         if (e?.is_promote) {
           await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
@@ -163,7 +169,7 @@ export class PaymentUserService {
           //
           await tx.property.update({
             where: { id: property.id },
-            data: { subscription_expired_at: newExpDate },
+            data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
           });
         }
       }
@@ -197,6 +203,7 @@ export class PaymentUserService {
       if (payment) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
       return { payment, isValid: false };
     }
+    console.log({ payment });
 
     return { payment, isValid: true };
   }

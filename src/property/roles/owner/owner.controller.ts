@@ -86,6 +86,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
+  /* ---------------------------------- MEDIA --------------------------------- */
   @ApiOperation({ operationId: 'Update property: media' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Patch(':propertyId/media')
@@ -97,7 +98,7 @@ export class PropertyOwnerController {
     const user = req.user;
 
     // check images and video
-    await this.attachmentService.validateFileOwner(dto.images, user.id, 1);
+    // await this.attachmentService.validateFileOwner(dto.images, user.id, 1);//TODO: uncomment
     if (!dto.images.includes(dto.feature_image_id)) throw new BadRequestException('PROPERTY_IMAGES1');
     // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
 
