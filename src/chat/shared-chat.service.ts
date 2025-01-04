@@ -68,6 +68,42 @@ export class SharedChatService {
   }
 
   /**
+   * لیست روم ها به علاوه تعداد خوانده نشده
+   * @param userId
+   * @returns
+   */
+  async findAll(userId: number): Promise<any> {
+    const list = await this.db.$queryRaw<any[]>`
+    SELECT 
+      mc.id,
+      mc.uuid,
+      mc.property_id,
+      p.title AS property_title,
+      ROW_TO_JSON(att.*) as property_image,
+      (
+      SELECT COUNT(*)
+      FROM messenger_messages mm
+      JOIN messenger_participants mp2 ON mm.chatroom_id = mp2.chatroom_id
+      WHERE mm.chatroom_id = mc.id
+      AND mp2.user_id = ${userId}
+      AND mm.participant_id != mp2.id
+      AND mm.created_at > mp2.message_read_at
+      ) AS unread_count
+    FROM 
+      messenger_participants mp
+    JOIN 
+      messenger_chatrooms mc ON mp.chatroom_id = mc.id
+    JOIN 
+      properties p ON mc.property_id = p.id
+    LEFT JOIN 
+      attachments att ON p.feature_image_id = att.id
+    WHERE 
+      mp.user_id = ${userId}
+    `;
+
+    return list;
+  }
+  /**
    *
    * @param chatroomId
    * @param senderId
@@ -104,11 +140,6 @@ export class SharedChatService {
       },
       { cursor, perPage: 20 },
     );
-
-    // await this.db.messengerParticipant.update({
-    //   where: { chatroom_id_user_id: { user_id: userId, chatroom_id: chatroomId } },
-    //   data: { message_read_at: new Date() },
-    // });
 
     return result;
   }
@@ -183,42 +214,6 @@ export class SharedChatService {
     return item?.unread_count || 0;
   }
 
-  async unreadMessages(userId: number): Promise<any[]> {
-    const list = await this.db.$queryRaw<any[]>`
-    SELECT 
-    mm.id AS message_id,
-    mm.text,
-    mm.third_party,
-    mm.chatroom_id,
-    mm.created_at,
-    mc.deposit_id,
-    mc.withdraw_id,
-    mp.id as p_id,
-    ROW_TO_JSON(a.*) as media
-      FROM 
-        messenger_messages mm
-      JOIN 
-        messenger_participants mp 
-          ON mm.chatroom_id = mp.chatroom_id 
-          AND mp.user_id = ${userId}                       
-      JOIN 
-        messenger_chatrooms mc ON mm.chatroom_id = mc.id   
-      LEFT JOIN 
-        attachments a 
-          ON mm.media_id = a.id                          
-      WHERE 
-        mm.created_at > mp.message_read_at
-    `;
-
-    return list;
-  }
-
-  /**
-  "token": {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMwMDEzNjQ3LCJleHAiOjE3MzA2MTg0NDd9.sTVKPateqw3CCknA2XWIcGVYpMhEc5idQcBpw559tjU",
-      "socket_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMwMDEzNjQ3LCJleHAiOjE3MzI2MDU2NDd9.I8EipV28OfXaG09D1x4IqqW9LnZIt9lx_lB6EXxEmnQ"
-    }
-  */
   /**
    * update last read at
    * @param participantId

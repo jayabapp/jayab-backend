@@ -47,6 +47,17 @@ export class ChatUserController {
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
+  @ApiOperation({ operationId: 'Find All' })
+  @Get()
+  async findAll(@Req() request: RequestType): Promise<SuccessResponseArgs> {
+    const user = request.user;
+
+    const result = await this.sharedChatService.findAll(user.id);
+
+    /* -------------------------------------------------------------------------- */
+    return { result };
+  }
+
   /**
    * هر درخواست یک چتروم دارد
    * چت همیشه از سمت کاربر ایجاد میشود
@@ -203,16 +214,6 @@ export class ChatUserController {
     await this.sharedChatService.updateReadAt(chatroom.participants.self.participant_id);
 
     return {};
-  }
-
-  @ApiOperation({ operationId: 'Unread messages list' })
-  @Get('unread/list')
-  async unreadMessages(@Req() request: RequestType): Promise<SuccessResponseArgs> {
-    const user = request.user;
-
-    const result = await this.sharedChatService.unreadMessages(user.id);
-
-    return { result };
   }
 
   @ApiOperation({ operationId: 'Unread messages count' })
