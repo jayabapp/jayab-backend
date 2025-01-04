@@ -31,6 +31,16 @@ export class SharedChatService {
     });
     if (part) return part.chatroom.uuid;
 
+    const property = await this.db.property.findFirst({
+      where: { id: dto.property_id },
+      select: { owner: { select: { user: { select: { id: true } } } } },
+    });
+
+    if (!property) throw new BadRequestException('CHAT5');
+
+    const ownerUserId = property.owner.user.id;
+    if (ownerUserId === userId) throw new BadRequestException('CHAT7');
+
     const newRoom = await this.db.messengerChatroom.create({
       data: {
         property_id: dto?.property_id,
@@ -41,6 +51,11 @@ export class SharedChatService {
               {
                 user_id: userId,
                 role: UserRole.USER,
+                message_read_at: new Date(),
+              },
+              {
+                user_id: ownerUserId,
+                role: UserRole.OWNER,
                 message_read_at: new Date(),
               },
             ],
@@ -126,9 +141,6 @@ export class SharedChatService {
    */
   async canCreateChat(userId: number, dto: CreateChatUserDto): Promise<boolean> {
     //limitation logic
-
-    const property = await this.db.property.findFirst({ where: { id: dto.property_id } });
-    if (!property) throw new BadRequestException('CHAT5');
 
     return true;
   }
@@ -228,18 +240,20 @@ export class SharedChatService {
    * @returns
    */
   async blacklist(dto: BlockParticipantUserDto, userId: number): Promise<void> {
+    if (dto.target_user_id === userId) throw new BadRequestException('COMMON4');
+
     if (dto.action === 1)
       await this.db.messengerBlackList.upsert({
-        where: { blocked_id_blocker_id: { blocked_id: dto.target_participant_id, blocker_id: userId } },
+        where: { blocked_id_blocker_id: { blocked_id: dto.target_user_id, blocker_id: userId } },
         create: {
-          blocked_id: dto.target_participant_id,
+          blocked_id: dto.target_user_id,
           blocker_id: userId,
         },
         update: {},
       });
     else if (dto.action === 0) {
       const prev = await this.db.messengerBlackList.findUnique({
-        where: { blocked_id_blocker_id: { blocked_id: dto.target_participant_id, blocker_id: userId } },
+        where: { blocked_id_blocker_id: { blocked_id: dto.target_user_id, blocker_id: userId } },
       });
       if (!prev) throw new BadRequestException('CHAT6');
 

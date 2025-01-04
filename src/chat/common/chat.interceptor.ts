@@ -36,11 +36,13 @@ export class FindOneChatInterceptor implements NestInterceptor {
     });
 
     /* -------------------------------------------------------------------------- */
-    if (!item) throw new BadRequestException('CHAT0');
+    if (!item) throw new BadRequestException('NOT_FOUND');
 
     //ممکنه ای دی کاربر و ادمین یکی باشه در نتیجه رول هم باید چک بشه
     const sender = item.participants.find((e) => e.user_id === userId);
     const recipient = item.participants.find((e) => e.user_id !== userId);
+
+    console.log({ sender, recipient });
 
     if (!sender) throw new BadRequestException('CHAT3');
 

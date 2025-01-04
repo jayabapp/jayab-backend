@@ -219,9 +219,9 @@ export class ChatUserController {
   @Get('unread/count')
   async unreadCount(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
-    await this.sharedChatService.unreadCount(user.id);
+    const unreadCount = await this.sharedChatService.unreadCount(user.id);
 
-    return {};
+    return { result: { unread_count: unreadCount } };
   }
 
   @ApiOperation({ operationId: 'Black List' })

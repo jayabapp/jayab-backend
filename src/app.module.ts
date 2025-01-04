@@ -62,6 +62,7 @@ import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.mo
 import { BaseModule as BaseModule } from './__base/base.module';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 import { IsPrice } from './common/validators/price-validator.decorator';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { IsPrice } from './common/validators/price-validator.decorator';
     PropertyOptionModule,
     PropertyModule,
     SubscriptionPlanModule,
+    ChatModule,
     BaseModule,
   ],
   providers: [

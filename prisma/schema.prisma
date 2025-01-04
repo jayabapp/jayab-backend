@@ -944,7 +944,7 @@ model MessengerChatroom {
   messages     MessengerMessages[]
   last_message MessengerMessages?     @relation("LastMessage", fields: [last_message_id], references: [id])
 
-  property Property? @relation(fields: [property_id], references: [id])
+  property Property? @relation(fields: [property_id], references: [id], onDelete: Cascade)
 
   @@map("messenger_chatrooms")
 }
@@ -961,7 +961,7 @@ model MessengerParticipant {
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
-  chatroom MessengerChatroom   @relation(fields: [chatroom_id], references: [id])
+  chatroom MessengerChatroom   @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
   messages MessengerMessages[]
 
   @@unique([chatroom_id, user_id, role])
@@ -971,15 +971,15 @@ model MessengerParticipant {
 model MessengerMessages {
   id             Int     @id() @default(autoincrement())
   chatroom_id    Int
-  participant_id Int?
+  participant_id Int
   text           String?
   media_id       Int?
   third_party    String?
 
-  chatroom              MessengerChatroom     @relation(fields: [chatroom_id], references: [id])
-  participant           MessengerParticipant? @relation(fields: [participant_id], references: [id])
-  chatroom_last_message MessengerChatroom?    @relation("LastMessage")
-  media                 Attachment?           @relation(fields: [media_id], references: [id])
+  chatroom              MessengerChatroom    @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
+  participant           MessengerParticipant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  chatroom_last_message MessengerChatroom?   @relation("LastMessage")
+  media                 Attachment?          @relation(fields: [media_id], references: [id])
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
@@ -1012,7 +1012,7 @@ model MessengerBlackList {
   blocker_id Int //کاربر بلاک کننده
   blocked_id Int //کاربر بلاک شده
 
-  blocked_user User @relation(fields: [blocked_id], references: [id])
+  blocked_user User @relation(fields: [blocked_id], references: [id], onDelete: Cascade)
 
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
@@ -1036,8 +1036,8 @@ model Subscription {
   updated_at  DateTime @updatedAt
 
   // advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
-  property Property? @relation(fields: [property_id], references: [id])
-  payment  Payment?  @relation(fields: [payment_id], references: [id])
+  property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
+  payment  Payment?  @relation(fields: [payment_id], references: [id], onDelete: SetNull)
 
   @@map("subscriptions")
 }
