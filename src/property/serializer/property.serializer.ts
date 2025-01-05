@@ -4,6 +4,7 @@ import {
   Property,
   PropertyBedroom,
   PropertyDailyPrice,
+  PropertyDescription,
   PropertyOption,
   PropertyOwnerAssistant,
 } from '@prisma/client';
@@ -11,9 +12,11 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { DayColumn } from 'src/common/helpers/day.helper';
+import { object } from 'joi';
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
+  attachments?: Attachment[];
   bedrooms: Partial<PropertyBedroom>;
   province: Partial<City>;
   city: Partial<City>;
@@ -21,9 +24,10 @@ export type PropertyJsonType = Property & {
   property_options: any[];
   _count?: { attachments: number };
   daily_price: PropertyDailyPrice;
+  description: PropertyDescription;
 };
 
-export type PropertyResType = {
+export type PropertyArrayResType = {
   id: number;
   code: string;
   title: string;
@@ -31,28 +35,45 @@ export type PropertyResType = {
   std_capacity: number;
   max_capacity: number;
   total_bedrooms: number;
+  bedrooms: any;
   has_pool: boolean;
   feature_image: Attachment;
+  attachments_count: number;
+  images: Attachment[];
   province: string;
   city: string;
   region: string;
   status: EnumList;
   advisor_commission: number;
-  options: object[];
-  attachments_count: number;
   today_price: number | null;
-  latitude: number;
-  longitude: number;
+
   // rate:number;
 };
+
+export type PropertyJsonResType = {
+  latitude: number;
+  longitude: number;
+  land_area: number;
+  building_area: number;
+  floors: number;
+  unit_per_floor: number;
+  floor: number;
+  construction_year: number;
+  daily_price: PropertyDailyPrice;
+  address: string;
+  options: object[];
+  property_descriptions: PropertyDescription;
+};
+
+export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
 
 export class PropertySerializer {
   async toArray(
     data: PropertyJsonType[],
     today: DayColumn,
     isAdvisor: false,
-  ): Promise<Array<PropertyResType>> {
-    const res: PropertyResType[] = [];
+  ): Promise<Array<PropertyArrayResType>> {
+    const res: PropertyArrayResType[] = [];
     for (const e of data) {
       res.push({
         ...this.summarize(e, today, true, isAdvisor),
@@ -99,33 +120,49 @@ export class PropertySerializer {
     }
   }
 
-  summarize(data: PropertyJsonType, today: DayColumn, isArray: boolean, isAdvisor: boolean): PropertyResType {
+  summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
     if (!data) return;
-    console.log(data);
+    let single: PropertyJsonResType;
 
-    const res: PropertyResType = {
+    let list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
       title: data.title,
       slug: data.slug,
       feature_image: data.feature_image,
       attachments_count: data._count?.attachments || 0,
+      images: data.attachments || [],
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
+      bedrooms: data.bedrooms,
       has_pool: data.has_pool,
       province: data.province?.title,
       city: data.city?.title,
       region: data.region?.title,
       advisor_commission: data.advisor_commission,
-      options: !isArray ? this.formatPropertyOptions(data.property_options, 'title') : [],
       today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
-      latitude: data.lat,
-      longitude: data.lng,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       // authorize_status: !data.hasOwnProperty('property_authorize') ? '' : this.findAuthStatus(e.property_authorize),
     };
 
+    if (!isList)
+      single = {
+        daily_price: data.daily_price || null,
+        latitude: data.lat,
+        longitude: data.lng,
+        land_area: data.land_area,
+        building_area: data.building_area,
+        floors: data.floors,
+        unit_per_floor: data.unit_per_floor,
+        floor: data.floor,
+        construction_year: data.construction_year,
+        address: data.address,
+        options: this.formatPropertyOptions(data.property_options, 'title'),
+        property_descriptions: data.description,
+      };
+
+    let res: PropertyResType = { ...list, ...single };
     return res;
   }
 }

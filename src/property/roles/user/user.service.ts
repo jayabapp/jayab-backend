@@ -10,6 +10,7 @@ import { DayDto } from '../owner/dto/update-property.dto';
 import { isEmpty } from 'lodash';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 import {
+  PropertyArrayResType,
   PropertyJsonType,
   PropertyResType,
   PropertySerializer,
@@ -29,7 +30,7 @@ export class PropertyUserService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<PropertyResType>> {
+  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<PropertyArrayResType>> {
     const {
       code,
       province_id,
@@ -140,12 +141,14 @@ export class PropertyUserService {
       where: { code },
       include: {
         feature_image: true,
+        attachments: true,
         province: { select: { title: true } },
         city: { select: { title: true } },
         property_options: { select: { option: { select: { title: true, group: true } } } },
-        bedrooms: { select: { total_bedrooms: true } },
+        bedrooms: true,
         daily_price: true,
         assistants: true,
+        description: true,
       },
     });
 

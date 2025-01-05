@@ -18,8 +18,8 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 
 @ApiTags('Property - USER')
-@UseGuards(UserJwtGuard)
-@ApiBearerAuth('user-jwt')
+// @UseGuards(UserJwtGuard)
+// @ApiBearerAuth('user-jwt')
 @Controller(USER_ROUTE_GROUP)
 export class PropertyUserController {
   constructor(private readonly propertyUserService: PropertyUserService) {}
