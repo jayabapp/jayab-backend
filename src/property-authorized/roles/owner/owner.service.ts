@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PropertyAuthorized, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePropertyAuthorizedOwnerDto } from './dto/create.dto';
 import { UpdatePropertyAuthorizedOwnerDto } from './dto/update.dto';
 import { FindAllPropertyAuthorizedOwnerDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { CommonStatuses } from 'src/common/interfaces/common-status.interface';
+import { PropertyAuthorizeStatuses } from 'src/property-authorized/common/property-authorize-status.type';
 
 @Injectable()
 export class PropertyAuthorizedOwnerService {
@@ -16,7 +18,14 @@ export class PropertyAuthorizedOwnerService {
    * @returns
    */
   async create(dto: CreatePropertyAuthorizedOwnerDto): Promise<PropertyAuthorized> {
-    const newPropertyAuthorized = await this.db.propertyAuthorized.create({ data: dto });
+    const newPropertyAuthorized = await this.db.propertyAuthorized.create({
+      data: {
+        nc_image_id: dto.nc_image_id,
+        property_id: dto.property_id,
+        status: PropertyAuthorizeStatuses.PENDING,
+        docs: { connect: dto.docs?.map((e) => ({ id: +e })) },
+      },
+    });
     return newPropertyAuthorized;
   }
 
@@ -40,12 +49,14 @@ export class PropertyAuthorizedOwnerService {
    * @param propertyAuthorizedId
    * @returns
    */
-  async findOne(propertyAuthorizedId: number): Promise<PropertyAuthorized> {
+  async findOne(propertyAuthorizedId: number, ownerId: number): Promise<PropertyAuthorized> {
     const item = await this.db.propertyAuthorized.findFirst({
       where: { id: propertyAuthorizedId },
+      include: { property: { select: { owner_id: true } } },
     });
 
     if (!item) throw new NotFoundException('NOT_FOUND');
+    if (item.property.owner_id !== ownerId) throw new ForbiddenException('PROPERTY_AUTH2');
 
     return item;
   }
@@ -56,10 +67,17 @@ export class PropertyAuthorizedOwnerService {
    * @param dto
    * @returns
    */
-  async update(propertyAuthorizedId: number, dto: UpdatePropertyAuthorizedOwnerDto): Promise<PropertyAuthorized> {
+  async update(
+    propertyAuthorizedId: number,
+    dto: UpdatePropertyAuthorizedOwnerDto,
+  ): Promise<PropertyAuthorized> {
     const item = await this.db.propertyAuthorized.update({
       where: { id: propertyAuthorizedId },
-      data: dto,
+      data: {
+        nc_image_id: dto.nc_image_id,
+        status: PropertyAuthorizeStatuses.PENDING,
+        docs: { set: [], connect: dto.docs?.map((e) => ({ id: +e })) },
+      },
     });
 
     return item;

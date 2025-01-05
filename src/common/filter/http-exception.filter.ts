@@ -190,4 +190,7 @@ const failedMessages = {
 
   SUBSCRIPTION_PLAN_NOT_FOUND: 'پلن مورد نظر یافت نشد',
   SUBSCRIPTION_PLAN_NOT_FOUND2: 'پلن انتخاب شده اشتباه است',
+
+  PROPERTY_AUTH1: 'احراز تایید شده است',
+  PROPERTY_AUTH2: 'ملک مورد نظر متعلق به شما نیست',
 };

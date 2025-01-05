@@ -19,7 +19,7 @@ export class OwnerUpdatePropertyInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const user = request.user as PartialUser;
 
-    const propertyId = +request.body?.propertyId || +request.params?.propertyId;
+    const propertyId = +request.body?.property_id || +request.params?.propertyId;
     if (!propertyId) throw new BadRequestException('PROPERTY_INTERCEPTOR1');
 
     const property = await this.db.property.findFirst({ where: { id: propertyId, owner_id: user.owner_id } });

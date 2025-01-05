@@ -292,6 +292,8 @@ const PROPS = {
   additional_property_price: 'قیمت ملک اضافی',
   national_card_image_id: 'عکس کارت ملی',
   selfie_image_id: 'عکس سلفی',
+  nc_image_id: 'عکس کارت ملی',
+  docs: 'تصویر مستندات',
 };
 
 /* ------------------------------- Decorators ------------------------------- */

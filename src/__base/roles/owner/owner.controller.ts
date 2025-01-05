@@ -12,17 +12,17 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 // import { OwnerJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { USER_ROUTE_GROUP } from 'src/__base/common/route-group.constant';
+import { OWNER_ROUTE_GROUP } from 'src/__base/common/route-group.constant';
 import { BaseOwnerService } from './owner.service';
 import { CreateBaseOwnerDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UpdateBaseOwnerDto } from './dto/update.dto';
 import { FindAllBaseOwnerDto } from './dto/find-all.dto';
 
-@ApiTags('Base - USER')
+@ApiTags('Base - OWNER')
 // @UseGuards(OwnerJwtGuard)
 // @ApiBearerAuth('user-jwt')
-@Controller(USER_ROUTE_GROUP)
+@Controller(OWNER_ROUTE_GROUP)
 export class BaseOwnerController {
   constructor(private readonly baseOwnerService: BaseOwnerService) {}
 
