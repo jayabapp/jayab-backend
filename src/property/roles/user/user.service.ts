@@ -9,17 +9,27 @@ import isJson from 'src/common/helpers/is-json.helper';
 import { DayDto } from '../owner/dto/update-property.dto';
 import { isEmpty } from 'lodash';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
+import {
+  PropertyJsonType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyUserService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly propertySerializer: PropertySerializer,
+    private readonly dayHelper: DayHelper,
+  ) {}
 
   /**
    * find all Property
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<Property>> {
+  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<PropertyResType>> {
     const {
       code,
       province_id,
@@ -47,7 +57,7 @@ export class PropertyUserService {
     //initial query
     let query: Prisma.PropertyWhereInput = {
       status: PropertyStatuses.PUBLISHED,
-      // subscription: { expire_at: { gte: new Date() } }, بعد از توسعه مربوط به حذف اشتراک اجباری برای ملک این قسمت غیر فعال شد
+      subscription_expired_at: { gte: new Date() },
       // property_authorize:{status:CommonStatuses.APPROVED}
     };
     if (code) query = { ...query, code };
@@ -91,13 +101,29 @@ export class PropertyUserService {
         daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
       };
 
-    const list = await cursorPaginate()<Property, Prisma.PropertyFindManyArgs>(
+    /* ---------------------------------- LIST ---------------------------------- */
+    const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
-      {},
+      {
+        where: {
+          AND: optionsQuery,
+          ...query,
+        },
+        include: {
+          feature_image: true,
+          province: { select: { title: true } },
+          city: { select: { title: true } },
+          property_options: true,
+          daily_price: true,
+          _count: { select: { attachments: true } },
+        },
+      },
       { cursor: dto.cursor },
     );
 
-    return list;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toArray(list.data, today, false);
+    return { data: serialized };
   }
 
   /**
