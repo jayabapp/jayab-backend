@@ -5,6 +5,7 @@ import {
   PropertyBedroom,
   PropertyDailyPrice,
   PropertyOption,
+  PropertyOwnerAssistant,
 } from '@prisma/client';
 import { EnumList } from 'src/common/interfaces/model-props.interface';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
@@ -13,12 +14,12 @@ import { DayColumn } from 'src/common/helpers/day.helper';
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
-  bedrooms: PropertyBedroom;
-  province: City;
-  city: City;
-  region?: City;
-  property_options: PropertyOption[];
-  _count: { attachments: number };
+  bedrooms: Partial<PropertyBedroom>;
+  province: Partial<City>;
+  city: Partial<City>;
+  region?: Partial<City>;
+  property_options: any[];
+  _count?: { attachments: number };
   daily_price: PropertyDailyPrice;
 };
 
@@ -26,6 +27,7 @@ export type PropertyResType = {
   id: number;
   code: string;
   title: string;
+  slug: string;
   std_capacity: number;
   max_capacity: number;
   total_bedrooms: number;
@@ -39,6 +41,8 @@ export type PropertyResType = {
   options: object[];
   attachments_count: number;
   today_price: number | null;
+  latitude: number;
+  longitude: number;
   // rate:number;
 };
 
@@ -85,15 +89,27 @@ export class PropertySerializer {
     return groupByOption;
   }
 
+  findContactInfo(assistants: PropertyOwnerAssistant[], type: number) {
+    switch (type) {
+      case 1:
+        break;
+
+      default:
+        break;
+    }
+  }
+
   summarize(data: PropertyJsonType, today: DayColumn, isArray: boolean, isAdvisor: boolean): PropertyResType {
-    const isDeleted = !!data?.deleted_at;
+    if (!data) return;
+    console.log(data);
 
     const res: PropertyResType = {
       id: data.id,
       code: data.code,
       title: data.title,
+      slug: data.slug,
       feature_image: data.feature_image,
-      attachments_count: data._count.attachments,
+      attachments_count: data._count?.attachments || 0,
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
@@ -104,6 +120,8 @@ export class PropertySerializer {
       advisor_commission: data.advisor_commission,
       options: !isArray ? this.formatPropertyOptions(data.property_options, 'title') : [],
       today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
+      latitude: data.lat,
+      longitude: data.lng,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       // authorize_status: !data.hasOwnProperty('property_authorize') ? '' : this.findAuthStatus(e.property_authorize),
     };

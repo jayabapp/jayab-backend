@@ -32,10 +32,10 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
-  @Get(':propertyId')
-  async findOne(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
-    const result = await this.propertyUserService.findOne(propertyId);
+  @ApiOperation({ operationId: 'Find One By Slug', description: '' })
+  @Get(':propertySlug')
+  async findOne(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findOne(propertySlug);
 
     return { result };
   }

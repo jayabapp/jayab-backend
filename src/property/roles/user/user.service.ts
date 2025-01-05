@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
@@ -115,6 +115,7 @@ export class PropertyUserService {
           city: { select: { title: true } },
           property_options: true,
           daily_price: true,
+          bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
         },
       },
@@ -131,13 +132,27 @@ export class PropertyUserService {
    * @param propertyId
    * @returns
    */
-  async findOne(propertyId: number): Promise<Property> {
+  async findOne(propertySlug: string): Promise<PropertyResType> {
+    const code = propertySlug.split('-')?.[0];
+    if (!code) throw new BadRequestException('NOT_FOUND');
+
     const item = await this.db.property.findFirst({
-      where: { id: propertyId },
+      where: { code },
+      include: {
+        feature_image: true,
+        province: { select: { title: true } },
+        city: { select: { title: true } },
+        property_options: { select: { option: { select: { title: true, group: true } } } },
+        bedrooms: { select: { total_bedrooms: true } },
+        daily_price: true,
+        assistants: true,
+      },
     });
 
     if (!item) throw new NotFoundException('NOT_FOUND');
 
-    return item;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toJSON(item, today, false);
+    return serialized;
   }
 }

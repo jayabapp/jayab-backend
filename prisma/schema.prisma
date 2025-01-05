@@ -499,8 +499,8 @@ model Property {
   code                    String    @unique
   owner_id                Int
   title                   String?
-  slug                    String    @unique
-  slug_hash               String    @unique
+  slug                    String?   @unique
+  slug_hash               String?   @unique
   land_area               Int?
   building_area           Int?
   floors                  Int?

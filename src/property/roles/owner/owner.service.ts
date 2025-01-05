@@ -28,6 +28,7 @@ import moment from 'moment-jalaali';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
+import { slugify } from 'src/common/helpers/slugify';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -109,6 +110,8 @@ export class PropertyOwnerService {
    * @returns
    */
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
+    const slug = `${property.code}-${slugify(dto.title)}`;
+
     /* -------------------------------------------------------------------------- */
     // data without options
     let data: Prisma.PropertyUncheckedUpdateInput = {
@@ -116,6 +119,7 @@ export class PropertyOwnerService {
       region_id: dto.region_id || null,
       city_id: dto.city_id,
       title: dto.title,
+      slug,
       land_area: dto.land_area,
       building_area: dto.building_area,
       floors: dto.floors,
