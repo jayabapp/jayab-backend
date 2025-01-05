@@ -499,6 +499,8 @@ model Property {
   code                    String    @unique
   owner_id                Int
   title                   String?
+  slug                    String    @unique
+  slug_hash               String    @unique
   land_area               Int?
   building_area           Int?
   floors                  Int?
@@ -559,9 +561,7 @@ model Property {
 
   chatrooms MessengerChatroom[]
 
-  // @@index([id, code, advisor_commission, calendar_updated_at])
-  @@index([id, code, advisor_commission])
-  @@index([sort_order])
+  @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
 }
 

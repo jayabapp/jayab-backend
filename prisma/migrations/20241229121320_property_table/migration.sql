@@ -4,6 +4,8 @@ CREATE TABLE "properties" (
     "code" TEXT NOT NULL,
     "owner_id" INTEGER NOT NULL,
     "title" TEXT,
+    "slug" TEXT NOT NULL,
+    "slug_hash" TEXT NOT NULL,
     "land_area" INTEGER,
     "building_area" INTEGER,
     "floors" INTEGER,
@@ -19,10 +21,18 @@ CREATE TABLE "properties" (
     "status" SMALLINT NOT NULL,
     "is_chat_enabled" BOOLEAN,
     "is_location_visible" BOOLEAN,
+    "sort_order" BIGINT NOT NULL DEFAULT 0,
+    "subscription_expired_at" TIMESTAMP(3),
+    "check_in_hour" SMALLINT,
+    "check_out_hour" SMALLINT,
+    "advisor_commission" SMALLINT NOT NULL DEFAULT 5,
+    "max_capacity" INTEGER,
+    "std_capacity" INTEGER,
+    "canceling_type" TEXT,
+    "has_pool" BOOLEAN,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
-
     CONSTRAINT "properties_pkey" PRIMARY KEY ("id")
 );
 
@@ -31,27 +41,56 @@ CREATE TABLE "options_on_property" (
     "property_id" INTEGER NOT NULL,
     "option_id" INTEGER NOT NULL,
     "assigned_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "options_on_property_pkey" PRIMARY KEY ("property_id","option_id")
+    CONSTRAINT "options_on_property_pkey" PRIMARY KEY ("property_id", "option_id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "properties_code_key" ON "properties"("code");
+CREATE INDEX "properties_id_sort_order_code_advisor_commission_idx" ON "properties"("id", "sort_order", "code", "advisor_commission");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "properties_slug_key" ON "properties"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "properties_slug_hash_key" ON "properties"("slug_hash");
 
 -- AddForeignKey
-ALTER TABLE "properties" ADD CONSTRAINT "properties_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "owners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "properties"
+ADD
+    CONSTRAINT "properties_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "owners"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "properties" ADD CONSTRAINT "properties_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "cities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "properties"
+ADD
+    CONSTRAINT "properties_region_id_fkey" FOREIGN KEY ("region_id") REFERENCES "cities"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "properties" ADD CONSTRAINT "properties_province_id_fkey" FOREIGN KEY ("province_id") REFERENCES "cities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "properties"
+ADD
+    CONSTRAINT "properties_province_id_fkey" FOREIGN KEY ("province_id") REFERENCES "cities"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "properties" ADD CONSTRAINT "properties_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "cities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "properties"
+ADD
+    CONSTRAINT "properties_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "cities"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "options_on_property" ADD CONSTRAINT "options_on_property_property_id_fkey" FOREIGN KEY ("property_id") REFERENCES "properties"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "options_on_property"
+ADD
+    CONSTRAINT "options_on_property_property_id_fkey" FOREIGN KEY ("property_id") REFERENCES "properties"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "options_on_property" ADD CONSTRAINT "options_on_property_option_id_fkey" FOREIGN KEY ("option_id") REFERENCES "property_options"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE
+    "options_on_property"
+ADD
+    CONSTRAINT "options_on_property_option_id_fkey" FOREIGN KEY ("option_id") REFERENCES "property_options"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

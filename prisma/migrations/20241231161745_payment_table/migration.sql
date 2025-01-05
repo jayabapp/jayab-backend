@@ -1,7 +1,3 @@
--- AlterTable
-ALTER TABLE "properties" ADD COLUMN     "promoted_at" TIMESTAMP(3),
-ADD COLUMN     "subscription_expired_at" TIMESTAMP(3);
-
 -- CreateTable
 CREATE TABLE "payments" (
     "id" SERIAL NOT NULL,
@@ -22,7 +18,6 @@ CREATE TABLE "payments" (
     "redirect_url" TEXT,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
 );
 
@@ -33,10 +28,9 @@ CREATE TABLE "payment_gateways" (
     "logo" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT false,
-    "params" JSONB[],
+    "params" JSONB [],
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "payment_gateways_pkey" PRIMARY KEY ("id")
 );
 
@@ -53,18 +47,24 @@ CREATE TABLE "turnovers" (
     "balance" INTEGER,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "turnovers_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "payment_gateways_key_key" ON "payment_gateways"("key");
 
--- CreateIndex
-CREATE INDEX "properties_id_code_advisor_commission_idx" ON "properties"("id", "code", "advisor_commission");
+-- AddForeignKey
+ALTER TABLE
+    "payments"
+ADD
+    CONSTRAINT "payments_gateway_key_fkey" FOREIGN KEY ("gateway_key") REFERENCES "payment_gateways"("key") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payments" ADD CONSTRAINT "payments_gateway_key_fkey" FOREIGN KEY ("gateway_key") REFERENCES "payment_gateways"("key") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "turnovers" ADD CONSTRAINT "turnovers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE
+    "turnovers"
+ADD
+    CONSTRAINT "turnovers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE
+SET
+    NULL ON UPDATE CASCADE;
