@@ -77,7 +77,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: location' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/location')
+  @Put(':propertyId/location')
   async updateLocation(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyLocationOwnerDto,
@@ -89,7 +89,7 @@ export class PropertyOwnerController {
   /* ---------------------------------- MEDIA --------------------------------- */
   @ApiOperation({ operationId: 'Update property: media' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/media')
+  @Put(':propertyId/media')
   async updateMedia(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -109,7 +109,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: environment' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/environment')
+  @Put(':propertyId/environment')
   async updateEnvironment(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyEnvOwnerDto,
@@ -120,7 +120,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: bedroom' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/bedroom')
+  @Put(':propertyId/bedroom')
   async updateBedroom(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyBedroomOwnerDto,
@@ -131,7 +131,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: facility' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/facility')
+  @Put(':propertyId/facility')
   updateFacility(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyFacilityOwnerDto,
@@ -142,7 +142,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: price' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/price')
+  @Put(':propertyId/price')
   updatePrices(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyPriceOwnerDto,
@@ -153,7 +153,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: assistant' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/assistants')
+  @Put(':propertyId/assistants')
   async updateAssistant(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -166,7 +166,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Update property: terms' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/terms')
+  @Put(':propertyId/terms')
   async updateTerms(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -180,7 +180,7 @@ export class PropertyOwnerController {
 
   @ApiOperation({ operationId: 'Pay Subscription' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/pay-subscription')
+  @Put(':propertyId/pay-subscription')
   async paySubscription(
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -191,6 +191,15 @@ export class PropertyOwnerController {
 
     //
     const result = await this.propertyOwnerService.paySubscription(user, property, dto);
+    return { result };
+  }
+
+  @ApiOperation({ operationId: 'Find All' })
+  @Get()
+  async findAll(@Req() req: RequestType) {
+    const user = req.user as PartialUser;
+    //
+    const result = await this.propertyOwnerService.findAll(user.owner_id);
     return { result };
   }
 }

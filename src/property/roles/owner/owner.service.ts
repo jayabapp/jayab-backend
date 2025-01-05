@@ -29,6 +29,8 @@ import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/us
 import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { slugify } from 'src/common/helpers/slugify';
+import { PropertyArrayResType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -36,6 +38,8 @@ export class PropertyOwnerService {
     private readonly db: PrismaService,
     private readonly subscriptionPlanUserService: SubscriptionPlanUserService,
     private readonly paymentUserService: PaymentUserService,
+    private readonly propertySerializer: PropertySerializer,
+    private readonly dayHelper: DayHelper,
   ) {}
 
   /**
@@ -496,14 +500,23 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyOwnerDto): Promise<CursorPaginatedResult<Property>> {
-    const list = await cursorPaginate()<Property, Prisma.PropertyFindManyArgs>(
-      this.db.property,
-      {},
-      { cursor: dto.cursor },
-    );
+  async findAll(ownerId: number): Promise<Array<PropertyArrayResType>> {
+    const list = await this.db.property.findMany({
+      where: { owner_id: ownerId },
+      include: {
+        feature_image: true,
+        province: { select: { title: true } },
+        city: { select: { title: true } },
+        property_options: true,
+        daily_price: true,
+        bedrooms: { select: { total_bedrooms: true } },
+        _count: { select: { attachments: true } },
+      },
+    });
 
-    return list;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toArray(list, today, false);
+    return serialized;
   }
 
   /**

@@ -13,6 +13,8 @@ import { PropertyStatuses, PropertyStatusesList } from '../common/types/property
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { DayColumn } from 'src/common/helpers/day.helper';
 import { object } from 'joi';
+import moment from 'moment-jalaali';
+import { RentType } from '../common/types/property-rent-types.type';
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -23,8 +25,8 @@ export type PropertyJsonType = Property & {
   region?: Partial<City>;
   property_options: any[];
   _count?: { attachments: number };
-  daily_price: PropertyDailyPrice;
-  description: PropertyDescription;
+  daily_price?: PropertyDailyPrice;
+  description?: PropertyDescription;
 };
 
 export type PropertyArrayResType = {
@@ -46,7 +48,7 @@ export type PropertyArrayResType = {
   status: EnumList;
   advisor_commission: number;
   today_price: number | null;
-
+  remaining_days: number;
   // rate:number;
 };
 
@@ -63,6 +65,7 @@ export type PropertyJsonResType = {
   address: string;
   options: object[];
   property_descriptions: PropertyDescription;
+  rent_type: RentType;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -143,6 +146,8 @@ export class PropertySerializer {
       advisor_commission: data.advisor_commission,
       today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
       status: PropertyStatusesList.find((_) => _.id === data.status),
+      //owner
+      remaining_days: moment(data.subscription_expired_at).diff(moment.now(), 'days'),
       // authorize_status: !data.hasOwnProperty('property_authorize') ? '' : this.findAuthStatus(e.property_authorize),
     };
 
@@ -160,6 +165,7 @@ export class PropertySerializer {
         address: data.address,
         options: this.formatPropertyOptions(data.property_options, 'title'),
         property_descriptions: data.description,
+        rent_type: RentType.DAILY,
       };
 
     let res: PropertyResType = { ...list, ...single };
