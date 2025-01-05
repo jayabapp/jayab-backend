@@ -61,6 +61,7 @@
     "get_cpus_length": "^1.0.3",
     "haversine": "^1.1.1",
     "ioredis": "^5.3.2",
+    "is-json": "^2.0.1",
     "joi": "^17.12.2",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
