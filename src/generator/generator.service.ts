@@ -245,6 +245,10 @@ export class GeneratorService {
           newMod = mod.replace(/\/\/@user /g, ``);
           break;
 
+        case GeneratorRole.OWNER:
+          newMod = mod.replace(/\/\/@owner /g, ``);
+          break;
+
         default:
           break;
       }

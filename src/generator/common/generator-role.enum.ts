@@ -1,4 +1,5 @@
 export enum GeneratorRole {
-  USER = 'User',
   ADMIN = 'Admin',
+  USER = 'User',
+  OWNER = 'Owner',
 }

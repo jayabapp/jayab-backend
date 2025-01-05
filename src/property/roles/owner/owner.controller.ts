@@ -40,6 +40,7 @@ import {
 import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import { User } from '@prisma/client';
+import { PropertyAuthorizeDto } from './dto/property-authorize.dto';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -194,6 +195,9 @@ export class PropertyOwnerController {
     return { result };
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                    FIND                                    */
+  /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Find All' })
   @Get()
   async findAll(@Req() req: RequestType) {
@@ -202,4 +206,22 @@ export class PropertyOwnerController {
     const result = await this.propertyOwnerService.findAll(user.owner_id);
     return { result };
   }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                  AUTHORIZE                                 */
+  /* -------------------------------------------------------------------------- */
+  // @ApiOperation({ operationId: 'Authorize property' })
+  // @Post(':propertyId/authorize')
+  // async propertyAuthorize(@Req() req: RequestType, @Param('propertyId', ParseIntPipe) propertyId: number, @Body() dto: PropertyAuthorizeDto) {
+  //   const user = req.user as PartialUser;
+
+  //   return this.propertyAuthorizeService.create(user, propertyId, dto);
+  // }
+
+  // @ApiOperation({ operationId: 'Find property authorize' })
+  // @Get(':id/authorize')
+  // findOnePropertyAuthorize(@Req() request: Request, @Param('id', ParseIntPipe) propertyId: number) {
+  //   const { user } = request;
+  //   return this.propertyAuthorizeService.findOne(user, propertyId);
+  // }
 }

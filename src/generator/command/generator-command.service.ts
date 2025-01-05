@@ -40,7 +40,7 @@ export class GeneratorCommandService {
   }
 
   async selectRole(): Promise<GeneratorRole> {
-    const roles = [GeneratorRole.ADMIN, GeneratorRole.USER];
+    const roles = [GeneratorRole.ADMIN, GeneratorRole.USER, GeneratorRole.OWNER];
 
     const roleName = await consola.prompt(`Select the role name`, {
       type: 'select',

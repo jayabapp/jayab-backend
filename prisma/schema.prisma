@@ -195,6 +195,8 @@ model Attachment {
   submitted_form_items        SubmittedFormItems[]
   city                        City[]
   messenger_media             MessengerMessages[]
+  property_auth_nc            PropertyAuthorized[] @relation("PropertyAuthNcImage")
+  property_auth_docs          PropertyAuthorized[] @relation("PropertyAuthDocsImage")
 
   @@map("attachments")
 }
@@ -537,27 +539,27 @@ model Property {
   deleted_at              DateTime?
 
   // -------------------------------------------------------------------------- //
-  owner            Owner                    @relation(fields: [owner_id], references: [id])
-  property_options OptionsOnProperty[]
-  region           City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
-  province         City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
-  city             City?                    @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image    Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video            Attachment?              @relation("Video", fields: [video_id], references: [id])
-  attachments      Attachment[]             @relation("Property")
-  temp_attachments Attachment[]             @relation("Property_Temp")
-  bedrooms         PropertyBedroom?
-  daily_price      PropertyDailyPrice?
-  assistants       PropertyOwnerAssistant[]
-  description      PropertyDescription?
+  owner              Owner                    @relation(fields: [owner_id], references: [id])
+  property_options   OptionsOnProperty[]
+  region             City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
+  province           City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
+  city               City?                    @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image      Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video              Attachment?              @relation("Video", fields: [video_id], references: [id])
+  attachments        Attachment[]             @relation("Property")
+  temp_attachments   Attachment[]             @relation("Property_Temp")
+  bedrooms           PropertyBedroom?
+  daily_price        PropertyDailyPrice?
+  assistants         PropertyOwnerAssistant[]
+  description        PropertyDescription?
   // propertyCalendarNotes PropertyCalendarNote[]
-  // property_authorize    PropertyAuthorized?
+  property_authorize PropertyAuthorized?
   // banners               Banner[]
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
-  subscriptions    Subscription[]
-  payments         Payment[]
+  subscriptions      Subscription[]
+  payments           Payment[]
 
   chatrooms MessengerChatroom[]
 
@@ -673,6 +675,25 @@ model PropertyOption {
   // rent_request_options RentRequest[]
 
   @@map("property_options")
+}
+
+// -------------------------------- AUTHORIZE ------------------------------- //
+model PropertyAuthorized {
+  id          Int @id() @default(autoincrement())
+  property_id Int @unique
+  nc_image_id Int
+  status      Int
+
+  //explicit many to many
+  docs Attachment[] @relation("PropertyAuthDocsImage")
+
+  property Property   @relation(fields: [property_id], references: [id])
+  nc_image Attachment @relation("PropertyAuthNcImage", fields: [nc_image_id], references: [id])
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@map("property_authorized")
 }
 
 // ---------------------------- SUBSCRIPTION PLAN --------------------------- //

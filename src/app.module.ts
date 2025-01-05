@@ -59,6 +59,7 @@ import { UserModule } from './user/user.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyModule } from './property/property.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
+import { PropertyAuthorizedModule } from './property-authorized/property-authorized.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 import { IsPrice } from './common/validators/price-validator.decorator';
@@ -132,6 +133,7 @@ import { ChatModule } from './chat/chat.module';
     PropertyModule,
     SubscriptionPlanModule,
     ChatModule,
+    PropertyAuthorizedModule,
     BaseModule,
   ],
   providers: [
