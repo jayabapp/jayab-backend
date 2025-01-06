@@ -45,14 +45,15 @@ export class PropertyAuthorizeOwnerService {
   }
 
   /**
-   * find one PropertyAuthorize
+   * find one PropertyAuthorize by propertyId
    * @param propertyAuthorizeId
    * @returns
    */
-  async findOne(propertyAuthorizeId: number, ownerId: number): Promise<PropertyAuthorize> {
+  async findOne(propertyId: number, ownerId: number): Promise<Partial<PropertyAuthorize>> {
     const item = await this.db.propertyAuthorize.findFirst({
-      where: { id: propertyAuthorizeId },
-      include: { property: { select: { owner_id: true } } },
+      where: { property_id: propertyId },
+      include: { property: { select: { owner_id: true } }, nc_image: true, docs: true },
+      omit: { changelog: true },
     });
 
     if (!item) throw new NotFoundException('NOT_FOUND');
@@ -82,12 +83,4 @@ export class PropertyAuthorizeOwnerService {
 
     return item;
   }
-
-  // /**
-  //  * remove
-  //  * @param propertyAuthorizeId
-  //  */
-  // async remove(propertyAuthorizeId: number): Promise<void> {
-  //   await this.db.propertyAuthorize.delete({ where: { id: propertyAuthorizeId } });
-  // }
 }

@@ -28,6 +28,7 @@ import {
   IMAGES_OWNER_PROPERTY_FOLDER,
   VIDEOS_OWNER_PROPERTY_FOLDER,
   CHAT_MEDIA_FOLDER,
+  IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
@@ -112,6 +113,17 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_PROPERTY_FOLDER,
+          resizeWidth: 1024,
+          resizeMode: 'normal',
+          userId: user.id,
+        };
+        break;
+
+      case AttachmentUserFolder.OWNER_PROPERTY_DOCS:
+        if (!user.owner_id) throw new UnprocessableEntityException('FORBIDDEN');
+        args = {
+          file,
+          folder: IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
           resizeWidth: 1024,
           resizeMode: 'normal',
           userId: user.id,

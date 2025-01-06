@@ -511,6 +511,7 @@ export class PropertyOwnerService {
         daily_price: true,
         bedrooms: { select: { total_bedrooms: true } },
         _count: { select: { attachments: true } },
+        property_authorize: true,
       },
     });
 

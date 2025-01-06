@@ -2,6 +2,7 @@ import {
   Attachment,
   City,
   Property,
+  PropertyAuthorize,
   PropertyBedroom,
   PropertyDailyPrice,
   PropertyDescription,
@@ -15,6 +16,7 @@ import { DayColumn } from 'src/common/helpers/day.helper';
 import { object } from 'joi';
 import moment from 'moment-jalaali';
 import { RentType } from '../common/types/property-rent-types.type';
+import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -27,6 +29,7 @@ export type PropertyJsonType = Property & {
   _count?: { attachments: number };
   daily_price?: PropertyDailyPrice;
   description?: PropertyDescription;
+  property_authorize?: PropertyAuthorize;
 };
 
 export type PropertyArrayResType = {
@@ -49,6 +52,8 @@ export type PropertyArrayResType = {
   advisor_commission: number;
   today_price: number | null;
   remaining_days: number;
+  is_authorized: boolean;
+  authorize_status: EnumList;
   // rate:number;
 };
 
@@ -126,6 +131,7 @@ export class PropertySerializer {
   summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
+    console.log({ a: data.property_authorize });
 
     let list: PropertyArrayResType = {
       id: data.id,
@@ -145,10 +151,13 @@ export class PropertySerializer {
       region: data.region?.title,
       advisor_commission: data.advisor_commission,
       today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
+      is_authorized: data.is_authorized,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       //owner
       remaining_days: moment(data.subscription_expired_at).diff(moment.now(), 'days'),
-      // authorize_status: !data.hasOwnProperty('property_authorize') ? '' : this.findAuthStatus(e.property_authorize),
+      authorize_status: data.hasOwnProperty('property_authorize')
+        ? PropertyAuthorizeStatusesList.find((e) => e.id === data.property_authorize?.status)
+        : null,
     };
 
     if (!isList)

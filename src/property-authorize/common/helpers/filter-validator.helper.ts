@@ -33,12 +33,10 @@ export const filterValidator = (
 
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
-      case 'user_id':
-        // query = { ...query, user_id: +filters.user_id };
+      case 'status':
+        query = { ...query, status: +filters.status };
         break;
+
       // case 'user_fullname':
       //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
       //   break;

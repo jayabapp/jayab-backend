@@ -274,9 +274,8 @@ export class AccessControlService {
   async findNotifPermissionSelectableItems(): Promise<any> {
     const list = [
       { id: 1, title: 'تیکت جدید', value: 'NewTicket' },
-      { id: 2, title: 'نظر جدید روی محصول', value: 'NewComment' },
-      { id: 3, title: 'کاربر جدید', value: 'NewUserAccount' },
-      { id: 4, title: 'سفارش جدید', value: 'NewOrder' },
+      { id: 2, title: 'کاربر جدید', value: 'NewUserAccount' },
+      { id: 3, title: 'احراز ملک جدید', value: 'NewPropertyAuth' },
     ];
 
     return list;

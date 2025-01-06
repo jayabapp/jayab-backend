@@ -1,4 +1,4 @@
-import { AccessControlList, PropertyAuthorize, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyAuthorize, Prisma, Attachment, Property } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -9,12 +9,13 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { PropertyAuthorizeStatusesList } from '../property-authorize-status.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  property = 'property',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyAuthorizeScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -24,24 +25,37 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: PropertyAuthorize): Array<ShowProps> => {
+export const showPropsBuilder = (
+  item: PropertyAuthorize & { property: Property; nc_image: Attachment; docs: Attachment[] },
+): Array<ShowProps> => {
   const props: Array<ShowProps> = [
-    // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
-    //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
-    /* ----------------------------------- REF ---------------------------------- */
-    // the ids must be hidden in ref
-    // ---- single ref
-    // {state: 'category',title: 'دسته بندی اصلی',value: item.category,type: 'object',nestedKey: 'title',},
-    // {state: 'category_id',ref: 'category',value: item.category.id,type: 'chip',isHidden: true,},
-    // ---- multi ref
-    // { state: 'media', title: 'عکس های ملک', value: item.media, type: 'image' },
-    // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',value: { lat: item.lat, lng: item.lng },title: 'موقعیت جغرافیایی',},
-    /* --------------------------------- SWITCH --------------------------------- */
-    // { state: 'is_active', type: 'boolean', value: item.is_acitve, title: 'وضعیت' },
+    { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
+    { state: 'title', title: 'ملک', value: item.property.title, type: 'string', route: '/properties/show/' },
+    {
+      state: 'status',
+      title: 'وضعیت',
+      value: PropertyAuthorizeStatusesList.find((e) => e.id === item.status),
+      type: 'chip',
+    },
+    {
+      state: 'status_list',
+      title: 'وضعیت',
+      value: PropertyAuthorizeStatusesList,
+      isHidden: true,
+    },
+    {
+      state: 'admin_descriptions',
+      title: '',
+      value: item.changelog,
+      isHidden: true,
+    },
+    { state: 'created_at', title: 'تاریخ ایجاد', value: item.created_at, type: 'date' },
+    { state: 'updated_at', title: 'تاریخ به روز رسانی', value: item.created_at, type: 'date' },
+
+    { type: 'divider' },
+    { state: 'nc_image', title: 'تصویر کارت ملی', value: item.nc_image, type: 'image' },
+    { type: 'divider' },
+    { state: 'docs', title: 'مستندات', value: item.docs, type: 'image' },
   ];
 
   return props;
@@ -102,8 +116,15 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     modelTitle: 'احراز ملک',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
+      {
+        id: 10,
+        title: 'ملک',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'title',
+        link: '/properties/show/',
+      },
+      { id: 20, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: PropertyAuthorizeStatusesList },
       // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
       // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
 
@@ -112,8 +133,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
 
       /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -145,11 +166,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

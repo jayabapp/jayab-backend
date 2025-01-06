@@ -29,7 +29,7 @@ export const PropertyAuthorizeStatusesList: Array<EnumList> = [
   {
     id: PropertyAuthorizeStatuses.PENDING,
     title: 'در انتظار تایید کارشناس جایاب',
-    hex: '#eab308 ',
+    hex: '#eab308',
   },
   {
     id: PropertyAuthorizeStatuses.APPROVED,

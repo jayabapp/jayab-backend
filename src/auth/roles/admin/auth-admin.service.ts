@@ -77,7 +77,7 @@ export class AuthAdminService {
   }
 
   /* --------------------------------- HELPERS -------------------------------- */
-  generateAdminJwtToken(id: number): string {
+  generateAdminJwtToken(id: number): { token: string; socket_token: string } {
     const payload: TokenPayload = { id, role: UserRole.ADMIN };
 
     const token = this.jwtService.sign(payload, {
@@ -85,7 +85,12 @@ export class AuthAdminService {
       expiresIn: this.configService.get('adminAuth.expire'),
     });
 
-    return token;
+    const socketToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('socket.secret'),
+      expiresIn: this.configService.get('socket.expire'),
+    });
+
+    return { token, socket_token: socketToken };
   }
 
   generateAdminSigninToken(id: number): string {

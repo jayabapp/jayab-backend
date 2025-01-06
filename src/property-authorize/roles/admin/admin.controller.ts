@@ -23,15 +23,24 @@ import { CreatePropertyAuthorizeAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UpdatePropertyAuthorizeAdminDto } from './dto/update.dto';
 import { FindAllPropertyAuthorizeAdminDto } from './dto/find-all.dto';
-import { AccessControlList } from '@prisma/client';
+import { AccessControlList, Admin } from '@prisma/client';
 import { UpdatePartialPropertyAuthorizeAdminDto } from './dto/update-partial.dto';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { Request } from 'express';
+import { AdminType } from 'src/common/interfaces/user.interface';
 
 @ApiTags('👨‍💻 PropertyAuthorize - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
 export class PropertyAuthorizeAdminController {
-  constructor(private readonly PropertyAuthorizeAdminService: PropertyAuthorizeAdminService) {}
+  constructor(
+    private readonly PropertyAuthorizeAdminService: PropertyAuthorizeAdminService,
+    private readonly notificationSharedService: NotificationSharedService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -42,17 +51,6 @@ export class PropertyAuthorizeAdminController {
     const rbac = req.adminRbac as AccessControlList;
     const result = await this.PropertyAuthorizeAdminService.findModelProps(rbac);
     return { result };
-  }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                   CREATE                                   */
-  /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Create', description: '' })
-  @Post()
-  async create(@Body() dto: CreatePropertyAuthorizeAdminDto): Promise<SuccessResponseArgs> {
-    const result = await this.PropertyAuthorizeAdminService.create(dto);
-
-    return { result, messageCode: 'CREATE' };
   }
 
   /* -------------------------------------------------------------------------- */
@@ -96,26 +94,29 @@ export class PropertyAuthorizeAdminController {
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update Partial', description: '' })
-  @Patch(':id/update-partial')
-  async updatePartial(
+  @Patch(':id/status')
+  async updateStatus(
+    @Req() req: Request,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePartialPropertyAuthorizeAdminDto,
   ): Promise<SuccessResponseArgs> {
-    await this.PropertyAuthorizeAdminService.findById(id);
-    const result = await this.PropertyAuthorizeAdminService.updatePartial(id, dto);
+    const admin = req.user as AdminType;
+    const au = await this.PropertyAuthorizeAdminService.findById(id);
+
+    const result = await this.PropertyAuthorizeAdminService.updateStatus(id, admin, dto);
+
+    /* ---------------------------- SEND NOTIFICATION --------------------------- */
+    await this.notificationSharedService.createNotification({
+      user: { id: au.property.owner.user.id, role: UserRole.USER },
+      mustSendNotif: true,
+      notification: {
+        title: 'احراز ملک',
+        body: `درخواست احراز ملک ${au.property.title} به وضعیت ${PropertyAuthorizeStatusesList.find((e) => e.id === dto.status)?.title} تغییر پیدا کرد`,
+      },
+      notificationType: NotificationTypes.OWNER_PROPERTY,
+      notificationableId: id.toString(),
+    });
 
     return { result, messageCode: 'UPDATE' };
   }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.PropertyAuthorizeAdminService.findById(id);
-  //   await this.PropertyAuthorizeAdminService.remove(id);
-
-  //   return { messageCode: 'DELETE' };
-  // }
 }

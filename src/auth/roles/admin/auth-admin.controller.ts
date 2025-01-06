@@ -58,9 +58,9 @@ export class AuthAdminController {
     const adminData = await this.authAdminService.verifyAdminCredential({ username, password }, true);
     await this.authSharedService.validateOTP(adminData.mobile_number, dto.code);
 
-    const token = this.authAdminService.generateAdminJwtToken(adminData.id);
+    const tokens = this.authAdminService.generateAdminJwtToken(adminData.id);
 
-    return { result: { admin: adminData, token }, messageCode: 'AUTH3' };
+    return { result: { admin: adminData, tokens }, messageCode: 'AUTH3' };
   }
 
   @ApiOperation({ operationId: 'Get Init Settings' })

@@ -32,6 +32,10 @@ export default () => ({
     expire: process.env.ADMIN_AUTH_EXPIRE,
     nonce: process.env.ADMIN_PASS_NONCE,
   },
+  socket: {
+    secret: process.env.SOCKET_SECRET,
+    expire: process.env.SOCKET_EXPIRE,
+  },
   sms: {
     smsApiToken: process.env.SMS_IR_API_TOKEN,
     verificationTemplateId: process.env.SMS_IR_VERIFY_TEMPLATE_ID,

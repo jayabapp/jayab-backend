@@ -530,13 +530,16 @@ model Property {
   sort_order              BigInt    @default(0) // timestamp - promote
   contact_type            Int       @default(1) @db.SmallInt
   status                  Int       @db.SmallInt
+  is_authorized           Boolean   @default(false) @db.Boolean
+  has_blue_tick           Boolean   @default(false) @db.Boolean
+
   // calendar_updated_at DateTime?
   // statistics          Json            @default("{}")
   // rate                Float?
   // rate_count               Int       @default(0)
-  created_at              DateTime  @default(now()) @db.Timestamp(6)
-  updated_at              DateTime  @updatedAt
-  deleted_at              DateTime?
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
   // -------------------------------------------------------------------------- //
   owner              Owner                    @relation(fields: [owner_id], references: [id])
@@ -679,10 +682,11 @@ model PropertyOption {
 
 // -------------------------------- AUTHORIZE ------------------------------- //
 model PropertyAuthorize {
-  id          Int @id() @default(autoincrement())
-  property_id Int @unique
+  id          Int    @id() @default(autoincrement())
+  property_id Int    @unique
   nc_image_id Int
   status      Int
+  changelog   Json[] @db.JsonB
 
   //explicit many to many
   docs Attachment[] @relation("PropertyAuthDocsImage")

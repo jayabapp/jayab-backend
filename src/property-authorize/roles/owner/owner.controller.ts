@@ -29,13 +29,19 @@ import {
   PropertyInterceptorData,
 } from 'src/property/common/interceptors/owner-property.interceptor';
 import { PropertyAuthorizeStatuses } from 'src/property-authorize/common/property-authorize-status.type';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
 
 @ApiTags('PropertyAuthorize - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
 @ApiBearerAuth('user-jwt')
 @Controller(OWNER_ROUTE_GROUP)
 export class PropertyAuthorizeOwnerController {
-  constructor(private readonly propertyAuthorizeOwnerService: PropertyAuthorizeOwnerService) {}
+  constructor(
+    private readonly propertyAuthorizeOwnerService: PropertyAuthorizeOwnerService,
+    private readonly notificationSharedService: NotificationSharedService,
+  ) {}
 
   @ApiOperation({ operationId: 'Create', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
@@ -44,7 +50,21 @@ export class PropertyAuthorizeOwnerController {
     @Req() req: RequestType,
     @Body() dto: CreatePropertyAuthorizeOwnerDto,
   ): Promise<SuccessResponseArgs> {
+    const property = req.interceptor_data as PropertyInterceptorData;
+
     const result = await this.propertyAuthorizeOwnerService.create(dto);
+
+    /* ---------------------------- SEND NOTIFICATION --------------------------- */
+    await this.notificationSharedService.createNotification({
+      user: { id: null, role: UserRole.ADMIN },
+      mustSendNotif: true,
+      notification: {
+        title: 'درخواست احراز ملک',
+        body: `درخواست احراز ملک ${property.title} ثبت شد`,
+      },
+      notificationType: NotificationTypes.NEW_PROPERTY_AUTH,
+      notificationableId: result.id.toString(),
+    });
 
     return { result, messageCode: 'CREATE' };
   }
@@ -58,13 +78,15 @@ export class PropertyAuthorizeOwnerController {
   }
 
   @ApiOperation({ operationId: 'Find One', description: '' })
-  @Get(':propertyAuthorizeId')
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Get(':propertyId')
   async findOne(
     @Req() req: RequestType,
-    @Param('propertyAuthorizeId', ParseIntPipe) propertyAuthorizeId: number,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
   ): Promise<SuccessResponseArgs> {
     const user = req.user as PartialUser;
-    const result = await this.propertyAuthorizeOwnerService.findOne(propertyAuthorizeId, user.owner_id);
+
+    const result = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
 
     return { result };
   }
@@ -86,13 +108,4 @@ export class PropertyAuthorizeOwnerController {
 
     return { result, messageCode: 'UPDATE' };
   }
-
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':propertyAuthorizeId')
-  // async remove(@Param('propertyAuthorizeId', ParseIntPipe) propertyAuthorizeId: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyAuthorizeOwnerService.findOne(propertyAuthorizeId);
-  //   await this.propertyAuthorizeOwnerService.remove(propertyAuthorizeId);
-
-  //   return { messageCode: 'DELETE' };
-  // }
 }
