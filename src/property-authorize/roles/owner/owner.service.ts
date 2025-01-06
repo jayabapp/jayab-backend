@@ -68,12 +68,9 @@ export class PropertyAuthorizeOwnerService {
    * @param dto
    * @returns
    */
-  async update(
-    propertyAuthorizeId: number,
-    dto: UpdatePropertyAuthorizeOwnerDto,
-  ): Promise<PropertyAuthorize> {
+  async update(propertyId: number, dto: UpdatePropertyAuthorizeOwnerDto): Promise<PropertyAuthorize> {
     const item = await this.db.propertyAuthorize.update({
-      where: { id: propertyAuthorizeId },
+      where: { property_id: propertyId },
       data: {
         nc_image_id: dto.nc_image_id,
         status: PropertyAuthorizeStatuses.PENDING,

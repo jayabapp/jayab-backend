@@ -92,19 +92,20 @@ export class PropertyAuthorizeOwnerController {
   }
 
   @ApiOperation({ operationId: 'Update', description: '' })
-  @Put(':propertyAuthorizeId')
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Put(':propertyId')
   async update(
     @Req() req: RequestType,
-    @Param('propertyAuthorizeId', ParseIntPipe) propertyAuthorizeId: number,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyAuthorizeOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user as PartialUser;
 
-    const authoriezed = await this.propertyAuthorizeOwnerService.findOne(propertyAuthorizeId, user.owner_id);
+    const authoriezed = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
     if (authoriezed.status === PropertyAuthorizeStatuses.APPROVED)
       throw new BadRequestException('PROPERTY_AUTH1');
 
-    const result = await this.propertyAuthorizeOwnerService.update(propertyAuthorizeId, dto);
+    const result = await this.propertyAuthorizeOwnerService.update(propertyId, dto);
 
     return { result, messageCode: 'UPDATE' };
   }

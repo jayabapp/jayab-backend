@@ -131,7 +131,6 @@ export class PropertySerializer {
   summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
-    console.log({ a: data.property_authorize });
 
     let list: PropertyArrayResType = {
       id: data.id,
