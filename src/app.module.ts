@@ -63,6 +63,7 @@ import { PropertyAuthorizeModule } from './property-authorize/property-authorize
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 import { IsPrice } from './common/validators/price-validator.decorator';
 import { ChatModule } from './chat/chat.module';
+import { PropertyReservedDaysModule } from './property-reserved-days/property-reserved-days.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -134,6 +135,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     SubscriptionPlanModule,
     ChatModule,
     PropertyAuthorizeModule,
+    PropertyReservedDaysModule,
     BaseModule,
   ],
   providers: [
