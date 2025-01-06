@@ -14,7 +14,7 @@ export class PropertyReservedDaysOwnerService {
    * @param dto
    * @returns
    */
-  async create(propertyId: number, dto: CreatePropertyReservedDaysOwnerDto): Promise<PropertyReservedDays> {
+  async create(propertyId: number, dto: CreatePropertyReservedDaysOwnerDto): Promise<void> {
     let prevRec = await this.db.propertyReservedDays.findUnique({
       where: {
         property_id_day_month_year: {
@@ -26,11 +26,10 @@ export class PropertyReservedDaysOwnerService {
       },
     });
 
-    let newRec: PropertyReservedDays;
     if (prevRec) await this.db.propertyReservedDays.delete({ where: { id: prevRec.id } });
-    else newRec = await this.db.propertyReservedDays.create({ data: { ...dto, property_id: propertyId } });
+    else await this.db.propertyReservedDays.create({ data: { ...dto, property_id: propertyId } });
 
-    return newRec;
+    return;
   }
 
   /**
