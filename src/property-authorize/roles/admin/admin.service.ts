@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, PropertyAuthorized, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyAuthorize, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatePropertyAuthorizedAdminDto } from './dto/create.dto';
-import { UpdatePropertyAuthorizedAdminDto } from './dto/update.dto';
+import { CreatePropertyAuthorizeAdminDto } from './dto/create.dto';
+import { UpdatePropertyAuthorizeAdminDto } from './dto/update.dto';
 import {
   CreateProps,
   FilterProps,
@@ -20,11 +20,11 @@ import {
   showActionBuilder,
   showPropsBuilder,
   tablePropsBuilder,
-} from 'src/property-authorized/common/helpers/model-props-builder.helper';
-import { UpdatePartialPropertyAuthorizedAdminDto } from './dto/update-partial.dto';
+} from 'src/property-authorize/common/helpers/model-props-builder.helper';
+import { UpdatePartialPropertyAuthorizeAdminDto } from './dto/update-partial.dto';
 
 @Injectable()
-export class PropertyAuthorizedAdminService {
+export class PropertyAuthorizeAdminService {
   constructor(private readonly db: PrismaService) {}
 
   /* -------------------------------------------------------------------------- */
@@ -35,24 +35,28 @@ export class PropertyAuthorizedAdminService {
    * @param dto
    * @returns
    */
-  async create(dto: CreatePropertyAuthorizedAdminDto): Promise<PropertyAuthorized> {
-    const newPropertyAuthorized = await this.db.propertyAuthorized.create({ data: dto });
-    return newPropertyAuthorized;
+  async create(dto: CreatePropertyAuthorizeAdminDto): Promise<PropertyAuthorize> {
+    const newPropertyAuthorize = await this.db.propertyAuthorize.create({ data: dto });
+    return newPropertyAuthorize;
   }
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
   /**
-   * find all PropertyAuthorized
+   * find all PropertyAuthorize
    * @param filers
    * @param page
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.PropertyAuthorizedWhereInput, page: number, perPage = 50): Promise<PaginatedResult<PropertyAuthorized>> {
-    const list = await paginate()<PropertyAuthorized, Prisma.PropertyAuthorizedFindManyArgs>(
-      this.db.propertyAuthorized,
+  async findAll(
+    filters: Prisma.PropertyAuthorizeWhereInput,
+    page: number,
+    perPage = 50,
+  ): Promise<PaginatedResult<PropertyAuthorize>> {
+    const list = await paginate()<PropertyAuthorize, Prisma.PropertyAuthorizeFindManyArgs>(
+      this.db.propertyAuthorize,
       { where: filters },
       { page, perPage },
     );
@@ -61,13 +65,13 @@ export class PropertyAuthorizedAdminService {
   }
 
   /**
-   * find one propertyAuthorized
+   * find one PropertyAuthorize
    * this method is used in the findOne controller to include or select items
    * @param id
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.propertyAuthorized.findUnique({ where: { id } });
+    const item = await this.db.propertyAuthorize.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
@@ -81,8 +85,8 @@ export class PropertyAuthorizedAdminService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<PropertyAuthorized> {
-    const item = await this.db.propertyAuthorized.findUnique({ where: { id } });
+  async findById(id: number): Promise<PropertyAuthorize> {
+    const item = await this.db.propertyAuthorize.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
@@ -97,8 +101,8 @@ export class PropertyAuthorizedAdminService {
    * @param dto
    * @returns
    */
-  async update(id: number, dto: UpdatePropertyAuthorizedAdminDto): Promise<PropertyAuthorized> {
-    const item = await this.db.propertyAuthorized.update({
+  async update(id: number, dto: UpdatePropertyAuthorizeAdminDto): Promise<PropertyAuthorize> {
+    const item = await this.db.propertyAuthorize.update({
       where: { id },
       data: dto,
     });
@@ -112,8 +116,8 @@ export class PropertyAuthorizedAdminService {
    * @param dto
    * @returns
    */
-  async updatePartial(id: number, dto: UpdatePartialPropertyAuthorizedAdminDto): Promise<PropertyAuthorized> {
-    const item = await this.db.propertyAuthorized.update({
+  async updatePartial(id: number, dto: UpdatePartialPropertyAuthorizeAdminDto): Promise<PropertyAuthorize> {
+    const item = await this.db.propertyAuthorize.update({
       where: { id },
       data: dto,
     });
@@ -129,7 +133,7 @@ export class PropertyAuthorizedAdminService {
    * @param id
    */
   async remove(id: number): Promise<void> {
-    await this.db.propertyAuthorized.delete({ where: { id } });
+    await this.db.propertyAuthorize.delete({ where: { id } });
   }
 
   /* -------------------------------------------------------------------------- */

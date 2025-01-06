@@ -1,4 +1,4 @@
-import { AccessControlList, PropertyAuthorized, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyAuthorize, Prisma } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -16,7 +16,7 @@ import { operators } from 'src/common/utils/constants/filter-operators.constant'
 enum RefEnum {
   test = 'test',
 }
-type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyAuthorizedScalarFieldEnum;
+type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyAuthorizeScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
 type ModifiedColumn = Column & { key: ModelFields };
 type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
@@ -24,7 +24,7 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: PropertyAuthorized): Array<ShowProps> => {
+export const showPropsBuilder = (item: PropertyAuthorize): Array<ShowProps> => {
   const props: Array<ShowProps> = [
     // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
     //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
@@ -48,7 +48,7 @@ export const showPropsBuilder = (item: PropertyAuthorized): Array<ShowProps> => 
 };
 
 /* --------------------------------- ACTIONS -------------------------------- */
-export const showActionBuilder = (item: PropertyAuthorized): Array<ShowAction> => {
+export const showActionBuilder = (item: PropertyAuthorize): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
     //  {
     //    title: 'لیست محصولات',
@@ -98,7 +98,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 /* -------------------------------------------------------------------------- */
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
-    model: 'propertyAuthorized',
+    model: 'PropertyAuthorize',
     modelTitle: 'احراز ملک',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },

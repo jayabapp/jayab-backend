@@ -5,28 +5,25 @@ import {
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
+  _ArrayNotEmpty,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 
-export class CreatePropertyAuthorizedAdminDto {
+export class CreatePropertyAuthorizeOwnerDto {
   @ApiProperty({ required: true, default: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  property_id: number
-        
+  property_id: number;
 
   @ApiProperty({ required: true, default: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  nc_image_id: number
-        
+  nc_image_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  status: number
+  @ApiProperty({ required: true, default: [1] })
+  @_ArrayNotEmpty()
+  docs: number[];
 }

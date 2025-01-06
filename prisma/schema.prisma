@@ -195,8 +195,8 @@ model Attachment {
   submitted_form_items        SubmittedFormItems[]
   city                        City[]
   messenger_media             MessengerMessages[]
-  property_auth_nc            PropertyAuthorized[] @relation("PropertyAuthNcImage")
-  property_auth_docs          PropertyAuthorized[] @relation("PropertyAuthDocsImage")
+  property_auth_nc            PropertyAuthorize[]  @relation("PropertyAuthNcImage")
+  property_auth_docs          PropertyAuthorize[]  @relation("PropertyAuthDocsImage")
 
   @@map("attachments")
 }
@@ -553,7 +553,7 @@ model Property {
   assistants         PropertyOwnerAssistant[]
   description        PropertyDescription?
   // propertyCalendarNotes PropertyCalendarNote[]
-  property_authorize PropertyAuthorized?
+  property_authorize PropertyAuthorize?
   // banners               Banner[]
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
@@ -678,7 +678,7 @@ model PropertyOption {
 }
 
 // -------------------------------- AUTHORIZE ------------------------------- //
-model PropertyAuthorized {
+model PropertyAuthorize {
   id          Int @id() @default(autoincrement())
   property_id Int @unique
   nc_image_id Int
@@ -693,7 +693,7 @@ model PropertyAuthorized {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
-  @@map("property_authorized")
+  @@map("property_authorize")
 }
 
 // ---------------------------- SUBSCRIPTION PLAN --------------------------- //

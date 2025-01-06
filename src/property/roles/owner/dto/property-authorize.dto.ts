@@ -17,7 +17,7 @@ import {
 } from 'src/common/pipes/validator-translate.pipe';
 import { IsNationalId } from 'src/common/validators/national-code.validator';
 
-export class PropertyAuthorizeDto {
+export class PropertyAuthorizeto {
   @ApiProperty({ title: 'عکس کارت ملی', description: 'ای دی فایل' })
   @_IsNotEmpty()
   @_IsInt()

@@ -15,23 +15,23 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { ADMIN_ROUTE_GROUP } from 'src/property-authorized/common/route-group.constant';
-import { filterValidator } from 'src/property-authorized/common/helpers/filter-validator.helper';
+import { ADMIN_ROUTE_GROUP } from 'src/property-authorize/common/route-group.constant';
+import { filterValidator } from 'src/property-authorize/common/helpers/filter-validator.helper';
 import qs from 'qs';
-import { PropertyAuthorizedAdminService } from './admin.service';
-import { CreatePropertyAuthorizedAdminDto } from './dto/create.dto';
+import { PropertyAuthorizeAdminService } from './admin.service';
+import { CreatePropertyAuthorizeAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdatePropertyAuthorizedAdminDto } from './dto/update.dto';
-import { FindAllPropertyAuthorizedAdminDto } from './dto/find-all.dto';
+import { UpdatePropertyAuthorizeAdminDto } from './dto/update.dto';
+import { FindAllPropertyAuthorizeAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
-import { UpdatePartialPropertyAuthorizedAdminDto } from './dto/update-partial.dto';
+import { UpdatePartialPropertyAuthorizeAdminDto } from './dto/update-partial.dto';
 
-@ApiTags('👨‍💻 PropertyAuthorized - ADMIN')
+@ApiTags('👨‍💻 PropertyAuthorize - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
-export class PropertyAuthorizedAdminController {
-  constructor(private readonly propertyAuthorizedAdminService: PropertyAuthorizedAdminService) {}
+export class PropertyAuthorizeAdminController {
+  constructor(private readonly PropertyAuthorizeAdminService: PropertyAuthorizeAdminService) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -40,7 +40,7 @@ export class PropertyAuthorizedAdminController {
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
-    const result = await this.propertyAuthorizedAdminService.findModelProps(rbac);
+    const result = await this.PropertyAuthorizeAdminService.findModelProps(rbac);
     return { result };
   }
 
@@ -49,8 +49,8 @@ export class PropertyAuthorizedAdminController {
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Create', description: '' })
   @Post()
-  async create(@Body() dto: CreatePropertyAuthorizedAdminDto): Promise<SuccessResponseArgs> {
-    const result = await this.propertyAuthorizedAdminService.create(dto);
+  async create(@Body() dto: CreatePropertyAuthorizeAdminDto): Promise<SuccessResponseArgs> {
+    const result = await this.PropertyAuthorizeAdminService.create(dto);
 
     return { result, messageCode: 'CREATE' };
   }
@@ -60,11 +60,11 @@ export class PropertyAuthorizedAdminController {
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Find All', description: '' })
   @Get()
-  async findAll(@Query() dto: FindAllPropertyAuthorizedAdminDto): Promise<SuccessResponseArgs> {
+  async findAll(@Query() dto: FindAllPropertyAuthorizeAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const result = await this.propertyAuthorizedAdminService.findAll(filterQuery, dto.page, dto.per_page);
+    const result = await this.PropertyAuthorizeAdminService.findAll(filterQuery, dto.page, dto.per_page);
 
     return { result };
   }
@@ -72,7 +72,7 @@ export class PropertyAuthorizedAdminController {
   @ApiOperation({ operationId: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-    const result = await this.propertyAuthorizedAdminService.findOne(id);
+    const result = await this.PropertyAuthorizeAdminService.findOne(id);
 
     return { result };
   }
@@ -84,10 +84,10 @@ export class PropertyAuthorizedAdminController {
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePropertyAuthorizedAdminDto,
+    @Body() dto: UpdatePropertyAuthorizeAdminDto,
   ): Promise<SuccessResponseArgs> {
-    await this.propertyAuthorizedAdminService.findById(id);
-    const result = await this.propertyAuthorizedAdminService.update(id, dto);
+    await this.PropertyAuthorizeAdminService.findById(id);
+    const result = await this.PropertyAuthorizeAdminService.update(id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -99,10 +99,10 @@ export class PropertyAuthorizedAdminController {
   @Patch(':id/update-partial')
   async updatePartial(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePartialPropertyAuthorizedAdminDto,
+    @Body() dto: UpdatePartialPropertyAuthorizeAdminDto,
   ): Promise<SuccessResponseArgs> {
-    await this.propertyAuthorizedAdminService.findById(id);
-    const result = await this.propertyAuthorizedAdminService.updatePartial(id, dto);
+    await this.PropertyAuthorizeAdminService.findById(id);
+    const result = await this.PropertyAuthorizeAdminService.updatePartial(id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -113,8 +113,8 @@ export class PropertyAuthorizedAdminController {
   // @ApiOperation({ operationId: 'Remove', description: '' })
   // @Delete(':id')
   // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyAuthorizedAdminService.findById(id);
-  //   await this.propertyAuthorizedAdminService.remove(id);
+  //   await this.PropertyAuthorizeAdminService.findById(id);
+  //   await this.PropertyAuthorizeAdminService.remove(id);
 
   //   return { messageCode: 'DELETE' };
   // }

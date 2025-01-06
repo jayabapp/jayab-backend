@@ -40,7 +40,7 @@ import {
 import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import { User } from '@prisma/client';
-import { PropertyAuthorizeDto } from './dto/property-authorize.dto';
+import { PropertyAuthorizeto } from './dto/property-authorize.dto';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -212,7 +212,7 @@ export class PropertyOwnerController {
   /* -------------------------------------------------------------------------- */
   // @ApiOperation({ operationId: 'Authorize property' })
   // @Post(':propertyId/authorize')
-  // async propertyAuthorize(@Req() req: RequestType, @Param('propertyId', ParseIntPipe) propertyId: number, @Body() dto: PropertyAuthorizeDto) {
+  // async propertyAuthorize(@Req() req: RequestType, @Param('propertyId', ParseIntPipe) propertyId: number, @Body() dto: PropertyAuthorizeto) {
   //   const user = req.user as PartialUser;
 
   //   return this.propertyAuthorizeService.create(user, propertyId, dto);

@@ -1,14 +1,16 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllPropertyAuthorizedAdminDto } from 'src/property-authorized/roles/admin/dto/find-all.dto';
+import { FindAllPropertyAuthorizeAdminDto } from 'src/property-authorize/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
  * @param dto
  * @returns
  */
-export const filterValidator = (filters: FindAllPropertyAuthorizedAdminDto): Prisma.PropertyAuthorizedWhereInput => {
+export const filterValidator = (
+  filters: FindAllPropertyAuthorizeAdminDto,
+): Prisma.PropertyAuthorizeWhereInput => {
   if (!filters) return {};
 
   /**
@@ -18,9 +20,9 @@ export const filterValidator = (filters: FindAllPropertyAuthorizedAdminDto): Pri
    */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
-  
+
   // eslint-disable-next-line
-  let query: Prisma.PropertyAuthorizedWhereInput = {};
+  let query: Prisma.PropertyAuthorizeWhereInput = {};
 
   for (const field of fields) {
     /**
