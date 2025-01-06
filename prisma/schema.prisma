@@ -564,7 +564,8 @@ model Property {
   subscriptions      Subscription[]
   payments           Payment[]
 
-  chatrooms MessengerChatroom[]
+  chatrooms              MessengerChatroom[]
+  property_reserved_days PropertyReservedDays[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -698,6 +699,24 @@ model PropertyAuthorize {
   updated_at DateTime @updatedAt
 
   @@map("property_authorize")
+}
+
+//------------------------------ RESERVE DAYS ------------------------------//
+model PropertyReservedDays {
+  id          Int @id() @default(autoincrement())
+  property_id Int
+  day         Int @db.SmallInt
+  month       Int @db.SmallInt
+  year        Int
+
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@unique([property_id, day, month, year])
+  @@index([property_id, day, month, year])
+  @@map("property_reserved_days")
 }
 
 // ---------------------------- SUBSCRIPTION PLAN --------------------------- //
