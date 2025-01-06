@@ -99,7 +99,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'propertyAuthorized',
-    modelTitle: 'بیس',
+    modelTitle: 'احراز ملک',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
@@ -128,7 +128,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
       title: '',
-      state: 'user_id',
+      state: 'status',
       type: 'input',
       isHidden: true,
     },

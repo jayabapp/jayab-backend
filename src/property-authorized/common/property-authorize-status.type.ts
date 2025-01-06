@@ -21,7 +21,7 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
 
 export enum PropertyAuthorizeStatuses {
   PENDING = 20,
-  REJECTED = 50,
+  REJECTED = 90,
   APPROVED = 100,
 }
 

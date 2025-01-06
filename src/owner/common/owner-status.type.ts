@@ -12,9 +12,9 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
 
 export enum OwnerStatus {
   PENDING = 10,
-  APPROVED = 20,
-  AUTO_CHECK_SERVICE_ERROR = 90,
-  REJECTED = 100,
+  AUTO_CHECK_SERVICE_ERROR = 50,
+  REJECTED = 90,
+  APPROVED = 100,
 }
 
 export const OwnerStatusList: Array<EnumList> = [
