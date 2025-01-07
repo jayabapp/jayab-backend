@@ -41,6 +41,7 @@ import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import { User } from '@prisma/client';
 import { PropertyAuthorizeto } from './dto/property-authorize.dto';
+import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -207,21 +208,15 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                  AUTHORIZE                                 */
-  /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Authorize property' })
-  // @Post(':propertyId/authorize')
-  // async propertyAuthorize(@Req() req: RequestType, @Param('propertyId', ParseIntPipe) propertyId: number, @Body() dto: PropertyAuthorizeto) {
-  //   const user = req.user as PartialUser;
-
-  //   return this.propertyAuthorizeService.create(user, propertyId, dto);
-  // }
-
-  // @ApiOperation({ operationId: 'Find property authorize' })
-  // @Get(':id/authorize')
-  // findOnePropertyAuthorize(@Req() request: Request, @Param('id', ParseIntPipe) propertyId: number) {
-  //   const { user } = request;
-  //   return this.propertyAuthorizeService.findOne(user, propertyId);
-  // }
+  @ApiOperation({ operationId: 'Find All' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Patch(':propertyId/advisor-commission')
+  async updateAdvisorCommission(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyAdvisorCommissionOwnerDto,
+  ) {
+    const result = await this.propertyOwnerService.updateAdvisorCommission(propertyId, dto);
+    return { result };
+  }
 }

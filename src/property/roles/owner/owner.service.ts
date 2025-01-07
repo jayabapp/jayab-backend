@@ -7,7 +7,7 @@ import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { random } from 'lodash';
 import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
-import { UpdatePropertyOwnerDto } from './dto/update.dto';
+import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
 import { CreatePropertyOwnerDto } from './dto/create.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
@@ -536,12 +536,15 @@ export class PropertyOwnerService {
   }
 
   /**
-   * update
+   * update advisor commission
    * @param propertyId
    * @param dto
    * @returns
    */
-  async update(propertyId: number, dto: UpdatePropertyOwnerDto): Promise<Property> {
+  async updateAdvisorCommission(
+    propertyId: number,
+    dto: UpdatePropertyAdvisorCommissionOwnerDto,
+  ): Promise<Property> {
     const item = await this.db.property.update({
       where: { id: propertyId },
       data: dto,
@@ -549,14 +552,6 @@ export class PropertyOwnerService {
 
     return item;
   }
-
-  // /**
-  //  * remove
-  //  * @param propertyId
-  //  */
-  // async remove(propertyId: number): Promise<void> {
-  //   await this.db.property.delete({ where: { id: propertyId } });
-  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                   HELPER                                   */
