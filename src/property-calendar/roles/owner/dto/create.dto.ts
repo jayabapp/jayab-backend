@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, Validate } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -10,8 +10,11 @@ import {
   _Max,
   _Min,
 } from 'src/common/pipes/validator-translate.pipe';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
+import { IsPrice } from 'src/common/validators/price-validator.decorator';
+import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
 
 export class CreatePropertyCalendarNoteOwnerDto extends JalaaliDateDto {
   @ApiProperty({ required: true, title: 'توضیحات', example: 'توضیحات' })
@@ -31,4 +34,18 @@ export class UpdatePropertyAdvisorCommissionOwnerDto extends JalaaliDateDto {
   @_Min(0)
   @_IsNotEmpty()
   advisor_commission: number;
+}
+
+export class UpdatePropertyDayPriceOwnerDto extends JalaaliDateDto {
+  @ApiProperty({ required: true, title: 'قیمت', default: 1500000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @_IsNotEmpty()
+  price: number;
+
+  @ApiProperty({ required: false, title: 'قیمت با تخفیف', default: 1000000 })
+  @Transform((e) => normalizePropertyPrice(e.value))
+  @Validate(IsPrice, [RentType.DAILY])
+  @IsOptional()
+  discounted_price: number = null;
 }

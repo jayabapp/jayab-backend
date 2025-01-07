@@ -7,6 +7,7 @@ import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/c
 import {
   CreatePropertyCalendarNoteOwnerDto,
   UpdatePropertyAdvisorCommissionOwnerDto,
+  UpdatePropertyDayPriceOwnerDto,
   UpdatePropertyReservedStatusOwnerDto,
 } from './dto/create.dto';
 import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
@@ -70,16 +71,41 @@ export class PropertyCalendarOwnerService {
   }
 
   /**
-   * find all PropertyCalendar
+   * update price for specific day
+   * @param propertyId
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyCalendarOwnerDto): Promise<CursorPaginatedResult<PropertyCalendar>> {
-    const list = await cursorPaginate()<PropertyCalendar, Prisma.PropertyCalendarFindManyArgs>(
-      this.db.propertyCalendar,
-      {},
-      { cursor: dto.cursor },
-    );
+  async updatePrice(propertyId: number, dto: UpdatePropertyDayPriceOwnerDto): Promise<PropertyCalendar> {
+    const rec = await this.findOrCreateByJalaaliDate(propertyId, dto);
+
+    const effectivePrice = dto.discounted_price ?? dto.price;
+
+    const newPropertyCalendar = await this.db.propertyCalendar.update({
+      where: { id: rec.id },
+      data: { price: dto.price, discounted_price: dto.discounted_price, effective_price: effectivePrice },
+    });
+    return newPropertyCalendar;
+  }
+
+  /**
+   * find all PropertyCalendar accroding to year/month/day
+   * @param dto
+   * @returns
+   */
+  async findAll(
+    propertyId: number,
+    year: number,
+    month: number,
+    day?: number,
+  ): Promise<Array<Partial<PropertyCalendar>>> {
+    let q: Prisma.PropertyCalendarWhereInput = { property_id: propertyId, year, month };
+    if (day) q = { ...q, day };
+
+    const list = await this.db.propertyCalendar.findMany({
+      where: q,
+      omit: { property_id: true, id: true, created_at: true, updated_at: true },
+    });
 
     return list;
   }
@@ -120,21 +146,6 @@ export class PropertyCalendarOwnerService {
     });
 
     console.log({ item, dto });
-
-    return item;
-  }
-
-  /**
-   * update
-   * @param propertyCalendarId
-   * @param dto
-   * @returns
-   */
-  async update(propertyCalendarId: number, dto: UpdatePropertyCalendarOwnerDto): Promise<PropertyCalendar> {
-    const item = await this.db.propertyCalendar.update({
-      where: { id: propertyCalendarId },
-      data: dto,
-    });
 
     return item;
   }

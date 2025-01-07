@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 // import { OwnerJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { OWNER_ROUTE_GROUP } from 'src/property-calendar/common/route-group.constant';
 import { PropertyCalendarOwnerService } from './owner.service';
@@ -24,6 +24,7 @@ import { OwnerUpdatePropertyInterceptor } from 'src/property/common/interceptors
 import {
   CreatePropertyCalendarNoteOwnerDto,
   UpdatePropertyAdvisorCommissionOwnerDto,
+  UpdatePropertyDayPriceOwnerDto,
   UpdatePropertyReservedStatusOwnerDto,
 } from './dto/create.dto';
 
@@ -71,42 +72,28 @@ export class PropertyCalendarOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ operationId: 'Update Price', description: '' })
+  @Post('price')
+  async updatePrice(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyDayPriceOwnerDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyCalendarOwnerService.updatePrice(propertyId, dto);
+
+    return { result };
+  }
+
+  @ApiOperation({ operationId: 'Find All', description: 'Find one too, with an optional query' })
+  @ApiQuery({ name: 'day', required: false, type: Number })
   @Get()
-  async findAll(@Query() dto: FindAllPropertyCalendarOwnerDto): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.findAll(dto);
+  async findAll(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query('year', ParseIntPipe) year: number,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('day') day?: number,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyCalendarOwnerService.findAll(propertyId, year, month, +day);
 
     return { result };
   }
-
-  @ApiOperation({ operationId: 'Find One', description: '' })
-  @Get(':propertyCalendarId')
-  async findOne(
-    @Param('propertyCalendarId', ParseIntPipe) propertyCalendarId: number,
-  ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.findOne(propertyCalendarId);
-
-    return { result };
-  }
-
-  @ApiOperation({ operationId: 'Update', description: '' })
-  @Put(':propertyCalendarId')
-  async update(
-    @Param('propertyCalendarId', ParseIntPipe) propertyCalendarId: number,
-    @Body() dto: UpdatePropertyCalendarOwnerDto,
-  ): Promise<SuccessResponseArgs> {
-    await this.propertyCalendarOwnerService.findOne(propertyCalendarId);
-    const result = await this.propertyCalendarOwnerService.update(propertyCalendarId, dto);
-
-    return { result, messageCode: 'UPDATE' };
-  }
-
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':propertyCalendarId')
-  // async remove(@Param('propertyCalendarId', ParseIntPipe) propertyCalendarId: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyCalendarOwnerService.findOne(propertyCalendarId);
-  //   await this.propertyCalendarOwnerService.remove(propertyCalendarId);
-
-  //   return { messageCode: 'DELETE' };
-  // }
 }
