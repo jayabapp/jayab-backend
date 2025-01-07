@@ -182,6 +182,8 @@ const failedMessages = {
 
   PROPERTY_NOT_FOUND: 'ملک مورد نظر یافت نشد',
   PROPERTY_INTERCEPTOR1: 'شناسه ملک اشتباه است',
+  PROPERTY_INTERCEPTOR2: 'شما اجازه دسترسی به این آگهی را ندارید',
+  PROPERTY_INTERCEPTOR3: 'شما اجازه دسترسی به این آگهی را ندارید',
   PROPERTY_IMAGES1: 'عکس شاخص اشتباه است',
   PROPERTY_SUB1: 'نمی توانید نردبان را فعال کنید',
   PROPERTY_SUB2: 'برای فعال کردن نردبان باید حداقل ۲ روز از زمان انتشار آگهی گذشته باشد',
@@ -193,4 +195,7 @@ const failedMessages = {
 
   PROPERTY_AUTH1: 'احراز تایید شده است',
   PROPERTY_AUTH2: 'ملک مورد نظر متعلق به شما نیست',
+
+  PROPERTY_BADGE1: 'درخواست ممتاز شدن پیش از این تایید شده است',
+  PROPERTY_BADGE2: 'درخواست ممتاز شدن پیش از این ثبت شده است',
 };

@@ -64,6 +64,7 @@ import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opt
 import { IsPrice } from './common/validators/price-validator.decorator';
 import { ChatModule } from './chat/chat.module';
 import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
+import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -136,6 +137,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     ChatModule,
     PropertyAuthorizeModule,
     PropertyCalendarModule,
+    PropertyBadgeModule,
     BaseModule,
   ],
   providers: [

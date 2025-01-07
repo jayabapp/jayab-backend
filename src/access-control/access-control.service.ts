@@ -276,6 +276,7 @@ export class AccessControlService {
       { id: 1, title: 'تیکت جدید', value: 'NewTicket' },
       { id: 2, title: 'کاربر جدید', value: 'NewUserAccount' },
       { id: 3, title: 'احراز ملک جدید', value: 'NewPropertyAuth' },
+      { id: 4, title: 'درخواست ممتاز شدن ملک', value: 'NewPropertyBadge' },
     ];
 
     return list;

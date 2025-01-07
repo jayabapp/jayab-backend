@@ -2,6 +2,7 @@ import {
   BadRequestException,
   CallHandler,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   NestInterceptor,
   NotFoundException,
@@ -22,8 +23,9 @@ export class OwnerUpdatePropertyInterceptor implements NestInterceptor {
     const propertyId = +request.body?.property_id || +request.params?.propertyId;
     if (!propertyId) throw new BadRequestException('PROPERTY_INTERCEPTOR1');
 
-    const property = await this.db.property.findFirst({ where: { id: propertyId, owner_id: user.owner_id } });
-    if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
+    const property = await this.db.property.findFirst({ where: { id: propertyId } });
+    if (!property) throw new ForbiddenException('PROPERTY_INTERCEPTOR2');
+    if (property.owner_id !== user.owner_id) throw new ForbiddenException('PROPERTY_INTERCEPTOR3');
 
     request.interceptor_data = property;
 

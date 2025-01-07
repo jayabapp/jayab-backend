@@ -566,6 +566,7 @@ model Property {
 
   chatrooms MessengerChatroom[]
   calendar  PropertyCalendar[]
+  blue_tick PropertyBadge?
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -727,6 +728,22 @@ model PropertyCalendar {
   @@index([date])
   @@index([day, month, year])
   @@map("property_calendar")
+}
+
+//---------------------------------- Badge ---------------------------------//
+model PropertyBadge {
+  id          Int    @id() @default(autoincrement())
+  property_id Int    @unique
+  status      Int
+  changelog   Json[] @db.JsonB
+
+  property Property @relation(fields: [property_id], references: [id])
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@index([property_id])
+  @@map("property_badges")
 }
 
 // ---------------------------- SUBSCRIPTION PLAN --------------------------- //

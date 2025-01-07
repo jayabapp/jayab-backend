@@ -36,10 +36,10 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'مشاوران', key: 'advisors' },
     { name: 'مالکان', key: 'owners' },
     { name: 'آپشن های ملک', key: 'property-options' },
-    { name: 'آپشن های ملک', key: 'property-options' },
     { name: 'اشتراک ها', key: 'subscription-plans' },
     { name: 'احراز ملک', key: 'property-authorize' },
-  ];
+   { name: 'امکال ممتاز', key: 'property-badges'},
+ ];
 
   return data;
 };
