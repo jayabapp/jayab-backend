@@ -65,6 +65,7 @@ import { IsPrice } from './common/validators/price-validator.decorator';
 import { ChatModule } from './chat/chat.module';
 import { PropertyReservedDaysModule } from './property-reserved-days/property-reserved-days.module';
 import { PropertyCalendarNoteModule } from './property-calendar-note/property-calendar-note.module';
+import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -138,6 +139,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     PropertyAuthorizeModule,
     PropertyReservedDaysModule,
     PropertyCalendarNoteModule,
+    PropertyCalendarModule,
     BaseModule,
   ],
   providers: [

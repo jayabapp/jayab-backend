@@ -1,4 +1,6 @@
 import moment from 'moment-jalaali';
+import { JalaaliDateDto } from '../dto/jalaali-date.dto';
+import { JALAALI_FORMAT } from '../utils/constants/date.constant';
 
 export function startOfToday(): Date {
   const date = new Date(moment().format('YYYY-MM-DD')); // 2023-11-12T00:00:00.000Z
@@ -45,4 +47,10 @@ export function nowDayNumber(): number {
 
 export function nowDate(): Date {
   return new Date();
+}
+
+export function convertJalaaliDtoToDate(dto: JalaaliDateDto): Date {
+  const jdate = `${dto.year}/${dto.month}/${dto.day}`;
+  const date = startOfDate(moment(jdate, JALAALI_FORMAT).toDate());
+  return date;
 }
