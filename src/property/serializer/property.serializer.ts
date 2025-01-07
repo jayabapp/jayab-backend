@@ -3,6 +3,7 @@ import {
   City,
   Property,
   PropertyAuthorize,
+  PropertyBadge,
   PropertyBedroom,
   PropertyDailyPrice,
   PropertyDescription,
@@ -17,6 +18,7 @@ import { object } from 'joi';
 import moment from 'moment-jalaali';
 import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
+import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -30,6 +32,7 @@ export type PropertyJsonType = Property & {
   daily_price?: PropertyDailyPrice;
   description?: PropertyDescription;
   property_authorize?: PropertyAuthorize;
+  blue_tick?: PropertyBadge;
 };
 
 export type PropertyArrayResType = {
@@ -53,7 +56,9 @@ export type PropertyArrayResType = {
   today_price: number | null;
   remaining_days: number;
   is_authorized: boolean;
+  has_blue_tick: boolean;
   authorize_status: EnumList;
+  blue_tick_status: EnumList;
   // rate:number;
 };
 
@@ -151,11 +156,15 @@ export class PropertySerializer {
       advisor_commission: data.advisor_commission,
       today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
       is_authorized: data.is_authorized,
+      has_blue_tick: data.has_blue_tick,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       //owner
       remaining_days: moment(data.subscription_expired_at).diff(moment.now(), 'days'),
       authorize_status: data.hasOwnProperty('property_authorize')
         ? PropertyAuthorizeStatusesList.find((e) => e.id === data.property_authorize?.status)
+        : null,
+      blue_tick_status: data.hasOwnProperty('blue_tick')
+        ? PropertyBadgeStatusList.find((e) => e.id === data.blue_tick?.status)
         : null,
     };
 

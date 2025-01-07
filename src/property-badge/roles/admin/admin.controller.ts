@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   // Delete,
   Get,
   Param,
@@ -25,13 +26,22 @@ import { UpdatePropertyBadgeAdminDto } from './dto/update.dto';
 import { FindAllPropertyBadgeAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialPropertyBadgeAdminDto } from './dto/update-partial.dto';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { Request } from 'express';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
 
 @ApiTags('👨‍💻 PropertyBadge - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
 export class PropertyBadgeAdminController {
-  constructor(private readonly propertyBadgeAdminService: PropertyBadgeAdminService) {}
+  constructor(
+    private readonly propertyBadgeAdminService: PropertyBadgeAdminService,
+    private readonly notificationSharedService: NotificationSharedService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -67,31 +77,31 @@ export class PropertyBadgeAdminController {
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                   UPDATE                                   */
-  /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update', description: '' })
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePropertyBadgeAdminDto,
-  ): Promise<SuccessResponseArgs> {
-    await this.propertyBadgeAdminService.findById(id);
-    const result = await this.propertyBadgeAdminService.update(id, dto);
-
-    return { result, messageCode: 'UPDATE' };
-  }
-
-  /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update Partial', description: '' })
-  @Patch(':id/update-partial')
-  async updatePartial(
+  @Patch(':id/status')
+  async updateStatus(
+    @Req() req: Request,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePartialPropertyBadgeAdminDto,
   ): Promise<SuccessResponseArgs> {
-    await this.propertyBadgeAdminService.findById(id);
-    const result = await this.propertyBadgeAdminService.updatePartial(id, dto);
+    const admin = req.user as AdminType;
+    const pb = await this.propertyBadgeAdminService.findById(id);
+
+    const result = await this.propertyBadgeAdminService.updateStatus(id, admin, dto);
+
+    /* ---------------------------- SEND NOTIFICATION --------------------------- */
+    await this.notificationSharedService.createNotification({
+      user: { id: pb.property.owner.user.id, role: UserRole.USER },
+      mustSendNotif: true,
+      notification: {
+        title: 'ممتاز شدن ملک',
+        body: `درخواست ممتاز شدن ملک ${pb.property.title} به وضعیت ${PropertyBadgeStatusList.find((e) => e.id === dto.status)?.title} تغییر پیدا کرد`,
+      },
+      notificationType: NotificationTypes.OWNER_PROPERTY,
+      notificationableId: id.toString(),
+    });
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -99,12 +109,12 @@ export class PropertyBadgeAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyBadgeAdminService.findById(id);
-  //   await this.propertyBadgeAdminService.remove(id);
+  @ApiOperation({ operationId: 'Remove', description: '' })
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const pb = await this.propertyBadgeAdminService.findById(id);
+    await this.propertyBadgeAdminService.remove(id, pb.property_id);
 
-  //   return { messageCode: 'DELETE' };
-  // }
+    return { messageCode: 'DELETE' };
+  }
 }

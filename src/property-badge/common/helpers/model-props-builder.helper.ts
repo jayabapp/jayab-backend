@@ -1,4 +1,4 @@
-import { AccessControlList, PropertyBadge, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyBadge, Prisma, Property } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -9,12 +9,13 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { PropertyBadgeStatusList } from '../property-badge-status.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  property = 'property',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyBadgeScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -24,24 +25,24 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: PropertyBadge): Array<ShowProps> => {
+export const showPropsBuilder = (item: PropertyBadge & { property: Property }): Array<ShowProps> => {
   const props: Array<ShowProps> = [
-    // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
-    //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
+    { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
+    { state: 'title', title: 'عنوان ملک', value: item.property.title, type: 'string' },
     /* ----------------------------------- REF ---------------------------------- */
-    // the ids must be hidden in ref
-    // ---- single ref
-    // {state: 'category',title: 'دسته بندی اصلی',value: item.category,type: 'object',nestedKey: 'title',},
-    // {state: 'category_id',ref: 'category',value: item.category.id,type: 'chip',isHidden: true,},
-    // ---- multi ref
-    // { state: 'media', title: 'عکس های ملک', value: item.media, type: 'image' },
-    // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
     /* --------------------------------- DIVIDER -------------------------------- */
     // { type: 'divider' },
     /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',value: { lat: item.lat, lng: item.lng },title: 'موقعیت جغرافیایی',},
+    {
+      title: 'وضعیت',
+      state: 'status',
+      type: 'chip',
+      value: PropertyBadgeStatusList.find((e) => e.id === item.status),
+    },
+    { title: '', state: 'status_list', type: 'string', value: PropertyBadgeStatusList, isHidden: true },
+    { title: '', state: 'admin_descriptions', type: 'string', value: item.changelog, isHidden: true },
     /* --------------------------------- SWITCH --------------------------------- */
-    // { state: 'is_active', type: 'boolean', value: item.is_acitve, title: 'وضعیت' },
+    { state: 'created_at', type: 'date', value: item.created_at, title: 'تاریخ ایجاد' },
   ];
 
   return props;
@@ -50,10 +51,10 @@ export const showPropsBuilder = (item: PropertyBadge): Array<ShowProps> => {
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (item: PropertyBadge): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
+    {
+      title: 'جزییات ملک',
+      route: `/properties/show/${item.property_id}`,
+    },
     //  {
     //    title: 'ایجاد محصول جدید',
     //    route: '',
@@ -99,21 +100,21 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'propertyBadge',
-    modelTitle: 'بیس',
+    modelTitle: 'ملک های ممتاز',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
-
+      {
+        id: 2,
+        title: 'نام ملک',
+        key: 'property',
+        nestedKey: 'title',
+        cellType: 'object',
+        link: '/admin/properties/show',
+      },
+      { id: 3, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: PropertyBadgeStatusList },
       /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -128,9 +129,14 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
       title: '',
-      state: 'user_id',
+      state: 'status',
       type: 'input',
       isHidden: true,
+    },
+    {
+      title: 'نام ملک',
+      state: 'property_title',
+      type: 'input',
     },
   ];
 
@@ -145,11 +151,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
     if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

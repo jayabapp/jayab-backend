@@ -512,6 +512,7 @@ export class PropertyOwnerService {
         bedrooms: { select: { total_bedrooms: true } },
         _count: { select: { attachments: true } },
         property_authorize: true,
+        blue_tick: true,
       },
     });
 

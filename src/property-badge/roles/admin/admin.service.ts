@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, PropertyBadge, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyBadge, Prisma, Property, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePropertyBadgeAdminDto } from './dto/create.dto';
 import { UpdatePropertyBadgeAdminDto } from './dto/update.dto';
@@ -22,6 +22,12 @@ import {
   tablePropsBuilder,
 } from 'src/property-badge/common/helpers/model-props-builder.helper';
 import { UpdatePartialPropertyBadgeAdminDto } from './dto/update-partial.dto';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
+import {
+  PropertyBadgeStatus,
+  PropertyBadgeStatusList,
+} from 'src/property-badge/common/property-badge-status.type';
 
 @Injectable()
 export class PropertyBadgeAdminService {
@@ -44,7 +50,7 @@ export class PropertyBadgeAdminService {
   ): Promise<PaginatedResult<PropertyBadge>> {
     const list = await paginate()<PropertyBadge, Prisma.PropertyBadgeFindManyArgs>(
       this.db.propertyBadge,
-      { where: filters },
+      { where: filters, include: { property: true } },
       { page, perPage },
     );
 
@@ -58,7 +64,7 @@ export class PropertyBadgeAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.propertyBadge.findUnique({ where: { id } });
+    const item = await this.db.propertyBadge.findUnique({ where: { id }, include: { property: true } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
@@ -72,8 +78,17 @@ export class PropertyBadgeAdminService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<PropertyBadge> {
-    const item = await this.db.propertyBadge.findUnique({ where: { id } });
+  async findById(
+    id: number,
+  ): Promise<PropertyBadge & { property: Partial<Property> & { owner: { user: Partial<User> } } }> {
+    const item = await this.db.propertyBadge.findUnique({
+      where: { id },
+      include: {
+        property: {
+          select: { id: true, title: true, owner: { select: { user: { select: { id: true } } } } },
+        },
+      },
+    });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
@@ -97,18 +112,34 @@ export class PropertyBadgeAdminService {
     return item;
   }
 
-  /**
-   * Update editable columns in admin panel table
-   * @param id
-   * @param dto
-   * @returns
-   */
-  async updatePartial(id: number, dto: UpdatePartialPropertyBadgeAdminDto): Promise<PropertyBadge> {
-    const item = await this.db.propertyBadge.update({
-      where: { id },
-      data: dto,
-    });
+  async updateStatus(
+    id: number,
+    admin: AdminType,
+    dto: UpdatePartialPropertyBadgeAdminDto,
+  ): Promise<PropertyBadge> {
+    const adminDscr: AdminDescription = {
+      description: dto.admin_description || '',
+      status: PropertyBadgeStatusList.find((e) => e.id === dto.status)?.title,
+      admin_name: admin.full_name,
+      admin_id: admin.id,
+      admin_role: admin.role.name,
+      created_at: new Date(),
+    };
 
+    let item: PropertyBadge;
+
+    //update is_authorize in property for flat DB design
+    await this.db.$transaction(async (tx) => {
+      item = await tx.propertyBadge.update({
+        where: { id },
+        data: { status: dto.status, changelog: { push: adminDscr } },
+      });
+
+      await tx.property.update({
+        where: { id: item.property_id },
+        data: { has_blue_tick: dto.status === PropertyBadgeStatus.APPROVED ? true : false },
+      });
+    });
     return item;
   }
 
@@ -119,8 +150,9 @@ export class PropertyBadgeAdminService {
    * remove
    * @param id
    */
-  async remove(id: number): Promise<void> {
+  async remove(id: number, propertyId: number): Promise<void> {
     await this.db.propertyBadge.delete({ where: { id } });
+    await this.db.property.update({ where: { id: propertyId }, data: { has_blue_tick: false } });
   }
 
   /* -------------------------------------------------------------------------- */

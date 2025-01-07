@@ -47,7 +47,7 @@ export class PropertyBadgeOwnerController {
       user: { id: null, role: UserRole.ADMIN },
       mustSendNotif: true,
       notification: {
-        title: 'درخواست احراز ملک',
+        title: 'درخواست ممتاز شدن',
         body: `درخواست ممتاز شدن برای ملک ${result.property.title} ثبت شد`,
       },
       notificationType: NotificationTypes.NEW_PROPERTY_BADGE,
