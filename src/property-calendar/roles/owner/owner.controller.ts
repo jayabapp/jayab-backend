@@ -21,7 +21,11 @@ import { FindAllPropertyCalendarOwnerDto } from './dto/find-all.dto';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { OwnerUpdatePropertyInterceptor } from 'src/property/common/interceptors/owner-property.interceptor';
-import { CreatePropertyCalendarNoteOwnerDto, CreatePropertyReservedDaysOwnerDto } from './dto/create.dto';
+import {
+  CreatePropertyCalendarNoteOwnerDto,
+  UpdatePropertyAdvisorCommissionOwnerDto,
+  UpdatePropertyReservedStatusOwnerDto,
+} from './dto/create.dto';
 
 @ApiTags('PropertyCalendar - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -31,24 +35,38 @@ import { CreatePropertyCalendarNoteOwnerDto, CreatePropertyReservedDaysOwnerDto 
 export class PropertyCalendarOwnerController {
   constructor(private readonly propertyCalendarOwnerService: PropertyCalendarOwnerService) {}
 
-  @ApiOperation({ operationId: 'Create Note', description: '' })
+  /* ---------------------------------- NOTE ---------------------------------- */
+  @ApiOperation({ operationId: 'Upser Note', description: '' })
   @Post('notes')
-  async createNote(
+  async upsertNote(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: CreatePropertyCalendarNoteOwnerDto,
   ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.createNote(propertyId, dto);
+    const result = await this.propertyCalendarOwnerService.upsertNote(propertyId, dto);
 
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Create Reserve Day', description: '' })
+  /* --------------------------------- RESERVE -------------------------------- */
+  @ApiOperation({ operationId: 'Update Reserve Status', description: '' })
   @Post('reserves')
   async createReserveDay(
     @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: CreatePropertyReservedDaysOwnerDto,
+    @Body() dto: UpdatePropertyReservedStatusOwnerDto,
   ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.createReserve(propertyId, dto);
+    const result = await this.propertyCalendarOwnerService.updateReserveStatus(propertyId, dto);
+
+    return { result };
+  }
+
+  /* ------------------------------- COMMISSION ------------------------------- */
+  @ApiOperation({ operationId: 'Update Advisor Commission', description: '' })
+  @Post('commission')
+  async updateAdvisorCommission(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyAdvisorCommissionOwnerDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyCalendarOwnerService.updateAdvisorCommission(propertyId, dto);
 
     return { result };
   }

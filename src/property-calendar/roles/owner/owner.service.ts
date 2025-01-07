@@ -4,7 +4,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdatePropertyCalendarOwnerDto } from './dto/update.dto';
 import { FindAllPropertyCalendarOwnerDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { CreatePropertyCalendarNoteOwnerDto, CreatePropertyReservedDaysOwnerDto } from './dto/create.dto';
+import {
+  CreatePropertyCalendarNoteOwnerDto,
+  UpdatePropertyAdvisorCommissionOwnerDto,
+  UpdatePropertyReservedStatusOwnerDto,
+} from './dto/create.dto';
 import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
 import { convertJalaaliDtoToDate, startOfDate } from 'src/common/helpers/date.helper';
 
@@ -17,7 +21,7 @@ export class PropertyCalendarOwnerService {
    * @param dto
    * @returns
    */
-  async createNote(propertyId: number, dto: CreatePropertyCalendarNoteOwnerDto): Promise<PropertyCalendar> {
+  async upsertNote(propertyId: number, dto: CreatePropertyCalendarNoteOwnerDto): Promise<PropertyCalendar> {
     const rec = await this.findOrCreateByJalaaliDate(propertyId, dto);
 
     const newPropertyCalendar = await this.db.propertyCalendar.update({
@@ -28,20 +32,39 @@ export class PropertyCalendarOwnerService {
   }
 
   /**
-   * create/ update reserve status.
+   * update reserve status.
    * @param propertyId
    * @param dto
    * @returns
    */
-  async createReserve(
+  async updateReserveStatus(
     propertyId: number,
-    dto: CreatePropertyReservedDaysOwnerDto,
+    dto: UpdatePropertyReservedStatusOwnerDto,
   ): Promise<PropertyCalendar> {
     const rec = await this.findOrCreateByJalaaliDate(propertyId, dto);
 
     const newPropertyCalendar = await this.db.propertyCalendar.update({
       where: { id: rec.id },
       data: { is_reserved: !rec.is_reserved },
+    });
+    return newPropertyCalendar;
+  }
+
+  /**
+   * update advisor commission for specific day
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateAdvisorCommission(
+    propertyId: number,
+    dto: UpdatePropertyAdvisorCommissionOwnerDto,
+  ): Promise<PropertyCalendar> {
+    const rec = await this.findOrCreateByJalaaliDate(propertyId, dto);
+
+    const newPropertyCalendar = await this.db.propertyCalendar.update({
+      where: { id: rec.id },
+      data: { advisor_commission: dto.advisor_commission },
     });
     return newPropertyCalendar;
   }
