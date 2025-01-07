@@ -84,15 +84,22 @@ export class AuthUserService {
    * @param jwtLevel
    * @returns
    */
-  async generateJwtToken(id: number, jwtLevel: number): Promise<string> {
+  async generateJwtToken(id: number, jwtLevel: number): Promise<{ token: string; socket_token: string }> {
     const payload: TokenPayload = { id, jwtLevel: (jwtLevel || 1) + 1, role: UserRole.USER };
 
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('auth.secret'),
       expiresIn: this.configService.get('auth.expire'),
     });
+
+    const socketToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('socket.secret'),
+      expiresIn: this.configService.get('socket.expire'),
+    });
+
     await this.db.user.update({ where: { id }, data: { jwt_level: { increment: 1 } } });
-    return token;
+
+    return { token, socket_token: socketToken };
   }
 
   /* -------------------------------------------------------------------------- */

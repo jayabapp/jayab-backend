@@ -128,8 +128,6 @@ export class PaymentUserService {
 
     if (!isVerified) return;
 
-    console.log({ isVerified });
-
     /* ----------------------------- PAYMENT PROCESS ---------------------------- */
     const updatedPayment = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
@@ -156,8 +154,6 @@ export class PaymentUserService {
       });
 
       const property = first(item.subscriptions)?.property;
-
-      console.log({ item, property });
 
       for (const e of item.subscriptions) {
         if (e?.is_promote) {

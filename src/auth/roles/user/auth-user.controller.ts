@@ -76,7 +76,7 @@ export class AuthUserController {
     const user = await this.authUserService.findOrCreateUser(dto.mobile_number);
 
     /* -------------------------------------------------------------------------- */
-    let token: string;
+    // let token: string;
 
     // /**
     //  * اگر کاربر رجیستر نبود توکن موقت میسازیم و میره برای وارد کردن اطلاعات پروفایل
@@ -90,9 +90,12 @@ export class AuthUserController {
     /**
      * برای کاربر رجیستر شده توکن اصلی میسازیم
      */
-    token = await this.authUserService.generateJwtToken(user.id, user.jwt_level);
+    const tokens = await this.authUserService.generateJwtToken(user.id, user.jwt_level);
 
-    return { result: { access_token: token }, messageCode: 'AUTH3' };
+    return {
+      result: { access_token: tokens.token, socket_token: tokens.socket_token },
+      messageCode: 'AUTH3',
+    };
   }
 
   // /**
