@@ -29,8 +29,13 @@ import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/us
 import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { slugify } from 'src/common/helpers/slugify';
-import { PropertyArrayResType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import {
+  PropertyArrayResType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -511,6 +516,7 @@ export class PropertyOwnerService {
         city: { select: { title: true } },
         property_options: true,
         daily_price: true,
+        calendar: { where: { date: startOfToday() } },
         bedrooms: { select: { total_bedrooms: true } },
         _count: { select: { attachments: true } },
         property_authorize: true,
@@ -525,17 +531,30 @@ export class PropertyOwnerService {
 
   /**
    * find one property
+   * owner checked in interceptor
    * @param propertyId
    * @returns
    */
-  async findOne(propertyId: number, ownerId: number): Promise<Property> {
+  async findOne(propertyId: number): Promise<PropertyResType> {
     const item = await this.db.property.findFirst({
-      where: { id: propertyId, owner_id: ownerId },
+      where: { id: propertyId },
+      include: {
+        feature_image: true,
+        attachments: true,
+        province: { select: { title: true } },
+        city: { select: { title: true } },
+        daily_price: true,
+        calendar: { where: { date: startOfToday() } },
+      },
     });
+
+    console.log({ c: item.calendar });
 
     if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
-    return item;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toJSON(item, today, false);
+    return serialized;
   }
 
   /**

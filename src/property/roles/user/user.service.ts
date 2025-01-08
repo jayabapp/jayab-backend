@@ -16,6 +16,7 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class PropertyUserService {
@@ -116,6 +117,7 @@ export class PropertyUserService {
           city: { select: { title: true } },
           property_options: true,
           daily_price: true,
+          calendar: { where: { date: startOfToday() } },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
         },
@@ -147,7 +149,8 @@ export class PropertyUserService {
         property_options: { select: { option: { select: { title: true, group: true } } } },
         bedrooms: true,
         daily_price: true,
-        assistants: true,
+        calendar: { where: { date: startOfToday() } },
+        // assistants: true,
         description: true,
       },
     });

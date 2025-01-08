@@ -208,15 +208,13 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find All' })
+  @ApiOperation({ operationId: 'Find One' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Patch(':propertyId/advisor-commission')
-  async updateAdvisorCommission(
-    @Req() req: RequestType,
-    @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: UpdatePropertyAdvisorCommissionOwnerDto,
-  ) {
-    const result = await this.propertyOwnerService.updateAdvisorCommission(propertyId, dto);
+  @Get(':propertyId')
+  async findOne(@Param('propertyId', ParseIntPipe) propertyId: number, @Req() req: RequestType) {
+    const user = req.user as PartialUser;
+    //
+    const result = await this.propertyOwnerService.findOne(propertyId);
     return { result };
   }
 }

@@ -5,6 +5,7 @@ import {
   PropertyAuthorize,
   PropertyBadge,
   PropertyBedroom,
+  PropertyCalendar,
   PropertyDailyPrice,
   PropertyDescription,
   PropertyOption,
@@ -20,19 +21,22 @@ import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 
+type TodayPrice = { price: number; discounted_price: number | null };
+
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
   attachments?: Attachment[];
-  bedrooms: Partial<PropertyBedroom>;
   province: Partial<City>;
   city: Partial<City>;
   region?: Partial<City>;
-  property_options: any[];
   _count?: { attachments: number };
-  daily_price?: PropertyDailyPrice;
-  description?: PropertyDescription;
+  property_options?: any[]; //مالک نیازی به این دیتا ندارد
+  bedrooms?: Partial<PropertyBedroom>; //مالک نیازی به این دیتا ندارد
+  daily_price?: PropertyDailyPrice; //مالک نیازی به این دیتا ندارد
+  description?: PropertyDescription; //مالک نیازی به این دیتا ندارد
   property_authorize?: PropertyAuthorize;
   blue_tick?: PropertyBadge;
+  calendar?: PropertyCalendar[];
 };
 
 export type PropertyArrayResType = {
@@ -53,7 +57,8 @@ export type PropertyArrayResType = {
   region: string;
   status: EnumList;
   advisor_commission: number;
-  today_price: number | null;
+  today_price: TodayPrice;
+  is_today_reserved: boolean;
   remaining_days: number;
   is_authorized: boolean;
   has_blue_tick: boolean;
@@ -133,6 +138,16 @@ export class PropertySerializer {
     }
   }
 
+  findTodayPrice(calendar: PropertyCalendar, today: DayColumn, dailyPrice: PropertyDailyPrice): TodayPrice {
+    if (calendar?.effective_price)
+      return {
+        price: calendar.price,
+        discounted_price: calendar.discounted_price,
+      };
+
+    return { price: dailyPrice?.[today], discounted_price: null };
+  }
+
   summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
@@ -153,8 +168,9 @@ export class PropertySerializer {
       province: data.province?.title,
       city: data.city?.title,
       region: data.region?.title,
-      advisor_commission: data.advisor_commission,
-      today_price: !data.daily_price ? null : data.daily_price['today_offer'] || data.daily_price[today],
+      advisor_commission: data.calendar?.[0]?.advisor_commission ?? data.advisor_commission,
+      today_price: this.findTodayPrice(data.calendar?.[0], today, data.daily_price),
+      is_today_reserved: !!data.calendar?.[0]?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
       status: PropertyStatusesList.find((_) => _.id === data.status),
