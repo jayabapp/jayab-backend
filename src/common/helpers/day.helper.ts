@@ -3,9 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { countBy, groupBy } from 'lodash';
 import moment from 'moment-jalaali';
 
-import { DateTime } from 'luxon';
-DateTime.fromObject({}, { zone: 'Asia/Tehran' });
-
 import { Cache } from 'cache-manager';
 import { DayDto } from 'src/property/roles/owner/dto/update-property.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -101,22 +98,21 @@ export class DayHelper {
   }
 
   todayUnix = (): number => {
-    // return moment().startOf('day').unix();
-    return DateTime.now().startOf('day').toUnixInteger();
+    return moment(startOfToday()).unix();
   };
 
-  dayUnix = (date: DayDto, duration = 0): number => {
-    const jDate = `${date.year}/${date.month}/${date.day}`;
-    let gerogian = moment(jDate, 'jYYYY/jMM/jDD').toDate();
+  // dayUnix = (date: DayDto, duration = 0): number => {
+  //   const jDate = `${date.year}/${date.month}/${date.day}`;
+  //   let gerogian = moment(jDate, 'jYYYY/jMM/jDD').toDate();
 
-    const dayUnix = DateTime.fromJSDate(gerogian).plus({ day: duration }).toUnixInteger();
-    return dayUnix;
-  };
+  //   const dayUnix = DateTime.fromJSDate(gerogian).plus({ day: duration }).toUnixInteger();
+  //   return dayUnix;
+  // };
 
-  dayUnixByUnix = (timestamp: number, duration = 0): number => {
-    const dayUnix = DateTime.fromSeconds(Math.trunc(timestamp)).plus({ day: duration }).toUnixInteger();
-    return dayUnix;
-  };
+  // dayUnixByUnix = (timestamp: number, duration = 0): number => {
+  //   const dayUnix = DateTime.fromSeconds(Math.trunc(timestamp)).plus({ day: duration }).toUnixInteger();
+  //   return dayUnix;
+  // };
 
   tsToJalaliObject = (timestamp: number): DayDto => {
     return {
@@ -128,12 +124,11 @@ export class DayHelper {
 
   async findPeak(unix: number) {
     const inCache = await this.cacheManager.get(`peak-${unix}`);
-    // console.log('today in cache', inCache);
 
     if (inCache == '1') return true;
     if (inCache == '0') return false;
 
-    const isPeak = false; //await this.db.peakDay.findFirst({ where: { timestamp: unix } });//TODO
+    const isPeak = await this.db.peakDay.findFirst({ where: { timestamp: unix } });
     if (isPeak) {
       // console.log('is peak');
 

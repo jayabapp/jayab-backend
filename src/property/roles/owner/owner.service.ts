@@ -34,7 +34,7 @@ import {
   PropertyResType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { DayHelper } from 'src/common/helpers/day.helper';
+import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
 import { convertJalaaliDtoToDate, startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
@@ -572,13 +572,13 @@ export class PropertyOwnerService {
     });
 
     const daysRange = await this.dayHelper.daysRange(convertJalaaliDtoToDate({ year, month, day: 1 }), 31);
-    console.log({ daysRange });
 
     let prices = [];
     for (let i = 1; i <= 31; i++) {
       const date = convertJalaaliDtoToDate({ year, month, day: i });
 
       const today = daysRange.requestedDays[i - 1];
+      const isPeak = today === DayColumn.peak;
       const cal = calendar?.find((e) => e.day === i && e.month === month && e.year === year);
 
       prices.push({
@@ -590,9 +590,9 @@ export class PropertyOwnerService {
         discounted_price: cal?.discounted_price ?? null,
         note: cal?.note ?? null,
         is_reserved: cal?.is_reserved ?? null,
+        is_peak: isPeak,
       });
     }
-    console.log({ prices });
 
     return prices;
   }
