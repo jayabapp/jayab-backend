@@ -35,7 +35,7 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { convertJalaaliDtoToDate, startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -548,8 +548,6 @@ export class PropertyOwnerService {
       },
     });
 
-    console.log({ c: item.calendar });
-
     if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
     const today = await this.dayHelper.today();
@@ -558,21 +556,45 @@ export class PropertyOwnerService {
   }
 
   /**
-   * update advisor commission
+   * calendar
    * @param propertyId
    * @param dto
    * @returns
    */
-  async updateAdvisorCommission(
-    propertyId: number,
-    dto: UpdatePropertyAdvisorCommissionOwnerDto,
-  ): Promise<Property> {
-    const item = await this.db.property.update({
-      where: { id: propertyId },
-      data: dto,
+  async findPropertyCalendar(propertyId: number, month: number, year: number): Promise<any> {
+    const calendar = await this.db.propertyCalendar.findMany({
+      where: { property_id: propertyId, month, year },
+      omit: { created_at: true, id: true, updated_at: true, property_id: true },
     });
 
-    return item;
+    const dailyPrice = await this.db.propertyDailyPrice.findFirst({
+      where: { property_id: propertyId },
+    });
+
+    const daysRange = await this.dayHelper.daysRange(convertJalaaliDtoToDate({ year, month, day: 1 }), 31);
+    console.log({ daysRange });
+
+    let prices = [];
+    for (let i = 1; i <= 31; i++) {
+      const date = convertJalaaliDtoToDate({ year, month, day: i });
+
+      const today = daysRange.requestedDays[i - 1];
+      const cal = calendar?.find((e) => e.day === i && e.month === month && e.year === year);
+
+      prices.push({
+        date,
+        day: i,
+        month,
+        year,
+        price: cal?.effective_price ?? dailyPrice[today],
+        discounted_price: cal?.discounted_price ?? null,
+        note: cal?.note ?? null,
+        is_reserved: cal?.is_reserved ?? null,
+      });
+    }
+    console.log({ prices });
+
+    return prices;
   }
 
   /* -------------------------------------------------------------------------- */

@@ -212,9 +212,21 @@ export class PropertyOwnerController {
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Get(':propertyId')
   async findOne(@Param('propertyId', ParseIntPipe) propertyId: number, @Req() req: RequestType) {
-    const user = req.user as PartialUser;
-    //
     const result = await this.propertyOwnerService.findOne(propertyId);
+    return { result };
+  }
+
+  @ApiOperation({ operationId: 'Find One Calendar' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Get(':propertyId/month-calendar')
+  async findOneCalendar(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query('month', ParseIntPipe) month: number,
+    @Query('year', ParseIntPipe) year: number,
+  ) {
+    const result = await this.propertyOwnerService.findPropertyCalendar(propertyId, month, year);
+    // const peakDays =
     return { result };
   }
 }

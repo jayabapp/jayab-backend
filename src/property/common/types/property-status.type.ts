@@ -42,7 +42,7 @@ export const PropertyStatusesList: Array<EnumList> = [
   {
     id: PropertyStatuses.WAITING,
     title: 'در انتظار تایید کارشناس جایاب',
-    hex: '#eab308 ',
+    hex: '#eab308',
   },
   {
     id: PropertyStatuses.PUBLISHED,

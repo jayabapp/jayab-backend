@@ -1113,3 +1113,18 @@ model Subscription {
 
   @@map("subscriptions")
 }
+
+// --------------------------------- PEAK DAYS --------------------------------- //
+model PeakDay {
+  id        Int      @id() @default(autoincrement())
+  day       Int      @db.SmallInt
+  month     Int      @db.SmallInt
+  year      Int
+  date      DateTime @db.Date
+  timestamp BigInt
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@map("peak_days")
+}

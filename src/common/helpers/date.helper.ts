@@ -54,3 +54,9 @@ export function convertJalaaliDtoToDate(dto: JalaaliDateDto): Date {
   const date = startOfDate(moment(jdate, JALAALI_FORMAT).toDate());
   return date;
 }
+
+export function convertGeorgianToJalaali(date: Date): string {
+  const gregorianDate = moment(date);
+  const persianDate = gregorianDate.format('jYYYY/jMM/jDD');
+  return persianDate;
+}

@@ -9,6 +9,7 @@ DateTime.fromObject({}, { zone: 'Asia/Tehran' });
 import { Cache } from 'cache-manager';
 import { DayDto } from 'src/property/roles/owner/dto/update-property.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { nDaysLaterDate, startOfDate, startOfToday } from './date.helper';
 
 export enum DayColumn {
   normal = 'normal',
@@ -31,9 +32,7 @@ export class DayHelper {
    * @returns
    */
   public async today(): Promise<DayColumn> {
-    const today: number = DateTime.now().weekday;
-    // console.log(DateTime.now().startOf('day').toUnixInteger());
-    // console.log(today);
+    const today: number = moment(startOfToday()).weekday();
 
     if (await this.findPeak(this.todayUnix())) return DayColumn.peak;
 
@@ -59,24 +58,23 @@ export class DayHelper {
   }
 
   public async daysRange(
-    startDate,
+    startDate: Date,
     duration: number,
   ): Promise<{ requestedDays: DayColumn[]; daysCount: object }> {
     let columns: DayColumn[] = [];
 
     for (let i = 0; i < duration; i++) {
-      // const dayUnix = moment.unix(Number(startDate)).add(i,'day').unix();
-      const dayUnix = DateTime.fromSeconds(Number(startDate)).plus({ day: i }).toUnixInteger();
+      const day = moment(nDaysLaterDate(startDate, i));
+      const dayUnix = day.unix();
 
       if (await this.findPeak(dayUnix)) {
         columns.push(DayColumn.peak);
         continue;
       }
-      // const day: number = moment.unix(Number(startDate)).add(i,'day').weekday();
-      const day: number = DateTime.fromSeconds(Number(startDate)).plus({ day: i }).weekday;
+      const dayNumber: number = day.weekday();
 
       let column: DayColumn;
-      switch (day) {
+      switch (dayNumber) {
         case 3:
           column = DayColumn.wednesday;
           break;
