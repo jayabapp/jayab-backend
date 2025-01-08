@@ -7,6 +7,7 @@ import {
   CannotBuySubscriptionStatuses,
   PropertyStatuses,
 } from 'src/property/common/types/property-status.type';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -17,8 +18,25 @@ export class SubscriptionPlanUserService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllSubscriptionPlanUserDto): Promise<Partial<SubscriptionPlan>[]> {
-    const list = this.db.subscriptionPlan.findMany({
+  async findAll(
+    user: PartialUser,
+    dto: FindAllSubscriptionPlanUserDto,
+  ): Promise<{ list: Partial<SubscriptionPlan>[]; can_promote: boolean }> {
+    let query: Prisma.SubscriptionPlanWhereInput = { group: dto.type, is_active: true };
+    let canPromote = false;
+
+    /* -------------------------------------------------------------------------- */
+    if (dto.property_id) {
+      const property = await this.db.property.findFirst({
+        where: { id: dto.property_id, owner_id: user.owner_id },
+      });
+
+      if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
+      if (property.status === PropertyStatuses.PUBLISHED) canPromote = true;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    const list = await this.db.subscriptionPlan.findMany({
       where: { group: dto.type, is_active: true },
       select: {
         id: true,
@@ -30,7 +48,7 @@ export class SubscriptionPlanUserService {
       },
     });
 
-    return list;
+    return { list, can_promote: canPromote };
   }
 
   /**
@@ -54,17 +72,24 @@ export class SubscriptionPlanUserService {
    * @param subscriptionPlanId
    * @param propertySortOrder
    */
-  async checkCanBuyPromote(subscriptionPlanId: number, property: Property): Promise<SubscriptionPlan> {
-    if (CannotBuySubscriptionStatuses.includes(property.status))
-      throw new BadRequestException('PROPERTY_SUB1');
+  async checkCanBuyPromote(
+    subscriptionPlanId: number,
+    property: Property,
+    mustReturnPromote = true,
+  ): Promise<SubscriptionPlan | null> {
+    if (property.status !== PropertyStatuses.PUBLISHED) return;
 
     //
     const timestamp = Number(property.sort_order);
     const twoDaysAgo = moment().subtract(2, 'days');
-    if (moment(timestamp).isBefore(twoDaysAgo)) throw new BadRequestException('PROPERTY_SUB2');
+    if (moment(timestamp).isBefore(twoDaysAgo)) return;
 
     //
-    const promote = await this.findOne(subscriptionPlanId, true);
-    return promote;
+    if (mustReturnPromote) {
+      const promote = await this.findOne(subscriptionPlanId, true);
+      return promote;
+    }
+
+    return;
   }
 }

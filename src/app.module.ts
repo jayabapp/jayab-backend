@@ -59,12 +59,18 @@ import { UserModule } from './user/user.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyModule } from './property/property.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
+<<<<<<< HEAD
 import { PropertyAuthorizeModule } from './property-authorize/property-authorize.module';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
 import { IsPrice } from './common/validators/price-validator.decorator';
 import { ChatModule } from './chat/chat.module';
 import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
 import { PropertyBadgeModule } from './property-badge/property-badge.module';
+=======
+import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
+import { IsPrice } from './common/validators/price-validator.decorator';
+import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
+>>>>>>> feat/properties
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -138,6 +144,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     PropertyAuthorizeModule,
     PropertyCalendarModule,
     PropertyBadgeModule,
+    PaymentGatewayModule,
     BaseModule,
   ],
   providers: [
