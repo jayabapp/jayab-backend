@@ -66,6 +66,7 @@ import { ChatModule } from './chat/chat.module';
 import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
 import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
+import { PeakDayModule } from './peak-day/peak-day.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -140,6 +141,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     PropertyCalendarModule,
     PropertyBadgeModule,
     PaymentGatewayModule,
+    PeakDayModule,
     BaseModule,
   ],
   providers: [
