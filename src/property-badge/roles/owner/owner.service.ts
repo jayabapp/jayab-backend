@@ -39,6 +39,7 @@ export class PropertyBadgeOwnerService {
   async findOne(propertyId: number): Promise<any> {
     const item = await this.db.propertyBadge.findFirst({
       where: { property_id: propertyId },
+      omit: { changelog: true },
     });
 
     if (!item) return null;

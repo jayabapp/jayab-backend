@@ -6,7 +6,11 @@ import { UpdatePropertyAuthorizeOwnerDto } from './dto/update.dto';
 import { FindAllPropertyAuthorizeOwnerDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { CommonStatuses } from 'src/common/interfaces/common-status.interface';
-import { PropertyAuthorizeStatuses } from 'src/property-authorize/common/property-authorize-status.type';
+import {
+  PropertyAuthorizeStatuses,
+  PropertyAuthorizeStatusesList,
+} from 'src/property-authorize/common/property-authorize-status.type';
+import { EnumList } from 'src/common/interfaces/model-props.interface';
 
 @Injectable()
 export class PropertyAuthorizeOwnerService {
@@ -56,8 +60,8 @@ export class PropertyAuthorizeOwnerService {
       omit: { changelog: true },
     });
 
-    if (!item) throw new NotFoundException('NOT_FOUND');
-    if (item.property.owner_id !== ownerId) throw new ForbiddenException('PROPERTY_AUTH2');
+    // if (!item) throw new NotFoundException('NOT_FOUND');
+    if (item && item.property.owner_id !== ownerId) throw new ForbiddenException('PROPERTY_AUTH2');
 
     return item;
   }

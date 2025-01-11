@@ -545,6 +545,7 @@ export class PropertyOwnerService {
         city: { select: { title: true } },
         daily_price: true,
         calendar: { where: { date: startOfToday() } },
+        property_authorize: true,
       },
     });
 
@@ -561,14 +562,14 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async findPropertyCalendar(propertyId: number, month: number, year: number): Promise<any> {
+  async findPropertyCalendar(property: Property, month: number, year: number): Promise<any> {
     const calendar = await this.db.propertyCalendar.findMany({
-      where: { property_id: propertyId, month, year },
+      where: { property_id: property.id, month, year },
       omit: { created_at: true, id: true, updated_at: true, property_id: true },
     });
 
     const dailyPrice = await this.db.propertyDailyPrice.findFirst({
-      where: { property_id: propertyId },
+      where: { property_id: property.id },
     });
 
     const daysRange = await this.dayHelper.daysRange(convertJalaaliDtoToDate({ year, month, day: 1 }), 31);
@@ -586,11 +587,12 @@ export class PropertyOwnerService {
         day: i,
         month,
         year,
-        price: cal?.effective_price ?? dailyPrice[today],
+        price: cal?.price ?? dailyPrice[today],
         discounted_price: cal?.discounted_price ?? null,
         note: cal?.note ?? null,
         is_reserved: cal?.is_reserved ?? null,
         is_peak: isPeak,
+        advisor_commission: cal?.advisor_commission ?? property.advisor_commission,
       });
     }
 

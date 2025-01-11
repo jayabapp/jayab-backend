@@ -28,7 +28,10 @@ import {
   OwnerUpdatePropertyInterceptor,
   PropertyInterceptorData,
 } from 'src/property/common/interceptors/owner-property.interceptor';
-import { PropertyAuthorizeStatuses } from 'src/property-authorize/common/property-authorize-status.type';
+import {
+  PropertyAuthorizeStatuses,
+  PropertyAuthorizeStatusesList,
+} from 'src/property-authorize/common/property-authorize-status.type';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
@@ -87,8 +90,11 @@ export class PropertyAuthorizeOwnerController {
     const user = req.user as PartialUser;
 
     const result = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
-
-    return { result };
+    const formatted = {
+      ...result,
+      status: PropertyAuthorizeStatusesList.find((e) => e.id === result.status),
+    };
+    return { result: formatted };
   }
 
   @ApiOperation({ operationId: 'Update', description: '' })
