@@ -57,11 +57,7 @@ export class PropertyUserService {
     }
 
     //initial query
-    let query: Prisma.PropertyWhereInput = {
-      status: PropertyStatuses.PUBLISHED,
-      subscription_expired_at: { gte: new Date() },
-      // property_authorize:{status:CommonStatuses.APPROVED}
-    };
+    let query: Prisma.PropertyWhereInput = this.validProperty();
     if (code) query = { ...query, code };
 
     /* -------------------------------- province -------------------------------- */
@@ -140,7 +136,7 @@ export class PropertyUserService {
     if (!code) throw new BadRequestException('NOT_FOUND');
 
     const item = await this.db.property.findFirst({
-      where: { code },
+      where: { ...this.validProperty(), code },
       include: {
         feature_image: true,
         attachments: true,
@@ -160,5 +156,20 @@ export class PropertyUserService {
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, false);
     return serialized;
+  }
+
+  validProperty() {
+    return {
+      status: PropertyStatuses.PUBLISHED,
+      subscription_expired_at: { gte: new Date() },
+    };
+  }
+
+  async findOnPartial(propertyId: number, select: Prisma.PropertySelect): Promise<Partial<Property>> {
+    const property = await this.db.property.findFirst({
+      where: { id: propertyId, ...this.validProperty() },
+      select: select,
+    });
+    return property;
   }
 }

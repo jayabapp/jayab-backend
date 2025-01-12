@@ -7,5 +7,6 @@ import { DayHelper } from 'src/common/helpers/day.helper';
 @Module({
   controllers: [PropertyUserController],
   providers: [PropertyUserService, PropertySerializer, DayHelper],
+  exports: [PropertyUserService],
 })
 export class PropertyUserModule {}

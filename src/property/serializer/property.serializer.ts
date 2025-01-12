@@ -81,6 +81,7 @@ export type PropertyJsonResType = {
   options: object[];
   property_descriptions: PropertyDescription;
   rent_type: RentType;
+  is_chat_enabled: boolean;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -199,6 +200,7 @@ export class PropertySerializer {
         options: this.formatPropertyOptions(data.property_options, 'title'),
         property_descriptions: data.description,
         rent_type: RentType.DAILY,
+        is_chat_enabled: data.is_chat_enabled,
       };
 
     let res: PropertyResType = { ...list, ...single };

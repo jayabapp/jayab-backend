@@ -5,10 +5,7 @@ export type PartialChatroom = {
   id: number;
   uuid: string;
   created_at: Date;
-  deposit: {
-    id: number;
-    status: number;
-  };
+  property_id: number;
   participants: {
     self: PartialParticipant;
     recipient: PartialParticipant;

@@ -1004,20 +1004,21 @@ model SubmittedFormItems {
 //                                    CHAT                                    //
 // -------------------------------------------------------------------------- //
 model MessengerChatroom {
-  id              Int    @id() @default(autoincrement())
-  uuid            String @unique @default(uuid())
-  property_id     Int?   @unique
-  last_message_id Int?   @unique
+  id          Int    @id() @default(autoincrement())
+  uuid        String @unique @default(uuid())
+  property_id Int?
+  // last_message_id Int?   
 
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
   participants MessengerParticipant[]
   messages     MessengerMessages[]
-  last_message MessengerMessages?     @relation("LastMessage", fields: [last_message_id], references: [id])
+  // last_message MessengerMessages?     @relation("LastMessage", fields: [last_message_id], references: [id])
 
   property Property? @relation(fields: [property_id], references: [id], onDelete: Cascade)
 
+  @@index([property_id])
   @@map("messenger_chatrooms")
 }
 
@@ -1037,6 +1038,7 @@ model MessengerParticipant {
   messages MessengerMessages[]
 
   @@unique([chatroom_id, user_id, role])
+  @@index([chatroom_id, user_id])
   @@map("messenger_participants")
 }
 
@@ -1048,15 +1050,16 @@ model MessengerMessages {
   media_id       Int?
   third_party    String?
 
-  chatroom              MessengerChatroom    @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
-  participant           MessengerParticipant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
-  chatroom_last_message MessengerChatroom?   @relation("LastMessage")
-  media                 Attachment?          @relation(fields: [media_id], references: [id])
+  chatroom    MessengerChatroom    @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
+  participant MessengerParticipant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  // chatroom_last_message MessengerChatroom?   @relation("LastMessage")
+  media       Attachment?          @relation(fields: [media_id], references: [id])
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
+  @@index([chatroom_id, participant_id])
   @@map("messenger_messages")
 }
 

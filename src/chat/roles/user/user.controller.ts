@@ -34,6 +34,7 @@ import { first } from 'lodash';
 import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
+import { PropertyUserService } from 'src/property/roles/user/user.service';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -41,10 +42,11 @@ import { BlockParticipantUserDto } from './dto/blacklist.dto';
 @Controller(ROUTE_GROUP)
 export class ChatUserController {
   constructor(
+    @InjectRedis() private readonly redis: Redis,
     private readonly sharedChatService: SharedChatService,
     private readonly socketService: SocketService,
     private readonly attachmentService: AttachmentService,
-    @InjectRedis() private readonly redis: Redis,
+    private readonly propertyService: PropertyUserService,
   ) {}
 
   @ApiOperation({ operationId: 'Find All' })
@@ -138,7 +140,9 @@ export class ChatUserController {
     const recipient = chatroom?.participants?.recipient;
     let isRecipientOnline = false;
     if (recipient) {
-      isRecipientOnline = !!first(await this.redis.keys(`${recipient.role}:${recipient.user_id}:status*`));
+      console.log({ s: await this.redis.keys(`${UserRole.USER}:${recipient.user_id}:status*`) });
+
+      isRecipientOnline = !!first(await this.redis.keys(`${UserRole.USER}:${recipient.user_id}:status*`));
     }
 
     const isBlocked = await this.sharedChatService.checkIsBlocked(
@@ -146,12 +150,20 @@ export class ChatUserController {
       chatroom.participants.self.participant_id,
     );
 
+    const property = await this.propertyService.findOnPartial(chatroom.property_id, {
+      id: true,
+      slug: true,
+      title: true,
+      feature_image: true,
+    });
+
     const result = {
       id: chatroom.uuid,
       self: chatroom.participants.self,
       recipient: chatroom.participants.recipient,
       is_recipient_online: isRecipientOnline,
       is_blocked: isBlocked,
+      property,
     };
 
     return { result };

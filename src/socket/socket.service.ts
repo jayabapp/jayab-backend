@@ -137,7 +137,7 @@ export class SocketService {
     console.log({ recipient });
 
     // create key
-    const key = this.createRoomKey(recipient.user_id, recipient.role as UserRole);
+    const key = this.createRoomKey(recipient.user_id, UserRole.USER);
 
     /* -------------------------------------------------------------------------- */
     // emit

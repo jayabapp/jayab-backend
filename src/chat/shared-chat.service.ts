@@ -10,6 +10,7 @@ import moment from 'moment-jalaali';
 import { PartialParticipant } from './common/chat.interface';
 import { v7 as uuid } from 'uuid';
 import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
+import { PropertyUserService } from 'src/property/roles/user/user.service';
 
 @Injectable()
 export class SharedChatService {
@@ -83,14 +84,21 @@ export class SharedChatService {
       p.title AS property_title,
       ROW_TO_JSON(att.*) as property_image,
       (
-      SELECT COUNT(*)
-      FROM messenger_messages mm
-      JOIN messenger_participants mp2 ON mm.chatroom_id = mp2.chatroom_id
-      WHERE mm.chatroom_id = mc.id
-      AND mp2.user_id = ${userId}
-      AND mm.participant_id != mp2.id
-      AND mm.created_at > mp2.message_read_at
-      ) AS unread_count
+        SELECT COUNT(*)
+        FROM messenger_messages mm
+        JOIN messenger_participants mp2 ON mm.chatroom_id = mp2.chatroom_id
+        WHERE mm.chatroom_id = mc.id
+        AND mp2.user_id = ${userId}
+        AND mm.participant_id != mp2.id
+        AND mm.created_at > mp2.message_read_at
+      ) AS unread_count,
+      (
+        SELECT ROW_TO_JSON(last_msg.*)
+        FROM messenger_messages last_msg
+        WHERE last_msg.chatroom_id = mc.id
+        ORDER BY last_msg.created_at DESC
+        LIMIT 1
+    ) AS last_message
     FROM 
       messenger_participants mp
     JOIN 
