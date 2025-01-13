@@ -7,5 +7,6 @@ import { PropertyUserModule } from 'src/property/roles/user/user.module';
   imports: [PropertyUserModule],
   controllers: [BookmarkUserController],
   providers: [BookmarkUserService],
+  exports: [BookmarkUserService],
 })
 export class BookmarkUserModule {}

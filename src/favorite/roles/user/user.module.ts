@@ -5,5 +5,6 @@ import { FavoriteUserService } from './user.service';
 @Module({
   controllers: [FavoriteUserController],
   providers: [FavoriteUserService],
+  exports: [FavoriteUserService],
 })
 export class FavoriteUserModule {}
