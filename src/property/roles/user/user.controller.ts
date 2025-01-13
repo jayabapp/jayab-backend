@@ -39,4 +39,11 @@ export class PropertyUserController {
 
     return { result };
   }
+
+  @ApiOperation({ operationId: 'Find Contact Info', description: '' })
+  @Get(':propertySlug/contact-info')
+  async findContactInfo(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findContactInfo(propertySlug);
+    return { result };
+  }
 }

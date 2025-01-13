@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma } from '@prisma/client';
+import { Property, Prisma, PropertyOwnerAssistant } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
@@ -139,8 +139,7 @@ export class PropertyUserService {
    * @returns
    */
   async findOne(propertySlug: string): Promise<PropertyResType> {
-    const code = propertySlug.split('-')?.[0];
-    if (!code) throw new BadRequestException('NOT_FOUND');
+    const code = this.checkSlug(propertySlug);
 
     const item = await this.db.property.findFirst({
       where: { ...this.validProperty(), code },
@@ -166,6 +165,17 @@ export class PropertyUserService {
     return serialized;
   }
 
+  async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
+    const code = this.checkSlug(propertySlug);
+
+    const list = await this.db.propertyOwnerAssistant.findMany({
+      where: { property: { ...this.validProperty(), code } },
+      select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
+    });
+
+    return list;
+  }
+
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
@@ -179,5 +189,11 @@ export class PropertyUserService {
       select: select,
     });
     return property;
+  }
+
+  checkSlug(slug: string): string {
+    const code = slug.split('-')?.[0];
+    if (!code) throw new BadRequestException('NOT_FOUND');
+    return code;
   }
 }
