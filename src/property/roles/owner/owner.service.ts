@@ -521,6 +521,7 @@ export class PropertyOwnerService {
         _count: { select: { attachments: true } },
         property_authorize: true,
         blue_tick: true,
+        favorites: true,
       },
     });
 
@@ -546,6 +547,7 @@ export class PropertyOwnerService {
         daily_price: true,
         calendar: { where: { date: startOfToday() } },
         property_authorize: true,
+        favorites: true,
       },
     });
 

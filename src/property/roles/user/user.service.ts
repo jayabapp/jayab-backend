@@ -116,6 +116,7 @@ export class PropertyUserService {
           calendar: { where: { date: startOfToday() } },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
+          favorites: true,
         },
       },
       { cursor: dto.cursor },
@@ -148,6 +149,7 @@ export class PropertyUserService {
         calendar: { where: { date: startOfToday() } },
         // assistants: true,
         description: true,
+        favorites: true,
       },
     });
 

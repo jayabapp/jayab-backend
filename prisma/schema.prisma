@@ -434,9 +434,8 @@ model User {
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
-  turnovers Turnover[]
-  // favorites        Favorite[]
-
+  turnovers  Turnover[]
+  favorites  Favorite[]
   black_list MessengerBlackList[]
 
   @@map("users")
@@ -567,6 +566,7 @@ model Property {
   chatrooms MessengerChatroom[]
   calendar  PropertyCalendar[]
   blue_tick PropertyBadge?
+  favorites Favorite[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -864,18 +864,32 @@ model Turnover {
 // }
 
 // ------------------------------- FAVORITE ------------------------------- //
-// model Favorite {
+model Favorite {
+  id          Int @id() @default(autoincrement())
+  property_id Int
+  user_id     Int
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  product Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, property_id])
+  @@map("favorites")
+}
+
+// model Bookmark {
 //   id         Int @id() @default(autoincrement())
-//   product_id Int
+//   property_id Int
 //   user_id    Int
 
 //   created_at DateTime @default(now()) @db.Timestamp(6)
 
-//   product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+//   product Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
 //   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-//   @@index([user_id])
-//   @@map("favorites")
+//   @@index([user_id,property_id])
+//   @@map("bookmarks")
 // }
 
 // // ------------------------------- CONTACT US ------------------------------- //
