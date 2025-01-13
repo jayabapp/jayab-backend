@@ -31,7 +31,10 @@ export class PropertyUserService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<PropertyArrayResType>> {
+  async findAll(
+    dto: FindAllPropertyUserDto,
+    propertyIds?: number[],
+  ): Promise<CursorPaginatedResult<PropertyArrayResType>> {
     const {
       code,
       province_id,
@@ -98,6 +101,9 @@ export class PropertyUserService {
         ...query,
         daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
       };
+
+    /* -------------------------------- bookmark -------------------------------- */
+    if (propertyIds) query = { ...query, id: { in: propertyIds } };
 
     /* ---------------------------------- LIST ---------------------------------- */
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(

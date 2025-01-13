@@ -437,6 +437,7 @@ model User {
   turnovers  Turnover[]
   favorites  Favorite[]
   black_list MessengerBlackList[]
+  bookmarks  Bookmark[]
 
   @@map("users")
 }
@@ -567,6 +568,7 @@ model Property {
   calendar  PropertyCalendar[]
   blue_tick PropertyBadge?
   favorites Favorite[]
+  bookmarks Bookmark[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -871,26 +873,26 @@ model Favorite {
 
   created_at DateTime @default(now()) @db.Timestamp(6)
 
-  product Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
-  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, property_id])
   @@map("favorites")
 }
 
-// model Bookmark {
-//   id         Int @id() @default(autoincrement())
-//   property_id Int
-//   user_id    Int
+model Bookmark {
+  id          Int @id() @default(autoincrement())
+  property_id Int
+  user_id     Int
 
-//   created_at DateTime @default(now()) @db.Timestamp(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
 
-//   product Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
-//   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-//   @@index([user_id,property_id])
-//   @@map("bookmarks")
-// }
+  @@index([user_id, property_id])
+  @@map("bookmarks")
+}
 
 // // ------------------------------- CONTACT US ------------------------------- //
 // model ContactUs {

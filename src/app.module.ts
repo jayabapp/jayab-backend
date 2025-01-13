@@ -67,8 +67,9 @@ import { PropertyCalendarModule } from './property-calendar/property-calendar.mo
 import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
 import { PeakDayModule } from './peak-day/peak-day.module';
-import { BaseModule as BaseModule } from './__base/base.module';
 import { FavoriteModule } from './favorite/favorite.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
+import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
   imports: [
@@ -144,6 +145,7 @@ import { FavoriteModule } from './favorite/favorite.module';
     PaymentGatewayModule,
     PeakDayModule,
     FavoriteModule,
+    BookmarkModule,
     BaseModule,
   ],
   providers: [
