@@ -35,10 +35,10 @@ export class BookmarkUserController {
     const user = request.user;
     const propertyIds = await this.bookmarkUserService.findAllIds(user.id);
     const result = await this.propertyUserService.findAll({ cursor: 0, per_page: 100 }, propertyIds);
-    return { result };
+    return { result: result.data };
   }
 
-  @ApiOperation({ operationId: 'Find All Employee ids', description: '' })
+  @ApiOperation({ operationId: 'Find All Property ids', description: '' })
   @Get('property-ids')
   async findAllIds(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
