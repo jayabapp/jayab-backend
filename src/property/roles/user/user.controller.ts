@@ -3,14 +3,16 @@ import {
   Controller,
   // Delete,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   Post,
   Put,
   Query,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
@@ -33,10 +35,15 @@ export class PropertyUserController {
   }
 
   @ApiOperation({ operationId: 'Find One By Slug', description: '' })
+  @ApiHeader({ name: 'fingerprint', required: true })
   @Get(':propertySlug')
-  async findOne(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
+  async findOne(
+    @Param('propertySlug') propertySlug: string,
+    @Headers() headers: { fingerprint: string },
+  ): Promise<SuccessResponseArgs> {
+    if (!headers.fingerprint) throw new UnauthorizedException('Unauthorized');
     const result = await this.propertyUserService.findOne(propertySlug);
-
+    await this.propertyUserService.updateViewStatistics(result.id, headers.fingerprint);
     return { result };
   }
 

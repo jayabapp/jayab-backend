@@ -17,6 +17,9 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
 
 @Injectable()
 export class PropertyUserService {
@@ -24,6 +27,7 @@ export class PropertyUserService {
     private readonly db: PrismaService,
     private readonly propertySerializer: PropertySerializer,
     private readonly dayHelper: DayHelper,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   /**
@@ -195,5 +199,28 @@ export class PropertyUserService {
     const code = slug.split('-')?.[0];
     if (!code) throw new BadRequestException('NOT_FOUND');
     return code;
+  }
+
+  /**
+   *
+   * @param propertyId
+   * @param fingerprint
+   * @returns
+   */
+  async updateViewStatistics(propertyId: number, fingerprint: string): Promise<void> {
+    /*  */
+    const redisKey = userPropertyViewKey(propertyId, fingerprint);
+    const userViewedPost = await this.redis.get(redisKey);
+    if (userViewedPost) return;
+    await this.redis.set(redisKey, 1, 'EX', 86400);
+
+    const now = startOfToday();
+
+    // create statistics
+    await this.db.propertyStatistics.upsert({
+      where: { property_id_date: { property_id: propertyId, date: now } },
+      update: { view_count: { increment: 1 } },
+      create: { date: now, property_id: propertyId, view_count: 1 },
+    });
   }
 }

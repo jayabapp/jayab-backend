@@ -666,6 +666,20 @@ model PropertyOwnerAssistant {
   @@map("property_owner_assistants")
 }
 
+model PropertyStatistics {
+  id          Int      @id() @default(autoincrement())
+  property_id Int
+  view_count  Int      @default(0)
+  date        DateTime
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([property_id, date])
+  @@index([property_id, date])
+  @@map("property_statistics")
+}
+
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //
 model PropertyOption {
   id          Int       @id() @default(autoincrement())
