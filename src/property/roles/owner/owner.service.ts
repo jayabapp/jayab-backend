@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, Owner, User, SubscriptionPlan } from '@prisma/client';
+import { Property, Prisma, Owner, User, SubscriptionPlan, PropertyStatistics } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -35,7 +35,7 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
-import { convertJalaaliDtoToDate, startOfToday } from 'src/common/helpers/date.helper';
+import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -619,6 +619,26 @@ export class PropertyOwnerService {
   /* -------------------------------------------------------------------------- */
   async remove(propertyId: number): Promise<void> {
     await this.db.property.delete({ where: { id: propertyId } });
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 STATISTICS                                 */
+  /* -------------------------------------------------------------------------- */
+
+  /**
+   *
+   * @param propertyId
+   */
+  async findStatistics(propertyId: number): Promise<Partial<PropertyStatistics>[]> {
+    const aWeekAgo = startOfDate(moment().subtract(8, 'days').toDate());
+    const now = startOfToday();
+
+    const list = await this.db.propertyStatistics.findMany({
+      where: { property_id: propertyId, date: { gte: aWeekAgo, lte: now } },
+      select: { id: true, date: true, view_count: true },
+    });
+
+    return list;
   }
 
   /* -------------------------------------------------------------------------- */

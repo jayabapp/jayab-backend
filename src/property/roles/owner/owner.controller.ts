@@ -246,6 +246,18 @@ export class PropertyOwnerController {
     return { result };
   }
 
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @ApiOperation({ operationId: 'Find Statistics', description: '' })
+  @Get(':propertyId/statistics')
+  async findStatistics(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+  ): Promise<SuccessResponseArgs> {
+    const property = req.interceptor_data as PropertyInterceptorData;
+    const result = await this.propertyOwnerService.findStatistics(propertyId);
+    return { result: { statistics: result } };
+  }
+
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
