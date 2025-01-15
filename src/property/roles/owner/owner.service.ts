@@ -416,6 +416,19 @@ export class PropertyOwnerService {
   }
 
   /**
+   * Update advisor commission
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateCommission(propertyId: number, dto: UpdatePropertyAdvisorCommissionOwnerDto): Promise<void> {
+    await this.db.property.update({
+      where: { id: propertyId },
+      data: { advisor_commission: dto.advisor_commission },
+    });
+  }
+
+  /**
    *
    * @param property
    * @param dto

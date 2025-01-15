@@ -23,6 +23,7 @@ import { PropertyOwnerService } from './owner.service';
 import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import {
   UpdatePropertyBedroomOwnerDto,
+  UpdatePropertyCommissionOwnerDto,
   UpdatePropertyEnvOwnerDto,
   UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
@@ -178,6 +179,19 @@ export class PropertyOwnerController {
     const property = req.interceptor_data as PropertyInterceptorData;
     await this.propertyOwnerService.updateTerms(property, dto);
     return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update Commission' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Put(':propertyId/commission')
+  async updateCommission(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyCommissionOwnerDto,
+  ) {
+    const property = req.interceptor_data as PropertyInterceptorData;
+    await this.propertyOwnerService.updateCommission(property.id, dto);
+    return { result: dto.advisor_commission, messageCode: 'UPDATE' };
   }
 
   @ApiOperation({ operationId: 'Pay Subscription' })

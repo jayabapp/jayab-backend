@@ -542,3 +542,12 @@ export class UpdatePropertyOwnerAssistantOwnerDto {
   @_IsNotEmpty()
   show_mobile_type: number;
 }
+
+export class UpdatePropertyCommissionOwnerDto {
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @_IsInt()
+  @_Max(50)
+  @_Min(0)
+  @_IsNotEmpty()
+  advisor_commission: number;
+}
