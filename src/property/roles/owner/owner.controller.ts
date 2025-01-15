@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   // Delete,
   Get,
   Param,
@@ -243,5 +244,16 @@ export class PropertyOwnerController {
     const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year);
     // const peakDays =
     return { result };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   DELETE                                   */
+  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ operationId: 'Delete' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Delete(':propertyId')
+  async delete(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
+    const result = await this.propertyOwnerService.remove(propertyId);
+    return { messageCode: 'DELETE' };
   }
 }
