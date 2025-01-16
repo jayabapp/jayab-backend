@@ -1135,3 +1135,28 @@ model PeakDay {
   @@index([date, timestamp])
   @@map("peak_days")
 }
+
+model LandingPage {
+  id                      Int     @id() @default(autoincrement())
+  title                   String
+  content_category_id     Int?
+  url                     String  @unique
+  is_active               Boolean @default(false)
+  show_in_home            Boolean @default(false)
+  options                 Json?   @db.JsonB
+  province_id             Int?
+  city_id                 Int?
+  has_pool                Boolean @default(false)
+  property_type           Int?
+  min_discount_percentage Int     @db.SmallInt
+  is_premium              Boolean @default(false)
+  min_price               Int?
+  max_price               Int?
+  min_bedroom             Int?
+  max_bedroom             Int?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@map("landing_pages")
+}

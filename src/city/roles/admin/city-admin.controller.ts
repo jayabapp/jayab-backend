@@ -41,6 +41,13 @@ export class CityAdminController {
     return { result };
   }
 
+  @ApiOperation({ operationId: 'Find all categories', summary: 'دریافت همه دسته بندی ها' })
+  @Get()
+  async findAll(@Query() dto: FindAllCityAdminDto): Promise<SuccessResponseArgs> {
+    const result = await this.cityAdminService.findAll(dto, dto.page, dto.per_page);
+    return { result };
+  }
+
   @ApiOperation({ operationId: 'Find all parents', summary: 'دریافت همه والد ها' })
   @Get('parents')
   async findParents(): Promise<SuccessResponseArgs> {
@@ -62,14 +69,6 @@ export class CityAdminController {
 
     return { result, messageCode: 'CREATE' };
   }
-
-  // @ApiOperation({ operationId: 'Find all categories', summary: 'دریافت همه دسته بندی ها' })
-  // @Get()
-  // async findAll(): Promise<SuccessResponseArgs> {
-
-  //   const result = await this.cityAdminService.findAll();
-  //   return { result };
-  // }
 
   @ApiOperation({ operationId: 'Find one city', summary: 'دریافت دسته بندی' })
   @Get(':cityId')

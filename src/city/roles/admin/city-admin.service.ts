@@ -13,6 +13,7 @@ import { CreateProps, ShowAction, ShowProps } from 'src/common/interfaces/model-
 import { isEmpty, isInteger } from 'lodash';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { hasPersianLetter } from 'src/common/helpers/persian-regex';
+import { FindAllCityAdminDto } from './dto/find-all.dto';
 
 export type RecursiveCity = City & { parent: RecursiveCity | null };
 
@@ -70,18 +71,19 @@ export class CityAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: object, page: number, perPage = 50): Promise<PaginatedResult<City>> {
+  async findAll(dto: FindAllCityAdminDto, page: number, perPage = 50): Promise<PaginatedResult<City>> {
+    let q: Prisma.CityWhereInput = {};
+    if (dto.title) q = { ...q, title: { contains: dto.title } };
+    if (dto.is_parent === 1) q = { ...q, parent_id: null };
+    else if (dto.is_parent === 0) q = { ...q, parent_id: { not: null } };
+
     const list = await paginate()<City, Prisma.CityFindManyArgs>(
       this.db.city,
       {
-        where: filters,
-        include: {
-          parent: {
-            select: {
-              id: true,
-              title: true,
-            },
-          },
+        where: q,
+        select: {
+          id: true,
+          title: true,
         },
       },
       { page, perPage },

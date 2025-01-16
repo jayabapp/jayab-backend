@@ -40,6 +40,7 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'احراز ملک', key: 'property-authorize' },
    { name: 'امکال ممتاز', key: 'property-badges'},
   { name: 'روزهای پیک', key: 'peak-days'},
+  { name: 'صفحات لندینگ', key: 'landing-pages'},
  ];
 
   return data;
