@@ -17,6 +17,7 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 
 @Injectable()
 export class PropertyUserService {
@@ -38,23 +39,26 @@ export class PropertyUserService {
       cities,
       regions,
       total_bedrooms,
+      total_guests,
       property_type,
       pool_type,
       entertainment,
       with_pool,
+      is_premium,
       title,
       start_day,
       num_days,
       min_price,
       max_price,
     } = dto;
+    console.log({ dto });
 
-    let startDay = null;
+    // let startDay = null;
 
-    if (isJson(start_day)) {
-      startDay = JSON.parse(dto.start_day) as DayDto;
-      if (!startDay?.day || !startDay?.month || !startDay?.year) startDay = null;
-    }
+    // if (isJson(start_day)) {
+    //   startDay = JSON.parse(dto.start_day) as DayDto;
+    //   if (!startDay?.day || !startDay?.month || !startDay?.year) startDay = null;
+    // }
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -64,7 +68,7 @@ export class PropertyUserService {
     if (province_id) query = { ...query, province_id };
 
     /* --------------------------------- cities --------------------------------- */
-    if (!isEmpty(cities)) query = { ...query, city_id: { in: cities } };
+    if (!isEmpty(cities)) query = { ...query, city_id: { in: parseQueryNumberArray(cities) } };
 
     /* --------------------------------- regions -------------------------------- */
     if (!isEmpty(regions)) query = { ...query, region_id: { in: regions } };
@@ -72,39 +76,41 @@ export class PropertyUserService {
     /* ----------------------------- total bedrooms ----------------------------- */
     if (total_bedrooms >= 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
 
-    /* -------------------------------- RENT TYPE ------------------------------- */
-    if (dto.rent_type?.includes(RentType.DAILY)) query = { ...query, NOT: { daily_price: null } };
+    /* ----------------------------- total guests ----------------------------- */
+    if (total_guests >= 0) query = { ...query, std_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
     let options = [];
     if (property_type) options.push(property_type);
 
-    if (!isEmpty(entertainment)) options = options.concat(entertainment);
-    let optionsQuery = [];
-    options.map((e) => optionsQuery.push({ property_options: { some: { option_id: e } } }));
+    if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
 
     /* --------------------------- نوع های استخر - OR --------------------------- */
-    if (!isEmpty(pool_type))
-      query = { ...query, property_options: { some: { option_id: { in: pool_type } } } };
+    if (!isEmpty(pool_type)) options.push(...parseQueryNumberArray(pool_type));
 
     /* ------------------------------ فقط استخردار ------------------------------ */
-    if (with_pool != undefined) query = { ...query, has_pool: with_pool };
+    if (with_pool === 1) query = { ...query, has_pool: true };
+    else if (with_pool === 0) query = { ...query, has_pool: false };
+
+    /* ------------------------------ ملک های ویژه ------------------------------ */
+    if (is_premium === 1) query = { ...query, has_blue_tick: true };
 
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title } };
 
-    if (min_price >= 0 && max_price >= 0)
-      query = {
-        ...query,
-        daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
-      };
+    // if (min_price >= 0 && max_price >= 0)
+    //   query = {
+    //     ...query,
+    //     daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
+    //   };
+    console.log({ options });
 
     /* ---------------------------------- LIST ---------------------------------- */
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
         where: {
-          AND: optionsQuery,
+          options_array: { hasEvery: options },
           ...query,
         },
         include: {

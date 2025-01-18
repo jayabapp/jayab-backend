@@ -11,6 +11,7 @@ import {
   _IsString,
   _IsNotEmpty,
   _IsNumberString,
+  _IsIn,
 } from 'src/common/pipes/validator-translate.pipe';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 
@@ -23,14 +24,12 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'استان' })
   @IsOptional()
   @Type(() => Number)
-  // @Validate(IsExist, ['city', 'id'])
   province_id: number;
 
-  @ApiProperty({ required: false, title: 'شهر' })
+  @ApiProperty({ isArray: false, required: false, title: 'شهر', default: '147,2' })
+  @_IsString()
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber({}, { each: true })
-  cities: number[];
+  cities: string;
 
   @ApiProperty({ required: false, title: 'محله' })
   @IsOptional()
@@ -45,40 +44,50 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   total_bedrooms: number;
 
+  @ApiProperty({ required: false, title: 'تعداد نفرات' })
+  @Type(() => Number)
+  @_IsInt()
+  @_Max(100)
+  @_Min(0)
+  @IsOptional()
+  total_guests: number;
+
   @ApiProperty({ required: false, title: 'نوع ملک' })
   @Type(() => Number)
   @IsOptional()
   @_IsInt()
-  // @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PROPERTY_TYPE])
   property_type: number;
 
   @ApiProperty({ required: false, title: 'فقط استخردار' })
-  @Transform(({ value }) => {
-    if (value == 'true') return true;
-    else if (value == 'false') return false;
-    else return undefined;
-  })
-  @IsOptional()
-  @_IsBoolean()
-  with_pool: boolean;
-
-  @ApiProperty({ required: false, title: 'استخر' })
   @Type(() => Number)
-  // @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.POOL_TYPE])
+  @_IsIn([0, 1])
   @IsOptional()
-  pool_type: number[];
+  with_pool: number;
+
+  @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
+  @_IsString()
+  @IsOptional()
+  pool_type?: string;
 
   @ApiProperty({ required: false, title: 'تفریحی' })
-  @Type(() => Number)
+  @_IsString()
   @IsOptional()
-  // @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ENTERTAINMENT])
-  entertainment: number[];
+  entertainment: string;
 
-  @ApiProperty({ required: false, title: 'نوع اجاره' })
-  @_IsArray()
-  @IsEnum(RentType, { each: true })
+  @ApiProperty({ required: false, title: 'ملک های ویژه' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
   @IsOptional()
-  rent_type: RentType[];
+  is_premium: number;
+
+  // @ApiProperty({ required: false, title: 'نوع اجاره' })
+  // @Transform(({ value }) => {
+  //   if (!value) return null;
+  //   return value?.split(',')?.map((e) => +e);
+  // })
+  // @_IsString()
+  // @IsOptional()
+  // rent_type: RentType[];
 
   @ApiProperty({ required: false, title: 'اسم ملک' })
   @_IsString()
