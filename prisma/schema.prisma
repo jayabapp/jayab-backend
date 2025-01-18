@@ -460,24 +460,29 @@ model Owner {
 }
 
 model Advisor {
-  id                      Int       @id() @default(autoincrement())
-  national_code           String?   @unique @db.VarChar(10)
+  id                          Int       @id() @default(autoincrement())
+  national_code               String?   @unique @db.VarChar(10)
   //
-  tel                     String?   @db.VarChar(11)
-  area_code               String?   @db.VarChar(3)
+  tel                         String?   @db.VarChar(11)
+  area_code                   String?   @db.VarChar(3)
   //
-  address                 String?   @db.Text
-  cities                  City[]
+  address                     String?   @db.Text
+  cities                      City[]
   //
-  is_special              Boolean   @default(false)
-  status                  Int       @db.SmallInt
-  admin_descriptions      Json[]    @db.JsonB
-  sort_order              Int?
-  subscription_expired_at DateTime?
-
+  is_special                  Boolean   @default(false)
+  status                      Int       @db.SmallInt
+  admin_descriptions          Json[]    @db.JsonB
+  sort_order                  Int?
+  subscription_expired_at     DateTime?
   //
-  national_card_image_id Int? @unique
-  document_image_id      Int? @unique
+  users_satisfaction          Int?
+  owners_satisfaction         Int?
+  advisor_behavior            Int?
+  advisor_responsibility      Int?
+  response_speed_and_followup Int?
+  //
+  national_card_image_id      Int?      @unique
+  document_image_id           Int?      @unique
   //
   // rate                   Float?
   // special_advisor_info   Json?

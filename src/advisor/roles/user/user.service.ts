@@ -34,6 +34,8 @@ export class AdvisorUserService {
         select: {
           id: true,
           created_at: true,
+          users_satisfaction: true,
+          owners_satisfaction: true,
           cities: { select: { title: true } },
           user: { select: { full_name: true, referral_code: true, profile_image: true } },
         },
@@ -61,6 +63,11 @@ export class AdvisorUserService {
       select: {
         id: true,
         created_at: true,
+        users_satisfaction: true,
+        owners_satisfaction: true,
+        response_speed_and_followup: true,
+        advisor_behavior: true,
+        advisor_responsibility: true,
         cities: { select: { title: true } },
         user: { select: { full_name: true, mobile_number: true, referral_code: true, profile_image: true } },
       },
