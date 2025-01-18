@@ -1,11 +1,18 @@
+-- AlterTable
+ALTER TABLE "advisors" ADD COLUMN     "advisor_behavior" INTEGER,
+ADD COLUMN     "advisor_responsibility" INTEGER,
+ADD COLUMN     "owners_satisfaction" INTEGER,
+ADD COLUMN     "response_speed_and_followup" INTEGER,
+ADD COLUMN     "users_satisfaction" INTEGER;
+
 -- CreateTable
 CREATE TABLE "rates" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "advisor_id" INTEGER NOT NULL,
-    "advisor_behavior" SMALLINT NOT NULL,
-    "advisor_responsibility" SMALLINT NOT NULL,
-    "response_speed_and_followup" SMALLINT NOT NULL,
+    "advisor_behavior" SMALLINT,
+    "advisor_responsibility" SMALLINT,
+    "response_speed_and_followup" SMALLINT,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
