@@ -152,6 +152,29 @@ export class ProfileUserService {
   }
 
   /**
+   * Get advisor profile
+   * @param userId
+   * @returns
+   */
+  async findAdvisorProfile(userId: number): Promise<Partial<User>> {
+    const data = await this.db.advisor.findFirst({
+      where: { user: { id: userId } },
+      select: {
+        id: true,
+        user: { select: { full_name: true } },
+        status: true,
+        admin_descriptions: true,
+        is_special: true,
+        subscription_expired_at: true,
+        national_code: true,
+        created_at: true,
+      },
+    });
+
+    return data;
+  }
+
+  /**
    * Update fcm token
    * @param user
    * @param dto

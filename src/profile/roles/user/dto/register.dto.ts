@@ -55,7 +55,8 @@ export class RegisterAdvisorUserDto {
   national_code: string;
 
   @ApiProperty({ required: false, description: 'tel number without zero', default: '12345678' })
-  @_MaxLength(8)
+  @_MaxLength(11)
+  // @_MaxLength(8)
   @_IsNumberString()
   @IsOptional()
   tel: string;

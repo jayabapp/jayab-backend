@@ -54,13 +54,13 @@ export class ProfileUserController {
     return { result };
   }
 
-  // @ApiOperation({ operationId: 'Get owner profile' })
-  // @Get('/advisor')
-  // async getOwnerProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
-  //   const user = request.user;
-  //   const result = await this.profileUserService.findOwnerProfile(user.id);
-  //   return { result };
-  // }
+  @ApiOperation({ operationId: 'Get advisor profile' })
+  @Get('/advisor')
+  async getAdvisorProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
+    const user = request.user;
+    const result = await this.profileUserService.findAdvisorProfile(user.id);
+    return { result };
+  }
 
   /* -------------------------------------------------------------------------- */
   /*                                  REGISTER                                  */
