@@ -60,11 +60,11 @@ export class RegisterAdvisorUserDto {
   @IsOptional()
   tel: string;
 
-  @ApiProperty({ required: false, default: '021' })
-  @_IsNumberString()
-  @_MaxLength(3)
-  @IsOptional()
-  area_code: string;
+  // @ApiProperty({ required: false, default: '021' })
+  // @_IsNumberString()
+  // @_MaxLength(3)
+  // @IsOptional()
+  // area_code: string;
 
   @ApiProperty({ required: false, default: [1] })
   @_IsArray()

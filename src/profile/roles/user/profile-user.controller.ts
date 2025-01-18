@@ -141,7 +141,7 @@ export class ProfileUserController {
     }
 
     /* -------------------------------------------------------------------------- */
-    const owner = await this.profileUserService.registerAdvisor(user.id, dto);
+    await this.profileUserService.registerAdvisor(user.id, dto);
 
     return { messageCode: 'CREATE' };
   }
