@@ -5,7 +5,7 @@ import { PartialUser, UserType } from 'src/common/interfaces/user.interface';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
 import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerStatus } from 'src/owner/common/owner-status.type';
-import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
+import { AdvisorStatus, AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import { first } from 'lodash';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import moment from 'moment-jalaali';
@@ -167,9 +167,11 @@ export class ProfileUserService {
         is_special: true,
         subscription_expired_at: true,
         national_code: true,
-        created_at: true,
       },
     });
+
+    // @ts-ignore
+    if (data) data.status = AdvisorStatusList.find((e) => e.id == data.status);
 
     return data;
   }

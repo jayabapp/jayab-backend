@@ -115,43 +115,71 @@ export class PaymentUserService {
     const updatedPayment = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
 
-      // update payment
+      /* update payment */
       const item = await tx.payment.update({
         where: { id: payment.id },
-        data: {
-          status: PaymentStatuses.APPROVED,
-          ref_id: refId,
-          subscriptions: {
-            updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
-          },
-        },
-        include: {
-          subscriptions: {
-            select: {
-              property: { select: { id: true, subscription_expired_at: true } },
-              is_promote: true,
-              duration: true,
-            },
-          },
-        },
+        data: { status: PaymentStatuses.APPROVED, ref_id: refId },
       });
 
-      const property = first(item.subscriptions)?.property;
+      /* update subscription */
+      const subscription = await this.db.subscription.update({
+        where: { payment_id: payment.id },
+        data: { status: PropertySubscription.SUCCESS },
+        include: { property: { select: { id: true, subscription_expired_at: true } } },
+      });
+      const property = subscription.property;
 
-      for (const e of item.subscriptions) {
-        if (e?.is_promote) {
-          await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
-        } else {
-          const lastSubExpiredAt = property?.subscription_expired_at || undefined;
-          const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
+      /*  */
+      const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+      const now = moment();
+      let newExpDate = null;
 
-          //
-          await tx.property.update({
-            where: { id: property.id },
-            data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
-          });
-        }
-      }
+      if (now.isAfter(lastSubExpiredAt))
+        newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
+      else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
+
+      await tx.property.update({
+        where: { id: property.id },
+        data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
+      });
+
+      // // update payment
+      // const item = await tx.payment.update({
+      //   where: { id: payment.id },
+      //   data: {
+      //     status: PaymentStatuses.APPROVED,
+      //     ref_id: refId,
+      //     subscriptions: {
+      //       updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
+      //     },
+      //   },
+      //   include: {
+      //     subscriptions: {
+      //       select: {
+      //         property: { select: { id: true, subscription_expired_at: true } },
+      //         is_promote: true,
+      //         duration: true,
+      //       },
+      //     },
+      //   },
+      // });
+
+      // const property = first(item.subscriptions)?.property;
+
+      // for (const e of item.subscriptions) {
+      //   if (e?.is_promote) {
+      //     await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
+      //   } else {
+      //     const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+      //     const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
+
+      //     //
+      //     await tx.property.update({
+      //       where: { id: property.id },
+      //       data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
+      //     });
+      //   }
+      // }
 
       return item;
     });
