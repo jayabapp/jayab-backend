@@ -19,7 +19,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ title: 'کد', required: false })
   @_IsNumberString()
   @IsOptional()
-  code: string;
+  code?: string;
 
   @ApiProperty({ required: false, title: 'استان' })
   @IsOptional()
@@ -34,7 +34,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'محله' })
   @IsOptional()
   @IsNumber({}, { each: true })
-  regions: number[];
+  regions?: number[];
 
   @ApiProperty({ required: false, title: 'تعداد خواب' })
   @Type(() => Number)
@@ -42,7 +42,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_Max(20)
   @_Min(0)
   @IsOptional()
-  total_bedrooms: number;
+  total_bedrooms?: number;
 
   @ApiProperty({ required: false, title: 'تعداد نفرات' })
   @Type(() => Number)
@@ -98,14 +98,14 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'اسم ملک' })
   @_IsString()
   @IsOptional()
-  title: string;
+  title?: string;
 
   @ApiProperty({ required: false, title: 'تاریخ شروع' })
   // @IsObject()
   // @ValidateNested()
   // @Type(() => DayDto)
   @IsOptional()
-  start_day: string;
+  start_day?: string;
 
   @ApiProperty({ required: false, title: 'تاریخ شروع' })
   @Type(() => Number)
@@ -113,18 +113,18 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsInt()
   @_Min(1)
   @_Max(30)
-  @_IsNotEmpty()
-  num_days: number;
+  @IsOptional()
+  num_days?: number;
 
   @ApiProperty({ required: false, title: 'از قیمت' })
   @Type(() => Number)
   @_IsInt()
   @IsOptional()
-  min_price: number;
+  min_price?: number;
 
   @ApiProperty({ required: false, title: 'تا قیمت' })
   @Type(() => Number)
   @_IsInt()
   @IsOptional()
-  max_price: number;
+  max_price?: number;
 }

@@ -3,11 +3,9 @@ import { SubscriptionPlan, Prisma, Property } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 import moment from 'moment-jalaali';
-import {
-  CannotBuySubscriptionStatuses,
-  PropertyStatuses,
-} from 'src/property/common/types/property-status.type';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -22,7 +20,6 @@ export class SubscriptionPlanUserService {
     user: PartialUser,
     dto: FindAllSubscriptionPlanUserDto,
   ): Promise<{ list: Partial<SubscriptionPlan>[]; can_promote: boolean }> {
-    let query: Prisma.SubscriptionPlanWhereInput = { group: dto.type, is_active: true };
     let canPromote = false;
 
     /* -------------------------------------------------------------------------- */
@@ -45,6 +42,7 @@ export class SubscriptionPlanUserService {
         price_with_discount: true,
         is_promote: true,
         description: true,
+        is_special: true,
       },
     });
 
@@ -56,13 +54,17 @@ export class SubscriptionPlanUserService {
    * @param subscriptionPlanId
    * @returns
    */
-  async findOne(subscriptionPlanId: number, isPromote = false): Promise<SubscriptionPlan> {
-    const item = await this.db.subscriptionPlan.findFirst({
-      where: { id: subscriptionPlanId },
-    });
+  async findOne(
+    subscriptionPlanId: number,
+    isPromote = false,
+    isSpecialAdvisor = false,
+  ): Promise<SubscriptionPlan> {
+    const item = await this.db.subscriptionPlan.findFirst({ where: { id: subscriptionPlanId } });
 
     if (!item) throw new NotFoundException('SUBSCRIPTION_PLAN_NOT_FOUND');
     if (isPromote && !item.is_promote) throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND2');
+    if (isSpecialAdvisor && item.group !== SubscriptionPlanGroup.ADVISOR)
+      throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND2');
 
     return item;
   }

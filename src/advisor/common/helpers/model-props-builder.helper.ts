@@ -65,12 +65,6 @@ export const showPropsBuilder = (
       route: `/users/edit/${item.user.id}`,
     },
     {
-      state: 'mobile_number',
-      title: 'موبایل',
-      value: item.user.mobile_number,
-      type: 'string',
-    },
-    {
       state: 'national_code',
       title: 'کد ملی',
       value: item.national_code,
@@ -78,17 +72,23 @@ export const showPropsBuilder = (
     },
     { type: 'break' },
     {
+      state: 'mobile_number',
+      title: 'موبایل',
+      value: item.user.mobile_number,
+      type: 'string',
+    },
+    {
       state: 'tel',
       title: 'شماره تلفن',
       value: item.tel,
       type: 'string',
     },
-    {
-      state: 'area_code',
-      title: 'پیش شماره',
-      value: item.area_code,
-      type: 'string',
-    },
+    // {
+    //   state: 'area_code',
+    //   title: 'پیش شماره',
+    //   value: item.area_code,
+    //   type: 'string',
+    // },
     { type: 'break' },
     {
       state: 'address',

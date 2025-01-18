@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   // Delete,
   Get,
   Param,
@@ -23,6 +24,7 @@ import { PropertyOwnerService } from './owner.service';
 import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import {
   UpdatePropertyBedroomOwnerDto,
+  UpdatePropertyCommissionOwnerDto,
   UpdatePropertyEnvOwnerDto,
   UpdatePropertyFacilityOwnerDto,
   UpdatePropertyLocationOwnerDto,
@@ -180,6 +182,19 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
+  @ApiOperation({ operationId: 'Update Commission' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Put(':propertyId/commission')
+  async updateCommission(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: UpdatePropertyCommissionOwnerDto,
+  ) {
+    const property = req.interceptor_data as PropertyInterceptorData;
+    await this.propertyOwnerService.updateCommission(property.id, dto);
+    return { result: dto.advisor_commission, messageCode: 'UPDATE' };
+  }
+
   @ApiOperation({ operationId: 'Pay Subscription' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/pay-subscription')
@@ -229,5 +244,28 @@ export class PropertyOwnerController {
     const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year);
     // const peakDays =
     return { result };
+  }
+
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @ApiOperation({ operationId: 'Find Statistics', description: '' })
+  @Get(':propertyId/statistics')
+  async findStatistics(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+  ): Promise<SuccessResponseArgs> {
+    const property = req.interceptor_data as PropertyInterceptorData;
+    const result = await this.propertyOwnerService.findStatistics(propertyId);
+    return { result: { statistics: result } };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   DELETE                                   */
+  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ operationId: 'Delete' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Delete(':propertyId')
+  async delete(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
+    const result = await this.propertyOwnerService.remove(propertyId);
+    return { messageCode: 'DELETE' };
   }
 }

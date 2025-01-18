@@ -3,14 +3,16 @@ import {
   Controller,
   // Delete,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   Post,
   Put,
   Query,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
@@ -36,7 +38,23 @@ export class PropertyUserController {
   @Get(':propertySlug')
   async findOne(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.findOne(propertySlug);
+    return { result };
+  }
 
+  @ApiOperation({ operationId: 'Update View', description: '' })
+  @Put(':propertyId/view')
+  async updateView(
+    @Param('propertyId') propertyId: number,
+    @Body() dto: { fingerprint: string },
+  ): Promise<SuccessResponseArgs> {
+    await this.propertyUserService.updateViewStatistics(propertyId, dto.fingerprint);
+    return {};
+  }
+
+  @ApiOperation({ operationId: 'Find Contact Info', description: '' })
+  @Get(':propertySlug/contact-info')
+  async findContactInfo(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findContactInfo(propertySlug);
     return { result };
   }
 }

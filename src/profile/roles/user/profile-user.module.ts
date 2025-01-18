@@ -6,9 +6,19 @@ import { CategoryModule } from 'src/category/category.module';
 import { OwnerUserModule } from 'src/owner/roles/user/user.module';
 import { AdvisorUserModule } from 'src/advisor/roles/user/user.module';
 import { CityModule } from 'src/city/city.module';
+import { SubscriptionPlanUserModule } from 'src/subscription-plan/roles/user/user.module';
+import { PaymentUserModule } from 'src/payment/roles/user/user.module';
 
 @Module({
-  imports: [AttachmentModule, CategoryModule, OwnerUserModule, AdvisorUserModule, CityModule],
+  imports: [
+    AttachmentModule,
+    CategoryModule,
+    OwnerUserModule,
+    AdvisorUserModule,
+    CityModule,
+    SubscriptionPlanUserModule,
+    PaymentUserModule,
+  ],
   controllers: [ProfileUserController],
   providers: [ProfileUserService],
   exports: [ProfileUserService],

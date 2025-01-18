@@ -8,16 +8,18 @@ import {
   Put,
   BadRequestException,
   ConflictException,
+  Post,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequestType } from 'src/common/interfaces/user.interface';
+import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { AttachmentService } from 'src/attachment/attachment.service';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
 import { ProfileUserService } from './profile-user.service';
 import { PROFILE_USER_ROUTE_GROUP } from 'src/profile/common/route-group.constant';
-import { RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
+import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerUserService } from 'src/owner/roles/user/user.service';
 import { AdvisorUserService } from 'src/advisor/roles/user/user.service';
 import { CitySharedService } from 'src/city/shared.service';
@@ -52,13 +54,13 @@ export class ProfileUserController {
     return { result };
   }
 
-  // @ApiOperation({ operationId: 'Get owner profile' })
-  // @Get('/advisor')
-  // async getOwnerProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
-  //   const user = request.user;
-  //   const result = await this.profileUserService.findOwnerProfile(user.id);
-  //   return { result };
-  // }
+  @ApiOperation({ operationId: 'Get advisor profile' })
+  @Get('/advisor')
+  async getAdvisorProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
+    const user = request.user;
+    const result = await this.profileUserService.findAdvisorProfile(user.id);
+    return { result };
+  }
 
   /* -------------------------------------------------------------------------- */
   /*                                  REGISTER                                  */
@@ -111,6 +113,9 @@ export class ProfileUserController {
     return { messageCode: 'CREATE' };
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                   ADVISOR                                  */
+  /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Register advisor' })
   @Put('register/advisor')
   async registerAdvisor(
@@ -136,9 +141,25 @@ export class ProfileUserController {
     }
 
     /* -------------------------------------------------------------------------- */
-    const owner = await this.profileUserService.registerAdvisor(user.id, dto);
+    await this.profileUserService.registerAdvisor(user.id, dto);
 
     return { messageCode: 'CREATE' };
+  }
+
+  @ApiOperation({ operationId: 'pay Advisor Subscription' })
+  @Post('pay-plan')
+  async payAdvisorSubscription(
+    @Req() request: RequestType,
+    @Body() dto: BuySubscriptionAdvisorDto,
+  ): Promise<SuccessResponseArgs> {
+    /*  */
+    const user = request.user as PartialUser;
+    if (!user.advisor_id) throw new UnprocessableEntityException('COMMON4');
+
+    /*  */
+    const payUrl = await this.profileUserService.payAdvisorSubscription(user, dto);
+
+    return { result: payUrl };
   }
 
   /* -------------------------------------------------------------------------- */

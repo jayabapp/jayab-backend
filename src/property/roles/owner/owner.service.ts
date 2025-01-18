@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, Owner, User, SubscriptionPlan } from '@prisma/client';
+import { Property, Prisma, Owner, User, SubscriptionPlan, PropertyStatistics } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -35,7 +35,8 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
-import { convertJalaaliDtoToDate, startOfToday } from 'src/common/helpers/date.helper';
+import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -71,7 +72,7 @@ export class PropertyOwnerService {
       property_options: { include: { option: true } },
       attachments: { where: { type: 1 } },
       assistants: {
-        select: { assistant_full_name: true, assistant_mobile_number: true, owner_mobile_number: true },
+        select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
       },
       bedrooms: true,
       // property_authorize: true,
@@ -331,28 +332,7 @@ export class PropertyOwnerService {
    * @returns
    */
   async updateAssistant(user: PartialUser, propertyId: number, dto: UpdatePropertyOwnerAssistantOwnerDto) {
-    let data: Prisma.PropertyOwnerAssistantUncheckedCreateInput = {
-      property_id: propertyId,
-      owner_mobile_number: user.mobile_number,
-      assistant_mobile_number: dto?.assistant_mobile,
-      assistant_full_name: dto?.assistant_full_name,
-    };
-
-    switch (dto.show_mobile_type) {
-      // نمایش شماره مالک بر روی آگهی
-      case 1:
-        data = { ...data, assistant_mobile_number: null, assistant_full_name: null };
-        break;
-
-      // نمایش شماره دستیار بر روی آگهی
-      case 2:
-        data = { ...data, owner_mobile_number: null };
-        break;
-
-      // نمایش هر دو شماره بر روی آگهی - که حالت دیفالت رو همین در نظر گرفتیم
-      case 3:
-        break;
-    }
+    const owner = await this.db.user.findUnique({ where: { id: user.id } });
 
     /* -------------------------------------------------------------------------- */
     /**
@@ -360,7 +340,28 @@ export class PropertyOwnerService {
      */
     this.db.$transaction(async (tx) => {
       await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
-      await tx.propertyOwnerAssistant.create({ data });
+
+      if ([1, 3].includes(dto.show_mobile_type)) {
+        await tx.propertyOwnerAssistant.create({
+          data: {
+            property_id: propertyId,
+            is_owner: true,
+            assistant_mobile_number: owner.mobile_number,
+            assistant_full_name: owner.full_name,
+          },
+        });
+      }
+
+      if ([2, 3].includes(dto.show_mobile_type)) {
+        await tx.propertyOwnerAssistant.create({
+          data: {
+            property_id: propertyId,
+            assistant_mobile_number: dto?.assistant_mobile,
+            assistant_full_name: dto?.assistant_full_name,
+          },
+        });
+      }
+
       await tx.property.update({ where: { id: propertyId }, data: { contact_type: dto.show_mobile_type } });
     });
   }
@@ -425,6 +426,19 @@ export class PropertyOwnerService {
   }
 
   /**
+   * Update advisor commission
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async updateCommission(propertyId: number, dto: UpdatePropertyAdvisorCommissionOwnerDto): Promise<void> {
+    await this.db.property.update({
+      where: { id: propertyId },
+      data: { advisor_commission: dto.advisor_commission },
+    });
+  }
+
+  /**
    *
    * @param property
    * @param dto
@@ -470,7 +484,14 @@ export class PropertyOwnerService {
       if (subscription) amount += subscription?.price_with_discount || subscription?.price;
       if (promote) amount += promote?.price_with_discount || promote?.price;
 
-      const pay = await this.paymentUserService.create(user, amount, dto.redirect_url, dto.gateway, tx);
+      const pay = await this.paymentUserService.create(
+        user,
+        amount,
+        dto.redirect_url,
+        dto.gateway,
+        TurnoverType.PAY_SUBSCRIPTION,
+        tx,
+      );
 
       // حذف تمام درخواست پرداخت های پرداخت نشده
       await tx.subscription.deleteMany({
@@ -530,6 +551,7 @@ export class PropertyOwnerService {
         _count: { select: { attachments: true } },
         property_authorize: true,
         blue_tick: true,
+        favorites: true,
       },
     });
 
@@ -555,6 +577,7 @@ export class PropertyOwnerService {
         daily_price: true,
         calendar: { where: { date: startOfToday() } },
         property_authorize: true,
+        favorites: true,
       },
     });
 
@@ -606,6 +629,33 @@ export class PropertyOwnerService {
     }
 
     return prices;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   DELETE                                   */
+  /* -------------------------------------------------------------------------- */
+  async remove(propertyId: number): Promise<void> {
+    await this.db.property.delete({ where: { id: propertyId } });
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 STATISTICS                                 */
+  /* -------------------------------------------------------------------------- */
+
+  /**
+   *
+   * @param propertyId
+   */
+  async findStatistics(propertyId: number): Promise<Partial<PropertyStatistics>[]> {
+    const aWeekAgo = startOfDate(moment().subtract(8, 'days').toDate());
+    const now = startOfToday();
+
+    const list = await this.db.propertyStatistics.findMany({
+      where: { property_id: propertyId, date: { gte: aWeekAgo, lte: now } },
+      select: { id: true, date: true, view_count: true },
+    });
+
+    return list;
   }
 
   /* -------------------------------------------------------------------------- */

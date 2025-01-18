@@ -25,6 +25,9 @@ import { createGuestBrowserFingerprint } from 'src/common/helpers/guest-fingerpr
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { ConfigService } from '@nestjs/config';
+import { BookmarkUserService } from 'src/bookmark/roles/user/bookmark.service';
+import { FavoriteUserService } from 'src/favorite/roles/user/user.service';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 
 @ApiTags('🔐 Auth - USER')
 @Controller(USER_AUTH_ROUTE_GROUP)
@@ -35,6 +38,8 @@ export class AuthUserController {
     private readonly smsService: SmsService,
     private readonly authSharedService: AuthSharedService,
     private readonly config: ConfigService,
+    private readonly bookmarkUserService: BookmarkUserService,
+    private readonly favoriteUserService: FavoriteUserService,
   ) {}
 
   @Throttle({ default: { limit: 3, ttl: 30000 } })
@@ -162,6 +167,17 @@ export class AuthUserController {
   //   const init = await this.authUserService.findInitSettings();
   //   return { result: init };
   // }
+
+  @ApiOperation({ operationId: 'Get Init Profile' })
+  @UseGuards(UserJwtGuard)
+  @ApiBearerAuth('user-jwt')
+  @Get('init-settings')
+  async findInitSettings(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const bookmarks = await this.bookmarkUserService.findAllIds(user.id);
+    const favorites = await this.favoriteUserService.findAllIds(user.id);
+    return { result: { bookmarks, favorites } };
+  }
 
   // @ApiOperation({ operationId: 'Get private key' })
   // @Post('test')

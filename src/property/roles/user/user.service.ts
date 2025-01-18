@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma } from '@prisma/client';
+import { Property, Prisma, PropertyOwnerAssistant } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
@@ -18,6 +18,9 @@ import {
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
 
 @Injectable()
 export class PropertyUserService {
@@ -25,6 +28,7 @@ export class PropertyUserService {
     private readonly db: PrismaService,
     private readonly propertySerializer: PropertySerializer,
     private readonly dayHelper: DayHelper,
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   /**
@@ -32,7 +36,10 @@ export class PropertyUserService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllPropertyUserDto): Promise<CursorPaginatedResult<PropertyArrayResType>> {
+  async findAll(
+    dto: FindAllPropertyUserDto,
+    propertyIds?: number[],
+  ): Promise<CursorPaginatedResult<PropertyArrayResType>> {
     const {
       code,
       province_id,
@@ -110,6 +117,9 @@ export class PropertyUserService {
     //   };
     console.log({ options });
 
+    /* -------------------------------- bookmark -------------------------------- */
+    if (propertyIds) query = { ...query, id: { in: propertyIds } };
+
     /* ---------------------------------- LIST ---------------------------------- */
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
@@ -127,6 +137,7 @@ export class PropertyUserService {
           calendar: { where: { date: startOfToday() } },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
+          favorites: true,
         },
       },
       { cursor: dto.cursor },
@@ -143,8 +154,7 @@ export class PropertyUserService {
    * @returns
    */
   async findOne(propertySlug: string): Promise<PropertyResType> {
-    const code = propertySlug.split('-')?.[0];
-    if (!code) throw new BadRequestException('NOT_FOUND');
+    const code = this.checkSlug(propertySlug);
 
     const item = await this.db.property.findFirst({
       where: { ...this.validProperty(), code },
@@ -159,6 +169,7 @@ export class PropertyUserService {
         calendar: { where: { date: startOfToday() } },
         // assistants: true,
         description: true,
+        favorites: true,
       },
     });
 
@@ -167,6 +178,27 @@ export class PropertyUserService {
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, false);
     return serialized;
+  }
+
+  /**
+   * find by id
+   * @param id
+   * @returns
+   */
+  async findById(id: number): Promise<void> {
+    const item = await this.db.property.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('NOT_FOUND');
+  }
+
+  async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
+    const code = this.checkSlug(propertySlug);
+
+    const list = await this.db.propertyOwnerAssistant.findMany({
+      where: { property: { ...this.validProperty(), code } },
+      select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
+    });
+
+    return list;
   }
 
   validProperty() {
@@ -182,5 +214,34 @@ export class PropertyUserService {
       select: select,
     });
     return property;
+  }
+
+  checkSlug(slug: string): string {
+    const code = slug.split('-')?.[0];
+    if (!code) throw new BadRequestException('NOT_FOUND');
+    return code;
+  }
+
+  /**
+   *
+   * @param propertyId
+   * @param fingerprint
+   * @returns
+   */
+  async updateViewStatistics(propertyId: number, fingerprint: string): Promise<void> {
+    /*  */
+    const redisKey = userPropertyViewKey(propertyId, fingerprint);
+    const userViewedPost = await this.redis.get(redisKey);
+    if (userViewedPost) return;
+    await this.redis.set(redisKey, 1, 'EX', 86400);
+
+    const now = startOfToday();
+
+    // create statistics
+    await this.db.propertyStatistics.upsert({
+      where: { property_id_date: { property_id: propertyId, date: now } },
+      update: { view_count: { increment: 1 } },
+      create: { date: now, property_id: propertyId, view_count: 1 },
+    });
   }
 }

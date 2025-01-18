@@ -23,6 +23,8 @@ import { first } from 'lodash';
 import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 
 @Injectable()
 export class PaymentUserService {
@@ -46,6 +48,7 @@ export class PaymentUserService {
     amount: number,
     redirectUrl: string,
     gateway: PaymentGatewayEnum,
+    turnoverType: TurnoverType,
     tx?: Prisma.TransactionClient,
   ): Promise<{ paymentUrl: string; payment?: Payment }> {
     const minAmount = 1000;
@@ -93,7 +96,7 @@ export class PaymentUserService {
         authority,
         redirect_url: redirectUrl,
         status: PaymentStatuses.INIT,
-        type: TurnoverType.PAY_SUBSCRIPTION,
+        type: turnoverType,
         gateway_key: gateway,
       };
 
@@ -109,66 +112,75 @@ export class PaymentUserService {
   }
 
   async subscriptionPaymentCallback(payment: Payment): Promise<Payment> {
-    const gateway = payment.gateway_key as PaymentGatewayEnum;
-    let isVerified = false;
-
-    switch (gateway) {
-      case PaymentGatewayEnum.SANDBOX:
-        isVerified = true;
-        break;
-
-      case PaymentGatewayEnum.ZARINPAL:
-        const res = await this.zarinpalService.verify(payment);
-        isVerified = res?.isValid;
-        break;
-
-      default:
-        break;
-    }
-
-    if (!isVerified) return;
-
     /* ----------------------------- PAYMENT PROCESS ---------------------------- */
     const updatedPayment = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
 
-      // update payment
+      /* update payment */
       const item = await tx.payment.update({
         where: { id: payment.id },
-        data: {
-          status: PaymentStatuses.APPROVED,
-          ref_id: refId,
-          subscriptions: {
-            updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
-          },
-        },
-        include: {
-          subscriptions: {
-            select: {
-              property: { select: { id: true, subscription_expired_at: true } },
-              is_promote: true,
-              duration: true,
-            },
-          },
-        },
+        data: { status: PaymentStatuses.APPROVED, ref_id: refId },
       });
 
-      const property = first(item.subscriptions)?.property;
+      /* update subscription */
+      const subscription = await this.db.subscription.update({
+        where: { payment_id: payment.id },
+        data: { status: PropertySubscription.SUCCESS },
+        include: { property: { select: { id: true, subscription_expired_at: true } } },
+      });
+      const property = subscription.property;
 
-      for (const e of item.subscriptions) {
-        if (e?.is_promote) {
-          await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
-        } else {
-          const lastSubExpiredAt = property?.subscription_expired_at || undefined;
-          const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
+      /*  */
+      const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+      const now = moment();
+      let newExpDate = null;
 
-          //
-          await tx.property.update({
-            where: { id: property.id },
-            data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
-          });
-        }
-      }
+      if (now.isAfter(lastSubExpiredAt))
+        newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
+      else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
+
+      await tx.property.update({
+        where: { id: property.id },
+        data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
+      });
+
+      // // update payment
+      // const item = await tx.payment.update({
+      //   where: { id: payment.id },
+      //   data: {
+      //     status: PaymentStatuses.APPROVED,
+      //     ref_id: refId,
+      //     subscriptions: {
+      //       updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
+      //     },
+      //   },
+      //   include: {
+      //     subscriptions: {
+      //       select: {
+      //         property: { select: { id: true, subscription_expired_at: true } },
+      //         is_promote: true,
+      //         duration: true,
+      //       },
+      //     },
+      //   },
+      // });
+
+      // const property = first(item.subscriptions)?.property;
+
+      // for (const e of item.subscriptions) {
+      //   if (e?.is_promote) {
+      //     await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
+      //   } else {
+      //     const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+      //     const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
+
+      //     //
+      //     await tx.property.update({
+      //       where: { id: property.id },
+      //       data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
+      //     });
+      //   }
+      // }
 
       return item;
     });
@@ -189,22 +201,106 @@ export class PaymentUserService {
     return updatedPayment;
   }
 
-  async checkAuthority(authority: string): Promise<{ payment: Payment; isValid: boolean } | undefined> {
+  async subscriptionAdvisorPaymentCallback(payment: Payment): Promise<Payment> {
+    /* ----------------------------- PAYMENT PROCESS ---------------------------- */
+    const updatedPayment = await this.db.$transaction(async (tx) => {
+      const refId = uuidv7();
+
+      /* update payment */
+      const item = await tx.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatuses.APPROVED, ref_id: refId },
+      });
+
+      /* update subscription */
+      const subscription = await this.db.subscription.update({
+        where: { payment_id: payment.id },
+        data: { status: AdvisorSubscription.SUCCESS },
+        include: {
+          advisor: { select: { id: true, subscription_expired_at: true, status: true, is_special: true } },
+        },
+      });
+      const advisor = subscription.advisor;
+
+      /*  */
+      const lastSubExpiredAt = advisor?.subscription_expired_at || undefined;
+      const now = moment();
+      let newExpDate = null;
+
+      if (now.isAfter(lastSubExpiredAt))
+        newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
+      else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
+
+      /**
+       * وضعیت کاربری که ویژه نیست و اشتراک ویژه میخرد باید به در انتظار تایید تغییر کند
+       */
+      let status: AdvisorStatus = advisor.status;
+      if (!advisor.is_special || subscription.is_special_advisor) status = AdvisorStatus.PENDING;
+
+      /*  */
+      await tx.advisor.update({
+        where: { id: advisor.id },
+        data: { subscription_expired_at: newExpDate, is_special: subscription.is_special_advisor, status },
+      });
+
+      return item;
+    });
+
+    /* -------------------------------------------------------------------------- */
+    /* SEND NOTIFICATION */
+    // await this.notificationSharedService.createNotification({
+    //   user: { id: null, role: UserRole.ADMIN },
+    //   mustSendNotif: true,
+    //   notification: {
+    //     title: 'سفارش جدید',
+    //     body: `یک سفارش جدید ثبت شده`,
+    //   },
+    //   notificationType: NotificationTypes.NEW_ORDER,
+    //   notificationableId: updatedPayment?.order_id?.toString(),
+    // });
+
+    return updatedPayment;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                   HELPER                                   */
+  /* -------------------------------------------------------------------------- */
+  async checkAuthority(authority: string): Promise<{ payment: Payment; isAuthValid: boolean } | undefined> {
     const payment = await this.db.payment.findFirst({
       where: { authority },
-      include: { subscriptions: true, property: true },
+      // include: { subscriptions: true, property: true },
     });
 
     if (payment?.status !== PaymentStatuses.INIT) {
       if (payment) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
-      return { payment, isValid: false };
+      return { payment, isAuthValid: false };
     }
-    console.log({ payment });
 
-    return { payment, isValid: true };
+    return { payment, isAuthValid: true };
   }
 
   async updatePaymentStatus(paymentId: number, status: PaymentStatuses): Promise<Payment> {
     return await this.db.payment.update({ where: { id: paymentId }, data: { status } });
+  }
+
+  async checkGateWay(payment: Payment): Promise<boolean> {
+    const gateway = payment.gateway_key as PaymentGatewayEnum;
+    let isVerified = false;
+
+    switch (gateway) {
+      case PaymentGatewayEnum.SANDBOX:
+        isVerified = true;
+        break;
+
+      case PaymentGatewayEnum.ZARINPAL:
+        const res = await this.zarinpalService.verify(payment);
+        isVerified = res?.isValid;
+        break;
+
+      default:
+        break;
+    }
+
+    return isVerified;
   }
 }

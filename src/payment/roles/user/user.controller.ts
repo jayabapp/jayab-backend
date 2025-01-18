@@ -31,14 +31,16 @@ export class PaymentUserController {
     @Res() res: Response,
     @Query('Authority') authority: string,
   ): Promise<SuccessResponseArgs> {
-    const { payment, isValid } = await this.paymentUserService.checkAuthority(authority);
+    /*  */
+    const { payment, isAuthValid } = await this.paymentUserService.checkAuthority(authority);
+    const isGatewayValid = await this.paymentUserService.checkGateWay(payment);
+
+    /*  */
     const redirectUrl = payment ? payment.redirect_url : '';
     let result: Payment;
 
-    /* -------------------------------------------------------------------------- */
     /** FAILED PAYMENT */
-    if (!isValid)
-      //failed
+    if (!isAuthValid || !isGatewayValid)
       res.render('failed-payment', {
         pageTitle: `پرداخت ناموفق|‌ ${getB2cConfig('APP_FA_NAME')}`,
         status: 'پرداخت ناموفق',
@@ -51,6 +53,10 @@ export class PaymentUserController {
     switch (payment.type) {
       case TurnoverType.PAY_SUBSCRIPTION:
         result = await this.paymentUserService.subscriptionPaymentCallback(payment);
+        break;
+
+      case TurnoverType.PAY_ADVISOR_SUBSCRIPTION:
+        result = await this.paymentUserService.subscriptionAdvisorPaymentCallback(payment);
         break;
 
       default:

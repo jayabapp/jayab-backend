@@ -1,6 +1,7 @@
 import {
   Attachment,
   City,
+  Favorite,
   Property,
   PropertyAuthorize,
   PropertyBadge,
@@ -37,6 +38,7 @@ export type PropertyJsonType = Property & {
   property_authorize?: PropertyAuthorize;
   blue_tick?: PropertyBadge;
   calendar?: PropertyCalendar[];
+  favorites: Favorite[];
 };
 
 export type PropertyArrayResType = {
@@ -64,6 +66,7 @@ export type PropertyArrayResType = {
   has_blue_tick: boolean;
   authorize_status: EnumList;
   blue_tick_status: EnumList;
+  favorites_count: number;
   // rate:number;
 };
 
@@ -82,6 +85,7 @@ export type PropertyJsonResType = {
   property_descriptions: PropertyDescription;
   rent_type: RentType;
   is_chat_enabled: boolean;
+  favorites_count: number;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -174,6 +178,7 @@ export class PropertySerializer {
       is_today_reserved: !!data.calendar?.[0]?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
+      favorites_count: data?.favorites.length,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       //owner
       remaining_days: moment(data.subscription_expired_at).diff(moment.now(), 'days'),
@@ -201,6 +206,7 @@ export class PropertySerializer {
         property_descriptions: data.description,
         rent_type: RentType.DAILY,
         is_chat_enabled: data.is_chat_enabled,
+        favorites_count: data?.favorites.length,
       };
 
     let res: PropertyResType = { ...list, ...single };

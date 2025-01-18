@@ -68,6 +68,8 @@ import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
 import { PeakDayModule } from './peak-day/peak-day.module';
 import { LandingPageModule } from './landing-page/landing-page.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -144,6 +146,8 @@ import { BaseModule as BaseModule } from './__base/base.module';
     PaymentGatewayModule,
     PeakDayModule,
     LandingPageModule,
+    FavoriteModule,
+    BookmarkModule,
     BaseModule,
   ],
   providers: [

@@ -435,10 +435,10 @@ model User {
   // tickets         Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
-  turnovers Turnover[]
-  // favorites        Favorite[]
-
+  turnovers  Turnover[]
+  favorites  Favorite[]
   black_list MessengerBlackList[]
+  bookmarks  Bookmark[]
 
   @@map("users")
 }
@@ -461,22 +461,29 @@ model Owner {
 }
 
 model Advisor {
-  id                     Int     @id() @default(autoincrement())
-  national_code          String? @unique @db.VarChar(10)
+  id                          Int       @id() @default(autoincrement())
+  national_code               String?   @unique @db.VarChar(10)
   //
-  tel                    String? @db.VarChar(11)
-  area_code              String? @db.VarChar(3)
+  tel                         String?   @db.VarChar(11)
+  area_code                   String?   @db.VarChar(3)
   //
-  address                String? @db.Text
-  cities                 City[]
+  address                     String?   @db.Text
+  cities                      City[]
   //
-  is_special             Boolean @default(false)
-  status                 Int     @db.SmallInt
-  admin_descriptions     Json[]  @db.JsonB
-  sort_order             Int?
+  is_special                  Boolean   @default(false)
+  status                      Int       @db.SmallInt
+  admin_descriptions          Json[]    @db.JsonB
+  sort_order                  Int?
+  subscription_expired_at     DateTime?
   //
-  national_card_image_id Int?    @unique
-  document_image_id      Int?    @unique
+  users_satisfaction          Int?
+  owners_satisfaction         Int?
+  advisor_behavior            Int?
+  advisor_responsibility      Int?
+  response_speed_and_followup Int?
+  //
+  national_card_image_id      Int?      @unique
+  document_image_id           Int?      @unique
   //
   // rate                   Float?
   // special_advisor_info   Json?
@@ -485,15 +492,30 @@ model Advisor {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
-  document_image      Attachment? @relation("DocumentImage", fields: [document_image_id], references: [id])
+  national_card_image Attachment?    @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image      Attachment?    @relation("DocumentImage", fields: [document_image_id], references: [id])
   user                User?
+  subscriptions       Subscription[]
   // rent_requests RentRequest[]
   // advisorNotes  AdvisorNote[]
   // banners       Banner[]
-  // subscriptions       Subscription[]
 
   @@map("advisors")
+}
+
+model Rate {
+  id                          Int  @id() @default(autoincrement())
+  user_id                     Int
+  advisor_id                  Int
+  advisor_behavior            Int? @db.SmallInt
+  advisor_responsibility      Int? @db.SmallInt
+  response_speed_and_followup Int? @db.SmallInt
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@unique([user_id, advisor_id])
+  @@map("rates")
 }
 
 // -------------------------------- PROPERTY -------------------------------- //
@@ -536,7 +558,6 @@ model Property {
   options_array           Int[] //برای راحتی کوئری ارایه امکانات رو اینجا هم نگه میداریم
 
   // calendar_updated_at DateTime?
-  // statistics          Json            @default("{}")
   // rate                Float?
   // rate_count               Int       @default(0)
   created_at DateTime  @default(now()) @db.Timestamp(6)
@@ -569,6 +590,8 @@ model Property {
   chatrooms MessengerChatroom[]
   calendar  PropertyCalendar[]
   blue_tick PropertyBadge?
+  favorites Favorite[]
+  bookmarks Bookmark[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -652,10 +675,10 @@ model PropertyDailyPrice {
 }
 
 model PropertyOwnerAssistant {
-  id                      Int     @id() @default(autoincrement())
+  id                      Int      @id() @default(autoincrement())
   property_id             Int
-  owner_mobile_number     String? @db.VarChar(11)
-  assistant_mobile_number String? @db.VarChar(11)
+  is_owner                Boolean? @default(false)
+  assistant_mobile_number String?  @db.VarChar(11)
   assistant_full_name     String?
 
   created_at DateTime @default(now()) @db.Timestamp(6)
@@ -664,6 +687,20 @@ model PropertyOwnerAssistant {
   property Property @relation(fields: [property_id], references: [id])
 
   @@map("property_owner_assistants")
+}
+
+model PropertyStatistics {
+  id          Int      @id() @default(autoincrement())
+  property_id Int
+  view_count  Int      @default(0)
+  date        DateTime
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([property_id, date])
+  @@index([property_id, date])
+  @@map("property_statistics")
 }
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //
@@ -761,6 +798,7 @@ model SubscriptionPlan {
   is_active           Boolean   @default(true)
   sort                Int?      @default(1)
   is_promote          Boolean   @default(false)
+  is_special          Boolean   @default(false) // for advisors plan
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime? @db.Timestamp(6)
@@ -867,19 +905,33 @@ model Turnover {
 // }
 
 // ------------------------------- FAVORITE ------------------------------- //
-// model Favorite {
-//   id         Int @id() @default(autoincrement())
-//   product_id Int
-//   user_id    Int
+model Favorite {
+  id          Int @id() @default(autoincrement())
+  property_id Int
+  user_id     Int
 
-//   created_at DateTime @default(now()) @db.Timestamp(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
 
-//   product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-//   user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-//   @@index([user_id])
-//   @@map("favorites")
-// }
+  @@index([user_id, property_id])
+  @@map("favorites")
+}
+
+model Bookmark {
+  id          Int @id() @default(autoincrement())
+  property_id Int
+  user_id     Int
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, property_id])
+  @@map("bookmarks")
+}
 
 // // ------------------------------- CONTACT US ------------------------------- //
 // model ContactUs {
@@ -1101,19 +1153,20 @@ model MessengerBlackList {
 
 // ---------------------------------- SUBSCRIPTION ---------------------------------- //
 model Subscription {
-  id          Int      @id() @default(autoincrement())
-  property_id Int?
-  // advisor_id  Int?
-  is_promote  Boolean  @default(false)
-  title       String
-  duration    Int?
-  price       Int?
-  payment_id  Int?
-  status      Int      @db.SmallInt
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @updatedAt
+  id                 Int      @id() @default(autoincrement())
+  property_id        Int?
+  advisor_id         Int?
+  is_promote         Boolean  @default(false)
+  is_special_advisor Boolean?
+  title              String
+  duration           Int?
+  price              Int?
+  payment_id         Int?     @unique
+  status             Int      @db.SmallInt
+  created_at         DateTime @default(now()) @db.Timestamp(6)
+  updated_at         DateTime @updatedAt
 
-  // advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
+  advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
   property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
   payment  Payment?  @relation(fields: [payment_id], references: [id], onDelete: SetNull)
 
