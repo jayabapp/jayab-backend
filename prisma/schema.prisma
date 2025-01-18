@@ -502,6 +502,21 @@ model Advisor {
   @@map("advisors")
 }
 
+model Rate {
+  id                          Int  @id() @default(autoincrement())
+  user_id                     Int
+  advisor_id                  Int
+  advisor_behavior            Int? @db.SmallInt
+  advisor_responsibility      Int? @db.SmallInt
+  response_speed_and_followup Int? @db.SmallInt
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@unique([user_id, advisor_id])
+  @@map("rates")
+}
+
 // -------------------------------- PROPERTY -------------------------------- //
 model Property {
   id                      Int       @id() @default(autoincrement())

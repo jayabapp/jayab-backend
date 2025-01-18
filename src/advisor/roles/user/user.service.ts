@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Advisor, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAdvisorUserDto } from './dto/create.dto';
@@ -7,6 +7,7 @@ import { FindAllAdvisorUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import moment from 'moment-jalaali';
+import { AddRateUserDto } from '../admin/dto/create.dto';
 
 @Injectable()
 export class AdvisorUserService {
@@ -57,9 +58,9 @@ export class AdvisorUserService {
    * @param advisorId
    * @returns
    */
-  async findOne(advisorId: number): Promise<Partial<Advisor>> {
+  async findOne(userId: number, advisorId: number): Promise<Partial<Advisor>> {
     let item = await this.db.advisor.findFirst({
-      where: { id: advisorId },
+      where: { id: advisorId, status: AdvisorStatus.APPROVED },
       select: {
         id: true,
         created_at: true,
@@ -69,19 +70,50 @@ export class AdvisorUserService {
         advisor_behavior: true,
         advisor_responsibility: true,
         cities: { select: { title: true } },
-        user: { select: { full_name: true, mobile_number: true, referral_code: true, profile_image: true } },
+        user: {
+          select: {
+            id: true,
+            full_name: true,
+            mobile_number: true,
+            referral_code: true,
+            profile_image: true,
+          },
+        },
       },
     });
 
-    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (!item || item.user.id == userId) throw new NotFoundException('NOT_FOUND');
 
-    item = {
+    /*  */
+    let result = {
       ...item,
-      // @ts-ignore
       cities: item.cities.map((c) => c.title),
       work_history_in_month: moment(moment()).diff(item.created_at, 'months') || 1,
+      has_user_rated: null,
     };
 
+    /*  */
+    const userRate = await this.db.rate.findUnique({
+      where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
+    });
+
+    result = { ...result, has_user_rated: Boolean(userRate) };
+
+    return result;
+  }
+
+  /**
+   * find by id
+   * @param advisorId
+   * @returns
+   */
+  async findById(userId: number, advisorId: number): Promise<Advisor> {
+    const item = await this.db.advisor.findFirst({
+      where: { id: advisorId, status: AdvisorStatus.APPROVED },
+      include: { user: { select: { id: true } } },
+    });
+
+    if (!item || item.user.id == userId) throw new NotFoundException('NOT_FOUND');
     return item;
   }
 
@@ -95,26 +127,47 @@ export class AdvisorUserService {
     return item;
   }
 
-  // /**
-  //  * update
-  //  * @param advisorId
-  //  * @param dto
-  //  * @returns
-  //  */
-  // async update(advisorId: number, dto: UpdateAdvisorUserDto): Promise<Advisor> {
-  //   const item = await this.db.advisor.update({
-  //     where: { id: advisorId },
-  //     data: dto,
-  //   });
+  async initRate(userId: number, advisorId: number): Promise<void> {
+    await this.db.rate.upsert({
+      where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
+      create: { user_id: userId, advisor_id: advisorId },
+      update: {},
+    });
+  }
 
-  //   return item;
-  // }
+  async addRate(userId: number, advisorId: number, dto: AddRateUserDto): Promise<void> {
+    /*  */
+    const userRate = await this.db.rate.findUnique({
+      where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
+    });
+    if (!userRate) throw new BadRequestException('RATE1');
 
-  // /**
-  //  * remove
-  //  * @param advisorId
-  //  */
-  // async remove(advisorId: number): Promise<void> {
-  //   await this.db.advisor.delete({ where: { id: advisorId } });
-  // }
+    /*  */
+    const rates = await this.db.rate.aggregate({
+      where: { advisor_id: advisorId },
+      _count: { id: true },
+      _sum: { advisor_responsibility: true, response_speed_and_followup: true, advisor_behavior: true },
+    });
+
+    const count = rates._count.id;
+    const behaviorRate = Math.ceil(rates._sum.advisor_behavior / count);
+    const responsibilityRate = Math.ceil(rates._sum.advisor_responsibility / count);
+    const speedAndFollowUpRate = Math.ceil(rates._sum.response_speed_and_followup / count);
+    const usersSatisfaction = Math.ceil((behaviorRate + responsibilityRate + speedAndFollowUpRate) / 3);
+
+    /*  */
+    await this.db.$transaction(async (tx) => {
+      await tx.rate.update({ where: { id: userRate.id }, data: dto });
+
+      await tx.advisor.update({
+        where: { id: advisorId },
+        data: {
+          advisor_behavior: behaviorRate,
+          advisor_responsibility: responsibilityRate,
+          response_speed_and_followup: speedAndFollowUpRate,
+          users_satisfaction: usersSatisfaction,
+        },
+      });
+    });
+  }
 }
