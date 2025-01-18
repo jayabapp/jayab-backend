@@ -24,6 +24,7 @@ import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 
 @Injectable()
 export class PaymentUserService {
@@ -215,7 +216,9 @@ export class PaymentUserService {
       const subscription = await this.db.subscription.update({
         where: { payment_id: payment.id },
         data: { status: AdvisorSubscription.SUCCESS },
-        include: { advisor: { select: { id: true, subscription_expired_at: true } } },
+        include: {
+          advisor: { select: { id: true, subscription_expired_at: true, status: true, is_special: true } },
+        },
       });
       const advisor = subscription.advisor;
 
@@ -228,10 +231,16 @@ export class PaymentUserService {
         newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
       else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
 
+      /**
+       * وضعیت کاربری که ویژه نیست و اشتراک ویژه میخرد باید به در انتظار تایید تغییر کند
+       */
+      let status: AdvisorStatus = advisor.status;
+      if (!advisor.is_special || subscription.is_special_advisor) status = AdvisorStatus.PENDING;
+
       /*  */
       await tx.advisor.update({
         where: { id: advisor.id },
-        data: { subscription_expired_at: newExpDate, is_special: subscription.is_special_advisor },
+        data: { subscription_expired_at: newExpDate, is_special: subscription.is_special_advisor, status },
       });
 
       return item;
