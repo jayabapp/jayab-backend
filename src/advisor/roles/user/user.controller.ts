@@ -30,7 +30,6 @@ export class AdvisorUserController {
   @Get()
   async findAll(@Query() dto: FindAllAdvisorUserDto): Promise<SuccessResponseArgs> {
     const result = await this.advisorUserService.findAll(dto);
-
     return { result };
   }
 
@@ -38,7 +37,6 @@ export class AdvisorUserController {
   @Get(':advisorId')
   async findOne(@Param('advisorId', ParseIntPipe) advisorId: number): Promise<SuccessResponseArgs> {
     const result = await this.advisorUserService.findOne(advisorId);
-
     return { result };
   }
 }

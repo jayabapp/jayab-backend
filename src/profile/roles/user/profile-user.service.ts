@@ -77,7 +77,9 @@ export class ProfileUserService {
   async registerAdvisor(userId: number, dto: RegisterAdvisorUserDto): Promise<Advisor> {
     const fullName = dto.full_name;
     delete dto.full_name;
-    let data: Prisma.AdvisorUncheckedCreateInput = { status: AdvisorStatus.PENDING };
+    let data: Prisma.AdvisorUncheckedCreateInput = {
+      status: dto.is_special ? AdvisorStatus.PENDING : AdvisorStatus.APPROVED,
+    };
 
     if (dto.is_special) {
       const cityIds = dto.cityIds.map((e) => ({ id: e }));

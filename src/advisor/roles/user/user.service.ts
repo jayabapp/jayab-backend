@@ -5,34 +5,49 @@ import { CreateAdvisorUserDto } from './dto/create.dto';
 import { UpdateAdvisorUserDto } from './dto/update.dto';
 import { FindAllAdvisorUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class AdvisorUserService {
   constructor(private readonly db: PrismaService) {}
 
   /**
-   * create
-   * @param dto
-   * @returns
-   */
-  async create(dto: CreateAdvisorUserDto): Promise<Advisor> {
-    const newAdvisor = await this.db.advisor.create({ data: dto });
-    return newAdvisor;
-  }
-
-  /**
    * find all Advisor
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllAdvisorUserDto): Promise<CursorPaginatedResult<Advisor>> {
-    const list = await cursorPaginate()<Advisor, Prisma.AdvisorFindManyArgs>(
+  async findAll(dto: FindAllAdvisorUserDto): Promise<any> {
+    /*  */
+    let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED };
+    if (dto.q) query = { ...query, user: { full_name: { contains: dto.q } } };
+    if (dto.cities) query = { ...query, cities: { some: { id: { in: dto.cities } } } };
+
+    /*  */
+    const list = await cursorPaginate()<
+      Advisor & { cities: { title: string }[] },
+      Prisma.AdvisorFindManyArgs
+    >(
       this.db.advisor,
-      {},
+      {
+        where: query,
+        select: {
+          id: true,
+          created_at: true,
+          cities: { select: { title: true } },
+          user: { select: { full_name: true, referral_code: true, profile_image: true } },
+        },
+      },
       { cursor: dto.cursor },
     );
 
-    return list;
+    const result = list.data.map((e) => ({
+      ...e,
+      work_history_in_month: moment(moment()).diff(e.created_at, 'months') || 1,
+      cities: e.cities.map((c) => c.title),
+    }));
+
+    return result;
   }
 
   /**
@@ -40,12 +55,25 @@ export class AdvisorUserService {
    * @param advisorId
    * @returns
    */
-  async findOne(advisorId: number): Promise<Advisor> {
-    const item = await this.db.advisor.findFirst({
+  async findOne(advisorId: number): Promise<Partial<Advisor>> {
+    let item = await this.db.advisor.findFirst({
       where: { id: advisorId },
+      select: {
+        id: true,
+        created_at: true,
+        cities: { select: { title: true } },
+        user: { select: { full_name: true, mobile_number: true, referral_code: true, profile_image: true } },
+      },
     });
 
     if (!item) throw new NotFoundException('NOT_FOUND');
+
+    item = {
+      ...item,
+      // @ts-ignore
+      cities: item.cities.map((c) => c.title),
+      work_history_in_month: moment(moment()).diff(item.created_at, 'months') || 1,
+    };
 
     return item;
   }
@@ -60,20 +88,20 @@ export class AdvisorUserService {
     return item;
   }
 
-  /**
-   * update
-   * @param advisorId
-   * @param dto
-   * @returns
-   */
-  async update(advisorId: number, dto: UpdateAdvisorUserDto): Promise<Advisor> {
-    const item = await this.db.advisor.update({
-      where: { id: advisorId },
-      data: dto,
-    });
+  // /**
+  //  * update
+  //  * @param advisorId
+  //  * @param dto
+  //  * @returns
+  //  */
+  // async update(advisorId: number, dto: UpdateAdvisorUserDto): Promise<Advisor> {
+  //   const item = await this.db.advisor.update({
+  //     where: { id: advisorId },
+  //     data: dto,
+  //   });
 
-    return item;
-  }
+  //   return item;
+  // }
 
   // /**
   //  * remove
