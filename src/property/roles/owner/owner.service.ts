@@ -120,6 +120,12 @@ export class PropertyOwnerService {
    */
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     const slug = `${property.code}-${slugify(dto.title)}`;
+    // const { options: o, numericIds: m } = await this.deleteAndCreateNewOption(property.id, dto, [
+    //   PropertyOptionGroup.PROPERTY_TYPE,
+    //   PropertyOptionGroup.OWNERSHIP,
+    //   PropertyOptionGroup.BUILDING_DIRECTION,
+    // ]);
+    // throw new BadRequestException();
 
     /* -------------------------------------------------------------------------- */
     // data without options
@@ -145,16 +151,16 @@ export class PropertyOwnerService {
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options
-    const options: OptionConnect[] = await this.deleteAndCreateNewOption(property.id, dto, [
+    const { options, numericIds } = await this.deleteAndCreateNewOption(property.id, dto, [
       PropertyOptionGroup.PROPERTY_TYPE,
       PropertyOptionGroup.OWNERSHIP,
       PropertyOptionGroup.BUILDING_DIRECTION,
     ]);
 
     /* -------------------------------------------------------------------------- */
-    const prop = await this.db.property.update({
+    await this.db.property.update({
       where: { id: property.id },
-      data: { ...data, property_options: { create: options } },
+      data: { ...data, property_options: { create: options }, options_array: { set: numericIds } },
     });
 
     // return prop;
@@ -209,15 +215,15 @@ export class PropertyOwnerService {
    */
   async updateEnvironment(propertyId: number, dto: UpdatePropertyEnvOwnerDto): Promise<void> {
     // CREATE OPTIONS RELATION - DELETE OLD OPTION
-    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+    const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.PATTERN,
       PropertyOptionGroup.ACCESS,
       PropertyOptionGroup.NEIGHBORHOOD,
     ]);
 
-    const updatedProperty = await this.db.property.update({
+    await this.db.property.update({
       where: { id: propertyId },
-      data: { property_options: { create: query } },
+      data: { property_options: { create: options }, options_array: { set: numericIds } },
     });
 
     const data = { distance_dscr: dto.distance_dscr, pattern_dscr: dto.pattern_dscr };
@@ -240,13 +246,11 @@ export class PropertyOwnerService {
   async updateBedroom(propertyId: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
     const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0; //+ dto.master_room ?? 0;
 
-    const upsertPropertyBedroom = await this.db.propertyBedroom.upsert({
+    await this.db.propertyBedroom.upsert({
       where: { property_id: propertyId },
       update: { ...dto, total_bedrooms },
       create: { ...dto, property_id: propertyId, total_bedrooms },
     });
-
-    // return  upsertPropertyBedroom
   }
 
   /**
@@ -257,7 +261,7 @@ export class PropertyOwnerService {
    */
   async updateFacility(propertyId: number, dto: UpdatePropertyFacilityOwnerDto): Promise<void> {
     // CREATE OPTIONS RELATION - DELETE OLD OPTION
-    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+    const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.POOL_TYPE,
       PropertyOptionGroup.ENTERTAINMENT,
       PropertyOptionGroup.KITCHEN,
@@ -265,9 +269,13 @@ export class PropertyOwnerService {
       PropertyOptionGroup.WELFARE,
     ]);
 
-    const updatedProperty = await this.db.property.update({
+    await this.db.property.update({
       where: { id: propertyId },
-      data: { property_options: { create: query }, has_pool: dto.has_pool },
+      data: {
+        property_options: { create: options },
+        options_array: { set: numericIds },
+        has_pool: dto.has_pool,
+      },
     });
 
     // UPDATE DESCRIPTION
@@ -370,7 +378,7 @@ export class PropertyOwnerService {
     /**
      * Options: delete old options and create new ones
      */
-    const query: OptionConnect[] = await this.deleteAndCreateNewOption(propertyId, dto, [
+    const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.GUEST_TYPE,
       PropertyOptionGroup.PET,
       PropertyOptionGroup.PARTY,
@@ -387,7 +395,8 @@ export class PropertyOwnerService {
         data: {
           canceling_type: dto.canceling_type,
           status: property.status == PropertyStatuses.IN_PROCESS ? PropertyStatuses.WAITING : property.status, //skip update in edit
-          property_options: { create: query },
+          property_options: { create: options },
+          options_array: { set: numericIds },
           check_in_hour: dto.check_in_hour,
           check_out_hour: dto.check_out_hour,
         },
@@ -613,10 +622,10 @@ export class PropertyOwnerService {
     propertyId: number,
     dto: any,
     groups: PropertyOptionGroup[],
-  ): Promise<OptionConnect[]> {
+  ): Promise<{ options: OptionConnect[]; numericIds: number[] }> {
     /* -------------------------------------------------------------------------- */
     // delete old records
-    const a = await this.db.optionsOnProperty.deleteMany({
+    await this.db.optionsOnProperty.deleteMany({
       where: {
         property_id: propertyId,
         option: {
@@ -627,20 +636,33 @@ export class PropertyOwnerService {
       },
     });
 
+    const remainedOptions = await this.db.optionsOnProperty.findMany({
+      where: {
+        property_id: propertyId,
+      },
+      select: { option_id: true },
+    });
+
     /* -------------------------------------------------------------------------- */
     // create new data
     let optionsQuery = [];
+    let numericIds = remainedOptions.map((e) => e.option_id);
+
     for (const e of groups) {
       const data = dto[e.toLowerCase()];
       if (!data) continue;
-      if (Array.isArray(data)) data.map((v) => optionsQuery.push({ option: { connect: { id: v } } }));
-      else
+      if (Array.isArray(data)) {
+        numericIds.push(...data);
+        data.map((v) => optionsQuery.push({ option: { connect: { id: v } } }));
+      } else {
+        numericIds.push(data);
         optionsQuery.push({
           option: { connect: { id: data } },
         });
+      }
     }
 
-    return optionsQuery;
+    return { options: optionsQuery, numericIds };
   }
 
   /**
