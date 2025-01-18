@@ -204,4 +204,8 @@ const failedMessages = {
   LANDING_PAGE1: '',
   LANDING_PAGE2: '',
   LANDING_PAGE3: '',
+
+  PROP_OPTION1: 'کلید با کلید یکی از امکانات مشابه است',
+  PROP_OPTION2: 'کلید با کلید یکی از شهر ها مشابه است',
+  PROP_OPTION3: '',
 };

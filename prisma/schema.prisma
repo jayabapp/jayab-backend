@@ -667,18 +667,18 @@ model PropertyOwnerAssistant {
 
 // ---------------------------- PROPERTY OPTIONS ---------------------------- //
 model PropertyOption {
-  id          Int       @id() @default(autoincrement())
-  title       String    @db.VarChar
-  description String?   @db.VarChar(256)
+  id          Int     @id() @default(autoincrement())
+  title       String  @db.VarChar
+  key         String? @db.VarChar(128)
+  description String? @db.VarChar(256)
   group       String
   sort        Int?
-  created_at  DateTime  @default(now()) @db.Timestamp(6)
-  updated_at  DateTime  @updatedAt
-  deleted_at  DateTime? @db.Timestamp(6)
 
-  // rent_requests OptionsOnRentRequest[]
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime? @db.Timestamp(6)
+
   properties OptionsOnProperty[]
-  // rent_request_options RentRequest[]
 
   @@map("property_options")
 }

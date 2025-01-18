@@ -36,4 +36,10 @@ export class CreatePropertyOptionAdminDto {
   @Transform(({ value }) => value || 0)
   @IsOptional()
   sort?: number;
+
+  @ApiProperty({ required: false, default: '' })
+  @_Length(0, 128)
+  @_IsString()
+  @IsOptional()
+  key?: string;
 }

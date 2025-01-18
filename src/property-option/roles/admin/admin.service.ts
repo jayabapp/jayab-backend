@@ -36,6 +36,12 @@ export class PropertyOptionAdminService {
    * @returns
    */
   async create(dto: CreatePropertyOptionAdminDto): Promise<PropertyOption> {
+    const isDuplicatedKey = await this.db.propertyOption.findFirst({ where: { key: dto.key } });
+    if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
+
+    const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
+    if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+
     const newPropertyOption = await this.db.propertyOption.create({ data: dto });
     return newPropertyOption;
   }
@@ -102,6 +108,14 @@ export class PropertyOptionAdminService {
    * @returns
    */
   async update(id: number, dto: UpdatePropertyOptionAdminDto): Promise<PropertyOption> {
+    const isDuplicatedKey = await this.db.propertyOption.findFirst({
+      where: { key: dto.key, id: { not: id } },
+    });
+    if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
+
+    const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
+    if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+
     const item = await this.db.propertyOption.update({
       where: { id },
       data: dto,

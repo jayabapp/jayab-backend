@@ -87,6 +87,12 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       title: 'ترتیب',
       options: { isMandatory: false, placeholder: '12', keyboard: 'number' },
     },
+    {
+      state: 'key',
+      type: 'input',
+      title: 'کلید انگلیسی',
+      options: { isMandatory: false, placeholder: 'Ex: pool', keyboard: 'text', titleHint: '(اختیاری)' },
+    },
     { type: 'break' },
     {
       state: 'description',
