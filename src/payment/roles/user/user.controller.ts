@@ -53,6 +53,10 @@ export class PaymentUserController {
         result = await this.paymentUserService.subscriptionPaymentCallback(payment);
         break;
 
+      // case TurnoverType.PAY_ADVISOR_SUBSCRIPTION:
+      //   result = await this.paymentUserService.subscriptionPaymentCallback(payment);
+      //   break;
+
       default:
         throw new BadRequestException('COMMON4');
     }

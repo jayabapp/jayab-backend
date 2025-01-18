@@ -1,15 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Advisor, Owner, Prisma, User } from '@prisma/client';
-import { UserType } from 'src/common/interfaces/user.interface';
+import { PartialUser, UserType } from 'src/common/interfaces/user.interface';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
-import { RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
+import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerStatus } from 'src/owner/common/owner-status.type';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
+import { first } from 'lodash';
+import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
+import moment from 'moment-jalaali';
+import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
+import { PaymentUserService } from 'src/payment/roles/user/user.service';
+import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 
 @Injectable()
 export class ProfileUserService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly subscriptionPlanUserService: SubscriptionPlanUserService,
+    private readonly paymentUserService: PaymentUserService,
+  ) {}
 
   /**
    * Update profile
@@ -148,6 +158,64 @@ export class ProfileUserService {
    */
   async updateFcm(user: UserType, dto: UpdateFcmDto): Promise<void> {
     await this.db.user.update({ where: { id: user.id }, data: { fcm_token: dto.fcm_token } });
+  }
+
+  /**
+   *
+   * @param user
+   * @param dto
+   * @returns
+   */
+  async payAdvisorSubscription(user: PartialUser, dto: BuySubscriptionAdvisorDto): Promise<string> {
+    /*  */
+    const advisorId = user.advisor_id;
+    const advisor = await this.db.advisor.findUnique({ where: { id: advisorId } });
+
+    /*  */
+    const chosenSub = await this.subscriptionPlanUserService.findOne(dto.plan_id, false, true);
+
+    /**
+     * آپدیت به ویژه داریم ولی برعکس قابل انجام نیست
+     * مگر اینکه اشتراک ویژه کاربر تمام شده باشد
+     * اگر اشتراک منقضی نباشه قطعا کاربر اشتراک فعال داره
+     * اگر اشتراک باقی مونده باشه و قرار به تمدید باشه در کال بک پرداخت اینو چک میکنیم
+     */
+    const isSubExpired = moment().isAfter(advisor?.subscription_expired_at);
+    if (!isSubExpired && advisor.is_special && !chosenSub.is_special) throw new BadRequestException('');
+
+    /*  */
+    const isSpecialSub = chosenSub?.is_special;
+
+    const pay = await this.db.$transaction(async (tx) => {
+      await tx.subscription.deleteMany({
+        where: { advisor_id: advisorId, status: AdvisorSubscription.WAITING },
+      });
+
+      const pay = await this.paymentUserService.create(
+        user,
+        chosenSub.price,
+        dto.redirect_url,
+        dto.gateway,
+        TurnoverType.PAY_ADVISOR_SUBSCRIPTION,
+        tx,
+      );
+
+      await tx.subscription.create({
+        data: {
+          advisor_id: advisorId,
+          is_special_advisor: isSpecialSub,
+          status: AdvisorSubscription.WAITING,
+          title: chosenSub.title,
+          duration: chosenSub.duration,
+          price: chosenSub.price,
+          payment_id: pay.payment.id,
+        },
+      });
+
+      return pay;
+    });
+
+    return pay.paymentUrl;
   }
 
   /* --------------------------------- HELPERS -------------------------------- */

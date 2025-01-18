@@ -36,6 +36,7 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
 import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -474,7 +475,14 @@ export class PropertyOwnerService {
       if (subscription) amount += subscription?.price_with_discount || subscription?.price;
       if (promote) amount += promote?.price_with_discount || promote?.price;
 
-      const pay = await this.paymentUserService.create(user, amount, dto.redirect_url, dto.gateway, tx);
+      const pay = await this.paymentUserService.create(
+        user,
+        amount,
+        dto.redirect_url,
+        dto.gateway,
+        TurnoverType.PAY_SUBSCRIPTION,
+        tx,
+      );
 
       // حذف تمام درخواست پرداخت های پرداخت نشده
       await tx.subscription.deleteMany({

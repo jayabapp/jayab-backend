@@ -35,16 +35,20 @@ export class PropertyUserController {
   }
 
   @ApiOperation({ operationId: 'Find One By Slug', description: '' })
-  @ApiHeader({ name: 'fingerprint', required: true })
   @Get(':propertySlug')
-  async findOne(
-    @Param('propertySlug') propertySlug: string,
-    @Headers() headers: { fingerprint: string },
-  ): Promise<SuccessResponseArgs> {
-    if (!headers.fingerprint) throw new UnauthorizedException('Unauthorized');
+  async findOne(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.findOne(propertySlug);
-    await this.propertyUserService.updateViewStatistics(result.id, headers.fingerprint);
     return { result };
+  }
+
+  @ApiOperation({ operationId: 'Update View', description: '' })
+  @Put(':propertyId/view')
+  async updateView(
+    @Param('propertyId') propertyId: number,
+    @Body() dto: { fingerprint: string },
+  ): Promise<SuccessResponseArgs> {
+    await this.propertyUserService.updateViewStatistics(propertyId, dto.fingerprint);
+    return {};
   }
 
   @ApiOperation({ operationId: 'Find Contact Info', description: '' })

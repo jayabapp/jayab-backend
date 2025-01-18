@@ -169,6 +169,16 @@ export class PropertyUserService {
     return serialized;
   }
 
+  /**
+   * find by id
+   * @param id
+   * @returns
+   */
+  async findById(id: number): Promise<void> {
+    const item = await this.db.property.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('NOT_FOUND');
+  }
+
   async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
     const code = this.checkSlug(propertySlug);
 

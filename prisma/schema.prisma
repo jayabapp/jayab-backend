@@ -460,22 +460,24 @@ model Owner {
 }
 
 model Advisor {
-  id                     Int     @id() @default(autoincrement())
-  national_code          String? @unique @db.VarChar(10)
+  id                      Int       @id() @default(autoincrement())
+  national_code           String?   @unique @db.VarChar(10)
   //
-  tel                    String? @db.VarChar(11)
-  area_code              String? @db.VarChar(3)
+  tel                     String?   @db.VarChar(11)
+  area_code               String?   @db.VarChar(3)
   //
-  address                String? @db.Text
-  cities                 City[]
+  address                 String?   @db.Text
+  cities                  City[]
   //
-  is_special             Boolean @default(false)
-  status                 Int     @db.SmallInt
-  admin_descriptions     Json[]  @db.JsonB
-  sort_order             Int?
+  is_special              Boolean   @default(false)
+  status                  Int       @db.SmallInt
+  admin_descriptions      Json[]    @db.JsonB
+  sort_order              Int?
+  subscription_expired_at DateTime?
+
   //
-  national_card_image_id Int?    @unique
-  document_image_id      Int?    @unique
+  national_card_image_id Int? @unique
+  document_image_id      Int? @unique
   //
   // rate                   Float?
   // special_advisor_info   Json?
@@ -484,13 +486,13 @@ model Advisor {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  national_card_image Attachment? @relation("NationalCard", fields: [national_card_image_id], references: [id])
-  document_image      Attachment? @relation("DocumentImage", fields: [document_image_id], references: [id])
+  national_card_image Attachment?    @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image      Attachment?    @relation("DocumentImage", fields: [document_image_id], references: [id])
   user                User?
+  subscriptions       Subscription[]
   // rent_requests RentRequest[]
   // advisorNotes  AdvisorNote[]
   // banners       Banner[]
-  // subscriptions       Subscription[]
 
   @@map("advisors")
 }
@@ -534,7 +536,6 @@ model Property {
   has_blue_tick           Boolean   @default(false) @db.Boolean
 
   // calendar_updated_at DateTime?
-  // statistics          Json            @default("{}")
   // rate                Float?
   // rate_count               Int       @default(0)
   created_at DateTime  @default(now()) @db.Timestamp(6)
@@ -774,6 +775,7 @@ model SubscriptionPlan {
   is_active           Boolean   @default(true)
   sort                Int?      @default(1)
   is_promote          Boolean   @default(false)
+  is_special          Boolean   @default(false) // for advisors plan
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime? @db.Timestamp(6)
@@ -1128,19 +1130,20 @@ model MessengerBlackList {
 
 // ---------------------------------- SUBSCRIPTION ---------------------------------- //
 model Subscription {
-  id          Int      @id() @default(autoincrement())
-  property_id Int?
-  // advisor_id  Int?
-  is_promote  Boolean  @default(false)
-  title       String
-  duration    Int?
-  price       Int?
-  payment_id  Int?
-  status      Int      @db.SmallInt
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @updatedAt
+  id                 Int      @id() @default(autoincrement())
+  property_id        Int?
+  advisor_id         Int?
+  is_promote         Boolean  @default(false)
+  is_special_advisor Boolean?
+  title              String
+  duration           Int?
+  price              Int?
+  payment_id         Int?
+  status             Int      @db.SmallInt
+  created_at         DateTime @default(now()) @db.Timestamp(6)
+  updated_at         DateTime @updatedAt
 
-  // advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
+  advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
   property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
   payment  Payment?  @relation(fields: [payment_id], references: [id], onDelete: SetNull)
 
