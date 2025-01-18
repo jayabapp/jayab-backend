@@ -83,12 +83,12 @@ export const showPropsBuilder = (
       value: item.tel,
       type: 'string',
     },
-    {
-      state: 'area_code',
-      title: 'پیش شماره',
-      value: item.area_code,
-      type: 'string',
-    },
+    // {
+    //   state: 'area_code',
+    //   title: 'پیش شماره',
+    //   value: item.area_code,
+    //   type: 'string',
+    // },
     { type: 'break' },
     {
       state: 'address',
