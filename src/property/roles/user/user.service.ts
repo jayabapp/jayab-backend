@@ -43,7 +43,8 @@ export class PropertyUserService {
       property_type,
       pool_type,
       entertainment,
-      with_pool,
+      has_pool,
+      has_discount,
       is_premium,
       title,
       start_day,
@@ -89,8 +90,12 @@ export class PropertyUserService {
     if (!isEmpty(pool_type)) options.push(...parseQueryNumberArray(pool_type));
 
     /* ------------------------------ فقط استخردار ------------------------------ */
-    if (with_pool === 1) query = { ...query, has_pool: true };
-    else if (with_pool === 0) query = { ...query, has_pool: false };
+    if (has_pool === 1) query = { ...query, has_pool: true };
+    else if (has_pool === 0) query = { ...query, has_pool: false };
+
+    /* -------------------------------- تخفیف دار ------------------------------- */
+    if (has_discount === 1)
+      query = { ...query, calendar: { some: { date: startOfToday(), discount_percentage: { gt: 0 } } } };
 
     /* ------------------------------ ملک های ویژه ------------------------------ */
     if (is_premium === 1) query = { ...query, has_blue_tick: true };

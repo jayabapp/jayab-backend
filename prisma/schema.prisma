@@ -706,18 +706,19 @@ model PropertyAuthorize {
 
 //---------------------------------- Calendar ---------------------------------//
 model PropertyCalendar {
-  id                 Int      @id() @default(autoincrement())
-  property_id        Int
-  day                Int      @db.SmallInt
-  month              Int      @db.SmallInt
-  year               Int
-  date               DateTime @db.Date
-  note               String?  @db.VarChar
-  is_reserved        Boolean  @default(false)
-  price              Int?
-  discounted_price   Int?
-  effective_price    Int?
-  advisor_commission Int?     @db.SmallInt
+  id                  Int      @id() @default(autoincrement())
+  property_id         Int
+  day                 Int      @db.SmallInt
+  month               Int      @db.SmallInt
+  year                Int
+  date                DateTime @db.Date
+  note                String?  @db.VarChar
+  is_reserved         Boolean  @default(false)
+  price               Int?
+  discounted_price    Int?
+  discount_percentage Int      @default(0)
+  effective_price     Int?
+  advisor_commission  Int?     @db.SmallInt
 
   property Property @relation(fields: [property_id], references: [id])
 

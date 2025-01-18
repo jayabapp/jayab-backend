@@ -58,12 +58,6 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsInt()
   property_type: number;
 
-  @ApiProperty({ required: false, title: 'فقط استخردار' })
-  @Type(() => Number)
-  @_IsIn([0, 1])
-  @IsOptional()
-  with_pool: number;
-
   @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
   @_IsString()
   @IsOptional()
@@ -73,6 +67,18 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsString()
   @IsOptional()
   entertainment: string;
+
+  @ApiProperty({ required: false, title: 'فقط استخردار' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  has_pool: number;
+
+  @ApiProperty({ required: false, title: 'فقط استخردار' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  has_discount: number;
 
   @ApiProperty({ required: false, title: 'ملک های ویژه' })
   @Type(() => Number)

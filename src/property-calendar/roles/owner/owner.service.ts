@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PropertyCalendar, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdatePropertyCalendarOwnerDto } from './dto/update.dto';
@@ -77,13 +77,23 @@ export class PropertyCalendarOwnerService {
    * @returns
    */
   async updatePrice(propertyId: number, dto: UpdatePropertyDayPriceOwnerDto): Promise<PropertyCalendar> {
+    if (dto.discounted_price > dto.price) throw new UnprocessableEntityException('PROPERTY_CALENDAR1');
+
     const rec = await this.findOrCreateByJalaaliDate(propertyId, dto);
 
     const effectivePrice = dto.discounted_price ?? dto.price;
+    let percentage = 0;
+    if (dto.discounted_price > 0)
+      percentage = +(((dto.price - dto.discounted_price) / dto.price) * 100).toFixed(2);
 
     const newPropertyCalendar = await this.db.propertyCalendar.update({
       where: { id: rec.id },
-      data: { price: dto.price, discounted_price: dto.discounted_price, effective_price: effectivePrice },
+      data: {
+        price: dto.price,
+        discounted_price: dto.discounted_price,
+        effective_price: effectivePrice,
+        discount_percentage: percentage,
+      },
     });
     return newPropertyCalendar;
   }
@@ -144,8 +154,6 @@ export class PropertyCalendarOwnerService {
       },
       update: {},
     });
-
-    console.log({ item, dto });
 
     return item;
   }
