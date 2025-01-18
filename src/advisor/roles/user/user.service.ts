@@ -8,6 +8,7 @@ import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/c
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import moment from 'moment-jalaali';
 import { AddRateUserDto } from '../admin/dto/create.dto';
+import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 
 @Injectable()
 export class AdvisorUserService {
@@ -22,7 +23,10 @@ export class AdvisorUserService {
     /*  */
     let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED };
     if (dto.q) query = { ...query, user: { full_name: { contains: dto.q } } };
-    if (dto.cities) query = { ...query, cities: { some: { id: { in: dto.cities } } } };
+    if (dto.cities) {
+      const cities = parseQueryNumberArray(dto.cities);
+      query = { ...query, cities: { some: { id: { in: cities } } } };
+    }
 
     /*  */
     const list = await cursorPaginate()<
