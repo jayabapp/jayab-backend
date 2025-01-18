@@ -24,12 +24,12 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'استان' })
   @IsOptional()
   @Type(() => Number)
-  province_id: number;
+  province_id?: number;
 
   @ApiProperty({ isArray: false, required: false, title: 'شهر', default: '147,2' })
   @_IsString()
   @IsOptional()
-  cities: string;
+  cities?: string;
 
   @ApiProperty({ required: false, title: 'محله' })
   @IsOptional()
@@ -50,13 +50,13 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_Max(100)
   @_Min(0)
   @IsOptional()
-  total_guests: number;
+  total_guests?: number;
 
   @ApiProperty({ required: false, title: 'نوع ملک' })
   @Type(() => Number)
   @IsOptional()
   @_IsInt()
-  property_type: number;
+  property_type?: number;
 
   @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
   @_IsString()
@@ -66,25 +66,25 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'تفریحی' })
   @_IsString()
   @IsOptional()
-  entertainment: string;
+  entertainment?: string;
 
   @ApiProperty({ required: false, title: 'فقط استخردار' })
   @Type(() => Number)
   @_IsIn([0, 1])
   @IsOptional()
-  has_pool: number;
+  has_pool?: number;
 
   @ApiProperty({ required: false, title: 'فقط استخردار' })
   @Type(() => Number)
   @_IsIn([0, 1])
   @IsOptional()
-  has_discount: number;
+  has_discount?: number;
 
   @ApiProperty({ required: false, title: 'ملک های ویژه' })
   @Type(() => Number)
   @_IsIn([0, 1])
   @IsOptional()
-  is_premium: number;
+  is_premium?: number;
 
   // @ApiProperty({ required: false, title: 'نوع اجاره' })
   // @Transform(({ value }) => {
