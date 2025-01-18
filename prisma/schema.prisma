@@ -197,6 +197,7 @@ model Attachment {
   messenger_media             MessengerMessages[]
   property_auth_nc            PropertyAuthorize[]  @relation("PropertyAuthNcImage")
   property_auth_docs          PropertyAuthorize[]  @relation("PropertyAuthDocsImage")
+  landing_page_image          LandingPage[]
 
   @@map("attachments")
 }
@@ -1143,20 +1144,24 @@ model LandingPage {
   url                     String  @unique
   is_active               Boolean @default(false)
   show_in_home            Boolean @default(false)
-  options                 Json?   @db.JsonB
+  options                 Int[]
   province_id             Int?
-  city_id                 Int?
+  cities                  Int[]
   has_pool                Boolean @default(false)
   property_type           Int?
-  min_discount_percentage Int     @db.SmallInt
+  min_discount_percentage Int?    @db.SmallInt
   is_premium              Boolean @default(false)
   min_price               Int?
   max_price               Int?
   min_bedroom             Int?
   max_bedroom             Int?
+  image_id                Int?
+  sort_order              Int?
 
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
+
+  image Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
 
   @@map("landing_pages")
 }

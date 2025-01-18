@@ -14,7 +14,7 @@ import { operators } from 'src/common/utils/constants/filter-operators.constant'
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  image = 'image',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.LandingPageScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -102,18 +102,14 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     modelTitle: 'بیس',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
+      { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
+      { id: 20, title: 'url', key: 'url', cellType: 'string' },
+      { id: 30, title: 'تصویر', key: 'image', cellType: 'image' },
+      { id: 40, title: 'ترتیب نمایش', key: 'sort_order', cellType: 'string' },
 
       /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -146,10 +142,10 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
 
   for (const act of allActions) {
     if (act === 'create' && rbac.c) availableActions.push('create');
-    if (act === 'show' && rbac.r) availableActions.push('show');
+    // if (act === 'show' && rbac.r) availableActions.push('show');
     if (act === 'edit' && rbac.u) availableActions.push('edit');
     if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

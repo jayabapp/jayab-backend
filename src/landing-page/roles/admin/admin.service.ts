@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AccessControlList, LandingPage, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLandingPageAdminDto } from './dto/create.dto';
@@ -50,10 +50,14 @@ export class LandingPageAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.LandingPageWhereInput, page: number, perPage = 50): Promise<PaginatedResult<LandingPage>> {
+  async findAll(
+    filters: Prisma.LandingPageWhereInput,
+    page: number,
+    perPage = 50,
+  ): Promise<PaginatedResult<LandingPage>> {
     const list = await paginate()<LandingPage, Prisma.LandingPageFindManyArgs>(
       this.db.landingPage,
-      { where: filters },
+      { where: filters, include: { image: true } },
       { page, perPage },
     );
 
@@ -66,14 +70,23 @@ export class LandingPageAdminService {
    * @param id
    * @returns
    */
-  async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.landingPage.findUnique({ where: { id } });
+  async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[]; data: any }> {
+    const item = await this.db.landingPage.findUnique({ where: { id }, include: { image: true } });
+    const contentCategory = item.content_category_id
+      ? await this.db.contentCategory.findFirst({ where: { id: item.content_category_id } })
+      : null;
+    const cities =
+      item.cities?.length > 0 ? await this.db.city.findMany({ where: { id: { in: item.cities } } }) : [];
+    const province = item.province_id
+      ? await this.db.city.findFirst({ where: { id: item.province_id } })
+      : null;
+
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
 
-    return { showProps, actions };
+    return { showProps, actions, data: { ...item, contentCategory, cities, province } };
   }
 
   /**
@@ -98,6 +111,9 @@ export class LandingPageAdminService {
    * @returns
    */
   async update(id: number, dto: UpdateLandingPageAdminDto): Promise<LandingPage> {
+    const isUrlDuplicated = await this.db.landingPage.findFirst({ where: { url: dto.url, id: { not: id } } });
+    if (isUrlDuplicated) throw new UnprocessableEntityException('LANDING_PAGE1');
+
     const item = await this.db.landingPage.update({
       where: { id },
       data: dto,

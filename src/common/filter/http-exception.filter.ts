@@ -200,4 +200,8 @@ const failedMessages = {
   PROPERTY_BADGE2: 'درخواست ممتاز شدن پیش از این ثبت شده است',
 
   PEAK_DAY1: 'این تاریخ قبلا ثبت شده است',
+
+  LANDING_PAGE1: '',
+  LANDING_PAGE2: '',
+  LANDING_PAGE3: '',
 };

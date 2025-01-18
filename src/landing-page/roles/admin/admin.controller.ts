@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   // Delete,
   Get,
   Param,
@@ -110,12 +111,12 @@ export class LandingPageAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.landingPageAdminService.findById(id);
-  //   await this.landingPageAdminService.remove(id);
+  @ApiOperation({ operationId: 'Remove', description: '' })
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    await this.landingPageAdminService.findById(id);
+    await this.landingPageAdminService.remove(id);
 
-  //   return { messageCode: 'DELETE' };
-  // }
+    return { messageCode: 'DELETE' };
+  }
 }
