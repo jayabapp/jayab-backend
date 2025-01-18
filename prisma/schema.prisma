@@ -1138,7 +1138,7 @@ model Subscription {
   title              String
   duration           Int?
   price              Int?
-  payment_id         Int?
+  payment_id         Int?     @unique
   status             Int      @db.SmallInt
   created_at         DateTime @default(now()) @db.Timestamp(6)
   updated_at         DateTime @updatedAt

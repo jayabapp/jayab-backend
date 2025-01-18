@@ -12,6 +12,7 @@ import moment from 'moment-jalaali';
 import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
+import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 
 @Injectable()
 export class ProfileUserService {
@@ -178,10 +179,11 @@ export class ProfileUserService {
      * آپدیت به ویژه داریم ولی برعکس قابل انجام نیست
      * مگر اینکه اشتراک ویژه کاربر تمام شده باشد
      * اگر اشتراک منقضی نباشه قطعا کاربر اشتراک فعال داره
-     * اگر اشتراک باقی مونده باشه و قرار به تمدید باشه در کال بک پرداخت اینو چک میکنیم
+     * !اگر اشتراک باقی مونده باشه و نیاز به تمدید باشه در کال بک پرداخت اینو چک میکنیم
      */
     const isSubExpired = moment().isAfter(advisor?.subscription_expired_at);
-    if (!isSubExpired && advisor.is_special && !chosenSub.is_special) throw new BadRequestException('');
+    if (!isSubExpired && advisor.is_special && !chosenSub.is_special)
+      throw new BadRequestException('BUY_SUBSCRIPTION1');
 
     /*  */
     const isSpecialSub = chosenSub?.is_special;

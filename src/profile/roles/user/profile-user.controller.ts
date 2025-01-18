@@ -157,9 +157,9 @@ export class ProfileUserController {
     if (!user.advisor_id) throw new UnprocessableEntityException('COMMON4');
 
     /*  */
-    await this.profileUserService.payAdvisorSubscription(user, dto);
+    const payUrl = await this.profileUserService.payAdvisorSubscription(user, dto);
 
-    return { messageCode: 'CREATE' };
+    return { result: payUrl };
   }
 
   /* -------------------------------------------------------------------------- */
