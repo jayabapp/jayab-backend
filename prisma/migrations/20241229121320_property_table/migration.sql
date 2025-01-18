@@ -30,6 +30,7 @@ CREATE TABLE "properties" (
     "std_capacity" INTEGER,
     "canceling_type" TEXT,
     "has_pool" BOOLEAN,
+    "options_array" INTEGER[],
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),

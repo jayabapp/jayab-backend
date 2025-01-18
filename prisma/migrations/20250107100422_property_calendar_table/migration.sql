@@ -12,6 +12,7 @@ CREATE TABLE "property_calendar" (
     "discounted_price" INTEGER,
     "effective_price" INTEGER,
     "advisor_commission" SMALLINT,
+    "discount_percentage" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
