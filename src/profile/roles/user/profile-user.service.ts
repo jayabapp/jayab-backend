@@ -76,7 +76,11 @@ export class ProfileUserService {
    */
   async registerAdvisor(userId: number, dto: RegisterAdvisorUserDto): Promise<Advisor> {
     const fullName = dto.full_name;
+    const profileImageId = dto.profile_image_id;
     delete dto.full_name;
+    delete dto.profile_image_id;
+
+    /*  */
     let data: Prisma.AdvisorUncheckedCreateInput = {
       status: dto.is_special ? AdvisorStatus.PENDING : AdvisorStatus.APPROVED,
     };
@@ -93,9 +97,8 @@ export class ProfileUserService {
       await tx.user.update({
         where: { id: userId },
         data: {
-          id: userId,
           full_name: fullName,
-          profile_image_id: dto.profile_image_id,
+          profile_image_id: profileImageId,
           advisor_id: advisor.id,
         },
       });

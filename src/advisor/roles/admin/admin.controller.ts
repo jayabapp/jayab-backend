@@ -45,16 +45,16 @@ export class AdvisorAdminController {
     return { result };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   CREATE                                   */
-  /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Create', description: '' })
-  @Post()
-  async create(@Body() dto: CreateAdvisorAdminDto): Promise<SuccessResponseArgs> {
-    const result = await this.advisorAdminService.create(dto);
+  // /* -------------------------------------------------------------------------- */
+  // /*                                   CREATE                                   */
+  // /* -------------------------------------------------------------------------- */
+  // @ApiOperation({ operationId: 'Create', description: '' })
+  // @Post()
+  // async create(@Body() dto: CreateAdvisorAdminDto): Promise<SuccessResponseArgs> {
+  //   const result = await this.advisorAdminService.create(dto);
 
-    return { result, messageCode: 'CREATE' };
-  }
+  //   return { result, messageCode: 'CREATE' };
+  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
@@ -82,15 +82,13 @@ export class AdvisorAdminController {
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update', description: '' })
-  @Patch(':id')
+  @Put(':id')
   async update(
-    @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePartialAdvisorAdminDto,
+    @Body() dto: UpdateAdvisorAdminDto,
   ): Promise<SuccessResponseArgs> {
-    const admin = req.user;
-    await this.advisorAdminService.findById(id);
-    const result = await this.advisorAdminService.update(admin, id, dto);
+    const advisor = await this.advisorAdminService.findById(id);
+    const result = await this.advisorAdminService.update(advisor, dto);
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -98,20 +96,19 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Update Partial', description: '' })
-  // @Patch(':id/update-partial')
-  // async updatePartial(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   // @Body() dto: UpdatePartialAdvisorAdminDto,
-  // ): Promise<SuccessResponseArgs> {
-  //   console.log('here');
+  @ApiOperation({ operationId: 'Update Partial', description: '' })
+  @Patch(':id/update-partial')
+  async updatePartial(
+    @Req() req: AdminRequestType,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePartialAdvisorAdminDto,
+  ): Promise<SuccessResponseArgs> {
+    const admin = req.user;
+    await this.advisorAdminService.findById(id);
+    const result = await this.advisorAdminService.updatePartial(admin, id, dto);
 
-  //   return;
-  //   await this.advisorAdminService.findById(id);
-  //   // const result = await this.advisorAdminService.updatePartial(id, dto);
-
-  //   // return { result, messageCode: 'UPDATE' };
-  // }
+    return { result, messageCode: 'UPDATE' };
+  }
 
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
@@ -10,11 +10,6 @@ export class FindAllAdvisorAdminDto extends PaginationDto {
   @_IsString()
   @IsOptional()
   referral_code: string;
-
-  @ApiProperty({ required: false, default: 'مشاور ویژه' })
-  @_IsBoolean()
-  @IsOptional()
-  is_special: boolean;
 
   @ApiProperty({ required: false, default: 'موبایل' })
   @_IsString()
@@ -31,4 +26,16 @@ export class FindAllAdvisorAdminDto extends PaginationDto {
   @Type(() => Number)
   @IsOptional()
   status: AdvisorStatus;
+
+  @ApiProperty({ required: false, default: 'مشاور ویژه' })
+  @_IsBoolean()
+  @Transform(({ value }) => (value && value == 'true' ? true : false))
+  @IsOptional()
+  is_special: boolean;
+
+  @ApiProperty({ required: false })
+  @_IsBoolean()
+  @Transform(({ value }) => (value && value == 'true' ? true : false))
+  @IsOptional()
+  no_sub: boolean;
 }
