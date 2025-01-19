@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, Validate } from 'class-validator';
-import { _IsInt, _IsNotEmpty, _IsString, _IsNumber } from 'src/common/pipes/validator-translate.pipe';
+import {
+  _IsInt,
+  _IsNotEmpty,
+  _IsString,
+  _IsNumber,
+  _IsBoolean,
+} from 'src/common/pipes/validator-translate.pipe';
 import { Transform, Type } from 'class-transformer';
 import { IsExist } from 'src/common/validators/is-exists.validator';
 
@@ -55,4 +61,9 @@ export class CreateContentQuestionAdminDto {
   @_IsString()
   @IsOptional()
   author_name: string;
+
+  @ApiProperty({ required: false, default: false })
+  @_IsBoolean()
+  @_IsNotEmpty()
+  is_publish: boolean;
 }

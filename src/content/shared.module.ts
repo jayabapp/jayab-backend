@@ -5,5 +5,6 @@ import { ContentSharedService } from './shared.service';
 @Module({
   controllers: [ContentSharedController],
   providers: [ContentSharedService],
+  exports: [ContentSharedService],
 })
 export class ContentSharedModule {}

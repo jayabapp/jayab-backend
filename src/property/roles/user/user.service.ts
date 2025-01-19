@@ -106,10 +106,10 @@ export class PropertyUserService {
     if (!isEmpty(regions)) query = { ...query, region_id: { in: regions } };
 
     /* ----------------------------- total bedrooms ----------------------------- */
-    if (total_bedrooms >= 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
+    if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
 
     /* ----------------------------- total guests ----------------------------- */
-    if (total_guests >= 0) query = { ...query, std_capacity: { gte: total_guests } };
+    if (total_guests > 0) query = { ...query, std_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
 

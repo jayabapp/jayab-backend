@@ -17,10 +17,10 @@ export class FindAllContentSharedDto extends PaginationDto {
   @ApiProperty({ required: false, default: 'مقاله' })
   @_IsString()
   @IsOptional()
-  q: string;
+  q?: string;
 
   @ApiProperty({ enum: ContentSort, required: false, default: ContentSort.DEFAULT })
   @_IsEnum(ContentSort)
   @IsOptional()
-  sort: ContentSort;
+  sort?: ContentSort;
 }

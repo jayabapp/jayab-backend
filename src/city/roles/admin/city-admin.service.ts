@@ -84,6 +84,8 @@ export class CityAdminService {
         select: {
           id: true,
           title: true,
+          slug: true,
+          slug_fa: true,
         },
       },
       { page, perPage },

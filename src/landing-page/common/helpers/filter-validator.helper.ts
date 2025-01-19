@@ -18,7 +18,7 @@ export const filterValidator = (filters: FindAllLandingPageAdminDto): Prisma.Lan
    */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
-  
+
   // eslint-disable-next-line
   let query: Prisma.LandingPageWhereInput = {};
 
@@ -34,8 +34,8 @@ export const filterValidator = (filters: FindAllLandingPageAdminDto): Prisma.Lan
       // case 'status':
       //   query = { ...query, status: +filters.status };
       //   break;
-      case 'user_id':
-        // query = { ...query, user_id: +filters.user_id };
+      case 'title':
+        query = { ...query, title: { contains: filters.title, mode: 'insensitive' } };
         break;
       // case 'user_fullname':
       //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };

@@ -18,11 +18,21 @@ export class CreateLandingPageAdminDto {
   title: string;
 
   @ApiProperty({ required: false, default: 1 })
-  @Validate(IsExist, ['contentCategory', 'id'])
+  @Validate(IsExist, ['content', 'id'])
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  content_category_id: number;
+  main_content_id: number;
+
+  // @ApiProperty({ required: false, default: 1 })
+  // @_IsArray()
+  // @IsOptional()
+  // related_contents: number[];
+
+  @ApiProperty({ required: false, default: 1 })
+  @_IsArray()
+  @IsOptional()
+  related_landings: number[];
 
   @ApiProperty({ required: true, default: '' })
   @Transform(({ value }) => value?.replace(/s\+/g, ''))
