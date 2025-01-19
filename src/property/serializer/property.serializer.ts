@@ -21,8 +21,11 @@ import moment from 'moment-jalaali';
 import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
+import { startOfDate } from 'src/common/helpers/date.helper';
 
 type TodayPrice = { price: number; discounted_price: number | null };
+
+type ReserveDay = { day_number: number; is_reserved: boolean };
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -39,6 +42,7 @@ export type PropertyJsonType = Property & {
   blue_tick?: PropertyBadge;
   calendar?: PropertyCalendar[];
   favorites: Favorite[];
+  reserve_days?: ReserveDay[];
 };
 
 export type PropertyArrayResType = {
@@ -67,6 +71,7 @@ export type PropertyArrayResType = {
   authorize_status: EnumList;
   blue_tick_status: EnumList;
   favorites_count: number;
+  reserve_days?: ReserveDay[];
   // rate:number;
 };
 
@@ -86,6 +91,7 @@ export type PropertyJsonResType = {
   rent_type: RentType;
   is_chat_enabled: boolean;
   favorites_count: number;
+  reserve_days?: ReserveDay[];
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -209,7 +215,14 @@ export class PropertySerializer {
         favorites_count: data?.favorites.length,
       };
 
-    let res: PropertyResType = { ...list, ...single };
+    let reserveDays: ReserveDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = startOfDate(moment().add(i, 'day').toDate());
+      const calendar = data.calendar.find((e) => moment(e.date).isSame(date));
+      reserveDays.push({ day_number: moment(date).day(), is_reserved: Boolean(calendar?.is_reserved) });
+    }
+
+    let res: PropertyResType = { ...list, ...single, reserve_days: reserveDays };
     return res;
   }
 }

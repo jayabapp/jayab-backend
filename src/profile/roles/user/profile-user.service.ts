@@ -84,7 +84,6 @@ export class ProfileUserService {
     if (dto.is_special) {
       const cityIds = dto.cityIds.map((e) => ({ id: e }));
       delete dto.cityIds;
-      delete dto.profile_image_id;
       data = { ...data, ...dto, cities: { connect: cityIds } };
     }
 

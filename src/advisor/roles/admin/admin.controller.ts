@@ -82,7 +82,7 @@ export class AdvisorAdminController {
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update', description: '' })
-  @Put(':id')
+  @Patch(':id')
   async update(
     @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,

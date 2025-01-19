@@ -16,11 +16,12 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { endOfDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class PropertyUserService {
@@ -59,7 +60,7 @@ export class PropertyUserService {
       min_price,
       max_price,
     } = dto;
-    console.log({ dto });
+    // console.log({ dto });
 
     // let startDay = null;
 
@@ -115,12 +116,16 @@ export class PropertyUserService {
     //     ...query,
     //     daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
     //   };
-    console.log({ options });
+    // console.log({ options });
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
 
     /* ---------------------------------- LIST ---------------------------------- */
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
@@ -134,7 +139,7 @@ export class PropertyUserService {
           city: { select: { title: true } },
           property_options: true,
           daily_price: true,
-          calendar: { where: { date: startOfToday() } },
+          calendar: { where: calendarDateQuery },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
           favorites: true,
