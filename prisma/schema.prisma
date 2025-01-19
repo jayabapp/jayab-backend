@@ -356,7 +356,7 @@ model Banner {
   description String?
   link        String?
   category_id Int?
-  product_id  Int?
+  property_id Int?
   brand_id    Int?
   position    String
   sort_order  Int?
@@ -366,6 +366,7 @@ model Banner {
   image    Attachment  @relation("Image", fields: [image_id], references: [id])
   image_sm Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
   category Category?   @relation(fields: [category_id], references: [id])
+  property Property?   @relation(fields: [property_id], references: [id])
 
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
@@ -565,33 +566,31 @@ model Property {
   deleted_at DateTime?
 
   // -------------------------------------------------------------------------- //
-  owner            Owner                    @relation(fields: [owner_id], references: [id])
-  property_options OptionsOnProperty[]
-  region           City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
-  province         City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
-  city             City?                    @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image    Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video            Attachment?              @relation("Video", fields: [video_id], references: [id])
-  attachments      Attachment[]             @relation("Property")
-  temp_attachments Attachment[]             @relation("Property_Temp")
-  bedrooms         PropertyBedroom?
-  daily_price      PropertyDailyPrice?
-  assistants       PropertyOwnerAssistant[]
-  description      PropertyDescription?
-
+  owner              Owner                    @relation(fields: [owner_id], references: [id])
+  property_options   OptionsOnProperty[]
+  region             City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
+  province           City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
+  city               City?                    @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image      Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video              Attachment?              @relation("Video", fields: [video_id], references: [id])
+  attachments        Attachment[]             @relation("Property")
+  temp_attachments   Attachment[]             @relation("Property_Temp")
+  bedrooms           PropertyBedroom?
+  daily_price        PropertyDailyPrice?
+  assistants         PropertyOwnerAssistant[]
+  description        PropertyDescription?
   property_authorize PropertyAuthorize?
-  // banners               Banner[]
+  banners            Banner[]
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
   subscriptions      Subscription[]
   payments           Payment[]
-
-  chatrooms MessengerChatroom[]
-  calendar  PropertyCalendar[]
-  blue_tick PropertyBadge?
-  favorites Favorite[]
-  bookmarks Bookmark[]
+  chatrooms          MessengerChatroom[]
+  calendar           PropertyCalendar[]
+  blue_tick          PropertyBadge?
+  favorites          Favorite[]
+  bookmarks          Bookmark[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")

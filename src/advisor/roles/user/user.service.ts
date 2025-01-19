@@ -93,7 +93,8 @@ export class AdvisorUserService {
       ...item,
       cities: item.cities.map((c) => c.title),
       work_history_in_month: moment(moment()).diff(item.created_at, 'months') || 1,
-      has_user_rated: null,
+      can_user_add_rate: null,
+      user_rate: null,
     };
 
     /*  */
@@ -101,7 +102,7 @@ export class AdvisorUserService {
       where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
     });
 
-    result = { ...result, has_user_rated: Boolean(userRate) };
+    result = { ...result, can_user_add_rate: Boolean(userRate), user_rate: userRate };
 
     return result;
   }
