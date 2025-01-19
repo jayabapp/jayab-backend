@@ -160,6 +160,9 @@ export class PropertyUserService {
    */
   async findOne(propertySlug: string): Promise<PropertyResType> {
     const code = this.checkSlug(propertySlug);
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
 
     const item = await this.db.property.findFirst({
       where: { ...this.validProperty(), code },
@@ -171,7 +174,7 @@ export class PropertyUserService {
         property_options: { select: { option: { select: { title: true, group: true } } } },
         bedrooms: true,
         daily_price: true,
-        calendar: { where: { date: startOfToday() } },
+        calendar: { where: calendarDateQuery },
         // assistants: true,
         description: true,
         favorites: true,
