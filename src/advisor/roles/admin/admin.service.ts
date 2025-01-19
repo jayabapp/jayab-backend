@@ -25,6 +25,7 @@ import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class AdvisorAdminService {
@@ -63,6 +64,16 @@ export class AdvisorAdminService {
       { where: filters, include: { user: { include: { profile_image: true } } } },
       { page, perPage },
     );
+
+    const result = list.data.map((e) => {
+      return {
+        ...e,
+        has_sub: e?.subscription_expired_at,
+        sub_remaining_days: e?.subscription_expired_at
+          ? moment(e?.subscription_expired_at).diff(moment(), 'days')
+          : 0,
+      };
+    });
 
     return list;
   }

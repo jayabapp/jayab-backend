@@ -17,6 +17,8 @@ import { AdvisorStatusList } from '../advisor-status.type';
 enum RefEnum {
   user = 'user',
   image = 'image',
+  sub_remaining_days = 'sub_remaining_days',
+  has_sub = 'has_sub',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.AdvisorScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -62,7 +64,7 @@ export const showPropsBuilder = (
       title: 'نام و نام خانوادگی',
       value: item.user.full_name,
       type: 'string',
-      route: `/users/edit/${item.user.id}`,
+      // route: `/users/edit/${item.user.id}`,
     },
     {
       state: 'national_code',
@@ -184,10 +186,15 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 10, title: 'تصویر', key: 'user', cellType: 'image', nestedKey: 'image' },
       { id: 20, title: 'نام و نام خانوادگی', key: 'user', cellType: 'object', nestedKey: 'full_name' },
       { id: 30, title: 'موبایل', key: 'user', cellType: 'object', nestedKey: 'mobile_number' },
+      { id: 31, title: 'رضایت کاربران', key: 'users_satisfaction', cellType: 'number' },
+      { id: 32, title: 'رضایت مالکان', key: 'owners_satisfaction', cellType: 'number' },
       // { id: 40, title: 'کدملی', key: 'national_code', cellType: 'string' },
       { id: 50, title: 'ویژه', key: 'is_special', cellType: 'boolean' },
       { id: 80, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: AdvisorStatusList },
-      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 88, title: 'اشتراک فعال', key: 'has_sub', cellType: 'boolean' },
+      { id: 89, title: 'روز مانده از اشتراک', key: 'sub_remaining_days', cellType: 'number' },
+      { id: 89, title: 'کد معرفی کننده', key: 'user', cellType: 'object', nestedKey: 'referral_code' },
+      { id: 90, title: 'تاریخ ثبت نام', key: 'created_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -218,7 +225,7 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   for (const act of allActions) {
     // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    if (act === 'edit' && rbac.u) availableActions.push('edit');
     // if (act === 'delete' && rbac.d) availableActions.push('delete');
     // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
