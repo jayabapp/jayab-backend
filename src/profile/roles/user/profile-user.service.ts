@@ -9,10 +9,10 @@ import { AdvisorStatus, AdvisorStatusList } from 'src/advisor/common/advisor-sta
 import { first } from 'lodash';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import moment from 'moment-jalaali';
-import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class ProfileUserService {
@@ -219,7 +219,7 @@ export class ProfileUserService {
 
     const pay = await this.db.$transaction(async (tx) => {
       await tx.subscription.deleteMany({
-        where: { advisor_id: advisorId, status: AdvisorSubscription.WAITING },
+        where: { advisor_id: advisorId, status: SubscriptionStatus.WAITING },
       });
 
       const pay = await this.paymentUserService.create(
@@ -235,7 +235,7 @@ export class ProfileUserService {
         data: {
           advisor_id: advisorId,
           is_special_advisor: isSpecialSub,
-          status: AdvisorSubscription.WAITING,
+          status: SubscriptionStatus.WAITING,
           title: chosenSub.title,
           duration: chosenSub.duration,
           price: chosenSub.price,

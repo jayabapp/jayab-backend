@@ -1,16 +1,14 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllSubscriptionPlanAdminDto } from 'src/subscription-plan/roles/admin/dto/find-all.dto';
+import { FindAllSubscriptionAdminDto } from 'src/subscription/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
  * @param dto
  * @returns
  */
-export const filterValidator = (
-  filters: FindAllSubscriptionPlanAdminDto,
-): Prisma.SubscriptionPlanWhereInput => {
+export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.SubscriptionWhereInput => {
   if (!filters) return {};
 
   /**
@@ -22,7 +20,7 @@ export const filterValidator = (
   const fields = Object.keys(filters).filter((e) => filters[e]);
 
   // eslint-disable-next-line
-  let query: Prisma.SubscriptionPlanWhereInput = {};
+  let query: Prisma.SubscriptionWhereInput = {};
 
   for (const field of fields) {
     /**
@@ -36,8 +34,8 @@ export const filterValidator = (
       // case 'status':
       //   query = { ...query, status: +filters.status };
       //   break;
-      case 'group':
-        query = { ...query, group: filters.group };
+      case 'mobile_number':
+        query = { ...query, advisor: { user: { mobile_number: { contains: filters.mobile_number } } } };
         break;
       // case 'user_fullname':
       //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };

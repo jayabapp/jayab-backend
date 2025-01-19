@@ -148,14 +148,10 @@ export const showPropsBuilder = (
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (item: Advisor): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
-    //  {
-    //    title: 'ایجاد محصول جدید',
-    //    route: '',
-    //  },
+    {
+      title: 'خرید اشتراک',
+      route: `/subscriptions/create?advisor_id=${item.id}`,
+    },
   ];
 
   return actions;
