@@ -1,14 +1,14 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllBaseAdminDto } from 'src/__base/roles/admin/dto/find-all.dto';
+import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
  * @param dto
  * @returns
  */
-export const filterValidator = (filters: FindAllBaseAdminDto): Prisma.BaseWhereInput => {
+export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.PropertyWhereInput => {
   if (!filters) return {};
 
   /**
@@ -18,9 +18,9 @@ export const filterValidator = (filters: FindAllBaseAdminDto): Prisma.BaseWhereI
    */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
-  
+
   // eslint-disable-next-line
-  let query: Prisma.BaseWhereInput = {};
+  let query: Prisma.PropertyWhereInput = {};
 
   for (const field of fields) {
     /**
@@ -31,18 +31,12 @@ export const filterValidator = (filters: FindAllBaseAdminDto): Prisma.BaseWhereI
 
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
-      case 'user_id':
-        // query = { ...query, user_id: +filters.user_id };
+      case 'status':
+        query = { ...query, status: +filters.status };
         break;
-      // case 'user_fullname':
-      //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
-      //   break;
-      // case 'user_mobile':
-      //   query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
-      //   break;
+      case 'title':
+        query = { ...query, title: { contains: filters.title } };
+        break;
 
       default:
         break;

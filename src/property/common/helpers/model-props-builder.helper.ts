@@ -126,12 +126,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
-    {
-      title: '',
-      state: 'user_id',
-      type: 'input',
-      isHidden: true,
-    },
+    { title: '', state: 'title', type: 'input', isHidden: true },
+    { title: '', state: 'status', type: 'select', isHidden: true },
   ];
 
   return filterProps;
