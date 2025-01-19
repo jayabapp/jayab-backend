@@ -26,7 +26,12 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @Type(() => Number)
   province_id?: number;
 
-  @ApiProperty({ isArray: false, required: false, title: 'شهر', default: '147,2' })
+  @ApiProperty({ required: false, default: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
+  @_IsString()
+  @IsOptional()
+  keys?: string;
+
+  @ApiProperty({ required: false, title: 'شهر', default: '147,2' })
   @_IsString()
   @IsOptional()
   cities?: string;

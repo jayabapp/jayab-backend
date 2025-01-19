@@ -8,19 +8,19 @@ const prisma = new PrismaClient();
 /* -------------------------------------------------------------------------- */
 const data = (): Prisma.PropertyOptionCreateInput[] => {
   const options: Prisma.PropertyOptionCreateInput[] = [
-    { title: 'بیلیارد', group: PropertyOptionGroup.ENTERTAINMENT },
+    { title: 'بیلیارد', group: PropertyOptionGroup.ENTERTAINMENT, key: 'billiard' },
     { title: 'فوتبال دستی', group: PropertyOptionGroup.ENTERTAINMENT },
     { title: 'مجرد', group: PropertyOptionGroup.GUEST_TYPE },
     { title: 'متاهل', group: PropertyOptionGroup.GUEST_TYPE },
     { title: 'استخرد روباز', group: PropertyOptionGroup.POOL_TYPE },
     { title: 'استخر آب گرم', group: PropertyOptionGroup.POOL_TYPE },
-    { title: 'ویلا', group: PropertyOptionGroup.PROPERTY_TYPE },
-    { title: 'سوئیت', group: PropertyOptionGroup.PROPERTY_TYPE },
-    { title: 'آپارتمان', group: PropertyOptionGroup.PROPERTY_TYPE },
+    { title: 'ویلا', group: PropertyOptionGroup.PROPERTY_TYPE, key: 'vila' },
+    { title: 'سوئیت', group: PropertyOptionGroup.PROPERTY_TYPE, key: 'suite' },
+    { title: 'آپارتمان', group: PropertyOptionGroup.PROPERTY_TYPE, key: 'apartment' },
     { title: 'جاده کوهستانی', group: PropertyOptionGroup.ACCESS },
-    { title: 'جنگلی', group: PropertyOptionGroup.PATTERN },
-    { title: 'ساحلی', group: PropertyOptionGroup.PATTERN },
-    { title: 'کوهستانی', group: PropertyOptionGroup.PATTERN },
+    { title: 'جنگلی', group: PropertyOptionGroup.PATTERN, key: 'jungle' },
+    { title: 'ساحلی', group: PropertyOptionGroup.PATTERN, key: 'beach' },
+    { title: 'کوهستانی', group: PropertyOptionGroup.PATTERN, key: 'mountain' },
     { title: 'مرکز خرید', group: PropertyOptionGroup.NEIGHBORHOOD },
     { title: 'یخچال', group: PropertyOptionGroup.KITCHEN },
     { title: 'مایکروفر', group: PropertyOptionGroup.KITCHEN },
@@ -50,10 +50,12 @@ const data = (): Prisma.PropertyOptionCreateInput[] => {
     {
       title: 'روباز',
       group: PropertyOptionGroup.POOL_TYPE,
+      key: 'open_pool',
     },
     {
       title: 'آب گرم',
       group: PropertyOptionGroup.POOL_TYPE,
+      key: 'warm_pool',
     },
     {
       title: 'داخل واحد',

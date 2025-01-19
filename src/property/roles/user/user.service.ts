@@ -17,7 +17,7 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { startOfToday } from 'src/common/helpers/date.helper';
-import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { parseQueryNumberArray, parseQueryStringArray } from 'src/common/helpers/parse-query-array.pipe';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
@@ -40,10 +40,10 @@ export class PropertyUserService {
     dto: FindAllPropertyUserDto,
     propertyIds?: number[],
   ): Promise<CursorPaginatedResult<PropertyArrayResType>> {
-    const {
+    let {
       code,
       province_id,
-      cities,
+      cities = '',
       regions,
       total_bedrooms,
       total_guests,
@@ -61,6 +61,30 @@ export class PropertyUserService {
     } = dto;
     console.log({ dto });
 
+    let options = [];
+
+    /**
+     * Ex: jayab.com/s/ramsar-lahijan/billiard
+     */
+    // if (dto.keys) {
+    //   const keys = parseQueryStringArray(dto.keys);
+    //   const c = await this.db.city.findMany({
+    //     where: { slug: { in: keys } },
+    //     select: { id: true },
+    //   });
+    //   if (c.length > 0) {
+    //     const cid = c.map((i) => i.id).join(',');
+    //     cities = cities ? `${cities},${cid}` : cid;
+    //   }
+    //   const o = await this.db.propertyOption.findMany({
+    //     where: { key: { in: keys } },
+    //     select: { id: true },
+    //   });
+    //   if (o.length > 0) {
+    //     options.push(...o.map((i) => i.id));
+    //   }
+    //   console.log({ keys, c, o, cities, options });
+    // }
     // let startDay = null;
 
     // if (isJson(start_day)) {
@@ -88,7 +112,7 @@ export class PropertyUserService {
     if (total_guests >= 0) query = { ...query, std_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
-    let options = [];
+
     if (property_type) options.push(property_type);
 
     if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
