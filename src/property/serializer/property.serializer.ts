@@ -22,7 +22,7 @@ import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 
-type TodayPrice = { price: number; discounted_price: number | null };
+type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -133,24 +133,15 @@ export class PropertySerializer {
     return groupByOption;
   }
 
-  findContactInfo(assistants: PropertyOwnerAssistant[], type: number) {
-    switch (type) {
-      case 1:
-        break;
-
-      default:
-        break;
-    }
-  }
-
   findTodayPrice(calendar: PropertyCalendar, today: DayColumn, dailyPrice: PropertyDailyPrice): TodayPrice {
     if (calendar?.effective_price)
       return {
         price: calendar.price,
         discounted_price: calendar.discounted_price,
+        discount_percentage: calendar.discount_percentage,
       };
 
-    return { price: dailyPrice?.[today], discounted_price: null };
+    return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
   summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
