@@ -10,6 +10,7 @@ import {
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { AdvisorStatusList } from '../advisor-status.type';
+import moment from 'moment-jalaali';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -74,6 +75,13 @@ export const showPropsBuilder = (
       title: 'کد ملی',
       value: item.national_code,
       type: 'string',
+    },
+    {
+      state: 'sub_remaining_days',
+      title: 'روز مانده از اشتراک',
+      value: item?.subscription_expired_at ? moment(item?.subscription_expired_at).diff(moment(), 'days') : 0,
+      type: 'number',
+      containerClass: 'text-danger',
     },
     { type: 'break' },
     {
