@@ -35,7 +35,13 @@ export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.Su
       //   query = { ...query, status: +filters.status };
       //   break;
       case 'mobile_number':
-        query = { ...query, advisor: { user: { mobile_number: { contains: filters.mobile_number } } } };
+        query = {
+          ...query,
+          OR: [
+            { advisor: { user: { mobile_number: { contains: filters.mobile_number } } } },
+            { property: { owner: { user: { mobile_number: { contains: filters.mobile_number } } } } },
+          ],
+        };
         break;
 
       case 'advisor_id':

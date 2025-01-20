@@ -149,7 +149,7 @@ export const showPropsBuilder = (
 export const showActionBuilder = (item: Advisor): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
     {
-      title: 'خرید اشتراک',
+      title: 'اشتراک های خریداری شده',
       route: `/subscriptions/create?advisor_id=${item.id}`,
     },
   ];
