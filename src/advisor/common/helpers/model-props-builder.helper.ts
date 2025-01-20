@@ -56,11 +56,19 @@ export const showPropsBuilder = (
       value: AdvisorStatusList.find((e) => e.id == item.status),
       type: 'chip',
     },
+    { type: 'break' },
     {
       state: 'is_special',
       title: 'ویژه',
       value: item.is_special,
       type: 'boolean',
+    },
+    {
+      state: 'sub_remaining_days',
+      title: 'روز مانده از اشتراک',
+      value: item?.subscription_expired_at ? moment(item?.subscription_expired_at).diff(moment(), 'days') : 0,
+      type: 'number',
+      containerClass: 'text-danger',
     },
     { type: 'break' },
     {
@@ -75,13 +83,6 @@ export const showPropsBuilder = (
       title: 'کد ملی',
       value: item.national_code,
       type: 'string',
-    },
-    {
-      state: 'sub_remaining_days',
-      title: 'روز مانده از اشتراک',
-      value: item?.subscription_expired_at ? moment(item?.subscription_expired_at).diff(moment(), 'days') : 0,
-      type: 'number',
-      containerClass: 'text-danger',
     },
     { type: 'break' },
     {
