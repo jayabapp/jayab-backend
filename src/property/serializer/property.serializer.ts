@@ -43,6 +43,7 @@ export type PropertyJsonType = Property & {
   calendar?: PropertyCalendar[];
   favorites: Favorite[];
   reserve_days?: ReserveDay[];
+  status_number?: number;
 };
 
 export type PropertyArrayResType = {
@@ -72,6 +73,7 @@ export type PropertyArrayResType = {
   blue_tick_status: EnumList;
   favorites_count: number;
   reserve_days?: ReserveDay[];
+  status_number?: number;
   // rate:number;
 };
 
@@ -92,6 +94,7 @@ export type PropertyJsonResType = {
   is_chat_enabled: boolean;
   favorites_count: number;
   reserve_days?: ReserveDay[];
+  status_number?: number;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -163,6 +166,8 @@ export class PropertySerializer {
     if (!data) return;
     let single: PropertyJsonResType;
 
+    const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days');
+
     let list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
@@ -185,9 +190,10 @@ export class PropertySerializer {
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
       favorites_count: data?.favorites.length,
+      status_number: data.status,
       status: PropertyStatusesList.find((_) => _.id === data.status),
       //owner
-      remaining_days: moment(data.subscription_expired_at).diff(moment.now(), 'days'),
+      remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
       authorize_status: data.hasOwnProperty('property_authorize')
         ? PropertyAuthorizeStatusesList.find((e) => e.id === data.property_authorize?.status)
         : null,

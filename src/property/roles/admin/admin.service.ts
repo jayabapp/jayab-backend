@@ -22,10 +22,24 @@ import {
   tablePropsBuilder,
 } from 'src/property/common/helpers/model-props-builder.helper';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import moment from 'moment-jalaali';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import {
+  PropertyArrayResType,
+  PropertyJsonType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 
 @Injectable()
 export class PropertyAdminService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly dayHelper: DayHelper,
+    private readonly propertySerializer: PropertySerializer,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
@@ -41,14 +55,34 @@ export class PropertyAdminService {
     filters: Prisma.PropertyWhereInput,
     page: number,
     perPage = 50,
-  ): Promise<PaginatedResult<Property>> {
-    const list = await paginate()<Property, Prisma.PropertyFindManyArgs>(
+  ): Promise<PaginatedResult<PropertyArrayResType>> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
+    const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
-      { where: filters },
+      {
+        where: filters,
+        include: {
+          feature_image: true,
+          province: { select: { title: true } },
+          city: { select: { title: true } },
+          property_options: true,
+          daily_price: true,
+          calendar: { where: calendarDateQuery },
+          bedrooms: { select: { total_bedrooms: true } },
+          _count: { select: { attachments: true } },
+          favorites: true,
+        },
+      },
       { page, perPage },
     );
 
-    return list;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toArray(list.data, today, false);
+
+    return { data: serialized, meta: list.meta };
   }
 
   /**

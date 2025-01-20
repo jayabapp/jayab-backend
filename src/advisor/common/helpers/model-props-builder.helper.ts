@@ -277,8 +277,10 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
     { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
+    { type: 'break' },
     { title: 'اشتراک فعال', state: 'no_sub', type: 'switch' },
     { title: 'مشاور ویژه', state: 'is_special', type: 'switch' },
+    /*  */
     { title: '', state: 'status', type: 'select', isHidden: true },
   ];
 

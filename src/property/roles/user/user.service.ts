@@ -4,11 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
-import isJson from 'src/common/helpers/is-json.helper';
-import { DayDto } from '../owner/dto/update-property.dto';
 import { isEmpty } from 'lodash';
-import { RentType } from 'src/property/common/types/property-rent-types.type';
 import {
   PropertyArrayResType,
   PropertyJsonType,
@@ -16,7 +12,7 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
-import { endOfDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';

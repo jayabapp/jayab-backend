@@ -9,12 +9,17 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { PropertyStatusesList } from '../types/property-status.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  feature_image = 'feature_image',
+  province = 'province',
+  city = 'city',
+  remaining_days = 'remaining_days',
+  status_number = 'status_number',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -99,21 +104,25 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'property',
-    modelTitle: 'بیس',
+    modelTitle: 'ملک',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
-
-      /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 5, title: 'تصویر', key: 'feature_image', cellType: 'image' },
+      { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
+      { id: 15, title: 'کد', key: 'code', cellType: 'string', optionalClass: 'text-warning' },
+      { id: 20, title: 'شهر', key: 'province', cellType: 'string' },
+      { id: 25, title: 'استان', key: 'city', cellType: 'string' },
+      { id: 30, title: 'وضعیت', key: 'status_number', cellType: 'enum', enumList: PropertyStatusesList },
+      { id: 35, title: 'تاریخ ثبت ملک', key: 'created_at', cellType: 'dateTime' },
+      { id: 40, title: 'وضعیت احراز', key: 'is_authorized', cellType: 'boolean' },
+      { id: 45, title: 'دارای تیک آبی', key: 'has_blue_tick', cellType: 'boolean' },
+      {
+        id: 50,
+        title: 'باقیمانده اشتراک (روز)',
+        key: 'remaining_days',
+        cellType: 'number',
+        optionalClass: 'text-success',
+      },
     ],
     availableActions,
   };
@@ -126,8 +135,12 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
-    { title: '', state: 'title', type: 'input', isHidden: true },
-    { title: '', state: 'status', type: 'select', isHidden: true },
+    { title: 'کد', state: 'code', type: 'input' },
+    { type: 'break' },
+    { title: 'منقضی شده', state: 'expired', type: 'switch' },
+    { title: 'احراز شده', state: 'authorized', type: 'switch' },
+    /*  */
+    { title: 'وضیعت', state: 'status', type: 'select', isHidden: true },
   ];
 
   return filterProps;
@@ -141,11 +154,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;
