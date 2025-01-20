@@ -16,6 +16,7 @@ import { operators } from 'src/common/utils/constants/filter-operators.constant'
 enum RefEnum {
   mobile_number = 'mobile_number',
   expired_at = 'expired_at',
+  type = 'type',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.SubscriptionScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -104,10 +105,12 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'موبایل', key: 'mobile_number', cellType: 'string' },
-      { id: 20, title: 'تاریخ شروع', key: 'created_at', cellType: 'date' },
-      { id: 30, title: 'تاریخ پایان', key: 'expired_at', cellType: 'date' },
+      { id: 11, title: 'نوع اشتراک', key: 'type', cellType: 'string' },
+      { id: 20, title: 'تاریخ ثبت', key: 'created_at', cellType: 'date' },
+      { id: 30, title: 'مدت زمان (روز)', key: 'duration', cellType: 'number' },
       { id: 40, title: 'پلن', key: 'title', cellType: 'string' },
       { id: 50, title: 'قیمت (تومان)', key: 'price', cellType: 'number' },
+      { id: 60, title: 'توضیحات', key: 'description', cellType: 'string' },
     ],
     availableActions,
   };

@@ -19,6 +19,7 @@ import { CreateSubscriptionAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { FindAllSubscriptionAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
+import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
 @ApiTags('👨‍💻 Subscription - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -44,9 +45,11 @@ export class SubscriptionAdminController {
   @ApiOperation({ operationId: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateSubscriptionAdminDto): Promise<SuccessResponseArgs> {
-    const result = await this.subscriptionAdminService.create(dto);
+    if (dto?.advisor_id) await this.subscriptionAdminService.createSubForAdvisor(dto);
+    else if (dto?.property_id) await this.subscriptionAdminService.createSubForProperty(dto);
+    else throw new BadRequestException('COMMON6');
 
-    return { result, messageCode: 'CREATE' };
+    return { messageCode: 'CREATE' };
   }
 
   /* -------------------------------------------------------------------------- */

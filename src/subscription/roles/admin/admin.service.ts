@@ -1,5 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, Subscription, Prisma, Advisor, User } from '@prisma/client';
+import {
+  AccessControlList,
+  Subscription,
+  Prisma,
+  Advisor,
+  User,
+  Property,
+  Owner,
+  SubscriptionPlan,
+} from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSubscriptionAdminDto } from './dto/create.dto';
 import {
@@ -21,22 +30,68 @@ import {
 } from 'src/subscription/common/helpers/model-props-builder.helper';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import moment from 'moment-jalaali';
+import { SubscriptionPlanAdminService } from 'src/subscription-plan/roles/admin/admin.service';
+import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
+import { endOfDate } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class SubscriptionAdminService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly subscriptionPlanAdminService: SubscriptionPlanAdminService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                   CREATE                                   */
   /* -------------------------------------------------------------------------- */
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
-  async create(dto: CreateSubscriptionAdminDto): Promise<Subscription> {
-    const newSubscription = await this.db.subscription.create({ data: dto });
-    return newSubscription;
+  async createSubForAdvisor(dto: CreateSubscriptionAdminDto): Promise<void> {
+    /*  */
+    const subPlan = await this.subscriptionPlanAdminService.findOneByGroup(
+      dto.subscription_plan_id,
+      SubscriptionPlanGroup.ADVISOR,
+    );
+
+    /*  */
+    const advisor = await this.db.advisor.findUnique({ where: { id: dto.advisor_id } });
+    const lastSubExpiredAt = advisor?.subscription_expired_at || undefined;
+    console.log();
+
+    const now = moment();
+    let newExpDate = null;
+    let description = '';
+
+    if (now.isAfter(lastSubExpiredAt) || advisor.is_special !== subPlan.is_special) {
+      description = 'حذف اشتراک قبلی به علت تغییر پلن و خرید پلن جدید توسط ادمین';
+      newExpDate = endOfDate(now.add(subPlan.duration, 'days').toDate());
+    } else {
+      description = lastSubExpiredAt ? 'تمدید اشتراک قبلی توسط ادمین' : 'خرید توسط ادمین';
+      newExpDate = endOfDate(moment(lastSubExpiredAt).add(subPlan.duration, 'days').toDate());
+    }
+
+    /*  */
+    await this.db.$transaction(async (tx) => {
+      await tx.subscription.create({
+        data: {
+          advisor_id: dto.advisor_id,
+          is_special_advisor: subPlan.is_special,
+          status: SubscriptionStatus.SUCCESS,
+          title: subPlan.title,
+          duration: subPlan.duration,
+          price: subPlan.price,
+          description,
+        },
+      });
+
+      await tx.advisor.update({
+        where: { id: advisor.id },
+        data: { subscription_expired_at: newExpDate, is_special: subPlan.is_special },
+      });
+    });
+  }
+
+  async createSubForProperty(dto: CreateSubscriptionAdminDto): Promise<void> {
+    // const newSubscription = await this.db.subscription.create({ data: dto });
+    // return newSubscription;
   }
 
   /* -------------------------------------------------------------------------- */
@@ -55,7 +110,9 @@ export class SubscriptionAdminService {
     perPage = 50,
   ): Promise<PaginatedResult<Subscription>> {
     const list = await paginate()<
-      Subscription & { advisor: Advisor & { user: User } },
+      Subscription & { advisor: Advisor & { user: User } } & {
+        property: Property & { owner: Owner & { user: User } };
+      },
       Prisma.SubscriptionFindManyArgs
     >(
       this.db.subscription,
@@ -69,17 +126,22 @@ export class SubscriptionAdminService {
           created_at: true,
           title: true,
           price: true,
-          advisor: { select: { user: { select: { mobile_number: true } } } },
+          description: true,
+          advisor: { select: { subscription_expired_at: true, user: { select: { mobile_number: true } } } },
+          property: { select: { owner: { select: { user: { select: { mobile_number: true } } } } } },
         },
       },
       { page, perPage },
     );
 
-    list.data = list.data.map((e) => ({
-      ...e,
-      mobile_number: e.advisor?.user?.mobile_number,
-      expired_at: moment(e.created_at).add(e.duration, 'days'),
-    }));
+    list.data = list.data.map((e) => {
+      const advisor = e?.advisor;
+      const property = e?.property;
+      const mobileNumber = advisor?.user.mobile_number || property?.owner.user.mobile_number;
+      const type = advisor ? 'مشاور' : 'ملک';
+
+      return { ...e, mobile_number: mobileNumber, type };
+    });
 
     return list;
   }

@@ -22,6 +22,7 @@ import {
   tablePropsBuilder,
 } from 'src/subscription-plan/common/helpers/model-props-builder.helper';
 import { UpdatePartialSubscriptionPlanAdminDto } from './dto/update-partial.dto';
+import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
 @Injectable()
 export class SubscriptionPlanAdminService {
@@ -43,6 +44,12 @@ export class SubscriptionPlanAdminService {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
+  async findOneByGroup(id: number, group: SubscriptionPlanGroup): Promise<SubscriptionPlan> {
+    const plan = await this.db.subscriptionPlan.findUnique({ where: { id, group, is_active: true } });
+    if (!plan) throw new NotFoundException('NOT_FOUND');
+    return plan;
+  }
+
   /**
    * find all SubscriptionPlan
    * @param filers
