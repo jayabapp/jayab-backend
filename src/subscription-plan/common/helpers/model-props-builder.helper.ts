@@ -183,7 +183,13 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /*                                   FILTER                                   */
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
-  const filterProps: Array<ModifiedFilterProps> = [];
+  const filterProps: Array<ModifiedFilterProps> = [
+    {
+      type: 'input',
+      isHidden: true,
+      state: 'group',
+    },
+  ];
 
   return filterProps;
 };

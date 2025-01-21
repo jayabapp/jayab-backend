@@ -19,25 +19,25 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
  * #22d3ee
  */
 
-export enum AdvisorSubscription {
+export enum SubscriptionStatus {
   WAITING = 10,
   SUCCESS = 20,
   FAILED = 100,
 }
 
-export const AdvisorSubscriptionList: Array<EnumList> = [
+export const SubscriptionStatusList: Array<EnumList> = [
   {
-    id: AdvisorSubscription.WAITING,
+    id: SubscriptionStatus.WAITING,
     title: 'در انتظار پرداخت',
     hex: '#f97316',
   },
   {
-    id: AdvisorSubscription.SUCCESS,
+    id: SubscriptionStatus.SUCCESS,
     title: 'پرداخت شده',
     hex: '#22c55e',
   },
   {
-    id: AdvisorSubscription.FAILED,
+    id: SubscriptionStatus.FAILED,
     title: 'خطا در پرداخت',
     hex: '#be123c ',
   },

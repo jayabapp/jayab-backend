@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, Advisor, Prisma } from '@prisma/client';
+import { AccessControlList, Advisor, City, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAdvisorAdminDto } from './dto/create.dto';
 import { UpdateAdvisorAdminDto } from './dto/update.dto';
@@ -25,23 +25,25 @@ import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
+import moment from 'moment-jalaali';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class AdvisorAdminService {
   constructor(private readonly db: PrismaService) {}
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   CREATE                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
-  async create(dto: CreateAdvisorAdminDto): Promise<Advisor> {
-    const newAdvisor = await this.db.advisor.create({ data: dto });
-    return newAdvisor;
-  }
+  // /* -------------------------------------------------------------------------- */
+  // /*                                   CREATE                                   */
+  // /* -------------------------------------------------------------------------- */
+  // /**
+  //  * create
+  //  * @param dto
+  //  * @returns
+  //  */
+  // async create(dto: CreateAdvisorAdminDto): Promise<Advisor> {
+  //   const newAdvisor = await this.db.advisor.create({ data: dto });
+  //   return newAdvisor;
+  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
@@ -64,6 +66,16 @@ export class AdvisorAdminService {
       { page, perPage },
     );
 
+    list.data = list.data.map((e) => {
+      return {
+        ...e,
+        has_sub: e?.subscription_expired_at,
+        sub_remaining_days: e?.subscription_expired_at
+          ? moment(e?.subscription_expired_at).diff(moment(), 'days')
+          : 0,
+      };
+    });
+
     return list;
   }
 
@@ -74,17 +86,22 @@ export class AdvisorAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.advisor.findUnique({
+    let item = await this.db.advisor.findUnique({
       where: { id },
       include: {
         document_image: true,
         national_card_image: true,
+        cities: true,
         user: { include: { profile_image: true } },
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
-    const showProps = showPropsBuilder(item);
+    const showProps = showPropsBuilder({
+      ...item,
+      profile_image: item.user.profile_image,
+      profile_image_id: item.user.profile_image_id,
+    });
     const actions = showActionBuilder(item);
 
     return { showProps, actions };
@@ -95,8 +112,8 @@ export class AdvisorAdminService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<Advisor> {
-    const item = await this.db.advisor.findUnique({ where: { id } });
+  async findById(id: number): Promise<Advisor & { user: User; cities: City[] }> {
+    const item = await this.db.advisor.findUnique({ where: { id }, include: { user: true, cities: true } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
@@ -111,7 +128,43 @@ export class AdvisorAdminService {
    * @param dto
    * @returns
    */
-  async update(admin: AdminType, id: number, dto: UpdatePartialAdvisorAdminDto): Promise<Advisor> {
+  async update(advisor: Advisor & { user: User; cities: City[] }, dto: UpdateAdvisorAdminDto): Promise<void> {
+    /*  */
+    const fullName = dto.full_name; // چون نام برای کاربر است نه برای مشاور
+    const profileImageId = dto.profile_image_id;
+    delete dto.full_name;
+    delete dto.profile_image_id;
+
+    /*  */
+    let data: Prisma.AdvisorUncheckedUpdateInput = dto;
+
+    if (!isEmpty(dto.cityIds)) {
+      const oldCityIds = advisor.cities.map((e) => ({ id: e.id }));
+      const newCityIds = dto.cityIds.map((e) => ({ id: e }));
+      delete dto.cityIds;
+      data = { ...data, cities: { disconnect: oldCityIds, connect: newCityIds } };
+    }
+
+    await this.db.$transaction(async (tx) => {
+      await tx.advisor.update({ where: { id: advisor.id }, data });
+
+      await tx.user.update({
+        where: { id: advisor.user.id },
+        data: {
+          full_name: fullName,
+          profile_image_id: profileImageId,
+        },
+      });
+    });
+  }
+
+  /**
+   * Update editable columns in admin panel table
+   * @param id
+   * @param dto
+   * @returns
+   */
+  async updatePartial(admin: AdminType, id: number, dto: UpdatePartialAdvisorAdminDto): Promise<Advisor> {
     let updateData: Prisma.AdvisorUpdateInput = { status: dto.status };
     const adminDscr: AdminDescription = {
       description: dto.admin_description || '',
@@ -124,21 +177,6 @@ export class AdvisorAdminService {
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
 
     const item = await this.db.advisor.update({ where: { id }, data: updateData });
-
-    return item;
-  }
-
-  /**
-   * Update editable columns in admin panel table
-   * @param id
-   * @param dto
-   * @returns
-   */
-  async updatePartial(id: number, dto: UpdatePartialAdvisorAdminDto): Promise<Advisor> {
-    const item = await this.db.advisor.update({
-      where: { id },
-      data: dto,
-    });
 
     return item;
   }

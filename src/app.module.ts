@@ -70,6 +70,7 @@ import { PeakDayModule } from './peak-day/peak-day.module';
 import { LandingPageModule } from './landing-page/landing-page.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -148,6 +149,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     LandingPageModule,
     FavoriteModule,
     BookmarkModule,
+    SubscriptionModule,
     BaseModule,
   ],
   providers: [

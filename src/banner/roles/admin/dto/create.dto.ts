@@ -18,25 +18,11 @@ export class CreateBannerAdminDto {
   title: string;
 
   @ApiProperty({ required: true, default: 1 })
-  @Validate(IsExist, ['category', 'id'])
+  @Validate(IsExist, ['property', 'id'])
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  category_id: number;
-
-  @ApiProperty({ required: true, default: 1 })
-  @Validate(IsExist, ['product', 'id'])
-  @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  product_id: number;
-
-  @ApiProperty({ required: true, default: 1 })
-  @Validate(IsExist, ['brand', 'id'])
-  @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  brand_id: number;
+  property_id: number;
 
   @ApiProperty({ enum: BannerPosition, required: true, default: 'لورم ایپسوم متن ساختگی' })
   @_IsEnum(BannerPosition)
