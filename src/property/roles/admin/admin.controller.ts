@@ -15,24 +15,23 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { ADMIN_ROUTE_GROUP } from 'src/advisor/common/route-group.constant';
-import { filterValidator } from 'src/advisor/common/helpers/filter-validator.helper';
+import { ADMIN_ROUTE_GROUP } from 'src/property/common/route-group.constant';
+import { filterValidator } from 'src/property/common/helpers/filter-validator.helper';
 import qs from 'qs';
-import { AdvisorAdminService } from './admin.service';
-import { CreateAdvisorAdminDto } from './dto/create.dto';
+import { PropertyAdminService } from './admin.service';
+import { CreatePropertyAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateAdvisorAdminDto } from './dto/update.dto';
-import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
+import { UpdatePropertyAdminDto } from './dto/update.dto';
+import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
-import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
-import { AdminRequestType } from 'src/common/interfaces/user.interface';
+import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 
-@ApiTags('👨‍💻 Advisor - ADMIN')
+@ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
-export class AdvisorAdminController {
-  constructor(private readonly advisorAdminService: AdvisorAdminService) {}
+export class PropertyAdminController {
+  constructor(private readonly propertyAdminService: PropertyAdminService) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -41,31 +40,20 @@ export class AdvisorAdminController {
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
-    const result = await this.advisorAdminService.findModelProps(rbac);
+    const result = await this.propertyAdminService.findModelProps(rbac);
     return { result };
   }
-
-  // /* -------------------------------------------------------------------------- */
-  // /*                                   CREATE                                   */
-  // /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Create', description: '' })
-  // @Post()
-  // async create(@Body() dto: CreateAdvisorAdminDto): Promise<SuccessResponseArgs> {
-  //   const result = await this.advisorAdminService.create(dto);
-
-  //   return { result, messageCode: 'CREATE' };
-  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Find All', description: '' })
   @Get()
-  async findAll(@Query() dto: FindAllAdvisorAdminDto): Promise<SuccessResponseArgs> {
+  async findAll(@Query() dto: FindAllPropertyAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const result = await this.advisorAdminService.findAll(filterQuery, dto.page, dto.per_page);
+    const result = await this.propertyAdminService.findAll(filterQuery, dto.page, dto.per_page);
 
     return { result };
   }
@@ -73,7 +61,7 @@ export class AdvisorAdminController {
   @ApiOperation({ operationId: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-    const result = await this.advisorAdminService.findOne(id);
+    const result = await this.propertyAdminService.findOne(id);
 
     return { result };
   }
@@ -81,17 +69,17 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update', description: '' })
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateAdvisorAdminDto,
-  ): Promise<SuccessResponseArgs> {
-    const advisor = await this.advisorAdminService.findById(id);
-    const result = await this.advisorAdminService.update(advisor, dto);
+  // @ApiOperation({ operationId: 'Update', description: '' })
+  // @Put(':id')
+  // async update(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @Body() dto: UpdatePropertyAdminDto,
+  // ): Promise<SuccessResponseArgs> {
+  //   await this.propertyAdminService.findById(id);
+  //   const result = await this.propertyAdminService.update(id, dto);
 
-    return { result, messageCode: 'UPDATE' };
-  }
+  //   return { result, messageCode: 'UPDATE' };
+  // }
 
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
@@ -99,13 +87,11 @@ export class AdvisorAdminController {
   @ApiOperation({ operationId: 'Update Partial', description: '' })
   @Patch(':id/update-partial')
   async updatePartial(
-    @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePartialAdvisorAdminDto,
+    @Body() dto: UpdatePartialPropertyAdminDto,
   ): Promise<SuccessResponseArgs> {
-    const admin = req.user;
-    await this.advisorAdminService.findById(id);
-    const result = await this.advisorAdminService.updatePartial(admin, id, dto);
+    await this.propertyAdminService.findById(id);
+    const result = await this.propertyAdminService.updatePartial(id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }
@@ -116,8 +102,8 @@ export class AdvisorAdminController {
   // @ApiOperation({ operationId: 'Remove', description: '' })
   // @Delete(':id')
   // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.advisorAdminService.findById(id);
-  //   await this.advisorAdminService.remove(id);
+  //   await this.propertyAdminService.findById(id);
+  //   await this.propertyAdminService.remove(id);
 
   //   return { messageCode: 'DELETE' };
   // }

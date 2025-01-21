@@ -26,7 +26,6 @@ import { PartialUser } from 'src/common/interfaces/user.interface';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import moment from 'moment-jalaali';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
-import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { slugify } from 'src/common/helpers/slugify';
 import {
@@ -37,6 +36,7 @@ import {
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
 import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -495,7 +495,7 @@ export class PropertyOwnerService {
 
       // حذف تمام درخواست پرداخت های پرداخت نشده
       await tx.subscription.deleteMany({
-        where: { property_id: property.id, status: PropertySubscription.WAITING },
+        where: { property_id: property.id, status: SubscriptionStatus.WAITING },
       });
 
       if (promote)
@@ -507,7 +507,7 @@ export class PropertyOwnerService {
             title: promote.title,
             duration: promote.duration,
             price: promote.price,
-            status: PropertySubscription.WAITING,
+            status: SubscriptionStatus.WAITING,
           },
         });
 
@@ -519,7 +519,7 @@ export class PropertyOwnerService {
             title: subscription.title,
             duration: subscription.duration,
             price: subscription.price,
-            status: PropertySubscription.WAITING,
+            status: SubscriptionStatus.WAITING,
           },
         });
 
@@ -722,7 +722,7 @@ export class PropertyOwnerService {
   async checkCanBuySubscriptionForFirstTime(property: Property): Promise<void> {
     // در مرحله ثبت ملک فقط یکبار اشتراک میتوان خرید کرد
     const firstSub = await this.db.subscription.findFirst({
-      where: { property_id: property.id, status: PropertySubscription.SUCCESS },
+      where: { property_id: property.id, status: SubscriptionStatus.SUCCESS },
     });
 
     if (property.status === PropertyStatuses.WAITING && firstSub)

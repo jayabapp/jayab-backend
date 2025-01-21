@@ -4,11 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
-import isJson from 'src/common/helpers/is-json.helper';
-import { DayDto } from '../owner/dto/update-property.dto';
 import { isEmpty } from 'lodash';
-import { RentType } from 'src/property/common/types/property-rent-types.type';
 import {
   PropertyArrayResType,
   PropertyJsonType,
@@ -16,11 +12,12 @@ import {
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class PropertyUserService {
@@ -59,7 +56,7 @@ export class PropertyUserService {
       min_price,
       max_price,
     } = dto;
-    console.log({ dto });
+    // console.log({ dto });
 
     // let startDay = null;
 
@@ -115,12 +112,16 @@ export class PropertyUserService {
     //     ...query,
     //     daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
     //   };
-    console.log({ options });
+    // console.log({ options });
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
 
     /* ---------------------------------- LIST ---------------------------------- */
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
@@ -134,7 +135,7 @@ export class PropertyUserService {
           city: { select: { title: true } },
           property_options: true,
           daily_price: true,
-          calendar: { where: { date: startOfToday() } },
+          calendar: { where: calendarDateQuery },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
           favorites: true,
@@ -155,6 +156,9 @@ export class PropertyUserService {
    */
   async findOne(propertySlug: string): Promise<PropertyResType> {
     const code = this.checkSlug(propertySlug);
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
 
     const item = await this.db.property.findFirst({
       where: { ...this.validProperty(), code },
@@ -166,7 +170,7 @@ export class PropertyUserService {
         property_options: { select: { option: { select: { title: true, group: true } } } },
         bedrooms: true,
         daily_price: true,
-        calendar: { where: { date: startOfToday() } },
+        calendar: { where: calendarDateQuery },
         // assistants: true,
         description: true,
         favorites: true,

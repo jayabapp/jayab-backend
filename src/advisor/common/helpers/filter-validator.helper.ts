@@ -43,6 +43,15 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
         query = { ...query, status: +filters.status };
         break;
 
+      case 'no_sub':
+        if (filters.no_sub) query = { ...query, subscription_expired_at: null };
+        break;
+
+      case 'is_special':
+        if (filters.is_special) query = { ...query, is_special: filters.is_special };
+        else query = { ...query };
+        break;
+
       default:
         break;
     }

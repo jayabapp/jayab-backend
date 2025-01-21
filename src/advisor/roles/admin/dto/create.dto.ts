@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import {
   _IsInt,
@@ -9,63 +9,10 @@ import {
   _IsEnum,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
+import { RegisterAdvisorUserDto } from 'src/profile/roles/user/dto/register.dto';
 
-export class CreateAdvisorAdminDto {
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
-  @_IsNotEmpty()
-  national_code: string;
-
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
-  @IsOptional()
-  tel: string;
-
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
-  @IsOptional()
-  area_code: string;
-
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
-  @_IsNotEmpty()
-  address: string;
-
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
-  @_IsBoolean()
-  @_IsNotEmpty()
-  is_special: boolean;
-
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  status: number;
-
-  @ApiProperty({ required: false, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  sort_order: number;
-
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  profile_image_id: number;
-
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  national_card_image_id: number;
-
-  @ApiProperty({ required: true, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  document_image_id: number;
-}
+// export class CreateAdvisorAdminDto extends PartialType(OmitType(RegisterAdvisorUserDto,[''])) {}
+export class CreateAdvisorAdminDto extends RegisterAdvisorUserDto {}
 
 export class AddRateUserDto {
   @ApiProperty({ required: true, default: 25 })

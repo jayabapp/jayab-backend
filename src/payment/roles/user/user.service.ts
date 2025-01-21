@@ -18,13 +18,12 @@ import { ConfigService } from '@nestjs/config';
 import { MD5 } from 'crypto-js';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { PartialUser } from 'src/common/interfaces/user.interface';
-import { PropertySubscription } from 'src/property/common/types/property-subscription.type';
 import { first } from 'lodash';
 import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { AdvisorSubscription } from 'src/profile/common/advisor-subscription.type';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class PaymentUserService {
@@ -125,7 +124,7 @@ export class PaymentUserService {
       /* update subscription */
       const subscription = await this.db.subscription.update({
         where: { payment_id: payment.id },
-        data: { status: PropertySubscription.SUCCESS },
+        data: { status: SubscriptionStatus.SUCCESS },
         include: { property: { select: { id: true, subscription_expired_at: true } } },
       });
       const property = subscription.property;
@@ -215,7 +214,7 @@ export class PaymentUserService {
       /* update subscription */
       const subscription = await this.db.subscription.update({
         where: { payment_id: payment.id },
-        data: { status: AdvisorSubscription.SUCCESS },
+        data: { status: SubscriptionStatus.SUCCESS },
         include: {
           advisor: { select: { id: true, subscription_expired_at: true, status: true, is_special: true } },
         },

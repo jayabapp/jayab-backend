@@ -1,4 +1,4 @@
-import { AccessControlList, Attachment, Prisma, Banner, Category } from '@prisma/client';
+import { AccessControlList, Attachment, Prisma, Banner, Category, Property } from '@prisma/client';
 import { AttachmentAdminFolder } from 'src/attachment/interfaces/attachment-folder.enum';
 import {
   AvailableAction,
@@ -16,6 +16,7 @@ import { BannerPositionList } from '../banner-positions.constant';
 enum RefEnum {
   image = 'image',
   image_sm = 'image_sm',
+  property = 'property',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.BannerScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -30,9 +31,12 @@ export const showPropsBuilder = (
     category: Category;
     image: Attachment;
     image_sm: Attachment;
+    property: Property;
   },
 ): Array<ShowProps> => {
   const props: Array<ShowProps> = [
+    { state: 'property', title: '', value: item.property, type: 'object', isHidden: true },
+
     { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
     { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean' },
     {
@@ -52,7 +56,13 @@ export const showPropsBuilder = (
     { state: 'sort_order', title: 'ترتیب الویت نمایش', value: item.sort_order, type: 'number' },
     { state: 'link', title: 'لینک', value: item.link, type: 'longString' },
     { state: 'description', title: 'توضیحات', value: item.description, type: 'longString' },
-    { state: 'category', title: 'دسته بندی', value: item.category, type: 'object', nestedKey: 'title' },
+    {
+      state: 'property',
+      title: 'متصل شده به ملک',
+      value: `${item?.property?.title} - ${item?.property?.code}`,
+      type: 'string',
+      route: `/properties/show/${item?.property?.id}`,
+    },
     { type: 'divider' },
     {
       state: 'image',
@@ -176,6 +186,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 5, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 6, title: 'تصویر سایز کوچک', key: 'image_sm', cellType: 'image' },
       { id: 2, title: 'عنوان', key: 'title', cellType: 'string' },
+      { id: 12, title: 'ملک', key: 'property', cellType: 'string', nestedKey: 'title' },
       { id: 3, title: 'فعال', key: 'is_active', cellType: 'boolean' },
       { id: 4, title: 'ترتیب', key: 'sort_order', cellType: 'string' },
       {

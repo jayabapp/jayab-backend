@@ -64,7 +64,7 @@ export class BannerAdminService {
   async findAll(filters: object, page: number, perPage = 50): Promise<PaginatedResult<Banner>> {
     const list = await paginate()<Banner, Prisma.BannerFindManyArgs>(
       this.db.banner,
-      { where: filters, include: { image: true, image_sm: true } },
+      { where: filters, include: { image: true, image_sm: true, property: true } },
       { page, perPage },
     );
 
@@ -90,7 +90,7 @@ export class BannerAdminService {
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
     const item = await this.db.banner.findUnique({
       where: { id },
-      include: { category: true, image: true, image_sm: true },
+      include: { category: true, image: true, image_sm: true, property: true },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
@@ -119,12 +119,7 @@ export class BannerAdminService {
    * @returns
    */
   async update(id: number, dto: UpdateBannerAdminDto): Promise<Banner> {
-    if (dto.category_id) dto.product_id = null;
-    else if (dto.product_id) dto.category_id = null;
-    else {
-      dto.category_id = null;
-      dto.product_id = null;
-    }
+    if (!dto.property_id) dto.property_id = null;
     const item = await this.db.banner.update({
       where: { id },
       data: dto,

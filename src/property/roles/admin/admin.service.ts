@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, SubscriptionPlan, Prisma } from '@prisma/client';
+import { AccessControlList, Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSubscriptionPlanAdminDto } from './dto/create.dto';
-import { UpdateSubscriptionPlanAdminDto } from './dto/update.dto';
+import { CreatePropertyAdminDto } from './dto/create.dto';
+import { UpdatePropertyAdminDto } from './dto/update.dto';
 import {
   CreateProps,
   FilterProps,
@@ -20,66 +20,80 @@ import {
   showActionBuilder,
   showPropsBuilder,
   tablePropsBuilder,
-} from 'src/subscription-plan/common/helpers/model-props-builder.helper';
-import { UpdatePartialSubscriptionPlanAdminDto } from './dto/update-partial.dto';
-import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
+} from 'src/property/common/helpers/model-props-builder.helper';
+import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import moment from 'moment-jalaali';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import {
+  PropertyArrayResType,
+  PropertyJsonType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 
 @Injectable()
-export class SubscriptionPlanAdminService {
-  constructor(private readonly db: PrismaService) {}
-
-  /* -------------------------------------------------------------------------- */
-  /*                                   CREATE                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
-  async create(dto: CreateSubscriptionPlanAdminDto): Promise<SubscriptionPlan> {
-    const newSubscriptionPlan = await this.db.subscriptionPlan.create({ data: dto });
-    return newSubscriptionPlan;
-  }
+export class PropertyAdminService {
+  constructor(
+    private readonly db: PrismaService,
+    private readonly dayHelper: DayHelper,
+    private readonly propertySerializer: PropertySerializer,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
-  async findOneByGroup(id: number, group: SubscriptionPlanGroup): Promise<SubscriptionPlan> {
-    const plan = await this.db.subscriptionPlan.findUnique({ where: { id, group, is_active: true } });
-    if (!plan) throw new NotFoundException('NOT_FOUND');
-    return plan;
-  }
-
   /**
-   * find all SubscriptionPlan
+   * find all Property
    * @param filers
    * @param page
    * @param perPage
    * @returns
    */
   async findAll(
-    filters: Prisma.SubscriptionPlanWhereInput,
+    filters: Prisma.PropertyWhereInput,
     page: number,
     perPage = 50,
-  ): Promise<PaginatedResult<SubscriptionPlan>> {
-    const list = await paginate()<SubscriptionPlan, Prisma.SubscriptionPlanFindManyArgs>(
-      this.db.subscriptionPlan,
-      { where: filters },
+  ): Promise<PaginatedResult<PropertyArrayResType>> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
+    const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
+      this.db.property,
+      {
+        where: filters,
+        include: {
+          feature_image: true,
+          province: { select: { title: true } },
+          city: { select: { title: true } },
+          property_options: true,
+          daily_price: true,
+          calendar: { where: calendarDateQuery },
+          bedrooms: { select: { total_bedrooms: true } },
+          _count: { select: { attachments: true } },
+          favorites: true,
+        },
+      },
       { page, perPage },
     );
 
-    return list;
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toArray(list.data, today, false);
+
+    return { data: serialized, meta: list.meta };
   }
 
   /**
-   * find one subscriptionPlan
+   * find one property
    * this method is used in the findOne controller to include or select items
    * @param id
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.subscriptionPlan.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException('SUBSCRIPTION_PLAN_NOT_FOUND');
+    const item = await this.db.property.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
@@ -92,8 +106,8 @@ export class SubscriptionPlanAdminService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<SubscriptionPlan> {
-    const item = await this.db.subscriptionPlan.findUnique({ where: { id } });
+  async findById(id: number): Promise<Property> {
+    const item = await this.db.property.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
@@ -102,20 +116,20 @@ export class SubscriptionPlanAdminService {
   /* -------------------------------------------------------------------------- */
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
-  /**
-   * update
-   * @param id
-   * @param dto
-   * @returns
-   */
-  async update(id: number, dto: UpdateSubscriptionPlanAdminDto): Promise<SubscriptionPlan> {
-    const item = await this.db.subscriptionPlan.update({
-      where: { id },
-      data: dto,
-    });
+  // /**
+  //  * update
+  //  * @param id
+  //  * @param dto
+  //  * @returns
+  //  */
+  // async update(id: number, dto: UpdatePropertyAdminDto): Promise<Property> {
+  //   const item = await this.db.property.update({
+  //     where: { id },
+  //     data: dto,
+  //   });
 
-    return item;
-  }
+  //   return item;
+  // }
 
   /**
    * Update editable columns in admin panel table
@@ -123,8 +137,8 @@ export class SubscriptionPlanAdminService {
    * @param dto
    * @returns
    */
-  async updatePartial(id: number, dto: UpdatePartialSubscriptionPlanAdminDto): Promise<SubscriptionPlan> {
-    const item = await this.db.subscriptionPlan.update({
+  async updatePartial(id: number, dto: UpdatePartialPropertyAdminDto): Promise<Property> {
+    const item = await this.db.property.update({
       where: { id },
       data: dto,
     });
@@ -140,7 +154,7 @@ export class SubscriptionPlanAdminService {
    * @param id
    */
   async remove(id: number): Promise<void> {
-    await this.db.subscriptionPlan.delete({ where: { id } });
+    await this.db.property.delete({ where: { id } });
   }
 
   /* -------------------------------------------------------------------------- */

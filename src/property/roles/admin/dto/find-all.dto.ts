@@ -5,37 +5,31 @@ import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import { _IsBoolean, _IsEnum, _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
-export class FindAllAdvisorAdminDto extends PaginationDto {
-  @ApiProperty({ required: false, default: '123456' })
+export class FindAllPropertyAdminDto extends PaginationDto {
+  @ApiProperty({ required: false, default: 1 })
+  // @_IsEnum(AdvisorStatus)
+  @Transform(({ value }) => +value)
+  @IsOptional()
+  status: number;
+
+  @ApiProperty({ required: false, default: 1 })
+  @IsOptional()
+  code: string;
+
+  @ApiProperty({ required: false, default: '' })
   @_IsString()
   @IsOptional()
-  referral_code: string;
+  title: string;
 
-  @ApiProperty({ required: false, default: 'موبایل' })
-  @_IsString()
-  @IsOptional()
-  mobile_number: string;
-
-  @ApiProperty({ required: false, default: 'رضا' })
-  @_IsString()
-  @IsOptional()
-  full_name: string;
-
-  @ApiProperty({ required: false, default: AdvisorStatus.APPROVED })
-  @_IsEnum(AdvisorStatus)
-  @Type(() => Number)
-  @IsOptional()
-  status: AdvisorStatus;
-
-  @ApiProperty({ required: false, default: 'مشاور ویژه' })
+  @ApiProperty({ required: false, default: true })
   @_IsBoolean()
   @Transform(({ value }) => (value && value == 'true' ? true : false))
   @IsOptional()
-  is_special: boolean;
+  authorized: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, default: true })
   @_IsBoolean()
   @Transform(({ value }) => (value && value == 'true' ? true : false))
   @IsOptional()
-  no_sub: boolean;
+  expired: boolean;
 }
