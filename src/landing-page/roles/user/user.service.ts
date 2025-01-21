@@ -78,7 +78,7 @@ export class LandingPageUserService {
     //find related landings
     let relatedLandings: any;
     if (!isEmpty(landing.related_landings)) {
-      relatedLandings = await this.db.landingPage.findFirst({
+      relatedLandings = await this.db.landingPage.findMany({
         where: { id: { in: landing.related_landings } },
         select: {
           title: true,
@@ -88,13 +88,16 @@ export class LandingPageUserService {
     }
 
     return {
-      with_pool: landing.has_pool ? 1 : 0,
-      has_discount: landing.min_discount_percentage > 0 ? 1 : 0,
-      is_premium: landing.is_premium ? 1 : 0,
+      query: {
+        with_pool: landing.has_pool ? 1 : 0,
+        has_discount: landing.min_discount_percentage > 0 ? 1 : 0,
+        is_premium: landing.is_premium ? 1 : 0,
+        cities: cities.map((e) => e.id),
+        ...options,
+      },
       content: landing.main_content,
       related_landings: relatedLandings,
       cities,
-      ...options,
     };
   }
 }

@@ -4,7 +4,7 @@ import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import { _IsIn, _IsInt, _IsString, _Max } from 'src/common/pipes/validator-translate.pipe';
 
-export class FindAllCityUserDto extends PaginationDto {
+export class FindAllCityUserDto {
   @ApiProperty({ required: false, default: '' })
   @_IsString()
   @IsOptional()

@@ -7,7 +7,7 @@ import { PropertyStatuses } from 'src/property/common/types/property-status.type
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import isJson from 'src/common/helpers/is-json.helper';
 import { DayDto } from '../owner/dto/update-property.dto';
-import { isEmpty } from 'lodash';
+import { isEmpty, omit, random } from 'lodash';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 import {
   PropertyArrayResType,
@@ -21,6 +21,8 @@ import { parseQueryNumberArray, parseQueryStringArray } from 'src/common/helpers
 import { Redis } from 'ioredis';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
+import { slugify } from 'src/common/helpers/slugify';
+import Num2persian from 'src/common/helpers/Num2Persian';
 
 @Injectable()
 export class PropertyUserService {
@@ -59,7 +61,6 @@ export class PropertyUserService {
       min_price,
       max_price,
     } = dto;
-    console.log({ dto });
 
     let options = [];
 
@@ -139,7 +140,6 @@ export class PropertyUserService {
     //     ...query,
     //     daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
     //   };
-    console.log({ options });
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
@@ -164,7 +164,7 @@ export class PropertyUserService {
           favorites: true,
         },
       },
-      { cursor: dto.cursor },
+      { cursor: dto.cursor, perPage: dto.per_page },
     );
 
     const today = await this.dayHelper.today();
@@ -267,5 +267,60 @@ export class PropertyUserService {
       update: { view_count: { increment: 1 } },
       create: { date: now, property_id: propertyId, view_count: 1 },
     });
+  }
+
+  async duplicate(propertyId: number): Promise<void> {
+    const propPure = await this.db.property.findUnique({ where: { id: propertyId }, omit: { id: true } });
+    const prop = await this.db.property.findUnique({
+      where: { id: propertyId },
+      include: {
+        property_options: true,
+        bedrooms: true,
+        daily_price: true,
+        description: true,
+      },
+    });
+
+    const titleMock = ['ویلای', 'سوییت', 'آپارتمان'];
+
+    for (let i = 0; i < 100; i++) {
+      const code = `${random(10_000, 99_999).toString()}`;
+      const title = `${titleMock[random(0, titleMock.length - 1)]} ${Num2persian(i + 1)}`;
+      const slug = `${code}-${slugify(title)}`;
+      const cityId = random(32, 165);
+      const province = await this.db.city.findUnique({ where: { id: cityId } });
+
+      await this.db.$transaction(async (tx) => {
+        const newProp = await tx.property.create({
+          data: {
+            ...propPure,
+            title: title,
+            slug: slug,
+            slug_hash: `${random(0, 1_000_000_000) + random(0, 1_000).toString(16)}`,
+            code,
+            city_id: cityId,
+            province_id: province?.parent_id,
+            is_chat_enabled: random(0, 1) === 0 ? false : true,
+            has_pool: random(0, 1) === 0 ? false : true,
+            has_blue_tick: random(0, 1) === 0 ? false : true,
+            std_capacity: random(1, 10),
+            advisor_commission: random(5, 50),
+            building_area: random(50, 200),
+            floor: random(1, 3),
+            feature_image_id: random(5, 20),
+            daily_price: { create: { ...omit(prop?.daily_price, ['id', 'property_id']) } },
+            bedrooms: { create: { ...omit(prop?.bedrooms, ['id', 'property_id']) } },
+            description: { create: { ...omit(prop?.description, ['id', 'property_id']) } },
+            attachments: { connect: [{ id: random(5, 20) }, { id: random(5, 20) }, { id: random(5, 20) }] },
+          },
+        });
+        await tx.optionsOnProperty.createMany({
+          data: prop?.property_options.map((item) => ({
+            property_id: newProp.id,
+            option_id: item.option_id,
+          })),
+        });
+      });
+    }
   }
 }
