@@ -27,6 +27,7 @@ import {
   UpdatePropertyDayPriceOwnerDto,
   UpdatePropertyReservedStatusOwnerDto,
 } from './dto/create.dto';
+import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
 
 @ApiTags('PropertyCalendar - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -72,11 +73,22 @@ export class PropertyCalendarOwnerController {
     return { result };
   }
 
+  @ApiOperation({ operationId: 'Acceptable Price Range', description: '' })
+  @Get('price')
+  async findAcceptablePriceRange(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: JalaaliDateDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyCalendarOwnerService.findAcceptablePriceRange(propertyId, dto);
+
+    return { result };
+  }
+
   @ApiOperation({ operationId: 'Update Price', description: '' })
   @Post('price')
   async updatePrice(
     @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: UpdatePropertyDayPriceOwnerDto,
+    @Query() dto: UpdatePropertyDayPriceOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const result = await this.propertyCalendarOwnerService.updatePrice(propertyId, dto);
 

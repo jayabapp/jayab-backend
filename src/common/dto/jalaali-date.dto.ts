@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { _IsInt, _Min, _Max, _IsNotEmpty } from '../pipes/validator-translate.pipe';
+import { Type } from 'class-transformer';
 
 export class JalaaliDateDto {
   @ApiProperty({ required: true, default: 1 })
+  @Type(() => Number)
   @_IsInt()
   @_Min(1)
   @_Max(31)
@@ -10,6 +12,7 @@ export class JalaaliDateDto {
   day: number;
 
   @ApiProperty({ required: true, default: 12 })
+  @Type(() => Number)
   @_IsInt()
   @_Min(1)
   @_Max(12)
@@ -17,6 +20,7 @@ export class JalaaliDateDto {
   month: number;
 
   @ApiProperty({ required: true, default: 1402 })
+  @Type(() => Number)
   @_IsInt()
   @_Min(1300)
   @_Max(1420)

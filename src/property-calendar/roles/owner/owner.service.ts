@@ -12,10 +12,14 @@ import {
 } from './dto/create.dto';
 import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
 import { convertJalaaliDtoToDate, startOfDate } from 'src/common/helpers/date.helper';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyCalendarOwnerService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly dayHelper: DayHelper,
+  ) {}
 
   /**
    * create and update note
@@ -68,6 +72,30 @@ export class PropertyCalendarOwnerService {
       data: { advisor_commission: dto.advisor_commission },
     });
     return newPropertyCalendar;
+  }
+
+  /**
+   * بازه قیمتی قابل قبول برای قیمت گذاری را برمیگرداند
+   * @param propertyId
+   * @param dto
+   * @returns
+   */
+  async findAcceptablePriceRange(propertyId: number, dto: JalaaliDateDto): Promise<any> {
+    const targetDay = await this.dayHelper.daysRange(convertJalaaliDtoToDate(dto), 1);
+    const dailyPrice = await this.db.propertyDailyPrice.findFirst({ where: { property_id: propertyId } });
+    console.log({ targetDay, dailyPrice });
+
+    const MAX_MIN_RATIO = 4; // adaptive
+    const maxPrice = dailyPrice[targetDay.requestedDays[0]];
+
+    const roundHelper = maxPrice / MAX_MIN_RATIO < 100000 ? Math.pow(10, 4) : Math.pow(10, 5);
+    const minPrice = Math.floor(maxPrice / (MAX_MIN_RATIO * roundHelper)) * roundHelper;
+
+    return {
+      max_price: maxPrice * 2,
+      min_price: minPrice,
+      step: roundHelper,
+    };
   }
 
   /**
