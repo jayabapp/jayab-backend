@@ -54,14 +54,11 @@ export class PropertyUserService {
       has_discount,
       is_premium,
       title,
-      start_day,
-      num_days,
       min_price,
       max_price,
     } = dto;
-    // console.log({ dto });
-    const today = await this.dayHelper.today();
 
+    const today = await this.dayHelper.today();
     let options = [];
 
     /**
@@ -135,12 +132,12 @@ export class PropertyUserService {
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title } };
 
-    // if (min_price >= 0 && max_price >= 0)
-    //   query = {
-    //     ...query,
-    //     daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
-    //   };
-    // console.log({ options });
+    /* ---------------------------------- price --------------------------------- */
+    if (min_price >= 0 && max_price >= 0)
+      query = {
+        ...query,
+        daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
+      };
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
@@ -151,7 +148,6 @@ export class PropertyUserService {
     };
 
     /* -------------------------------- ORDER BY -------------------------------- */
-    console.log({ today });
 
     let orderByQuery: Prisma.PropertyOrderByWithRelationInput | Prisma.PropertyOrderByWithRelationInput[] =
       [];
@@ -221,7 +217,6 @@ export class PropertyUserService {
         bedrooms: true,
         daily_price: true,
         calendar: { where: calendarDateQuery },
-        // assistants: true,
         description: true,
         favorites: true,
       },

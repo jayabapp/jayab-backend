@@ -96,22 +96,6 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   title?: string;
 
-  @ApiProperty({ required: false, title: 'تاریخ شروع' })
-  // @IsObject()
-  // @ValidateNested()
-  // @Type(() => DayDto)
-  @IsOptional()
-  start_day?: string;
-
-  @ApiProperty({ required: false, title: 'تاریخ شروع' })
-  @Type(() => Number)
-  @ValidateIf((obj) => Boolean(obj.start_day))
-  @_IsInt()
-  @_Min(1)
-  @_Max(30)
-  @IsOptional()
-  num_days?: number;
-
   @ApiProperty({ required: false, title: 'از قیمت' })
   @Type(() => Number)
   @_IsInt()
