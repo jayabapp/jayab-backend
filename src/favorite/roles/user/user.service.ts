@@ -15,8 +15,15 @@ export class FavoriteUserService {
       where: { user_id: userId, property_id: dto.property_id },
     });
 
-    if (isFav) await this.db.favorite.delete({ where: { id: isFav.id } });
-    else await this.db.favorite.create({ data: { user_id: userId, property_id: dto.property_id } });
+    await this.db.$transaction(async (tx) => {
+      if (isFav) await tx.favorite.delete({ where: { id: isFav.id } });
+      else await tx.favorite.create({ data: { user_id: userId, property_id: dto.property_id } });
+
+      await tx.property.update({
+        where: { id: dto.property_id },
+        data: { favorite_count: { increment: isFav ? -1 : 1 } },
+      });
+    });
 
     const ids = this.findAllIds(userId);
     return ids;

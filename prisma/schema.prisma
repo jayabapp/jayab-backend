@@ -558,6 +558,7 @@ model Property {
   is_authorized           Boolean   @default(false) @db.Boolean
   has_blue_tick           Boolean   @default(false) @db.Boolean
   options_array           Int[] //برای راحتی کوئری ارایه امکانات رو اینجا هم نگه میداریم
+  favorite_count          Int       @default(0) @db.Integer
 
   // calendar_updated_at DateTime?
   // rate                Float?

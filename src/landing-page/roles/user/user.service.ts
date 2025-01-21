@@ -60,7 +60,6 @@ export class LandingPageUserService {
       for (const key in grouped) {
         options[key.toLowerCase()] = grouped[key]?.map((e) => e.id);
       }
-      console.log({ options, grouped });
     }
 
     let cities = [];

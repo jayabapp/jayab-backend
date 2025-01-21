@@ -164,7 +164,6 @@ export class PropertyUserService {
           calendar: { where: calendarDateQuery },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
-          favorites: true,
         },
       },
       { cursor: dto.cursor, perPage: dto.per_page },
