@@ -206,4 +206,33 @@ export class SocketService {
     const data = await this.redis.get(key);
     console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
   }
+
+  /**
+   * emit to panel admin
+   * @param alert
+   * @returns
+   */
+  async emitToAdmins(alert: {
+    event?: string;
+    eventData?: number;
+    id: number;
+    type: 'success' | 'error' | 'warn' | 'info';
+    title: string;
+    body: string;
+    route?: string;
+  }): Promise<void> {
+    let admins: Admin[] = [];
+
+    admins = await this.db.admin.findMany({
+      where: {
+        // id: { notIn: businessAdmins.map((_) => _.id) },
+        role: { notification_permissions: { permissions: { contains: `-${alert.event}` } } },
+      },
+    });
+
+    for (const admin of [...admins]) {
+      this.socket.to(this.createRoomKey(admin.id, UserRole.ADMIN)).emit('event:panel', alert);
+    }
+    return;
+  }
 }

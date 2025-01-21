@@ -71,6 +71,7 @@ import { LandingPageModule } from './landing-page/landing-page.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
 import { SubscriptionModule } from './subscription/subscription.module';
+import { TicketModule } from './ticket/ticket.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -150,6 +151,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     FavoriteModule,
     BookmarkModule,
     SubscriptionModule,
+    TicketModule,
     BaseModule,
   ],
   providers: [
