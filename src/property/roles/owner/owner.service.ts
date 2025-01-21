@@ -538,6 +538,10 @@ export class PropertyOwnerService {
    * @returns
    */
   async findAll(ownerId: number): Promise<Array<PropertyArrayResType>> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
     const list = await this.db.property.findMany({
       where: { owner_id: ownerId },
       include: {
@@ -546,7 +550,7 @@ export class PropertyOwnerService {
         city: { select: { title: true } },
         property_options: true,
         daily_price: true,
-        calendar: { where: { date: startOfToday() } },
+        calendar: { where: calendarDateQuery },
         bedrooms: { select: { total_bedrooms: true } },
         _count: { select: { attachments: true } },
         property_authorize: true,
@@ -567,6 +571,9 @@ export class PropertyOwnerService {
    * @returns
    */
   async findOne(propertyId: number): Promise<PropertyResType> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
     const item = await this.db.property.findFirst({
       where: { id: propertyId },
       include: {
@@ -575,7 +582,7 @@ export class PropertyOwnerService {
         province: { select: { title: true } },
         city: { select: { title: true } },
         daily_price: true,
-        calendar: { where: { date: startOfToday() } },
+        calendar: { where: calendarDateQuery },
         property_authorize: true,
         favorites: true,
       },
