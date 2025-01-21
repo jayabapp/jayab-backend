@@ -13,6 +13,11 @@ export class FindAllPropertyAdminDto extends PaginationDto {
   status: number;
 
   @ApiProperty({ required: false, default: 1 })
+  @Transform(({ value }) => +value)
+  @IsOptional()
+  owner_id: number;
+
+  @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   code: string;
 

@@ -33,6 +33,10 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
 
     //query
     switch (field) {
+      case 'owner_id':
+        query = { ...query, owner_id: +filters.owner_id };
+        break;
+
       case 'status':
         query = { ...query, status: +filters.status };
         break;

@@ -79,10 +79,10 @@ export const showPropsBuilder = (
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (item: Owner): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
+    {
+      title: 'املاک',
+      route: `/properties?page=1&owner_id=${item.id}`,
+    },
     //  {
     //    title: 'ایجاد محصول جدید',
     //    route: '',
