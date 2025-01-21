@@ -24,7 +24,6 @@ export class LandingPageUserService {
       select: { url: true, title: true, image: true, position: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });
-    console.log({ list });
 
     const grouped = groupBy(list, 'position');
     return grouped;

@@ -13,6 +13,7 @@ import { PaymentUserService } from 'src/payment/roles/user/user.service';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
 
 @Injectable()
 export class ProfileUserService {
@@ -261,6 +262,26 @@ export class ProfileUserService {
       where: { id: userId },
       include: includes || {},
     });
+  }
+
+  async checkUserIsActiveAdvisor(authorization: string): Promise<boolean> {
+    const token = authorization ? authorization?.split(' ')?.[1] : null;
+    let userId;
+    if (token) {
+      const payload = await verifyUserTokenManualy(token);
+      if (!payload) return false;
+      userId = payload.id;
+    } else return false;
+
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { advisor: { select: { subscription_expired_at: true, is_special: true } } },
+    });
+
+    if (user?.advisor && moment().isBefore(user?.advisor?.subscription_expired_at)) {
+      return true;
+    }
+    return false;
   }
 
   // maskCriticalData(text: string, from: number, to: number): string {

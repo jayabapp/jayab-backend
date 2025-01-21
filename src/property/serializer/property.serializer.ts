@@ -100,7 +100,7 @@ export class PropertySerializer {
   async toArray(
     data: PropertyJsonType[],
     today: DayColumn,
-    isAdvisor: false,
+    isAdvisor: boolean,
   ): Promise<Array<PropertyArrayResType>> {
     const res: PropertyArrayResType[] = [];
     for (const e of data) {
@@ -215,7 +215,7 @@ export class PropertySerializer {
       reserveDays.push({ day_number: moment(date).day(), is_reserved: Boolean(calendar?.is_reserved) });
     }
 
-    let res: PropertyResType = { ...list, ...single, reserve_days: reserveDays };
+    let res: PropertyResType = { ...list, ...single, reserve_days: isAdvisor ? reserveDays : [] };
     return res;
   }
 }

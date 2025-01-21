@@ -37,6 +37,7 @@ export class PropertyUserService {
    */
   async findAll(
     dto: FindAllPropertyUserDto,
+    isAdvisor: boolean = false,
     propertyIds?: number[],
   ): Promise<CursorPaginatedResult<PropertyArrayResType>> {
     let {
@@ -194,7 +195,7 @@ export class PropertyUserService {
       { cursor: dto.cursor, perPage: dto.per_page },
     );
 
-    const serialized = await this.propertySerializer.toArray(list.data, today, false);
+    const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor);
     return { data: serialized };
   }
 
@@ -203,7 +204,7 @@ export class PropertyUserService {
    * @param propertyId
    * @returns
    */
-  async findOne(propertySlug: string): Promise<PropertyResType> {
+  async findOne(propertySlug: string, isAdvisor: boolean): Promise<PropertyResType> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -229,7 +230,7 @@ export class PropertyUserService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, false);
+    const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
     return serialized;
   }
 
