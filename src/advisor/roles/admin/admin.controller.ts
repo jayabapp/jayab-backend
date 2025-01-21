@@ -26,6 +26,7 @@ import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
 import { AdminRequestType } from 'src/common/interfaces/user.interface';
+import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
 
 @ApiTags('👨‍💻 Advisor - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -68,6 +69,23 @@ export class AdvisorAdminController {
     const result = await this.advisorAdminService.findAll(filterQuery, dto.page, dto.per_page);
 
     return { result };
+  }
+
+  @ApiOperation({ operationId: 'Get Excel', description: '' })
+  @Get('excel')
+  async getExcel(@Query() dto: FindAllAdvisorAdminDto): Promise<SuccessResponseArgs> {
+    const filterQuery = filterValidator(dto);
+    if (!filterQuery) throw new BadRequestException('FILTER1');
+
+    const list = await this.advisorAdminService.findAll(
+      filterQuery,
+      excelPaginationOptions.page,
+      excelPaginationOptions.perPage,
+    );
+
+    const url = await this.advisorAdminService.createExcel(list);
+
+    return { result: url };
   }
 
   @ApiOperation({ operationId: 'Find One', description: '' })

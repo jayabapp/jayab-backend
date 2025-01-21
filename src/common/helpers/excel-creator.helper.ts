@@ -4,6 +4,7 @@ import { v7 as uuidv7 } from 'uuid';
 
 export enum SHEET_NAME {
   USERS = 'users',
+  ADVISORS = 'advisors',
   ORDERS = 'orders',
   BUSINESS_PRODUCT_PRICES = 'prices',
   PRODUCTS = 'products',
