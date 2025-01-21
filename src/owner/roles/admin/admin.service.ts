@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, Owner, Prisma } from '@prisma/client';
+import { AccessControlList, Owner, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOwnerAdminDto } from './dto/create.dto';
 import { UpdateOwnerAdminDto } from './dto/update.dto';
@@ -25,6 +25,9 @@ import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
 import { AdminType } from 'src/common/interfaces/user.interface';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { OwnerStatusList } from 'src/owner/common/owner-status.type';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class OwnerAdminService {
@@ -53,11 +56,7 @@ export class OwnerAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(
-    filters: Prisma.OwnerWhereInput,
-    page: number,
-    perPage = 50,
-  ): Promise<PaginatedResult<Owner>> {
+  async findAll(filters: Prisma.OwnerWhereInput, page: number, perPage = 50): Promise<PaginatedResult<any>> {
     const list = await paginate()<Owner, Prisma.OwnerFindManyArgs>(
       this.db.owner,
       { where: filters, include: { user: { include: { profile_image: true } } } },
@@ -96,6 +95,28 @@ export class OwnerAdminService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  async createExcel(list: PaginatedResult<Owner & { user: User }>): Promise<any> {
+    const newList = list.data.map((e) => ({
+      full_name: e.user.full_name,
+      mobile_number: e.user.mobile_number,
+      status: OwnerStatusList.find((os) => os.id == e.status)?.title,
+      created_at: moment(e.created_at).format(JALAALI_FORMAT),
+    }));
+
+    const excelCols: ExcelCol[] = [
+      { header: 'نام و نام خانوادگی', key: 'full_name', width: 25 },
+      { header: 'موبایل', key: 'mobile_number', width: 15 },
+      { header: 'وضعیت', key: 'status', width: 20 },
+      { header: 'تاریخ ثبت نام', key: 'created_at', width: 15 },
+    ];
+
+    const url = await saveToExcel(excelCols, newList, SHEET_NAME.OWNERS);
+    return url;
   }
 
   /* -------------------------------------------------------------------------- */
