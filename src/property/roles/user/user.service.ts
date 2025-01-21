@@ -59,6 +59,7 @@ export class PropertyUserService {
       max_price,
     } = dto;
     // console.log({ dto });
+    const today = await this.dayHelper.today();
 
     let options = [];
 
@@ -148,6 +149,29 @@ export class PropertyUserService {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
     };
 
+    /* -------------------------------- ORDER BY -------------------------------- */
+    console.log({ today });
+
+    let orderByQuery: Prisma.PropertyOrderByWithRelationInput | Prisma.PropertyOrderByWithRelationInput[] =
+      [];
+    switch (dto.sort_type) {
+      case 'popular':
+        orderByQuery = { favorite_count: 'desc' };
+        break;
+      case 'newset':
+        orderByQuery = { created_at: 'desc' };
+        break;
+      case 'price_asc':
+        orderByQuery = { daily_price: { [today]: 'asc' } };
+        break;
+      case 'price_desc':
+        orderByQuery = { daily_price: { [today]: 'desc' } };
+        break;
+      default:
+        orderByQuery = { sort_order: 'desc' };
+        break;
+    }
+
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
@@ -165,11 +189,11 @@ export class PropertyUserService {
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { attachments: true } },
         },
+        orderBy: orderByQuery,
       },
       { cursor: dto.cursor, perPage: dto.per_page },
     );
 
-    const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toArray(list.data, today, false);
     return { data: serialized };
   }

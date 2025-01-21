@@ -91,15 +91,6 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   is_premium?: number;
 
-  // @ApiProperty({ required: false, title: 'نوع اجاره' })
-  // @Transform(({ value }) => {
-  //   if (!value) return null;
-  //   return value?.split(',')?.map((e) => +e);
-  // })
-  // @_IsString()
-  // @IsOptional()
-  // rent_type: RentType[];
-
   @ApiProperty({ required: false, title: 'اسم ملک' })
   @_IsString()
   @IsOptional()
@@ -132,4 +123,33 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsInt()
   @IsOptional()
   max_price?: number;
+
+  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
+  @_IsString()
+  @IsOptional()
+  sort_type?: 'popular' | 'newset' | 'price_asc' | 'price_desc';
+
+  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  popular?: number;
+
+  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  newset?: number;
+
+  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  price_asc?: number;
+
+  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  price_desc?: number;
 }
