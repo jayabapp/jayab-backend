@@ -2,6 +2,7 @@ import {
   Attachment,
   City,
   Favorite,
+  Owner,
   Property,
   PropertyAuthorize,
   PropertyBadge,
@@ -11,6 +12,7 @@ import {
   PropertyDescription,
   PropertyOption,
   PropertyOwnerAssistant,
+  User,
 } from '@prisma/client';
 import { EnumList } from 'src/common/interfaces/model-props.interface';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
@@ -22,6 +24,7 @@ import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 import { startOfDate } from 'src/common/helpers/date.helper';
+import { CancelingTypeList } from '../common/types/property-canceling-types.type';
 
 type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
 
@@ -44,6 +47,7 @@ export type PropertyJsonType = Property & {
   favorites: Favorite[];
   reserve_days?: ReserveDay[];
   status_number?: number;
+  owner?: Owner & { user: User };
 };
 
 export type PropertyArrayResType = {
@@ -78,6 +82,7 @@ export type PropertyArrayResType = {
 };
 
 export type PropertyJsonResType = {
+  owner?: { mobile_number: string; full_name: string };
   latitude: number;
   longitude: number;
   land_area: number;
@@ -95,6 +100,8 @@ export type PropertyJsonResType = {
   favorites_count: number;
   reserve_days?: ReserveDay[];
   status_number?: number;
+  canceling_type?: EnumList;
+  admin_descriptions?: any;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -195,6 +202,11 @@ export class PropertySerializer {
 
     if (!isList)
       single = {
+        owner: data?.owner
+          ? { mobile_number: data.owner.user.mobile_number, full_name: data.owner.user.full_name }
+          : null,
+        admin_descriptions: data.admin_descriptions,
+        canceling_type: CancelingTypeList.find((e) => e.id == data.canceling_type),
         daily_price: data.daily_price || null,
         latitude: data.lat,
         longitude: data.lng,

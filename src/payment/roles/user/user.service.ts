@@ -138,10 +138,11 @@ export class PaymentUserService {
         newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
       else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
 
-      await tx.property.update({
-        where: { id: property.id },
-        data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
-      });
+      let propertyUpdateData: Prisma.PropertyUpdateInput = {};
+      if (subscription.is_promote) propertyUpdateData = { sort_order: Date.now() };
+      else propertyUpdateData = { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING };
+
+      await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
 
       // // update payment
       // const item = await tx.payment.update({
@@ -226,7 +227,7 @@ export class PaymentUserService {
       const now = moment();
       let newExpDate = null;
 
-      if (now.isAfter(lastSubExpiredAt))
+      if (now.isAfter(lastSubExpiredAt) || advisor.is_special !== subscription.is_special_advisor)
         newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
       else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
 
