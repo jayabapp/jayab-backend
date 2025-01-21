@@ -3,24 +3,17 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CITY_USER_ROUTE_GROUP } from 'src/city/common/route-group.constant';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { CitySharedService } from '../../shared.service';
+import { FindAllCityUserDto } from './dto/find-all.dto';
 
 @ApiTags('Cities - USER')
 @Controller(CITY_USER_ROUTE_GROUP)
 export class CityUserController {
   constructor(private readonly citySharedService: CitySharedService) {}
 
-  @ApiOperation({ operationId: 'Find parents' })
+  @ApiOperation({ operationId: 'Find All' })
   @Get()
-  async findParents(): Promise<SuccessResponseArgs> {
-    const result = await this.citySharedService.findParents();
-
-    return { result };
-  }
-
-  @ApiOperation({ operationId: 'Search' })
-  @Get('search')
-  async findAll(@Query('q') q: string): Promise<SuccessResponseArgs> {
-    const result = await this.citySharedService.findAll(q);
+  async findAll(@Query() dto: FindAllCityUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.citySharedService.findAll(dto);
     return { result };
   }
 

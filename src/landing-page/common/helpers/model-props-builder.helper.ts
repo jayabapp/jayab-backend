@@ -124,9 +124,8 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
       title: '',
-      state: 'user_id',
+      state: 'title',
       type: 'input',
-      isHidden: true,
     },
   ];
 

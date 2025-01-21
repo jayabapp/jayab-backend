@@ -58,6 +58,12 @@ export const showPropsBuilder = (
       isHidden: true,
       // isEditable: false,
     },
+    {
+      state: 'is_publish',
+      type: 'boolean',
+      title: 'منتشر شده',
+      value: item.is_publish,
+    },
     { type: 'break' },
     {
       state: 'content_category',
@@ -205,6 +211,11 @@ export const createPropsBuilder = (contents: any, formattedCategories: any): Arr
       title: 'نام',
       options: { titleHint: 'اختیاری', placeholder: 'نام پرسش کننده', keyboard: 'text' },
     },
+    {
+      state: 'is_publish',
+      type: 'switch',
+      title: 'منتشر شود؟',
+    },
     { type: 'divider' },
     {
       state: 'image_id',
@@ -229,6 +240,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 5, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 10, title: 'سوال', key: 'question', cellType: 'string' },
       { id: 20, title: 'پاسخ', key: 'answer', cellType: 'string' },
+      { id: 220, title: 'منتشر شده', key: 'is_publish', cellType: 'boolean' },
       { id: 21, title: 'موبایل کاربر', key: 'mobile_number', cellType: 'string' },
       { id: 22, title: 'توسط ادمین', key: 'admin_id', cellType: 'boolean' },
       {

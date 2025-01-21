@@ -1,36 +1,23 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { City, Prisma } from '@prisma/client';
+import { FindAllCityUserDto } from './roles/user/dto/find-all.dto';
+import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 
 @Injectable()
 export class CitySharedService {
   constructor(private readonly db: PrismaService) {}
 
   /**
-   * Get provinces
+   * find all cities and provinces
+   * @param dto
    * @returns
    */
-  async findParents(): Promise<Array<Partial<City>>> {
-    const cities = await this.db.city.findMany({
-      where: { parent_id: null },
-      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
-      select: {
-        id: true,
-        title: true,
-        image: true,
-        child: {
-          select: { id: true, title: true },
-          take: 5,
-        },
-      },
-    });
-    return cities;
-  }
-
-  async findAll(q: string): Promise<Array<Partial<City>>> {
+  async findAll(dto: FindAllCityUserDto): Promise<Array<Partial<City>>> {
     let query: Prisma.CityWhereInput = {};
-    if (!q) return [];
-    if (q) query = { ...query, title: { contains: q } };
+    if (dto.cities) query = { ...query, id: { in: parseQueryNumberArray(dto.cities) } };
+    if (dto.is_parent) query = { ...query, parent_id: null };
+    if (dto.q) query = { ...query, title: { contains: dto.q, mode: 'insensitive' } };
 
     const cities = await this.db.city.findMany({
       where: query,
@@ -38,7 +25,12 @@ export class CitySharedService {
       select: {
         id: true,
         title: true,
-        parent: { select: { title: true } },
+        slug: true,
+        image: true,
+        child: {
+          select: { id: true, title: true },
+          take: +dto.depth || 5,
+        },
       },
     });
 

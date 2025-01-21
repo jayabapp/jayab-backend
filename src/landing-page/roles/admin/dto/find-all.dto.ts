@@ -6,10 +6,9 @@ import { _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllLandingPageAdminDto extends PaginationDto {
   @ApiProperty({ required: false, default: 1 })
-  @Type(() => Number)
-  @_IsInt()
+  @_IsString()
   @IsOptional()
-  user_id: number;
+  title?: string;
 
   // @ApiProperty({ required: false, default: '' })
   // @_IsString()

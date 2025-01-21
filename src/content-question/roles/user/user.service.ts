@@ -28,7 +28,7 @@ export class ContentQuestionUserService {
   async findAll(dto: FindAllContentQuestionUserDto): Promise<PaginatedResult<ContentQuestion>> {
     const list = paginate()<ContentQuestion, Prisma.ContentQuestionFindManyArgs>(
       this.db.contentQuestion,
-      { where: { content_id: dto.content_id, answer: { not: null } }, include: { image: true } },
+      { where: { content_id: dto.content_id, is_publish: true }, include: { image: true } },
       { page: dto.page, perPage: dto.per_page },
     );
 

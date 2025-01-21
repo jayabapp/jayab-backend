@@ -9,8 +9,6 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ONE_HOUR_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('PropertyOption - USER')
-@UseGuards(UserJwtGuard)
-@ApiBearerAuth('user-jwt')
 @Controller(USER_ROUTE_GROUP)
 export class PropertyOptionUserController {
   constructor(private readonly propertyOptionUserService: PropertyOptionUserService) {}

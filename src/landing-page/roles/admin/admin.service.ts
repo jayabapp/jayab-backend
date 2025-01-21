@@ -71,10 +71,14 @@ export class LandingPageAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[]; data: any }> {
-    const item = await this.db.landingPage.findUnique({ where: { id }, include: { image: true } });
-    const contentCategory = item.content_category_id
-      ? await this.db.contentCategory.findFirst({ where: { id: item.content_category_id } })
-      : null;
+    const item = await this.db.landingPage.findUnique({
+      where: { id },
+      include: { image: true, main_content: true },
+    });
+    const relatedLandings =
+      item.related_landings?.length > 0
+        ? await this.db.landingPage.findMany({ where: { id: { in: item.related_landings } } })
+        : null;
     const cities =
       item.cities?.length > 0 ? await this.db.city.findMany({ where: { id: { in: item.cities } } }) : [];
     const province = item.province_id
@@ -86,7 +90,7 @@ export class LandingPageAdminService {
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
 
-    return { showProps, actions, data: { ...item, contentCategory, cities, province } };
+    return { showProps, actions, data: { ...item, related_landings: relatedLandings, cities, province } };
   }
 
   /**

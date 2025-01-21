@@ -29,9 +29,9 @@ export class LandingPageUserController {
   }
 
   @ApiOperation({ operationId: 'Find One', description: '' })
-  @Get(':landingPageId')
-  async findOne(@Param('landingPageId', ParseIntPipe) landingPageId: number): Promise<SuccessResponseArgs> {
-    const result = await this.landingPageUserService.findOne(landingPageId);
+  @Get(':landingPageUrl')
+  async findOne(@Param('landingPageUrl') landingPageUrl: string): Promise<SuccessResponseArgs> {
+    const result = await this.landingPageUserService.findOne(landingPageUrl);
 
     return { result };
   }

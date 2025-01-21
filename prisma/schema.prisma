@@ -260,6 +260,7 @@ model Content {
   questions      ContentQuestion[]
   forms          FormBuilder[]
   submitted_form SubmittedForm[]
+  landing_page   LandingPage[]
 
   @@map("contents")
 }
@@ -1195,7 +1196,9 @@ model PeakDay {
 model LandingPage {
   id                      Int     @id() @default(autoincrement())
   title                   String
-  content_category_id     Int?
+  main_content_id         Int?
+  related_contents        Int[]
+  related_landings        Int[]
   url                     String  @unique
   is_active               Boolean @default(false)
   show_in_home            Boolean @default(false)
@@ -1216,7 +1219,9 @@ model LandingPage {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
-  image Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
+  image        Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
+  main_content Content?    @relation(fields: [main_content_id], references: [id], onDelete: SetNull)
 
+  @@index([url])
   @@map("landing_pages")
 }
