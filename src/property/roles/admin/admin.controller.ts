@@ -2,29 +2,24 @@ import {
   BadRequestException,
   Body,
   Controller,
-  // Delete,
   Get,
   Param,
   ParseIntPipe,
   Patch,
-  Post,
-  Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { ADMIN_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { filterValidator } from 'src/property/common/helpers/filter-validator.helper';
-import qs from 'qs';
 import { PropertyAdminService } from './admin.service';
-import { CreatePropertyAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdatePropertyAdminDto } from './dto/update.dto';
 import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
+import { AdminRequestType, AdminType } from 'src/common/interfaces/user.interface';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -85,13 +80,15 @@ export class PropertyAdminController {
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update Partial', description: '' })
-  @Patch(':id/update-partial')
+  @Patch(':id')
   async updatePartial(
+    @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePartialPropertyAdminDto,
   ): Promise<SuccessResponseArgs> {
+    const admin = req.user;
     await this.propertyAdminService.findById(id);
-    const result = await this.propertyAdminService.updatePartial(id, dto);
+    const result = await this.propertyAdminService.updatePartial(admin, id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }

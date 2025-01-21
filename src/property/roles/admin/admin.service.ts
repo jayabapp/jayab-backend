@@ -1,17 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, Property, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatePropertyAdminDto } from './dto/create.dto';
-import { UpdatePropertyAdminDto } from './dto/update.dto';
 import {
   CreateProps,
-  FilterProps,
   OperatorItems,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import {
   allActionsBuilder,
@@ -28,10 +25,11 @@ import { DayHelper } from 'src/common/helpers/day.helper';
 import {
   PropertyArrayResType,
   PropertyJsonType,
-  PropertyResType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
+import { AdminType } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class PropertyAdminService {
@@ -92,10 +90,33 @@ export class PropertyAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.property.findUnique({ where: { id } });
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
+    const item = await this.db.property.findUnique({
+      where: { id },
+      include: {
+        owner: { include: { user: true } },
+        feature_image: true,
+        attachments: true,
+        province: { select: { title: true } },
+        city: { select: { title: true } },
+        property_options: { select: { option: { select: { title: true, group: true } } } },
+        bedrooms: true,
+        daily_price: true,
+        calendar: { where: calendarDateQuery },
+        // assistants: true,
+        description: true,
+        favorites: true,
+      },
+    });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
-    const showProps = showPropsBuilder(item);
+    const today = await this.dayHelper.today();
+    const serialized = await this.propertySerializer.toJSON(item, today, false);
+
+    const showProps = showPropsBuilder(serialized);
     const actions = showActionBuilder(item);
 
     return { showProps, actions };
@@ -137,13 +158,19 @@ export class PropertyAdminService {
    * @param dto
    * @returns
    */
-  async updatePartial(id: number, dto: UpdatePartialPropertyAdminDto): Promise<Property> {
-    const item = await this.db.property.update({
-      where: { id },
-      data: dto,
-    });
+  async updatePartial(admin: AdminType, id: number, dto: UpdatePartialPropertyAdminDto): Promise<void> {
+    let updateData: Prisma.PropertyUpdateInput = { status: dto.status };
+    const adminDscr: AdminDescription = {
+      description: dto.admin_description || '',
+      status: PropertyStatusesList.find((e) => e.id === dto.status)?.title,
+      admin_name: admin.full_name,
+      admin_id: admin.id,
+      admin_role: admin.role.name,
+      created_at: new Date(),
+    };
+    updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
 
-    return item;
+    await this.db.property.update({ where: { id }, data: updateData });
   }
 
   /* -------------------------------------------------------------------------- */

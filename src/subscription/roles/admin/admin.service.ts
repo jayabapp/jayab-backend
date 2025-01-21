@@ -33,6 +33,7 @@ import moment from 'moment-jalaali';
 import { SubscriptionPlanAdminService } from 'src/subscription-plan/roles/admin/admin.service';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { endOfDate } from 'src/common/helpers/date.helper';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 
 @Injectable()
 export class SubscriptionAdminService {
@@ -54,7 +55,6 @@ export class SubscriptionAdminService {
     /*  */
     const advisor = await this.db.advisor.findUnique({ where: { id: dto.advisor_id } });
     const lastSubExpiredAt = advisor?.subscription_expired_at || undefined;
-    console.log();
 
     const now = moment();
     let newExpDate = null;
@@ -90,8 +90,54 @@ export class SubscriptionAdminService {
   }
 
   async createSubForProperty(dto: CreateSubscriptionAdminDto): Promise<void> {
-    // const newSubscription = await this.db.subscription.create({ data: dto });
-    // return newSubscription;
+    /*  */
+    const subPlan = await this.subscriptionPlanAdminService.findOneByGroup(
+      dto.subscription_plan_id,
+      SubscriptionPlanGroup.PROPERTY,
+    );
+
+    /*  */
+    const property = await this.db.property.findUnique({ where: { id: dto.property_id } });
+    const lastSubExpiredAt = property?.subscription_expired_at || undefined;
+
+    /*  */
+    let description = '';
+
+    let propertyUpdateData: Prisma.PropertyUpdateInput = {};
+    if (subPlan.is_promote) {
+      description = 'تمدید انقضای نردبان توسط ادمین';
+      propertyUpdateData = { sort_order: Date.now() };
+    } else {
+      const now = moment();
+      let newExpDate = null;
+
+      if (now.isAfter(lastSubExpiredAt)) {
+        description = 'حذف اشتراک قبلی به علت تغییر پلن و خرید پلن جدید توسط ادمین';
+        newExpDate = endOfDate(now.add(subPlan.duration, 'days').toDate());
+      } else {
+        description = lastSubExpiredAt ? 'تمدید اشتراک قبلی توسط ادمین' : 'خرید توسط ادمین';
+        newExpDate = endOfDate(moment(lastSubExpiredAt).add(subPlan.duration, 'days').toDate());
+      }
+
+      propertyUpdateData = { subscription_expired_at: newExpDate };
+    }
+
+    /*  */
+    await this.db.$transaction(async (tx) => {
+      await tx.subscription.create({
+        data: {
+          property_id: property.id,
+          is_promote: subPlan.is_promote,
+          title: subPlan.title,
+          duration: subPlan.duration,
+          price: subPlan.price,
+          status: SubscriptionStatus.SUCCESS,
+          description,
+        },
+      });
+
+      await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
+    });
   }
 
   /* -------------------------------------------------------------------------- */
