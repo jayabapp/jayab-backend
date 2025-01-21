@@ -23,6 +23,9 @@ import { SearchUsersAdminDto } from './dto/search.dto';
 import { DateType } from 'src/common/validators/is-date.validator';
 import { UpdatePartialUserAdminDto } from './dto/update-partial.dto';
 import { UserStatusList } from 'src/user/common/user-status.type';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import moment from 'moment-jalaali';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 
 @Injectable()
 export class UserAdminService {
@@ -149,6 +152,30 @@ export class UserAdminService {
   // async remove(id: number): Promise<void> {
   //   await this.db.user.delete({ where: { id } });
   // }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  async createExcel(list: PaginatedResult<User>): Promise<any> {
+    const newList = list.data.map((e) => ({
+      ...e,
+      is_advisor: e.advisor_id ? 'بله' : 'خیر',
+      is_owner: e.owner_id ? 'بله' : 'خیر',
+      is_banned: e.is_banned ? 'بله' : 'خیر',
+      created_at: moment(e.created_at).format(JALAALI_FORMAT),
+    }));
+
+    const excelCols: ExcelCol[] = [
+      { header: 'شماره موبایل', key: 'mobile_number', width: 15 },
+      { header: 'مشاور است', key: 'is_advisor', width: 15 },
+      { header: 'مالک است', key: 'is_owner', width: 15 },
+      { header: 'بلاک شده', key: 'is_banned', width: 15 },
+      { header: 'تاریخ ثبت نام', key: 'created_at', width: 15 },
+    ];
+
+    const url = await saveToExcel(excelCols, newList, SHEET_NAME.USERS);
+    return url;
+  }
 
   /* -------------------------------------------------------------------------- */
   /*                                   HELPER                                   */
