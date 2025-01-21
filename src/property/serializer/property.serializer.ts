@@ -105,15 +105,20 @@ export class PropertySerializer {
     const res: PropertyArrayResType[] = [];
     for (const e of data) {
       res.push({
-        ...this.summarize(e, today, true, isAdvisor),
+        ...this.summarize(e, today, true, isAdvisor, false),
       });
     }
 
     return res;
   }
 
-  async toJSON(data: PropertyJsonType, today: DayColumn, isAdvisor = false): Promise<PropertyResType> {
-    const res = { ...this.summarize(data, today, false, isAdvisor) };
+  async toJSON(
+    data: PropertyJsonType,
+    today: DayColumn,
+    isAdvisor = false,
+    isOwner = false,
+  ): Promise<PropertyResType> {
+    const res = { ...this.summarize(data, today, false, isAdvisor, isOwner) };
     return res;
   }
 
@@ -150,7 +155,13 @@ export class PropertySerializer {
     return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
-  summarize(data: PropertyJsonType, today: DayColumn, isList: boolean, isAdvisor: boolean): PropertyResType {
+  summarize(
+    data: PropertyJsonType,
+    today: DayColumn,
+    isList: boolean,
+    isAdvisor: boolean,
+    isOwner: boolean,
+  ): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
 
@@ -193,8 +204,8 @@ export class PropertySerializer {
     if (!isList)
       single = {
         daily_price: data.daily_price || null,
-        latitude: data.is_location_visible ? data.lat : null,
-        longitude: data.is_location_visible ? data.lng : null,
+        latitude: data.is_location_visible || isOwner ? data.lat : null,
+        longitude: data.is_location_visible || isOwner ? data.lng : null,
         land_area: data.land_area,
         building_area: data.building_area,
         floors: data.floors,

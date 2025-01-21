@@ -591,7 +591,7 @@ export class PropertyOwnerService {
     if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, false);
+    const serialized = await this.propertySerializer.toJSON(item, today, false, true);
     return serialized;
   }
 
