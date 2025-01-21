@@ -128,28 +128,4 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsString()
   @IsOptional()
   sort_type?: 'popular' | 'newset' | 'price_asc' | 'price_desc';
-
-  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
-  @Type(() => Number)
-  @_IsIn([0, 1])
-  @IsOptional()
-  popular?: number;
-
-  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
-  @Type(() => Number)
-  @_IsIn([0, 1])
-  @IsOptional()
-  newset?: number;
-
-  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
-  @Type(() => Number)
-  @_IsIn([0, 1])
-  @IsOptional()
-  price_asc?: number;
-
-  @ApiProperty({ required: false, title: 'محبوب ترین ها' })
-  @Type(() => Number)
-  @_IsIn([0, 1])
-  @IsOptional()
-  price_desc?: number;
 }
