@@ -193,8 +193,8 @@ export class PropertySerializer {
     if (!isList)
       single = {
         daily_price: data.daily_price || null,
-        latitude: data.lat,
-        longitude: data.lng,
+        latitude: data.is_location_visible ? data.lat : null,
+        longitude: data.is_location_visible ? data.lng : null,
         land_area: data.land_area,
         building_area: data.building_area,
         floors: data.floors,
