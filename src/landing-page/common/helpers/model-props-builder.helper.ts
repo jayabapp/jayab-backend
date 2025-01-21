@@ -9,6 +9,7 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { LandingPagePositionList } from '../landing-position.enum';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -99,13 +100,14 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'landingPage',
-    modelTitle: 'بیس',
+    modelTitle: 'صفحهات فرود',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'url', key: 'url', cellType: 'string' },
       { id: 30, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 40, title: 'ترتیب نمایش', key: 'sort_order', cellType: 'string' },
+      { id: 50, title: 'موقعیت', key: 'position', cellType: 'enum', enumList: LandingPagePositionList },
 
       /* ---------------------------------- date ---------------------------------- */
       { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },

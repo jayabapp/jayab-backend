@@ -18,14 +18,16 @@ export class LandingPageUserService {
    * @param dto
    * @returns
    */
-  async findAll(dto: FindAllLandingPageUserDto): Promise<Partial<LandingPage>[]> {
+  async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
     const list = await this.db.landingPage.findMany({
       where: { is_active: true },
-      select: { url: true, title: true, image: true },
+      select: { url: true, title: true, image: true, position: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });
+    console.log({ list });
 
-    return list;
+    const grouped = groupBy(list, 'position');
+    return grouped;
   }
 
   /**

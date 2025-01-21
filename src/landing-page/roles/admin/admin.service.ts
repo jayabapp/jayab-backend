@@ -22,6 +22,7 @@ import {
   tablePropsBuilder,
 } from 'src/landing-page/common/helpers/model-props-builder.helper';
 import { UpdatePartialLandingPageAdminDto } from './dto/update-partial.dto';
+import { LandingPagePositionList } from 'src/landing-page/common/landing-position.enum';
 
 @Injectable()
 export class LandingPageAdminService {
@@ -90,7 +91,17 @@ export class LandingPageAdminService {
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
 
-    return { showProps, actions, data: { ...item, related_landings: relatedLandings, cities, province } };
+    return {
+      showProps,
+      actions,
+      data: {
+        ...item,
+        related_landings: relatedLandings,
+        cities,
+        province,
+        position_list: LandingPagePositionList,
+      },
+    };
   }
 
   /**

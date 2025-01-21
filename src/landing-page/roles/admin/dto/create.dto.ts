@@ -7,9 +7,11 @@ import {
   _IsNumber,
   _IsBoolean,
   _IsArray,
+  _IsEnum,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Transform, Type } from 'class-transformer';
 import { IsExist } from 'src/common/validators/is-exists.validator';
+import { LandingPagePosition } from 'src/landing-page/common/landing-position.enum';
 
 export class CreateLandingPageAdminDto {
   @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
@@ -123,4 +125,9 @@ export class CreateLandingPageAdminDto {
   @Type(() => Number)
   @IsOptional()
   sort_order: number;
+
+  @ApiProperty({ enum: LandingPagePosition, required: true, default: LandingPagePosition.POPULAR_CITY })
+  @_IsEnum(LandingPagePosition)
+  @_IsNotEmpty()
+  position: LandingPagePosition;
 }
