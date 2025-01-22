@@ -1,4 +1,4 @@
-import { AccessControlList, Property, Prisma } from '@prisma/client';
+import { AccessControlList, Property, Prisma, PropertyOption, OptionsOnProperty } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -10,6 +10,13 @@ import {
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { PropertyStatusesList } from '../types/property-status.type';
+import {
+  PropertyArrayResType,
+  PropertyJsonResType,
+  PropertyResType,
+} from 'src/property/serializer/property.serializer';
+import { isArray, isEmpty } from 'lodash';
+import { PropertyOptionGroupList } from 'src/property-option/common/property-option-groups.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -29,24 +36,152 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: Property): Array<ShowProps> => {
+const bedroomsInfo = (item: PropertyResType): Array<ShowProps> => {
+  const bedrooms: number[] = item?.bedrooms?.bedrooms;
+  if (isEmpty(bedrooms)) return [];
+
+  let list = [];
+  for (let i = 0; i < bedrooms.length; i++) {
+    const bedroomBeds = bedrooms[i];
+    const number = i + 1;
+
+    list.push({
+      state: `bedroom${number}`,
+      title: `تعداد تخت اتاق ${number}`,
+      value: bedroomBeds,
+      type: 'number',
+    });
+  }
+
+  return list;
+};
+
+const options = (item: PropertyResType): Array<ShowProps> => {
+  let list: ShowProps[] = [];
+
+  for (const optionKey of Object.keys(item.options)) {
+    const propertyOption = PropertyOptionGroupList.find((e) => e.id == optionKey.toUpperCase());
+
+    const optionValue = item.options[optionKey];
+    const propValue = isArray(optionValue) ? optionValue.join(' - ') : optionValue;
+    list.push({
+      state: `${propertyOption.id.toLocaleString().toLowerCase()}`,
+      title: `${propertyOption.title}`,
+      value: propValue,
+      type: 'string',
+    });
+  }
+
+  return list;
+};
+
+export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
+  const bedrooms = item.bedrooms;
+  const dailyPrice = item.daily_price;
+
   const props: Array<ShowProps> = [
-    // {state: 'id',title: 'شناسه',value: item.id,type: 'number',isEditable: false,},
-    //{ state: 'title', title: 'عنوان', value: item.title, type: 'string' },
-    /* ----------------------------------- REF ---------------------------------- */
-    // the ids must be hidden in ref
-    // ---- single ref
-    // {state: 'category',title: 'دسته بندی اصلی',value: item.category,type: 'object',nestedKey: 'title',},
-    // {state: 'category_id',ref: 'category',value: item.category.id,type: 'chip',isHidden: true,},
-    // ---- multi ref
-    // { state: 'media', title: 'عکس های ملک', value: item.media, type: 'image' },
+    { state: 'status_list', title: 'لیست وضعیت ها', value: PropertyStatusesList, isHidden: true },
+    { state: 'admin_descriptions', title: 'لیست وضعیت ها', value: item.admin_descriptions, isHidden: true },
+    /* -------------------------------------------------------------------------- */
+    { type: 'dividerTitle', title: 'اطلاعات اصلی' },
+    { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
+    { state: 'code', title: 'کد ملک', value: item.code, type: 'string' },
+    {
+      state: 'status',
+      title: 'وضعیت',
+      value: PropertyStatusesList.find((e) => e.id == item.status_number),
+      type: 'chip',
+    },
+    { type: 'break' },
+    /* -------------------------------------------------------------------------- */
+    { state: 'is_authorized', title: 'احراز شده', value: item.is_authorized, type: 'boolean' },
+    { state: 'has_blue_tick', title: 'دارای تیک آبی', value: item.has_blue_tick, type: 'boolean' },
+    { state: 'remaining_days', title: 'باقیمانده اشتراک (روز)', value: item.remaining_days, type: 'number' },
+    { state: 'is_today_reserved', title: 'امروز رزرو شده', value: item.is_today_reserved, type: 'boolean' },
+    { type: 'break' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'اطلاعات مالک' },
+    { state: 'owner_mobile_number', title: 'شماره موبایل', value: item.owner.mobile_number, type: 'string' },
+    { state: 'owner_full_name', title: 'نام و نام خانوادگی', value: item.owner.full_name, type: 'string' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'تعداد نفرات و قیمت ها (تومان)' },
+    { state: 'std_capacity', title: 'ظرفیت استاندارد میهمان', value: item.std_capacity, type: 'number' },
+    { state: 'max_capacity', title: 'حداکثر ظرفیت میهمان', value: item.max_capacity, type: 'number' },
+    { type: 'break' },
+    { state: 'normal', title: 'قیمت شنبه تا سه شنبه', value: dailyPrice.normal, type: 'number' },
+    { state: 'wednesday', title: 'قیمت چهارشنبه', value: dailyPrice.wednesday, type: 'number' },
+    { state: 'thursday', title: 'قیمت پنجشنبه', value: dailyPrice.thursday, type: 'number' },
+    { state: 'friday', title: 'قیمت جمعه', value: dailyPrice.friday, type: 'number' },
+    { state: 'peak', title: 'قیمت ایام پیک', value: dailyPrice.peak, type: 'number' },
+    { state: 'cleaning', title: 'هزینه نظافت', value: dailyPrice.cleaning, type: 'number' },
+    { state: 'today_offer', title: 'تخفیف امروز', value: dailyPrice.today_offer, type: 'number' },
+    {
+      state: 'additional_person',
+      title: 'قیمت نفر اضافه و سه سال به بالا',
+      value: dailyPrice.additional_person,
+      type: 'number',
+    },
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'اطلاعات اصلی ملک' },
+    { state: 'land_area', title: 'متراژ زمین', value: item.land_area, type: 'number' },
+    { state: 'building_area', title: 'متراژ بنا', value: item.building_area, type: 'number' },
+    { state: 'floors', title: 'تعداد طبقات', value: item.floors, type: 'number' },
+    { state: 'unit_per_floor', title: 'تعداد واحد در طبقه', value: item.unit_per_floor, type: 'number' },
+    { state: 'construction_year', title: 'سال ساخت', value: item.construction_year, type: 'number' },
+    { state: 'province', title: 'استان', value: item.province, type: 'string' },
+    { state: 'city', title: 'شهر', value: item.city, type: 'string' },
+    { state: 'address', title: 'آدرس دقیق ملک', value: item.address, type: 'number' },
+    { state: 'has_pool', title: 'استخر دارد', value: item.has_pool, type: 'boolean' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'اطلاعات اتاق و رخت خواب' },
+    { state: 'total_bedrooms', title: 'تعداد اتاق', value: item.total_bedrooms, type: 'number' },
+    { type: 'break' },
+    ...bedroomsInfo(item),
+    { type: 'break' },
+    { state: 'master_room', title: 'تعداد اتاق مستر', value: bedrooms.master_room, type: 'number' },
+    { state: 'additional_bed', title: 'رخت خواب اضافه', value: bedrooms.additional_bed, type: 'number' },
+    { state: 'additional_bed', title: 'مبل تخت خواب شو', value: bedrooms.additional_bed, type: 'number' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'امکانات محیطی' },
+    ...options(item),
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'امکانات عمومی ویلا' },
+    { state: 'wc', title: 'سرویس بهداشتی فرنگی', value: bedrooms.wc, type: 'number' },
+    { state: 'wc_ir', title: 'سرویس بهداشتی ایرانی', value: bedrooms.wc_ir, type: 'number' },
+    { state: 'bathroom_general', title: 'حمام مشترک', value: bedrooms.bathroom_general, type: 'number' },
+    { state: 'bathroom_tub', title: 'حمام وان دار', value: bedrooms.bathroom_tub, type: 'number' },
+    { state: 'bathroom_in_wc', title: 'حمام در سرویس', value: bedrooms.bathroom_in_wc, type: 'number' },
+    { state: 'bathroom_master', title: 'حمام در اتاق', value: bedrooms.bathroom_master, type: 'number' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'تصاویر' },
+    { state: 'feature_image', title: 'تصویر اصلی', value: item.feature_image, type: 'image' },
+
+    { type: 'break' },
+    { state: 'images', title: 'عکس های ملک', value: item.images, type: 'image' },
     // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',value: { lat: item.lat, lng: item.lng },title: 'موقعیت جغرافیایی',},
-    /* --------------------------------- SWITCH --------------------------------- */
-    // { state: 'is_active', type: 'boolean', value: item.is_acitve, title: 'وضعیت' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+
+    {
+      state: 'coordinate',
+      type: 'map',
+      value: { lat: item.latitude, lng: item.longitude },
+      title: 'موقعیت جغرافیایی',
+    },
   ];
 
   return props;
@@ -55,14 +190,14 @@ export const showPropsBuilder = (item: Property): Array<ShowProps> => {
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (item: Property): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
-    //  {
-    //    title: 'ایجاد محصول جدید',
-    //    route: '',
-    //  },
+    {
+      title: 'اشتراک های خریداری شده',
+      route: `/subscriptions/create?property_id=${item.id}`,
+    },
+    {
+      title: 'صفحه ملک',
+      route: `${process.env.BASE_URL}/property/${item.slug}`,
+    },
   ];
 
   return actions;

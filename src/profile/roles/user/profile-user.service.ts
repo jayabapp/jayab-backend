@@ -225,7 +225,7 @@ export class ProfileUserService {
 
       const pay = await this.paymentUserService.create(
         user,
-        chosenSub.price,
+        chosenSub?.price_with_discount || chosenSub.price,
         dto.redirect_url,
         dto.gateway,
         TurnoverType.PAY_ADVISOR_SUBSCRIPTION,
