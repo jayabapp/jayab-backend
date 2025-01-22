@@ -85,6 +85,16 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       selectItems: JALAALI_YEARS(),
       options: { isMandatory: true },
     },
+    // {
+    //   state: 'is_nowruz',
+    //   type: 'switch',
+    //   title: 'نوروز',
+    //   options: {
+    //     isMandatory: true,
+    //     switchCheckedTitle: 'ایام نوروز',
+    //     switchUncheckedTitle: 'ایام غیر نوروز',
+    //   },
+    // },
   ];
 
   return createProps;
