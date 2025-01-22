@@ -112,4 +112,16 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsString()
   @IsOptional()
   sort_type?: 'popular' | 'newset' | 'price_asc' | 'price_desc';
+
+  @ApiProperty({ required: false, title: 'از قیمت' })
+  @Type(() => Number)
+  @_IsInt()
+  @IsOptional()
+  min_building_area?: number;
+
+  @ApiProperty({ required: false, title: 'تا قیمت' })
+  @Type(() => Number)
+  @_IsInt()
+  @IsOptional()
+  max_building_area?: number;
 }

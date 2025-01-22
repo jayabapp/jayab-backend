@@ -56,6 +56,8 @@ export class PropertyUserService {
       title,
       min_price,
       max_price,
+      max_building_area,
+      min_building_area,
     } = dto;
 
     const today = await this.dayHelper.today();
@@ -138,6 +140,10 @@ export class PropertyUserService {
         ...query,
         daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
       };
+
+    /* ------------------------------ building area ----------------------------- */
+    if (min_building_area >= 0 && max_building_area >= 0)
+      query = { ...query, building_area: { gte: min_building_area, lte: max_building_area } };
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
