@@ -22,4 +22,4 @@ export const JALAALI_MONTHS = [
 export const JALAALI_YEARS = (start?: number, end?: number) =>
   range(start || moment().jYear(), end || moment().jYear() + 10).map((e) => ({ id: e, title: e }));
 
-export const JALAALI_DAYS = range(1, 31).map((e) => ({ id: e, title: e }));
+export const JALAALI_DAYS = range(1, 32).map((e) => ({ id: e, title: e }));
