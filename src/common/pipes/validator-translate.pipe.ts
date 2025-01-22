@@ -82,6 +82,7 @@ const VM = {
 /* -------------------------- Translated properties ------------------------- */
 const PROPS = {
   mobile_number: 'شماره تلفن همراه',
+  mobile_numbers: 'شماره ها',
   code: 'کد',
   title: 'عنوان',
   username: 'نام کاربری',
