@@ -11,5 +11,6 @@ import { PropertySerializer } from 'src/property/serializer/property.serializer'
   imports: [AttachmentModule, SubscriptionPlanUserModule, PaymentUserModule],
   controllers: [PropertyOwnerController],
   providers: [PropertyOwnerService, PropertySerializer, DayHelper],
+  exports: [PropertyOwnerService],
 })
 export class PropertyOwnerModule {}

@@ -234,9 +234,10 @@ export class PropertyUserService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<void> {
+  async findById(id: number): Promise<Property> {
     const item = await this.db.property.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
+    return item;
   }
 
   async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
