@@ -27,6 +27,8 @@ import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
 import moment from 'moment-jalaali';
 import { isEmpty } from 'lodash';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 
 @Injectable()
 export class AdvisorAdminService {
@@ -59,7 +61,7 @@ export class AdvisorAdminService {
     filters: Prisma.AdvisorWhereInput,
     page: number,
     perPage = 50,
-  ): Promise<PaginatedResult<Advisor>> {
+  ): Promise<PaginatedResult<any>> {
     const list = await paginate()<Advisor, Prisma.AdvisorFindManyArgs>(
       this.db.advisor,
       { where: filters, include: { user: { include: { profile_image: true } } } },
@@ -69,7 +71,7 @@ export class AdvisorAdminService {
     list.data = list.data.map((e) => {
       return {
         ...e,
-        has_sub: e?.subscription_expired_at,
+        has_sub: moment(e?.subscription_expired_at).isAfter(moment()),
         sub_remaining_days: e?.subscription_expired_at
           ? moment(e?.subscription_expired_at).diff(moment(), 'days')
           : 0,
@@ -190,6 +192,45 @@ export class AdvisorAdminService {
    */
   async remove(id: number): Promise<void> {
     await this.db.advisor.delete({ where: { id } });
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  async createExcel(
+    list: PaginatedResult<Advisor & { user: User; has_sub: boolean; sub_remaining_days: number }>,
+  ): Promise<any> {
+    const newList = list.data.map((e) => ({
+      ...e,
+      full_name: e.user.full_name,
+      mobile_number: e.user.mobile_number,
+      users_satisfaction: e.users_satisfaction || 'بدون امتیاز',
+      owners_satisfaction: e.owners_satisfaction || 'بدون امتیاز',
+      is_special: e.is_special ? 'بله' : 'خیر',
+      status: AdvisorStatusList.find((as) => as.id == e.status)?.title,
+      has_sub: e.has_sub ? 'بله' : 'خیر',
+      sub_remaining_days: e.sub_remaining_days,
+      tel: e.tel,
+      address: e.address,
+      created_at: moment(e.created_at).format(JALAALI_FORMAT),
+    }));
+
+    const excelCols: ExcelCol[] = [
+      { header: 'نام و نام خانوادگی', key: 'full_name', width: 25 },
+      { header: 'موبایل', key: 'mobile_number', width: 15 },
+      { header: 'شماره تلفن', key: 'tel', width: 15 },
+      { header: 'رضایت کاربران', key: 'users_satisfaction', width: 15 },
+      { header: 'رضایت مالکان', key: 'owners_satisfaction', width: 15 },
+      { header: 'وضعیت', key: 'status', width: 20 },
+      { header: 'ویژه', key: 'is_special', width: 15 },
+      { header: 'اشتراک فعال', key: 'has_sub', width: 15 },
+      { header: 'روز مانده از اشتراک', key: 'sub_remaining_days', width: 20 },
+      { header: 'آدرس', key: 'address', width: 60 },
+      { header: 'تاریخ ثبت نام', key: 'created_at', width: 15 },
+    ];
+
+    const url = await saveToExcel(excelCols, newList, SHEET_NAME.ADVISORS);
+    return url;
   }
 
   /* -------------------------------------------------------------------------- */

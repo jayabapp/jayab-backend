@@ -50,6 +50,7 @@ export type PropertyJsonType = Property & {
 };
 
 export type PropertyArrayResType = {
+  owner?: { mobile_number: string; full_name: string };
   id: number;
   code: string;
   title: string;
@@ -77,6 +78,8 @@ export type PropertyArrayResType = {
   reserve_days?: ReserveDay[];
   status_number?: number;
   favorite_count: number;
+  created_at: Date;
+  // rate:number;
 };
 
 export type PropertyJsonResType = {
@@ -175,6 +178,9 @@ export class PropertySerializer {
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days');
 
     let list: PropertyArrayResType = {
+      owner: data?.owner
+        ? { mobile_number: data.owner.user.mobile_number, full_name: data.owner.user.full_name }
+        : null,
       id: data.id,
       code: data.code,
       title: data.title,
@@ -200,6 +206,7 @@ export class PropertySerializer {
       favorite_count: data?.favorite_count,
       status_number: data.status,
       status: PropertyStatusesList.find((_) => _.id === data.status),
+      created_at: data.created_at,
       //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
       authorize_status: data.hasOwnProperty('property_authorize')

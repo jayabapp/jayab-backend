@@ -178,7 +178,7 @@ export class AttachmentController {
         args = {
           file,
           folder: BANNER_FOLDER,
-          resizeWidth: 800,
+          resizeWidth: 2048,
           resizeMode: 'normal',
           adminId: admin.id,
         };

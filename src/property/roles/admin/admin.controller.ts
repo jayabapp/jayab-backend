@@ -20,6 +20,7 @@ import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { AdminRequestType, AdminType } from 'src/common/interfaces/user.interface';
+import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -42,6 +43,26 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ operationId: 'Get Excel', description: '' })
+  @Get('excel')
+  async getExcel(@Query() dto: FindAllPropertyAdminDto): Promise<SuccessResponseArgs> {
+    const filterQuery = filterValidator(dto);
+    if (!filterQuery) throw new BadRequestException('FILTER1');
+
+    const list = await this.propertyAdminService.findAll(
+      filterQuery,
+      excelPaginationOptions.page,
+      excelPaginationOptions.perPage,
+    );
+
+    const url = await this.propertyAdminService.createExcel(list.data);
+
+    return { result: url };
+  }
+
   @ApiOperation({ operationId: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllPropertyAdminDto): Promise<SuccessResponseArgs> {

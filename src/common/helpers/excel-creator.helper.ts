@@ -1,15 +1,17 @@
-import { Cell, Row, Workbook } from 'exceljs';
+import { Cell, Column, Row, Workbook } from 'exceljs';
 import { __baseDir } from 'src/config/settings';
 import { v7 as uuidv7 } from 'uuid';
 
 export enum SHEET_NAME {
   USERS = 'users',
+  ADVISORS = 'advisors',
+  OWNERS = 'owners',
   ORDERS = 'orders',
   BUSINESS_PRODUCT_PRICES = 'prices',
   PRODUCTS = 'products',
 }
 
-export type ExcelCol = { header: string; key: string; width: number };
+export type ExcelCol = Partial<Column>;
 
 export const excelPaginationOptions = { perPage: 2000, page: 1 };
 
@@ -22,7 +24,7 @@ export async function saveToExcel(cols: ExcelCol[], data: object[], sheetName: S
     workbook.created = new Date();
     workbook.modified = new Date();
 
-    const sheet = workbook.addWorksheet(sheetName, { properties: { tabColor: { argb: 'FFC0000' } } });
+    const sheet = workbook.addWorksheet(sheetName, { properties: { tabColor: { argb: 'ffffff' } } });
 
     /**
      * FOR EXAMPLE
@@ -46,7 +48,11 @@ export async function saveToExcel(cols: ExcelCol[], data: object[], sheetName: S
 
     sheet.eachRow((row: Row, rowNumber: number) => {
       row.font = {
-        size: 12,
+        size: 14,
+      };
+      row.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
       };
       if (rowNumber === 1) {
         row.height = 20;
@@ -62,7 +68,7 @@ export async function saveToExcel(cols: ExcelCol[], data: object[], sheetName: S
         row.fill = {
           type: 'pattern',
           pattern: 'solid',
-          fgColor: { argb: '0D9488' },
+          fgColor: { argb: '1E40AF' },
         };
         row.border = {
           left: { color: { argb: '262626' }, style: 'thin' },

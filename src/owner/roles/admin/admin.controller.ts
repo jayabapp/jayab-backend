@@ -26,6 +26,7 @@ import { FindAllOwnerAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
 import { AdminRequestType } from 'src/common/interfaces/user.interface';
+import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
 
 @ApiTags('👨‍💻 Owner - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -54,6 +55,26 @@ export class OwnerAdminController {
     const result = await this.ownerAdminService.create(dto);
 
     return { result, messageCode: 'CREATE' };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ operationId: 'Get Excel', description: '' })
+  @Get('excel')
+  async getExcel(@Query() dto: FindAllOwnerAdminDto): Promise<SuccessResponseArgs> {
+    const filterQuery = filterValidator(dto);
+    if (!filterQuery) throw new BadRequestException('FILTER1');
+
+    const list = await this.ownerAdminService.findAll(
+      filterQuery,
+      excelPaginationOptions.page,
+      excelPaginationOptions.perPage,
+    );
+
+    const url = await this.ownerAdminService.createExcel(list);
+
+    return { result: url };
   }
 
   /* -------------------------------------------------------------------------- */

@@ -71,15 +71,13 @@ export class UserAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const excelCols: ExcelCol[] = [{ header: 'شماره موبایل', key: 'mobile_number', width: 15 }];
-
-    const result = await this.userAdminService.findAll(
+    const list = await this.userAdminService.findAll(
       filterQuery,
       excelPaginationOptions.page,
       excelPaginationOptions.perPage,
     );
 
-    const url = await saveToExcel(excelCols, result.data, SHEET_NAME.USERS);
+    const url = await this.userAdminService.createExcel(list);
 
     return { result: url };
   }

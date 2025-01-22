@@ -434,7 +434,7 @@ model User {
   owner                Owner?      @relation(fields: [owner_id], references: [id])
   advisor              Advisor?    @relation(fields: [advisor_id], references: [id])
 
-  // tickets         Ticket[]
+  tickets    Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
   turnovers  Turnover[]
@@ -971,36 +971,36 @@ model Notification {
 }
 
 // --------------------------------- TICKET --------------------------------- //
-// model Ticket {
-//   id      Int    @id() @default(autoincrement())
-//   user_id Int
-//   title   String @db.VarChar
-//   message String @db.Text
-//   status  Int
+model Ticket {
+  id      Int    @id() @default(autoincrement())
+  user_id Int
+  title   String @db.VarChar
+  message String @db.Text
+  status  Int
 
-//   created_at DateTime  @default(now()) @db.Timestamp(6)
-//   updated_at DateTime  @updatedAt
-//   deleted_at DateTime?
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
 
-//   user    User            @relation(fields: [user_id], references: [id])
-//   replies TicketReplies[]
+  user    User            @relation(fields: [user_id], references: [id])
+  replies TicketReplies[]
 
-//   @@map("tickets")
-// }
+  @@map("tickets")
+}
 
-// model TicketReplies {
-//   id        Int     @id() @default(autoincrement())
-//   ticket_id Int
-//   message   String  @db.Text
-//   by_admin  Boolean @default(false)
+model TicketReplies {
+  id        Int     @id() @default(autoincrement())
+  ticket_id Int
+  message   String  @db.Text
+  by_admin  Boolean @default(false)
 
-//   created_at DateTime @default(now()) @db.Timestamp(6)
-//   updated_at DateTime @updatedAt
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
 
-//   ticket Ticket @relation(fields: [ticket_id], references: [id])
+  ticket Ticket @relation(fields: [ticket_id], references: [id])
 
-//   @@map("ticket_replies")
-// }
+  @@map("ticket_replies")
+}
 
 // -------------------------------- FORM BUILDER -------------------------------- //
 model FormBuilder {

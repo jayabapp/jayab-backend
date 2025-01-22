@@ -191,7 +191,7 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
 export const showActionBuilder = (item: Property): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
     {
-      title: 'اشتراک های خریداری شده',
+      title: 'خرید اشتراک و سابقه',
       route: `/subscriptions/create?property_id=${item.id}`,
     },
     {
@@ -276,6 +276,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
     { title: 'احراز شده', state: 'authorized', type: 'switch' },
     /*  */
     { title: 'وضیعت', state: 'status', type: 'select', isHidden: true },
+    { title: '', state: 'owner_id', type: 'input', isHidden: true },
   ];
 
   return filterProps;

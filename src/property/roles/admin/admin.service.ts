@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, Property, Prisma } from '@prisma/client';
+import { AccessControlList, Property, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateProps,
@@ -30,6 +30,8 @@ import {
 import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 
 @Injectable()
 export class PropertyAdminService {
@@ -63,6 +65,7 @@ export class PropertyAdminService {
       {
         where: filters,
         include: {
+          owner: { include: { user: true } },
           feature_image: true,
           province: { select: { title: true } },
           city: { select: { title: true } },
@@ -171,6 +174,45 @@ export class PropertyAdminService {
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
 
     await this.db.property.update({ where: { id }, data: updateData });
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EXCEL                                   */
+  /* -------------------------------------------------------------------------- */
+  async createExcel(list: PropertyArrayResType[]): Promise<any> {
+    const newList = list.map((e) => ({
+      ...e,
+      is_authorized: e.is_authorized ? 'بله' : 'خیر',
+      has_blue_tick: e.has_blue_tick ? 'بله' : 'خیر',
+      has_pool: e.has_pool ? 'بله' : 'خیر',
+      slug: e.slug,
+      std_capacity: e.std_capacity,
+      mobile_number: e?.owner?.mobile_number,
+      full_name: e?.owner?.full_name,
+      remaining_days: e.remaining_days,
+      status: e.status.title,
+      created_at: moment(e.created_at).format(JALAALI_FORMAT),
+    }));
+
+    const excelCols: ExcelCol[] = [
+      { header: 'نام مالک', key: 'full_name', width: 15 },
+      { header: 'شماره موبایل مالک', key: 'mobile_number', width: 20 },
+      { header: 'عنوان', key: 'title', width: 15 },
+      { header: 'کد', key: 'code', width: 15 },
+      { header: 'اسلاگ', key: 'slug', width: 25 },
+      { header: 'شهر', key: 'province', width: 15 },
+      { header: 'استان', key: 'city', width: 15 },
+      { header: 'وضعیت', key: 'status', width: 20 },
+      { header: 'تاریخ ثبت ملک', key: 'created_at', width: 15 },
+      { header: 'روز باقیمانده از اشتراک', key: 'remaining_days', width: 20 },
+      { header: 'ظرفیت استاندارد', key: 'std_capacity', width: 20 },
+      { header: 'احراز شده', key: 'is_authorized', width: 15 },
+      { header: 'تیک آبی دارد', key: 'has_blue_tick', width: 15 },
+      { header: 'استخر دارد', key: 'has_pool', width: 15 },
+    ];
+
+    const url = await saveToExcel(excelCols, newList, SHEET_NAME.USERS);
+    return url;
   }
 
   /* -------------------------------------------------------------------------- */
