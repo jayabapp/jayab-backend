@@ -12,7 +12,7 @@ export default () => ({
     password: process.env.REDIS_PASSWORD,
   },
   settings: {},
-  config: { websiteUrl: process.env.WEBSITE_URL },
+  url: { websiteUrl: process.env.WEBSITE_URL, advisorShareUrl: process.env.ADVISOR_SHARE_URL },
   app: {
     apiPrefix: 'api',
   },
@@ -46,6 +46,7 @@ export default () => ({
   },
   project: {
     maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,
+    advisorShareLinkSecret: process.env.ADVISOR_SHARE_LINK_SECRET,
   },
   payment: { paymentBaseUrl: process.env.PAYMENT_BASE_URL },
   aws: {

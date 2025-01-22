@@ -187,7 +187,7 @@ Allow: *
       where: { show_in_sitemap: true },
     });
 
-    const siteUrl = this.config.get('config.websiteUrl');
+    const siteUrl = this.config.get('url.websiteUrl');
 
     const sitemap: Sitemap[] = [];
 

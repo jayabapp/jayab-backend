@@ -3,6 +3,7 @@ import Joi from 'joi';
 const configValidations = Joi.object({
   DATABASE_URL: Joi.string().required(),
   WEBSITE_URL: Joi.string().required(),
+  ADVISOR_SHARE_URL: Joi.string().required(),
   BASE_URL: Joi.string().required(),
   // PAYMENT_BASE_URL: Joi.string().required(),
   // REDIS_HOST: Joi.string().required(),
@@ -38,15 +39,8 @@ const configValidations = Joi.object({
   APP_NAME: Joi.string().required(),
   APP_FA_NAME: Joi.string().required(),
   APP_LOGO: Joi.string().required(),
-  IS_MARKETPLACE: Joi.string().required(),
-  BUSINESS_NAME: Joi.string().required(),
-  BUSINESS_ADDRESS: Joi.string().required(),
-  BUSINESS_LATITUDE: Joi.string().required(),
-  BUSINESS_LONGITUDE: Joi.string().required(),
-  HAS_MULTI_PRODUCT_ATTRIBUTE: Joi.string().required(),
-  // MAIN_ATTRIBUTE_GROUP: Joi.string().required(),
-  HAS_OFFER_CODE: Joi.string().required(),
-  HAS_PAYMENT: Joi.string().required(),
+
+  ADVISOR_SHARE_LINK_SECRET: Joi.string().required(),
 });
 
 export default configValidations;

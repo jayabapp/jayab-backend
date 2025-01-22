@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   // Delete,
   Get,
   Header,
@@ -21,6 +22,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
+import { FindAdvisorShareDto } from './dto/find-advisor-share.dto';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -42,7 +44,7 @@ export class PropertyUserController {
     /**
      * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
      */
-    const isAdvisor = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
+    const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
 
     const result = await this.propertyUserService.findAll(dto, isAdvisor);
 
@@ -56,12 +58,10 @@ export class PropertyUserController {
     @Param('propertySlug') propertySlug: string,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
-    console.log({ authorization });
-
     /**
      * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
      */
-    const isAdvisor = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
+    const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
 
     const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
     return { result };
@@ -88,6 +88,36 @@ export class PropertyUserController {
   @Post(':propertyId/duplicate')
   async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.duplicate(propertyId);
+    return { result };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    SHARE                                   */
+  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ operationId: 'Generate Advisor Share Link', description: '' })
+  @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
+  @Get(':propertyId/advisor-share/link')
+  async generateAdvisorShare(
+    @Param('propertyId') propertyId: number,
+    @Headers('authorization') authorization?: string,
+  ): Promise<SuccessResponseArgs> {
+    const { isAdvisor, advisorId } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
+    if (!isAdvisor) throw new ForbiddenException('FORBIDDEN');
+
+    const result = await this.propertyUserService.generateAdvisorShare(propertyId, advisorId);
+    return { result };
+  }
+
+  /**
+   * اطلاعات لینک رو رمز گشایی میکنه و دیتا رو برای سایت مشاوران برمیگردونه
+   * @param dto
+   * @returns
+   */
+  @ApiOperation({ operationId: 'Retrive Share Link Data', description: '' })
+  @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
+  @Get(':propertyId/advisor-share')
+  async findAdvisorShareData(@Query() dto: FindAdvisorShareDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findAdvisorShareData(dto);
     return { result };
   }
 }

@@ -20,14 +20,18 @@ import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
 import moment from 'moment-jalaali';
 import { slugify } from 'src/common/helpers/slugify';
 import Num2persian from 'src/common/helpers/Num2Persian';
+import { ConfigService } from '@nestjs/config';
+import { FindAdvisorShareDto } from './dto/find-advisor-share.dto';
+import { AES, enc } from 'crypto-js';
 
 @Injectable()
 export class PropertyUserService {
   constructor(
+    @InjectRedis() private readonly redis: Redis,
     private readonly db: PrismaService,
     private readonly propertySerializer: PropertySerializer,
     private readonly dayHelper: DayHelper,
-    @InjectRedis() private readonly redis: Redis,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -294,6 +298,62 @@ export class PropertyUserService {
     });
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                    SHARE                                   */
+  /* -------------------------------------------------------------------------- */
+  async generateAdvisorShare(propertyId: number, advisorId: number): Promise<string> {
+    const advisorShareUrl = this.config.get('url.advisorShareUrl');
+    // const expireAt = moment().add(1, 'day').format('YYYY-MM-DD');
+    const encryptedParams = await this.encryptShareLink(propertyId, advisorId, '');
+
+    const url = `${advisorShareUrl}/s?content=${encryptedParams}`;
+    console.log({ url });
+
+    return url;
+  }
+  async findAdvisorShareData(dto: FindAdvisorShareDto): Promise<any> {
+    const decrypted = await this.decryptShareLink(dto.content);
+    const data = JSON.parse(decrypted);
+    const prop = await this.db.property.findUnique({
+      where: { id: data.propertyId },
+      select: { slug: true, attachments: true, feature_image: true },
+    });
+    const property = await this.findOne(prop.slug, false);
+    console.log({ dto, data, property });
+    const advisor = await this.db.advisor.findUnique({
+      where: { id: data.advisorId },
+      select: { user: { select: { full_name: true, mobile_number: true, profile_image: true } } },
+    });
+    return { property, advisor };
+  }
+
+  async encryptShareLink(propertyId: number, advisorId: number, expireAt: string): Promise<string> {
+    const secretKey = this.config.get('project.advisorShareLinkSecret');
+    const obj = {
+      propertyId,
+      advisorId,
+      expireAt,
+    };
+    const sentence = JSON.stringify(obj);
+
+    const cipher = AES.encrypt(sentence, secretKey).toString();
+
+    return cipher;
+  }
+
+  async decryptShareLink(sentence: string): Promise<string> {
+    const secretKey = this.config.get('project.advisorShareLinkSecret');
+
+    const bytes = AES.decrypt(sentence, secretKey);
+    const decrypted = bytes.toString(enc.Utf8);
+
+    return decrypted;
+  }
+  /* -------------------------------------------------------------------------- */
+  /**
+   * faker
+   * @param propertyId
+   */
   async duplicate(propertyId: number): Promise<void> {
     const propPure = await this.db.property.findUnique({ where: { id: propertyId }, omit: { id: true } });
     const prop = await this.db.property.findUnique({

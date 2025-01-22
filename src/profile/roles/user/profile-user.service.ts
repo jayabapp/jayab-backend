@@ -264,24 +264,29 @@ export class ProfileUserService {
     });
   }
 
-  async checkUserIsActiveAdvisor(authorization: string): Promise<boolean> {
+  async checkUserIsActiveAdvisor(authorization: string): Promise<{ isAdvisor: boolean; advisorId?: number }> {
     const token = authorization ? authorization?.split(' ')?.[1] : null;
     let userId;
     if (token) {
       const payload = await verifyUserTokenManualy(token);
-      if (!payload) return false;
+      if (!payload) return { isAdvisor: false };
       userId = payload.id;
-    } else return false;
+    } else return { isAdvisor: false };
 
     const user = await this.db.user.findUnique({
       where: { id: userId },
-      select: { advisor: { select: { subscription_expired_at: true, is_special: true } } },
+      select: {
+        advisor: { select: { id: true, subscription_expired_at: true, is_special: true, status: true } },
+      },
     });
 
-    if (user?.advisor && moment().isBefore(user?.advisor?.subscription_expired_at)) {
-      return true;
+    if (!user?.advisor) return { isAdvisor: false };
+    if (user.advisor.status !== AdvisorStatus.APPROVED) return { isAdvisor: false };
+
+    if (moment().isBefore(user?.advisor?.subscription_expired_at)) {
+      return { isAdvisor: true, advisorId: user.advisor.id };
     }
-    return false;
+    return { isAdvisor: false };
   }
 
   // maskCriticalData(text: string, from: number, to: number): string {
