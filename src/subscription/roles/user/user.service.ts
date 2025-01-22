@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllSubscriptionUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { PartialUser } from 'src/common/interfaces/user.interface';
-import { SubscriptionStatusList } from 'src/subscription/common/subscription-status.type';
+import { SubscriptionStatus, SubscriptionStatusList } from 'src/subscription/common/subscription-status.type';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { startOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
@@ -24,10 +24,10 @@ export class SubscriptionUserService {
     dto: FindAllSubscriptionUserDto,
   ): Promise<CursorPaginatedResult<Subscription>> {
     /*  */
-    let query: Prisma.SubscriptionWhereInput = {
-      status: PaymentStatuses.APPROVED,
-      OR: [{ advisor_id: user?.advisor_id }, { property: { owner_id: user?.owner_id } }],
-    };
+
+    let query: Prisma.SubscriptionWhereInput = { status: SubscriptionStatus.SUCCESS, OR: [] };
+    if (user?.advisor_id) query.OR.push({ advisor_id: user?.advisor_id });
+    if (user?.owner_id) query.OR.push({ property: { owner_id: user?.owner_id } });
 
     /**
      * check dates
