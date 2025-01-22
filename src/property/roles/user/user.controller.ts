@@ -22,7 +22,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllPropertyUserDto } from './dto/find-all.dto';
 import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
-import { FindAdvisorShareDto } from './dto/find-advisor-share.dto';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -99,12 +99,13 @@ export class PropertyUserController {
   @Get(':propertyId/advisor-share/link')
   async generateAdvisorShare(
     @Param('propertyId') propertyId: number,
+    @Query() dto: GenerateAdvisorShareDto,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
     const { isAdvisor, advisorId } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     if (!isAdvisor) throw new ForbiddenException('FORBIDDEN');
 
-    const result = await this.propertyUserService.generateAdvisorShare(propertyId, advisorId);
+    const result = await this.propertyUserService.generateAdvisorShare(propertyId, advisorId, dto);
     return { result };
   }
 

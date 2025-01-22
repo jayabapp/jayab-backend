@@ -15,6 +15,13 @@ import {
 } from 'src/common/pipes/validator-translate.pipe';
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 
+export class GenerateAdvisorShareDto {
+  @ApiProperty({ required: true })
+  @_IsString()
+  @_IsNotEmpty()
+  elements: string;
+}
+
 export class FindAdvisorShareDto {
   @ApiProperty({ required: true })
   @_IsString()
