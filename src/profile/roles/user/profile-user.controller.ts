@@ -16,13 +16,15 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { AttachmentService } from 'src/attachment/attachment.service';
-import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
+import { UpdateFcmDto } from 'src/profile/dto/update-profile.dto';
 import { ProfileUserService } from './profile-user.service';
 import { PROFILE_USER_ROUTE_GROUP } from 'src/profile/common/route-group.constant';
 import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerUserService } from 'src/owner/roles/user/user.service';
 import { AdvisorUserService } from 'src/advisor/roles/user/user.service';
 import { CitySharedService } from 'src/city/shared.service';
+import { FirebaseService } from 'src/firebase/firebase.service';
+import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -35,6 +37,7 @@ export class ProfileUserController {
     private readonly ownerUserService: OwnerUserService,
     private readonly advisorUserService: AdvisorUserService,
     private readonly citySharedService: CitySharedService,
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   @ApiOperation({ operationId: 'Get user profile' })
@@ -42,6 +45,16 @@ export class ProfileUserController {
   async getProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
     const result = await this.profileUserService.findOne(user.id);
+
+    /*  */
+    const fcmToken = result?.fcm_token;
+    const advisorRole = result?.advisor_id;
+    const ownerRole = result?.owner_id;
+    if (fcmToken) {
+      await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
+      if (ownerRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.OWNER);
+      if (advisorRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
+    }
 
     return { result };
   }
