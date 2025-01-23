@@ -16,6 +16,11 @@ import {
 import { RentType } from 'src/property/common/types/property-rent-types.type';
 
 export class FindAllPropertyUserDto extends PaginationCursorDto {
+  @ApiProperty({ title: 'سرچ', required: false })
+  @_IsString()
+  @IsOptional()
+  q?: string;
+
   @ApiProperty({ title: 'کد', required: false })
   @_IsNumberString()
   @IsOptional()

@@ -58,6 +58,7 @@ export class PropertyUserService {
       max_price,
       max_building_area,
       min_building_area,
+      q,
     } = dto;
 
     const today = await this.dayHelper.today();
@@ -95,6 +96,9 @@ export class PropertyUserService {
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
     if (code) query = { ...query, code };
+
+    /* ------------------------------------ q ----------------------------------- */
+    if (q) query = { ...query, OR: [{ title: { contains: q } }, { code: q }] };
 
     /* -------------------------------- province -------------------------------- */
     if (province_id) query = { ...query, province_id };
