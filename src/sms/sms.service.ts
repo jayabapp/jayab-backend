@@ -7,7 +7,10 @@ import { firstValueFrom } from 'rxjs';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  constructor(private readonly httpService: HttpService, private configService: ConfigService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private configService: ConfigService,
+  ) {}
 
   async sendVerificationCode(mobile: string, code: string): Promise<void> {
     try {
@@ -31,21 +34,19 @@ export class SmsService {
     }
   }
 
-  async sendOrderStatus(
+  async sendChangePropertyStatusToOwner(
     mobile: string,
-    userFullName: string,
-    businessName: string,
+    propertyTitle: string,
     status: string,
   ): Promise<void> {
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
-      const templateId = this.configService.get('sms.orderStatusTemplateId');
+      const templateId = this.configService.get('sms.propertyStatusTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
       const body = {
         parameters: [
-          { name: 'Name', value: userFullName },
-          { name: 'BusinessName', value: businessName },
+          { name: 'Title', value: propertyTitle },
           { name: 'Status', value: status },
         ],
         mobile: mobile,

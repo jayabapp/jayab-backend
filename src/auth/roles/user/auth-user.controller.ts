@@ -59,7 +59,7 @@ export class AuthUserController {
      */
     const resultMessage = code ? 'AUTH1' : 'AUTH1_1';
 
-    if (this.config.get('NODE_ENV') == 'production' && code) {
+    if (this.config.get('NODE_ENV') === 'production' && code) {
       await this.smsService.sendVerificationCode(dto.mobile_number, code);
       code = null;
     }

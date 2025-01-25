@@ -21,13 +21,18 @@ import { AccessControlList } from '@prisma/client';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { AdminRequestType, AdminType } from 'src/common/interfaces/user.interface';
 import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
+import { SmsService } from 'src/sms/sms.service';
+import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
 export class PropertyAdminController {
-  constructor(private readonly propertyAdminService: PropertyAdminService) {}
+  constructor(
+    private readonly propertyAdminService: PropertyAdminService,
+    private readonly smsService: SmsService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -108,8 +113,16 @@ export class PropertyAdminController {
     @Body() dto: UpdatePartialPropertyAdminDto,
   ): Promise<SuccessResponseArgs> {
     const admin = req.user;
-    await this.propertyAdminService.findById(id);
+    const property = await this.propertyAdminService.findById(id);
     const result = await this.propertyAdminService.updatePartial(admin, id, dto);
+
+    //send sms to owner
+    const statusText = PropertyStatusesList.find((e) => e.id === dto.status)?.title;
+    await this.smsService.sendChangePropertyStatusToOwner(
+      property.owner.user.mobile_number,
+      property.title,
+      statusText,
+    );
 
     return { result, messageCode: 'UPDATE' };
   }

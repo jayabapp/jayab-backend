@@ -130,8 +130,16 @@ export class PropertyAdminService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<Property> {
-    const item = await this.db.property.findUnique({ where: { id } });
+
+  async findById(id: number): Promise<
+    Prisma.PropertyGetPayload<{
+      include: { owner: { include: { user: { select: { mobile_number: true } } } } };
+    }>
+  > {
+    const item = await this.db.property.findUnique({
+      where: { id },
+      include: { owner: { include: { user: { select: { mobile_number: true } } } } },
+    });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;

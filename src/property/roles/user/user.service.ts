@@ -330,7 +330,7 @@ export class PropertyUserService {
   }
   async findAdvisorShareData(dto: FindAdvisorShareDto): Promise<any> {
     const decrypted = await this.decryptShareLink(dto.content);
-    if (!decrypted || isJson(decrypted)) throw new BadRequestException();
+    if (!decrypted) throw new BadRequestException();
 
     const data = JSON.parse(decrypted);
     const prop = await this.db.property.findUnique({
@@ -338,7 +338,7 @@ export class PropertyUserService {
       select: { slug: true, attachments: true, feature_image: true },
     });
     const property = await this.findOne(prop.slug, false);
-    console.log({ dto, data, property });
+
     const advisor = await this.db.advisor.findUnique({
       where: { id: data.advisorId },
       select: { user: { select: { full_name: true, mobile_number: true, profile_image: true } } },
@@ -370,7 +370,6 @@ export class PropertyUserService {
 
     const bytes = AES.decrypt(sentence, secretKey);
     const decrypted = bytes.toString(enc.Utf8);
-    console.log({ decrypted });
 
     return decrypted;
   }
