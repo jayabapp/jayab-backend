@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma, PropertyOwnerAssistant } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FindAllPropertyUserDto } from './dto/find-all.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { isEmpty, omit, random } from 'lodash';
@@ -103,7 +103,7 @@ export class PropertyUserService {
     if (code) query = { ...query, code };
 
     /* ------------------------------------ q ----------------------------------- */
-    if (q) query = { ...query, OR: [{ title: { contains: q } }, { code: q }] };
+    if (q) query = { ...query, OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[] };
 
     /* -------------------------------- province -------------------------------- */
     if (province_id) query = { ...query, province_id };
@@ -384,6 +384,54 @@ export class PropertyUserService {
 
     return decrypted;
   }
+
+  /* ---------------------------- SEARCH SUGGESTION --------------------------- */
+  async searchSuggestions(dto: PropertySearchSuggestuibUserDto): Promise<any> {
+    const properties = await this.db.property.findMany({
+      where: {
+        OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[],
+      },
+      select: { id: true, title: true, slug: true },
+      take: 5,
+    });
+
+    const cities = await this.db.city.findMany({
+      where: {
+        OR: this.preprocessSearchTerms(dto.q, 'title') as Prisma.CityWhereInput[],
+        parent_id: { not: null },
+      },
+      select: { id: true, title: true, slug: true },
+      take: 5,
+    });
+
+    const landings = await this.db.landingPage.findMany({
+      where: {
+        OR: this.preprocessSearchTerms(dto.q, 'title') as Prisma.LandingPageWhereInput[],
+      },
+      select: { id: true, title: true, url: true },
+      take: 5,
+    });
+
+    return { properties, cities, landings };
+  }
+
+  /* --------------------------------- HELPERS -------------------------------- */
+  /**
+   * prepare text for search
+   * @param searchTerm
+   * @param column
+   * @returns
+   */
+  preprocessSearchTerms = (searchTerm: string, column: string): string[] => {
+    const specialChars = /[()|&:*!]/g;
+    const strings = searchTerm.trim().replace(specialChars, ' ').split(/\s+/);
+    let query = [];
+    for (const text of strings) {
+      query.push({ [column]: { contains: text } });
+    }
+    return query;
+  };
+
   /* -------------------------------------------------------------------------- */
   /**
    * faker

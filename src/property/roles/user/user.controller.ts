@@ -18,7 +18,7 @@ import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { FindAllPropertyUserDto } from './dto/find-all.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { PropertyOwnerService } from '../owner/owner.service';
@@ -132,6 +132,13 @@ export class PropertyUserController {
   @Get(':propertyId/advisor-share')
   async findAdvisorShareData(@Query() dto: FindAdvisorShareDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.findAdvisorShareData(dto);
+    return { result };
+  }
+  /* ---------------------------- SEARCH SUGGESTION --------------------------- */
+  @ApiOperation({ operationId: 'Search Suggestion', description: '' })
+  @Get('search/suggestions')
+  async searchSuggestions(@Query() dto: PropertySearchSuggestuibUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.searchSuggestions(dto);
     return { result };
   }
 }

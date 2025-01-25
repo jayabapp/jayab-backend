@@ -130,3 +130,10 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   max_building_area?: number;
 }
+
+export class PropertySearchSuggestuibUserDto {
+  @ApiProperty({ required: true, title: '' })
+  @_IsString()
+  @_IsNotEmpty()
+  q: string;
+}
