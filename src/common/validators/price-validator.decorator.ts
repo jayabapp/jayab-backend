@@ -7,8 +7,8 @@ import { RentType } from 'src/property/common/types/property-rent-types.type';
 @ValidatorConstraint({ name: 'IsPrice', async: true })
 export class IsPrice implements ValidatorConstraintInterface {
   async validate(value: number, validationArguments: ValidationArguments) {
-    const MAX_PRICE = validationArguments.constraints[1] ?? 1000000000;
-    const MIN_PRICE = validationArguments.constraints[2] ?? 200000;
+    const MAX_PRICE = validationArguments.constraints?.[1] ?? 1000000000;
+    const MIN_PRICE = validationArguments.constraints?.[2] ?? 200000;
 
     // const rentType: RentType[] = validationArguments?.object['rent_type'] ?? [];
     // const type = Array.isArray(validationArguments.constraints)

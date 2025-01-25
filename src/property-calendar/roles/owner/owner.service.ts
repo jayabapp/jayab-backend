@@ -83,7 +83,6 @@ export class PropertyCalendarOwnerService {
   async findAcceptablePriceRange(propertyId: number, dto: JalaaliDateDto): Promise<any> {
     const targetDay = await this.dayHelper.daysRange(convertJalaaliDtoToDate(dto), 1);
     const dailyPrice = await this.db.propertyDailyPrice.findFirst({ where: { property_id: propertyId } });
-    console.log({ targetDay, dailyPrice });
 
     const MAX_MIN_RATIO = 4; // adaptive
     const maxPrice = dailyPrice[targetDay.requestedDays[0]];

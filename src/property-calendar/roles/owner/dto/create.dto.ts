@@ -39,7 +39,7 @@ export class UpdatePropertyAdvisorCommissionOwnerDto extends JalaaliDateDto {
 export class UpdatePropertyDayPriceOwnerDto extends JalaaliDateDto {
   @ApiProperty({ required: true, title: 'قیمت', default: 1500000 })
   @Transform((e) => normalizePropertyPrice(e.value))
-  @Validate(IsPrice, [RentType.DAILY])
+  @Validate(IsPrice)
   @_IsNotEmpty()
   price: number;
 

@@ -88,7 +88,7 @@ export class PropertyCalendarOwnerController {
   @Post('price')
   async updatePrice(
     @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Query() dto: UpdatePropertyDayPriceOwnerDto,
+    @Body() dto: UpdatePropertyDayPriceOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const result = await this.propertyCalendarOwnerService.updatePrice(propertyId, dto);
 
