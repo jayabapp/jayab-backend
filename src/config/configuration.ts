@@ -40,7 +40,7 @@ export default () => ({
     smsApiToken: process.env.SMS_IR_API_TOKEN,
     verificationTemplateId: process.env.SMS_IR_VERIFY_TEMPLATE_ID,
     propertyStatusTemplateId: process.env.SMS_IR_PROPERTY_STATUS_TEMPLATE_ID,
-    newOrderTemplateId: process.env.SMS_IR_NEW_ORDER_TEMPLATE_ID,
+    propertyAuthStatusTemplateId: process.env.SMS_IR_PROPERTY_AUTH_STATUS_TEMPLATE_ID,
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },

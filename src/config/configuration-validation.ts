@@ -26,8 +26,8 @@ const configValidations = Joi.object({
 
   SMS_IR_API_TOKEN: Joi.string().required(),
   SMS_IR_VERIFY_TEMPLATE_ID: Joi.string().required(),
-  SMS_IR_ORDER_STATUS_TEMPLATE_ID: Joi.string().required(),
-  SMS_IR_NEW_ORDER_TEMPLATE_ID: Joi.string().required(),
+  SMS_IR_PROPERTY_STATUS_TEMPLATE_ID: Joi.string().required(),
+  SMS_IR_PROPERTY_AUTH_STATUS_TEMPLATE_ID: Joi.string().required(),
 
   MAX_OTP_ATTEMPTS: Joi.string().required(),
 

@@ -31,6 +31,7 @@ import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/pro
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { Request } from 'express';
 import { AdminType } from 'src/common/interfaces/user.interface';
+import { SmsService } from 'src/sms/sms.service';
 
 @ApiTags('👨‍💻 PropertyAuthorize - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -40,6 +41,7 @@ export class PropertyAuthorizeAdminController {
   constructor(
     private readonly PropertyAuthorizeAdminService: PropertyAuthorizeAdminService,
     private readonly notificationSharedService: NotificationSharedService,
+    private readonly smsService: SmsService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -116,6 +118,14 @@ export class PropertyAuthorizeAdminController {
       notificationType: NotificationTypes.OWNER_PROPERTY,
       notificationableId: id.toString(),
     });
+
+    //send sms to owner
+    const statusText = PropertyAuthorizeStatusesList.find((e) => e.id === dto.status)?.title;
+    await this.smsService.sendChangePropertyAuthStatusToOwner(
+      au.property.owner.user.mobile_number,
+      au.property.title,
+      statusText,
+    );
 
     return { result, messageCode: 'UPDATE' };
   }

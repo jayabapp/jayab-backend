@@ -63,16 +63,20 @@ export class SmsService {
     }
   }
 
-  async sendNewOrderToAdmin(mobile: string, orderCode: string, businessName: string): Promise<void> {
+  async sendChangePropertyAuthStatusToOwner(
+    mobile: string,
+    propertyTitle: string,
+    status: string,
+  ): Promise<void> {
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
-      const templateId = this.configService.get('sms.newOrderTemplateId');
+      const templateId = this.configService.get('sms.propertyAuthStatusTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
       const body = {
         parameters: [
-          { name: 'OrderCode', value: orderCode },
-          { name: 'BusinessName', value: businessName },
+          { name: 'Title', value: propertyTitle },
+          { name: 'Status', value: status },
         ],
         mobile: mobile,
         templateId: templateId,
