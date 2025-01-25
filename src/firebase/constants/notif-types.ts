@@ -4,4 +4,5 @@ export enum NotificationTypes {
   NEW_PROPERTY_AUTH = 'NewPropertyAuth',
   NEW_PROPERTY_BADGE = 'NewPropertyBadge',
   OWNER_PROPERTY = 'OwnerProperty',
+  ADVISOR_SUBSCRIPTION = 'AdvisorSubscription',
 }

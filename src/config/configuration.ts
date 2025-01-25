@@ -41,6 +41,8 @@ export default () => ({
     verificationTemplateId: process.env.SMS_IR_VERIFY_TEMPLATE_ID,
     propertyStatusTemplateId: process.env.SMS_IR_PROPERTY_STATUS_TEMPLATE_ID,
     propertyAuthStatusTemplateId: process.env.SMS_IR_PROPERTY_AUTH_STATUS_TEMPLATE_ID,
+    propertySubscriptionReminderTemplateId: process.env.SMS_IR_PROPERTY_SUBSCRIPTION_TEMPLATE_ID,
+    advisorSubscriptionReminderTemplateId: process.env.SMS_IR_ADVISOR_SUBSCRIPTION_TEMPLATE_ID,
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },

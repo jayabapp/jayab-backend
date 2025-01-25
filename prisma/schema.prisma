@@ -476,7 +476,7 @@ model Advisor {
   status                      Int       @db.SmallInt
   admin_descriptions          Json[]    @db.JsonB
   sort_order                  Int?
-  subscription_expired_at     DateTime?
+  subscription_expired_at     DateTime? @db.Date
   //
   users_satisfaction          Int?
   owners_satisfaction         Int?
@@ -494,13 +494,11 @@ model Advisor {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  national_card_image Attachment?    @relation("NationalCard", fields: [national_card_image_id], references: [id])
-  document_image      Attachment?    @relation("DocumentImage", fields: [document_image_id], references: [id])
-  user                User?
-  subscriptions       Subscription[]
-  // rent_requests RentRequest[]
-  // advisorNotes  AdvisorNote[]
-  // banners       Banner[]
+  national_card_image    Attachment?            @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  document_image         Attachment?            @relation("DocumentImage", fields: [document_image_id], references: [id])
+  user                   User?
+  subscriptions          Subscription[]
+  subscription_reminders SubscriptionReminder[]
 
   @@map("advisors")
 }
@@ -551,7 +549,7 @@ model Property {
   advisor_commission      Int       @default(0) @db.SmallInt
   check_in_hour           Int?      @db.SmallInt
   check_out_hour          Int?      @db.SmallInt
-  subscription_expired_at DateTime?
+  subscription_expired_at DateTime? @db.Date
   sort_order              BigInt    @default(0) // timestamp - promote
   contact_type            Int       @default(1) @db.SmallInt
   status                  Int       @db.SmallInt
@@ -569,31 +567,32 @@ model Property {
   deleted_at DateTime?
 
   // -------------------------------------------------------------------------- //
-  owner              Owner                    @relation(fields: [owner_id], references: [id])
-  property_options   OptionsOnProperty[]
-  region             City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
-  province           City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
-  city               City?                    @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image      Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video              Attachment?              @relation("Video", fields: [video_id], references: [id])
-  attachments        Attachment[]             @relation("Property")
-  temp_attachments   Attachment[]             @relation("Property_Temp")
-  bedrooms           PropertyBedroom?
-  daily_price        PropertyDailyPrice?
-  assistants         PropertyOwnerAssistant[]
-  description        PropertyDescription?
-  property_authorize PropertyAuthorize?
-  banners            Banner[]
+  owner                  Owner                    @relation(fields: [owner_id], references: [id])
+  property_options       OptionsOnProperty[]
+  region                 City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
+  province               City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
+  city                   City?                    @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image          Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video                  Attachment?              @relation("Video", fields: [video_id], references: [id])
+  attachments            Attachment[]             @relation("Property")
+  temp_attachments       Attachment[]             @relation("Property_Temp")
+  bedrooms               PropertyBedroom?
+  daily_price            PropertyDailyPrice?
+  assistants             PropertyOwnerAssistant[]
+  description            PropertyDescription?
+  property_authorize     PropertyAuthorize?
+  banners                Banner[]
   // hourly_price          PropertyHourlyPrice?
   // monthly_price         PropertyMonthlyPrice?
   // yearly_price          PropertyYearlyPrice?
-  subscriptions      Subscription[]
-  payments           Payment[]
-  chatrooms          MessengerChatroom[]
-  calendar           PropertyCalendar[]
-  blue_tick          PropertyBadge?
-  favorites          Favorite[]
-  bookmarks          Bookmark[]
+  subscriptions          Subscription[]
+  payments               Payment[]
+  chatrooms              MessengerChatroom[]
+  calendar               PropertyCalendar[]
+  blue_tick              PropertyBadge?
+  favorites              Favorite[]
+  bookmarks              Bookmark[]
+  subscription_reminders SubscriptionReminder[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -1174,6 +1173,21 @@ model Subscription {
   payment  Payment?  @relation(fields: [payment_id], references: [id], onDelete: SetNull)
 
   @@map("subscriptions")
+}
+
+model SubscriptionReminder {
+  id          Int    @id() @default(autoincrement())
+  property_id Int?
+  advisor_id  Int?
+  type        String
+
+  created_at DateTime @default(now()) @db.Date //تاریخ ارسال
+  updated_at DateTime @updatedAt //تاریخ  و ساعت  ارسال
+
+  property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
+  advisor  Advisor?  @relation(fields: [advisor_id], references: [id], onDelete: SetNull)
+
+  @@map("subscription_reminders")
 }
 
 // --------------------------------- PEAK DAYS --------------------------------- //

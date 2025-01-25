@@ -91,4 +91,59 @@ export class SmsService {
       this.logger.error(error);
     }
   }
+
+  async sendPropertySubscriptionReminder(
+    mobile: string,
+    fullName: string,
+    propertyTitle: string,
+    days: string,
+  ): Promise<void> {
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.propertySubscriptionReminderTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [
+          { name: 'Name', value: fullName },
+          { name: 'Title', value: propertyTitle },
+          { name: 'Days', value: days },
+        ],
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+  async sendAdvisorSubscriptionReminder(mobile: string, fullName: string, days: string): Promise<void> {
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.advisorSubscriptionReminderTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [
+          { name: 'Name', value: fullName },
+          { name: 'Days', value: days },
+        ],
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }
