@@ -9,6 +9,8 @@ import { NotificationMessagePayload } from 'firebase-admin/lib/messaging/messagi
 import { SocketService } from 'src/socket/socket.service';
 import { SocketEvents } from 'src/socket/common/socket-event.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { RequestType, UserType } from 'src/common/interfaces/user.interface';
+import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
 
 type NotificationUser = { id: number; role: UserRole };
 
@@ -31,19 +33,22 @@ export class NotificationSharedService {
    * @returns
    */
   async findAll(
-    userId: number,
+    user: UserType,
     dto: FindAllNotificationSharedDto,
     userRole?: UserRole,
   ): Promise<CursorPaginatedResult<Notification>> {
-    const query = this.makeBaseQuery(userId, userRole);
+    const query = this.makeBaseQuery(user, userRole);
 
     const result = await cursorPaginate()<Notification, Prisma.NotificationFindManyArgs>(
       this.db.notification,
-      { where: query },
+      {
+        where: query,
+        select: { id: true, title: true, body: true, is_sent_by_admin: true, created_at: true },
+      },
       { cursor: dto.cursor },
     );
 
-    await this.db.user.update({ where: { id: userId }, data: { notification_read_at: new Date() } });
+    await this.db.user.update({ where: { id: user.id }, data: { notification_read_at: new Date() } });
 
     return result;
   }
@@ -55,8 +60,8 @@ export class NotificationSharedService {
    * @param {Date} notificationReadAtDate
    * @returns
    */
-  async findBadgeCount(userId: number, notificationReadAtDate: Date, userRole?: UserRole): Promise<number> {
-    const query = this.makeBaseQuery(userId, userRole);
+  async findBadgeCount(user: UserType, notificationReadAtDate: Date, userRole?: UserRole): Promise<number> {
+    const query = this.makeBaseQuery(user, userRole);
 
     const count = await this.db.notification.count({
       where: { ...query, created_at: { gt: notificationReadAtDate } },
@@ -161,8 +166,16 @@ export class NotificationSharedService {
   /* -------------------------------------------------------------------------- */
   /*                                   HELPER                                   */
   /* -------------------------------------------------------------------------- */
-  makeBaseQuery(userId: number, userRole?: UserRole): any {
-    let query: Prisma.NotificationWhereInput = { user_id: userId, role: userRole };
+  makeBaseQuery(user: UserType, userRole?: UserRole): any {
+    let query: Prisma.NotificationWhereInput = {
+      OR: [
+        { user_id: user.id, role: UserRole.USER },
+        { topic: FirebaseTopicType.USER },
+        { topic: FirebaseTopicType.TEST },
+      ],
+    };
+    if (user?.advisor_id) query.OR.push({ topic: FirebaseTopicType.ADVISOR });
+    if (user?.owner_id) query.OR.push({ topic: FirebaseTopicType.OWNER });
 
     return query;
   }

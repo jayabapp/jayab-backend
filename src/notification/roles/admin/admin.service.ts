@@ -12,9 +12,6 @@ export class NotificationAdminService {
     private readonly socketService: SocketService,
   ) {}
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    FETCH                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * Find all notification
    *

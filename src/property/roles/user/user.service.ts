@@ -61,6 +61,9 @@ export class PropertyUserService {
       title,
       min_price,
       max_price,
+      max_building_area,
+      min_building_area,
+      q,
     } = dto;
 
     const today = await this.dayHelper.today();
@@ -98,6 +101,9 @@ export class PropertyUserService {
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
     if (code) query = { ...query, code };
+
+    /* ------------------------------------ q ----------------------------------- */
+    if (q) query = { ...query, OR: [{ title: { contains: q } }, { code: q }] };
 
     /* -------------------------------- province -------------------------------- */
     if (province_id) query = { ...query, province_id };
@@ -143,6 +149,10 @@ export class PropertyUserService {
         ...query,
         daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
       };
+
+    /* ------------------------------ building area ----------------------------- */
+    if (min_building_area >= 0 && max_building_area >= 0)
+      query = { ...query, building_area: { gte: min_building_area, lte: max_building_area } };
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
@@ -239,9 +249,10 @@ export class PropertyUserService {
    * @param id
    * @returns
    */
-  async findById(id: number): Promise<void> {
+  async findById(id: number): Promise<Property> {
     const item = await this.db.property.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
+    return item;
   }
 
   async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
