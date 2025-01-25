@@ -119,7 +119,7 @@ export class AdvisorUserService {
       include: { user: { select: { id: true } } },
     });
 
-    if (!item || item.user.id == userId) throw new NotFoundException('NOT_FOUND');
+    if (!item) throw new NotFoundException('NOT_FOUND');
     return item;
   }
 
