@@ -86,7 +86,7 @@ export class AdvisorUserService {
       },
     });
 
-    if (!item || item.user.id == userId) throw new NotFoundException('NOT_FOUND');
+    if (!item) throw new NotFoundException('NOT_FOUND');
 
     /*  */
     let result = {
