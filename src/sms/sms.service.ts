@@ -6,14 +6,19 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
+  isProduction: boolean;
 
   constructor(
     private readonly httpService: HttpService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.isProduction = process.env.NODE_ENV === 'production';
+  }
 
   async sendVerificationCode(mobile: string, code: string): Promise<void> {
     try {
+      if (!this.isProduction) return;
+
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.verificationTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
@@ -40,6 +45,8 @@ export class SmsService {
     status: string,
   ): Promise<void> {
     try {
+      if (!this.isProduction) return;
+
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.propertyStatusTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
@@ -69,6 +76,8 @@ export class SmsService {
     status: string,
   ): Promise<void> {
     try {
+      if (!this.isProduction) return;
+
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.propertyAuthStatusTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
@@ -98,6 +107,8 @@ export class SmsService {
     propertyTitle: string,
     days: string,
   ): Promise<void> {
+    if (!this.isProduction) return;
+
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.propertySubscriptionReminderTemplateId');
@@ -123,6 +134,8 @@ export class SmsService {
     }
   }
   async sendAdvisorSubscriptionReminder(mobile: string, fullName: string, days: string): Promise<void> {
+    if (!this.isProduction) return;
+
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.advisorSubscriptionReminderTemplateId');

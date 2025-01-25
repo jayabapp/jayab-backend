@@ -71,7 +71,8 @@ export class TasksService {
 
     if (property) {
       console.log('property found: ', property.id);
-      const days = property.subscription_expired_at === today ? 'امروز' : 'تا سه روز دیگر';
+      const days =
+        property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
       await this.smsService.sendPropertySubscriptionReminder(
         property.owner.user.mobile_number,
@@ -130,7 +131,7 @@ export class TasksService {
 
     if (advisor) {
       console.log('advisor found: ', advisor.id);
-      const days = advisor.subscription_expired_at === today ? 'امروز' : 'تا سه روز دیگر';
+      const days = advisor.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
       await this.smsService.sendAdvisorSubscriptionReminder(
         advisor.user.mobile_number,
         advisor.user.full_name,

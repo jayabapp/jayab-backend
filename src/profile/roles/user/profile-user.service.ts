@@ -14,6 +14,7 @@ import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class ProfileUserService {
@@ -267,6 +268,7 @@ export class ProfileUserService {
   async checkUserIsActiveAdvisor(authorization: string): Promise<{ isAdvisor: boolean; advisorId?: number }> {
     const token = authorization ? authorization?.split(' ')?.[1] : null;
     let userId;
+
     if (token) {
       const payload = await verifyUserTokenManualy(token);
       if (!payload) return { isAdvisor: false };
@@ -283,21 +285,9 @@ export class ProfileUserService {
     if (!user?.advisor) return { isAdvisor: false };
     if (user.advisor.status !== AdvisorStatus.APPROVED) return { isAdvisor: false };
 
-    if (moment().isBefore(user?.advisor?.subscription_expired_at)) {
+    if (startOfToday().getTime() <= (user?.advisor?.subscription_expired_at).getTime()) {
       return { isAdvisor: true, advisorId: user.advisor.id };
     }
     return { isAdvisor: false };
   }
-
-  // maskCriticalData(text: string, from: number, to: number): string {
-  //   if (!text) return '';
-
-  //   let maskArray: string[] = text?.split('')?.map((char, i) => {
-  //     if (i < from || i > to) return char;
-  //     return '*';
-  //   });
-  //   const masked: string = maskArray.join('');
-
-  //   return masked;
-  // }
 }
