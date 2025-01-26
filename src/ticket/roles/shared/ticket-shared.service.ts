@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ReplyTicketDto } from './dto/reply-ticket.dto';
-import { TicketCommonStatuses } from '../../common/ticket-status.constant';
+import { TicketCommonStatuses, TicketStatusList } from '../../common/ticket-status.constant';
 
 @Injectable()
 export class TicketSharedService {
@@ -51,6 +51,12 @@ export class TicketSharedService {
       },
       { page: page },
     );
+
+    // @ts-ignore
+    tickets.data = tickets.data.map((ticket) => ({
+      ...ticket,
+      status: TicketStatusList.find((e) => e.id === ticket.status),
+    }));
 
     return tickets;
   }
