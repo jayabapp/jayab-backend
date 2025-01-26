@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllNotificationAdminDto } from 'src/Notification/roles/admin/dto/find-all.dto';
+import { FindAllNotificationAdminDto } from 'src/notification/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
