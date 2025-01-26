@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, ParseIntPipe, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { USER_ROUTE_GROUP } from 'src/__base/common/route-group.constant';
 import { NotificationUserService } from './user.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { FindAllNotificationUserDto } from './dto/find-all.dto';
@@ -9,11 +8,12 @@ import { UserRole } from 'src/common/interfaces/role.enum';
 import { UserType, RequestType } from 'src/common/interfaces/user.interface';
 import { NotificationSharedService } from '../shared/shared.service';
 import { FindAllNotificationSharedDto } from '../shared/dto/find-all.dto';
+import { USER_NOTIFICATION_ROUTE_GROUP } from 'src/notification/common/route-group.constant';
 
 @ApiTags('Notification - USER')
 @UseGuards(UserJwtGuard)
 @ApiBearerAuth('user-jwt')
-@Controller(USER_ROUTE_GROUP)
+@Controller(USER_NOTIFICATION_ROUTE_GROUP)
 export class NotificationUserController {
   constructor(private readonly notificationSharedService: NotificationSharedService) {}
 
