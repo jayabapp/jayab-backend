@@ -11,6 +11,7 @@ import {
   Delete,
   Put,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { TicketAdminService } from './ticket-admin.service';
@@ -20,47 +21,38 @@ import { FindAllTicketAdminDto } from './dto/find-all-ticket-admin.dto';
 import qs from 'qs';
 import { AccessControlList } from '@prisma/client';
 import { TICKET_ROUTE_GROUP } from '../../common/route-group.constant';
+import { filterValidator } from 'src/ticket/common/helpers/filter-validator.helper';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
 
 @ApiTags('👨‍💻 Ticket - ADMIN')
 @ApiBearerAuth('admin-jwt')
 @UseGuards(AdminJwtGuard)
 @Controller(`admin/${TICKET_ROUTE_GROUP}`)
 export class TicketAdminController {
-  constructor(private readonly ticketAdminService: TicketAdminService) {}
+  constructor(
+    private readonly ticketAdminService: TicketAdminService,
+    private readonly notificationService: NotificationSharedService,
+  ) {}
 
   /* -------------------------------- FIND ALL -------------------------------- */
   @ApiOperation({ operationId: 'Find All', description: '' })
-  @ApiQuery({
-    name: 'filters',
-    required: false,
-    type: 'string',
-    example: 'filters[title][contains]=titleName',
-    description: 'filters[field][operator]=value',
-  })
   @Get()
   async findAll(@Query() dto: FindAllTicketAdminDto): Promise<SuccessResponseArgs> {
-    if (typeof dto.filters === 'string') {
-      const parsedFilters = qs.parse(dto.filters, {
-        parameterLimit: 10, // Adjust this limit as needed
-      });
+    const filterQuery = filterValidator(dto);
+    if (!filterQuery) throw new BadRequestException('FILTER1');
 
-      dto.filters = parsedFilters.filters;
-    }
-
-    await this.ticketAdminService.validateFilters(dto.filters);
-    const result = await this.ticketAdminService.findAll(dto);
+    const result = await this.ticketAdminService.findAll(filterQuery, dto.page, dto.per_page);
 
     return { result };
   }
-
   /* ------------------------------- MODEL PROPS ------------------------------ */
   @ApiOperation({ operationId: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
-
     const result = await this.ticketAdminService.findModelProps(rbac);
-
     return { result };
   }
 
@@ -80,7 +72,18 @@ export class TicketAdminController {
     @Param('id', ParseIntPipe) ticketId: number,
     @Body() dto: ReplyTicketDto,
   ): Promise<SuccessResponseArgs> {
-    await this.ticketAdminService.replyTicket(ticketId, dto);
+    const updatedTicket = await this.ticketAdminService.replyTicket(ticketId, dto);
+
+    await this.notificationService.createNotification({
+      user: { id: updatedTicket?.user_id, role: UserRole.USER },
+      mustSendNotif: true,
+      notification: {
+        title: 'پاسخ تیکت',
+        body: `تیکت شماره ${updatedTicket.id} توسط کاربر پاسخ داده شد`,
+      },
+      notificationType: NotificationTypes.NEW_TICKET,
+      notificationableId: updatedTicket?.id?.toString(),
+    });
 
     return { messageCode: 'TICKET_REPLY_SUBMITED_SUCCESSFULLY' };
   }
