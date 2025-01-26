@@ -89,7 +89,7 @@ export class LandingPageUserService {
 
     return {
       query: {
-        with_pool: landing.has_pool ? 1 : 0,
+        has_pool: landing.has_pool ? 1 : 2, //دو میدیم که توی فیلتر ملک ها اشتباهی بدون استخرها رو نیاره
         has_discount: landing.min_discount_percentage > 0 ? 1 : 0,
         is_premium: landing.is_premium ? 1 : 0,
         cities: cities.map((e) => e.id),
