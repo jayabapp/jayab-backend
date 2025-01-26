@@ -80,7 +80,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
 
   @ApiProperty({ required: false, title: 'فقط استخردار' })
   @Type(() => Number)
-  @_IsIn([0, 1])
+  @_IsIn([0, 1, 2])
   @IsOptional()
   has_pool?: number;
 

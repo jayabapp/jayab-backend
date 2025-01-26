@@ -28,6 +28,7 @@ import { ConfigService } from '@nestjs/config';
 import { BookmarkUserService } from 'src/bookmark/roles/user/bookmark.service';
 import { FavoriteUserService } from 'src/favorite/roles/user/user.service';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 
 @ApiTags('🔐 Auth - USER')
 @Controller(USER_AUTH_ROUTE_GROUP)
@@ -40,6 +41,7 @@ export class AuthUserController {
     private readonly config: ConfigService,
     private readonly bookmarkUserService: BookmarkUserService,
     private readonly favoriteUserService: FavoriteUserService,
+    private readonly profileUserService: ProfileUserService,
   ) {}
 
   @Throttle({ default: { limit: 3, ttl: 30000 } })
@@ -176,7 +178,8 @@ export class AuthUserController {
     const user = req.user;
     const bookmarks = await this.bookmarkUserService.findAllIds(user.id);
     const favorites = await this.favoriteUserService.findAllIds(user.id);
-    return { result: { bookmarks, favorites } };
+    const isValidAdvisor = await this.profileUserService.checkUserIsActiveAdvisor('', user.id);
+    return { result: { bookmarks, favorites, isValidAdvisor } };
   }
 
   // @ApiOperation({ operationId: 'Get private key' })

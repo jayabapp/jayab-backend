@@ -171,7 +171,7 @@ export class PropertyUserService {
         orderByQuery = { favorite_count: 'desc' };
         break;
       case 'newset':
-        orderByQuery = { created_at: 'desc' };
+        orderByQuery = { sort_order: 'desc' };
         break;
       case 'price_asc':
         orderByQuery = { daily_price: { [today]: 'asc' } };

@@ -265,13 +265,18 @@ export class ProfileUserService {
     });
   }
 
-  async checkUserIsActiveAdvisor(authorization: string): Promise<{ isAdvisor: boolean; advisorId?: number }> {
+  async checkUserIsActiveAdvisor(
+    authorization: string,
+    explicitUserId?: number,
+  ): Promise<{ isAdvisor: boolean; advisorId?: number }> {
     const token = authorization ? authorization?.split(' ')?.[1] : null;
     let userId;
 
-    if (token) {
+    if (explicitUserId) userId = explicitUserId;
+    else if (token) {
       const payload = await verifyUserTokenManualy(token);
       if (!payload) return { isAdvisor: false };
+
       userId = payload.id;
     } else return { isAdvisor: false };
 
