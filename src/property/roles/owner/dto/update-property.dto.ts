@@ -174,13 +174,13 @@ export class UpdatePropertyStepOneOwnerDto {
 
   @ApiProperty({ required: true, default: false })
   @_IsBoolean()
-  @_IsNotEmpty()
-  is_chat_enabled: boolean;
+  @IsOptional()
+  is_chat_enabled = false;
 
   @ApiProperty({ required: true, default: false })
   @_IsBoolean()
-  @_IsNotEmpty()
-  is_location_visible: boolean;
+  @IsOptional()
+  is_location_visible = false;
 }
 
 export class UpdatePropertyLocationOwnerDto {

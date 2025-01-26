@@ -7,7 +7,10 @@ import { User } from '@prisma/client';
 
 @Injectable()
 export class UserAuthJwtStrategy extends PassportStrategy(Strategy, 'user-auth-jwt') {
-  constructor(private readonly db: PrismaService, private configService: ConfigService) {
+  constructor(
+    private readonly db: PrismaService,
+    private configService: ConfigService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: configService.get('userAuth.secret'),

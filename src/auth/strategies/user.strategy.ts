@@ -21,10 +21,18 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
   public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
     const user = await this.db.user.findFirst({
       where: { id: payload.id, jwt_level: payload.jwtLevel },
-      select: { id: true, mobile_number: true, advisor_id: true, owner_id: true, notification_read_at: true },
+      select: {
+        id: true,
+        mobile_number: true,
+        advisor_id: true,
+        owner_id: true,
+        notification_read_at: true,
+        is_banned: true,
+      },
     });
 
     if (!user) throw new UnauthorizedException();
+    if (user.is_banned) throw new UnauthorizedException('AUTH10');
 
     return user;
   }

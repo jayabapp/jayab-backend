@@ -389,6 +389,7 @@ export class PropertyUserService {
   async searchSuggestions(dto: PropertySearchSuggestuibUserDto): Promise<any> {
     const properties = await this.db.property.findMany({
       where: {
+        ...this.validProperty(),
         OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[],
       },
       select: { id: true, title: true, slug: true },

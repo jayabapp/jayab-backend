@@ -22,7 +22,11 @@ export class AdvisorUserService {
   async findAll(dto: FindAllAdvisorUserDto): Promise<any> {
     /*  */
     let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED };
-    if (dto.q) query = { ...query, user: { full_name: { contains: dto.q } } };
+    if (dto.q)
+      query = {
+        ...query,
+        user: { OR: [{ full_name: { contains: dto.q } }, { referral_code: dto.q }] },
+      };
     if (dto.cities) {
       const cities = parseQueryNumberArray(dto.cities);
       query = { ...query, cities: { some: { id: { in: cities } } } };

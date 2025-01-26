@@ -21,14 +21,16 @@ export class PropertyAuthorizeOwnerService {
    * @param dto
    * @returns
    */
-  async create(dto: CreatePropertyAuthorizeOwnerDto): Promise<PropertyAuthorize> {
-    const newPropertyAuthorize = await this.db.propertyAuthorize.create({
-      data: {
+  async create(propertyId: number, dto: CreatePropertyAuthorizeOwnerDto): Promise<PropertyAuthorize> {
+    const newPropertyAuthorize = await this.db.propertyAuthorize.upsert({
+      where: { property_id: propertyId },
+      create: {
         nc_image_id: dto.nc_image_id,
         property_id: dto.property_id,
         status: PropertyAuthorizeStatuses.PENDING,
         docs: { connect: dto.docs?.map((e) => ({ id: +e })) },
       },
+      update: {},
     });
     return newPropertyAuthorize;
   }

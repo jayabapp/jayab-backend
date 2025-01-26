@@ -55,7 +55,7 @@ export class PropertyAuthorizeOwnerController {
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
 
-    const result = await this.propertyAuthorizeOwnerService.create(dto);
+    const result = await this.propertyAuthorizeOwnerService.create(property.id, dto);
 
     /* ---------------------------- SEND NOTIFICATION --------------------------- */
     await this.notificationSharedService.createNotification({
@@ -92,7 +92,7 @@ export class PropertyAuthorizeOwnerController {
     const result = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
     const formatted = {
       ...result,
-      status: PropertyAuthorizeStatusesList.find((e) => e.id === result.status),
+      status: result ? PropertyAuthorizeStatusesList.find((e) => e.id === result.status) : null,
     };
     return { result: formatted };
   }

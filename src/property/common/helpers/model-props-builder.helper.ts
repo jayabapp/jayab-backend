@@ -112,7 +112,7 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { state: 'std_capacity', title: 'ظرفیت استاندارد میهمان', value: item.std_capacity, type: 'number' },
     { state: 'max_capacity', title: 'حداکثر ظرفیت میهمان', value: item.max_capacity, type: 'number' },
     { type: 'break' },
-    { state: 'normal', title: 'قیمت شنبه تا سه شنبه', value: dailyPrice.normal, type: 'number' },
+    { state: 'normal', title: 'قیمت شنبه تا سه شنبه', value: dailyPrice?.normal, type: 'number' },
     { state: 'wednesday', title: 'قیمت چهارشنبه', value: dailyPrice.wednesday, type: 'number' },
     { state: 'thursday', title: 'قیمت پنجشنبه', value: dailyPrice.thursday, type: 'number' },
     { state: 'friday', title: 'قیمت جمعه', value: dailyPrice.friday, type: 'number' },
