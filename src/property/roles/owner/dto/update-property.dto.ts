@@ -230,19 +230,19 @@ export class UpdatePropertyEnvOwnerDto {
 
   @ApiProperty({ required: true, title: 'همسایگی', default: 14 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.NEIGHBORHOOD])
-  @IsOptional()
+  @_IsNotEmpty()
   neighborhood: number;
 
   @ApiProperty({ title: 'توضیحات بافت' })
   @_IsString()
   @_MaxLength(200)
-  @IsOptional()
+  @_IsNotEmpty()
   pattern_dscr: string;
 
   @ApiProperty({ title: 'توضیحات فاصله' })
   @_IsString()
   @_MaxLength(200)
-  @IsOptional()
+  @_IsNotEmpty()
   distance_dscr: string;
 }
 
@@ -467,18 +467,16 @@ export class UpdatePropertyTermsOwnerDto {
   canceling_type: CancelingType;
 
   @ApiProperty({ required: true, default: 14 })
-  @_Max(24)
-  @_Min(1)
-  @Type(() => Number)
+  @_Length(1, 128)
+  @_IsString()
   @_IsNotEmpty()
-  check_in_hour: number;
+  check_in_hour: string;
 
   @ApiProperty({ required: true, default: 12 })
-  @_Max(24)
-  @_Min(1)
-  @Type(() => Number)
+  @_Length(1, 128)
+  @_IsString()
   @_IsNotEmpty()
-  check_out_hour: number;
+  check_out_hour: string;
 
   @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
   @_IsString()
