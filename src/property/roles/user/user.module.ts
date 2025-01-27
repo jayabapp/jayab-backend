@@ -7,7 +7,7 @@ import { ProfileUserModule } from 'src/profile/roles/user/profile-user.module';
 import { PropertyOwnerModule } from '../owner/owner.module';
 
 @Module({
-  imports: [ProfileUserModule, PropertyOwnerModule],
+  imports: [ProfileUserModule, PropertyOwnerModule, ProfileUserModule],
   controllers: [PropertyUserController],
   providers: [PropertyUserService, PropertySerializer, DayHelper],
   exports: [PropertyUserService],

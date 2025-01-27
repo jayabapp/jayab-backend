@@ -602,6 +602,7 @@ export class PropertyOwnerService {
     month: number,
     year: number,
     isAdvisor = false,
+    isOwner = false,
   ): Promise<any> {
     const calendar = await this.db.propertyCalendar.findMany({
       where: { property_id: property.id, month, year },
@@ -630,9 +631,9 @@ export class PropertyOwnerService {
         price: cal?.price ?? dailyPrice[today],
         discounted_price: cal?.discounted_price ?? null,
         note: cal?.note ?? null,
-        is_reserved: isAdvisor ? null : cal?.is_reserved ?? null, // just for owner
+        is_reserved: isOwner || isAdvisor ? cal?.is_reserved : null,
         is_peak: isPeak,
-        advisor_commission: isAdvisor ? null : cal?.advisor_commission ?? property.advisor_commission, // just for owner
+        advisor_commission: !isOwner ? null : cal?.advisor_commission ?? property.advisor_commission, // just for owner
       });
     }
 
