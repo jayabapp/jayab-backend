@@ -633,7 +633,7 @@ export class PropertyOwnerService {
         note: cal?.note ?? null,
         is_reserved: isOwner || isAdvisor ? cal?.is_reserved : null,
         is_peak: isPeak,
-        advisor_commission: !isOwner ? null : cal?.advisor_commission ?? property.advisor_commission, // just for owner
+        advisor_commission: isOwner ? cal?.advisor_commission || property.advisor_commission : null, // just for owner
       });
     }
 
