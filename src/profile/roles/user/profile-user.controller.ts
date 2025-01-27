@@ -156,12 +156,15 @@ export class ProfileUserController {
 
     /* -------------------------------------------------------------------------- */
     // check duplicate request
-    if (user.advisor_id) throw new BadRequestException('REGISTER1');
+    if (user.advisor_id) await this.profileUserService.checkCanUpdateAdvisor(user, dto.is_special);
 
     /* -------------------------------------------------------------------------- */
     // check the national code repetition, images and cities
     if (dto.is_special) {
-      const nationalCodeIsInUse = await this.advisorUserService.findOneByNationalCode(dto.national_code);
+      const nationalCodeIsInUse = await this.advisorUserService.findOneByNationalCode(
+        user.advisor_id,
+        dto.national_code,
+      );
       if (nationalCodeIsInUse) throw new ConflictException('REGISTER2');
 
       const images = [dto.profile_image_id, dto.document_image_id, dto.national_card_image_id];
@@ -171,7 +174,7 @@ export class ProfileUserController {
     }
 
     /* -------------------------------------------------------------------------- */
-    const advisor = await this.profileUserService.registerAdvisor(user.id, dto);
+    const advisor = await this.profileUserService.registerAdvisor(user, dto);
 
     /* -------------------------------------------------------------------------- */
     // send notif to admin

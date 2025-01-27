@@ -132,8 +132,10 @@ export class AdvisorUserService {
    * @param nationalCode
    * @returns
    */
-  async findOneByNationalCode(nationalCode: string): Promise<Advisor> {
-    const item = await this.db.advisor.findUnique({ where: { national_code: nationalCode } });
+  async findOneByNationalCode(advisorId: number, nationalCode: string): Promise<Advisor> {
+    let query: Prisma.AdvisorWhereInput = { national_code: nationalCode };
+    if (advisorId) query = { ...query, id: { not: advisorId } };
+    const item = await this.db.advisor.findFirst({ where: query });
     return item;
   }
 

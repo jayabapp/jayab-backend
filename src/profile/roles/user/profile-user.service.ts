@@ -76,7 +76,7 @@ export class ProfileUserService {
    * @param dto
    * @returns
    */
-  async registerAdvisor(userId: number, dto: RegisterAdvisorUserDto): Promise<Advisor> {
+  async registerAdvisor(user: PartialUser, dto: RegisterAdvisorUserDto): Promise<Advisor> {
     const fullName = dto.full_name;
     const profileImageId = dto.profile_image_id;
     delete dto.full_name;
@@ -94,10 +94,12 @@ export class ProfileUserService {
     }
 
     const newAdvisor = await this.db.$transaction(async (tx) => {
-      const advisor = await tx.advisor.create({ data });
+      let advisor: Advisor;
+      if (user.advisor_id) advisor = await tx.advisor.update({ where: { id: user.advisor_id }, data });
+      else advisor = await tx.advisor.create({ data });
 
       await tx.user.update({
-        where: { id: userId },
+        where: { id: user.id },
         data: {
           full_name: fullName,
           profile_image_id: profileImageId,
@@ -109,6 +111,11 @@ export class ProfileUserService {
     });
 
     return newAdvisor;
+  }
+
+  async checkCanUpdateAdvisor(user: PartialUser, isSpecial: boolean): Promise<void> {
+    const advisor = await this.db.advisor.findUnique({ where: { id: user.advisor_id } });
+    if (advisor.is_special && isSpecial) throw new BadRequestException('REGISTER1');
   }
 
   /**

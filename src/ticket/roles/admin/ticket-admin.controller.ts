@@ -79,7 +79,7 @@ export class TicketAdminController {
       mustSendNotif: true,
       notification: {
         title: 'پاسخ تیکت',
-        body: `تیکت شماره ${updatedTicket.id} توسط کاربر پاسخ داده شد`,
+        body: `تیکت شما با عنوان ${updatedTicket.title} توسط ادمین پاسخ داده شد`,
       },
       notificationType: NotificationTypes.NEW_TICKET,
       notificationableId: updatedTicket?.id?.toString(),
