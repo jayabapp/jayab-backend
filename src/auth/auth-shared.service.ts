@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOTPDto } from 'src/auth/roles/user/dto/auth-user.dto';
@@ -29,8 +29,11 @@ export class AuthSharedService {
     let rand = '';
 
     /* -------------------------------------------------------------------------- */
-    if (whom == 'user') rand = random(1000, 9999).toString();
-    else if (whom == 'admin')
+    if (whom == 'user') {
+      const isUserBanned = await this.db.user.findFirst({ where: { mobile_number, is_banned: true } });
+      if (isUserBanned) throw new BadRequestException('AUTH10');
+      rand = random(1000, 9999).toString();
+    } else if (whom == 'admin')
       rand =
         this.configService.get('adminAuth.enableTwoStepVerification') == '1'
           ? random(10000, 99999).toString()
