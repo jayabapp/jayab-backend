@@ -25,6 +25,9 @@ import { AdvisorUserService } from 'src/advisor/roles/user/user.service';
 import { CitySharedService } from 'src/city/shared.service';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -38,6 +41,7 @@ export class ProfileUserController {
     private readonly advisorUserService: AdvisorUserService,
     private readonly citySharedService: CitySharedService,
     private readonly firebaseService: FirebaseService,
+    private readonly notificationService: NotificationSharedService,
   ) {}
 
   @ApiOperation({ operationId: 'Get user profile' })
@@ -123,6 +127,19 @@ export class ProfileUserController {
     // TODO: validate the national code
     await this.profileUserService.validateNationalCodeWebService(owner);
 
+    /* -------------------------------------------------------------------------- */
+    // send notif to admin
+    await this.notificationService.createNotification({
+      user: { id: null, role: UserRole.ADMIN },
+      mustSendNotif: true,
+      notification: {
+        title: 'مالک جدید',
+        body: `${dto.full_name} نقش مالک خود را ثبت کرد`,
+      },
+      notificationType: NotificationTypes.NEW_OWNER_ACCOUNT,
+      notificationableId: owner.id.toString(),
+    });
+
     return { messageCode: 'CREATE' };
   }
 
@@ -154,7 +171,20 @@ export class ProfileUserController {
     }
 
     /* -------------------------------------------------------------------------- */
-    await this.profileUserService.registerAdvisor(user.id, dto);
+    const advisor = await this.profileUserService.registerAdvisor(user.id, dto);
+
+    /* -------------------------------------------------------------------------- */
+    // send notif to admin
+    await this.notificationService.createNotification({
+      user: { id: null, role: UserRole.ADMIN },
+      mustSendNotif: true,
+      notification: {
+        title: 'مشاور جدید',
+        body: `${dto.full_name} نقش مشاور خود را ثبت کرد`,
+      },
+      notificationType: NotificationTypes.NEW_ADVISOR_ACCOUNT,
+      notificationableId: advisor.id.toString(),
+    });
 
     return { messageCode: 'CREATE' };
   }

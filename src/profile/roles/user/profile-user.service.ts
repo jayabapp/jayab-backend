@@ -4,9 +4,9 @@ import { Advisor, Owner, Prisma, User } from '@prisma/client';
 import { PartialUser, UserType } from 'src/common/interfaces/user.interface';
 import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.dto';
 import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
-import { OwnerStatus } from 'src/owner/common/owner-status.type';
+import { OwnerStatus, OwnerStatusList } from 'src/owner/common/owner-status.type';
 import { AdvisorStatus, AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
-import { first } from 'lodash';
+import { first, last } from 'lodash';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import moment from 'moment-jalaali';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
@@ -139,7 +139,7 @@ export class ProfileUserService {
    * @returns
    */
   async findOwnerProfile(userId: number): Promise<Partial<User>> {
-    const data = await this.db.owner.findFirst({
+    let data = await this.db.owner.findFirst({
       where: { user: { id: userId } },
       select: {
         id: true,
@@ -154,6 +154,18 @@ export class ProfileUserService {
       },
     });
 
+    if (data) {
+      data = {
+        ...data,
+        // @ts-ignore
+        admin_description: last(data.admin_descriptions)?.description,
+        // @ts-ignore
+        status: OwnerStatusList.find((e) => e.id == data.status),
+      };
+    }
+
+    delete data?.admin_descriptions;
+
     return data;
   }
 
@@ -163,7 +175,7 @@ export class ProfileUserService {
    * @returns
    */
   async findAdvisorProfile(userId: number): Promise<Partial<User>> {
-    const data = await this.db.advisor.findFirst({
+    let data = await this.db.advisor.findFirst({
       where: { user: { id: userId } },
       select: {
         id: true,
@@ -176,8 +188,17 @@ export class ProfileUserService {
       },
     });
 
-    // @ts-ignore
-    if (data) data.status = AdvisorStatusList.find((e) => e.id == data.status);
+    if (data) {
+      data = {
+        ...data,
+        // @ts-ignore
+        admin_description: last(data.admin_descriptions)?.description,
+        // @ts-ignore
+        status: AdvisorStatusList.find((e) => e.id == data.status),
+      };
+    }
+
+    delete data?.admin_descriptions;
 
     return data;
   }
@@ -290,7 +311,7 @@ export class ProfileUserService {
     if (!user?.advisor) return { isAdvisor: false };
     if (user.advisor.status !== AdvisorStatus.APPROVED) return { isAdvisor: false };
 
-    if (startOfToday().getTime() <= (user?.advisor?.subscription_expired_at).getTime()) {
+    if (startOfToday().getTime() <= user?.advisor?.subscription_expired_at?.getTime()) {
       return { isAdvisor: true, advisorId: user.advisor.id };
     }
     return { isAdvisor: false };

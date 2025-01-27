@@ -22,6 +22,7 @@ import { EditAdminDto, SignUpAdminDto } from './dto/signup-admin.dto';
 import { hashPassword } from 'src/auth/common/helpers/admin-password-hash.helper';
 import { AdminRole } from './common/admin-roles.enum';
 import { UpdateRoleNotifPermissionDto } from './dto/update-role-notif-permission.dto';
+import { NotificationPermissionList } from 'src/firebase/constants/notif-types';
 
 @Injectable()
 export class AccessControlService {
@@ -272,14 +273,7 @@ export class AccessControlService {
   /*                              NOTIF PERMISSION                              */
   /* -------------------------------------------------------------------------- */
   async findNotifPermissionSelectableItems(): Promise<any> {
-    const list = [
-      { id: 1, title: 'تیکت جدید', value: 'NewTicket' },
-      { id: 2, title: 'کاربر جدید', value: 'NewUserAccount' },
-      { id: 3, title: 'احراز ملک جدید', value: 'NewPropertyAuth' },
-      { id: 4, title: 'درخواست ممتاز شدن ملک', value: 'NewPropertyBadge' },
-    ];
-
-    return list;
+    return NotificationPermissionList;
   }
 
   async findAdminNotifPermission(roleId: number): Promise<any> {

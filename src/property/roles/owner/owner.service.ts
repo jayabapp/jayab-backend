@@ -1,14 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, Owner, User, SubscriptionPlan, PropertyStatistics } from '@prisma/client';
+import { Property, Prisma, SubscriptionPlan, PropertyStatistics } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { random } from 'lodash';
-import { FindAllPropertyOwnerDto } from './dto/find-all.dto';
 import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
-import { CreatePropertyOwnerDto } from './dto/create.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -20,7 +17,6 @@ import {
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { RentType } from 'src/property/common/types/property-rent-types.type';
 import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
