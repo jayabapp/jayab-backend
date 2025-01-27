@@ -44,9 +44,9 @@ export class RegisterAdvisorUserDto {
   full_name: string;
 
   @ApiProperty({ required: false, default: 'آدرس تست' })
-  @_Length(1, 512)
+  @_Length(0, 512)
   @_IsString()
-  @_IsNotEmpty()
+  @IsOptional()
   address: string;
 
   @ApiProperty({ default: '0603400000', required: false })

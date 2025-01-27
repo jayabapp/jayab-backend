@@ -196,9 +196,8 @@ export class PropertySerializer {
       province: data.province?.title,
       city: data.city?.title,
       region: data.region?.title,
-      advisor_commission: !isAdvisor
-        ? null
-        : data.calendar?.[0]?.advisor_commission ?? data.advisor_commission,
+      advisor_commission:
+        !isAdvisor && !isOwner ? null : data.calendar?.[0]?.advisor_commission ?? data.advisor_commission,
       today_price: this.findTodayPrice(data.calendar?.[0], today, data.daily_price),
       is_today_reserved: !!data.calendar?.[0]?.is_reserved,
       is_authorized: data.is_authorized,

@@ -2,10 +2,11 @@ import { BadRequestException, Injectable, NotAcceptableException, NotFoundExcept
 import { Prisma, Ticket, User } from '@prisma/client';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ReplyTicketDto } from './dto/reply-ticket.dto';
 import { TicketCommonStatuses, TicketStatusList } from '../../common/ticket-status.constant';
+import { UserRole } from 'src/common/interfaces/role.enum';
 
 @Injectable()
 export class TicketSharedService {
@@ -24,15 +25,20 @@ export class TicketSharedService {
   async create(userId: number, dto: CreateTicketDto): Promise<{ ticket: Ticket; user: User }> {
     const user = await this.db.user.findUnique({ where: { id: userId } });
 
-    const tickets = await this.db.ticket.findMany({
-      where: { user_id: user?.id, replies: undefined },
+    const waitingTickets = await this.db.ticket.findMany({
+      where: { user_id: userId, replies: undefined, status: TicketCommonStatuses.WAITING },
     });
 
-    if (tickets.length === 10) throw new BadRequestException('TICKET1');
+    if (waitingTickets.length >= 5) throw new BadRequestException('TICKET1');
 
     const result = await this.db.ticket.create({
-      data: { ...dto, user_id: user?.id, status: TicketCommonStatuses.WAITING },
+      data: {
+        ...dto,
+        user_id: userId,
+        status: TicketCommonStatuses.WAITING,
+      },
     });
+
     return { user, ticket: result };
   }
 
@@ -41,12 +47,18 @@ export class TicketSharedService {
    * @param userId
    * @returns
    */
-  async findAll(userId: number, page: number): Promise<PaginatedResult<Ticket>> {
+  async findAll(user: any, page: number): Promise<PaginatedResult<Ticket>> {
     const tickets = await paginate()<Ticket, Prisma.TicketFindManyArgs>(
       this.db.ticket,
       {
-        where: { user_id: userId },
-        select: { id: true, title: true, message: true, status: true, created_at: true },
+        where: { user_id: user.id },
+        select: {
+          id: true,
+          title: true,
+          message: true,
+          status: true,
+          created_at: true,
+        },
         orderBy: { id: 'desc' },
       },
       { page: page },
@@ -67,14 +79,15 @@ export class TicketSharedService {
    * @param ticketId
    * @returns
    */
-  async findOne(userId: number, ticketId: number): Promise<Partial<Ticket>> {
+  async findOne(user: any, ticketId: number): Promise<Partial<Ticket>> {
     const ticket = await this.db.ticket.findUnique({
       where: {
         id: ticketId,
+        user_id: user.id,
       },
       select: {
-        id: true,
         user_id: true,
+        id: true,
         title: true,
         message: true,
         status: true,
@@ -90,7 +103,7 @@ export class TicketSharedService {
       },
     });
 
-    if (ticket === null || ticket.user_id != userId) throw new NotFoundException('NOT_FOUND');
+    if (!ticket) throw new NotFoundException('NOT_FOUND');
 
     return ticket;
   }
@@ -101,37 +114,22 @@ export class TicketSharedService {
    * @param ticketId
    * @param dto
    */
-  async replyTicket(userId: number, ticketId: number, dto: ReplyTicketDto): Promise<void> {
-    const ticket = await this.db.ticket.findUnique({
-      where: {
-        id: ticketId,
-      },
-    });
+  async replyTicket(user: any, ticketId: number, dto: ReplyTicketDto): Promise<Ticket> {
+    const ticket = await this.db.ticket.findUnique({ where: { id: ticketId, user_id: user.id } });
 
-    if (ticket === null || ticket.user_id != userId) throw new NotFoundException('NOT_FOUND');
+    if (!ticket) throw new NotFoundException('NOT_FOUND');
 
-    // Check ticket status that be in REPLIED status
-    if (ticket.status != TicketCommonStatuses.REPLIED)
-      throw new NotAcceptableException(
-        'تنها در صورتی که تیکت در وضعیت پاسخ داده شده باشد امکان ثبت پاسخ جدید وجود دارد',
-      );
+    // Check ticket status that be open
+    if (ticket.status === TicketCommonStatuses.CLOSED) throw new NotAcceptableException('TICKET2');
 
     // Save reply
-    await this.db.ticketReplies.create({
-      data: {
-        ticket: { connect: { id: ticketId } },
-        message: dto.message,
-      },
-    });
+    await this.db.ticketReplies.create({ data: { ticket_id: ticketId, message: dto.message } });
 
     // Change ticket status to WAITING
-    await this.db.ticket.update({
-      where: {
-        id: ticket.id,
-      },
-      data: {
-        status: TicketCommonStatuses.WAITING,
-      },
+    const updatedTicket = await this.db.ticket.update({
+      where: { id: ticket.id },
+      data: { status: TicketCommonStatuses.WAITING },
     });
+    return updatedTicket;
   }
 }

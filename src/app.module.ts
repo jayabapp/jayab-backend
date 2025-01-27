@@ -83,7 +83,8 @@ import { BaseModule as BaseModule } from './__base/base.module';
     }),
     MulterModule.register(multerOptions),
     FirebaseModule.forRoot({
-      configPath: __baseDir + '/src/common/utils/constants/modmall-firebase-adminsdk-ynl0k-479f63222c.json',
+      configPath:
+        __baseDir + '/src/common/utils/constants/jayab-test-firebase-adminsdk-fbsvc-bcf224fe8e.json',
     }),
     CacheModule.register({
       // ttl: 60 * 1000,

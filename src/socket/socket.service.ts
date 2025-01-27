@@ -114,7 +114,7 @@ export class SocketService {
   /*                                EMIT METHODS                                */
   /* -------------------------------------------------------------------------- */
 
-  emit(ids: number[], event: SocketEmitEvent, role = UserRole.USER): void {
+  emit(ids: number[], event: SocketEmitEvent, role: UserRole): void {
     for (const id of ids) {
       this.socket.in(this.createRoomKey(id, role)).emit(event.name, event);
     }

@@ -90,7 +90,7 @@ export class DashboardService {
         title: 'تعداد تیکت ها',
         sub_title: 'در انتظار پاسخ',
         value: pendingTickets,
-        route: '/tickets',
+        route: '/tickets?status=1',
       },
       {
         id: random(0, 1000000),

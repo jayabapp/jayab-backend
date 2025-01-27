@@ -113,22 +113,30 @@ export class NotificationSharedService {
         ids.push(admin.id);
         await this.create({ id: admin.id, role: UserRole.ADMIN }, notification, eventData);
       }
-      this.socketService.emit(ids, {
-        name: SocketEvents.NEW_NOTIFICATION,
-        eventData,
-        type: 'info',
-        title: notification.title,
-        body: notification.body,
-      });
+      this.socketService.emit(
+        ids,
+        {
+          name: SocketEvents.NEW_NOTIFICATION,
+          eventData,
+          type: 'info',
+          title: notification.title,
+          body: notification.body,
+        },
+        UserRole.ADMIN,
+      );
       console.log(`notif sent to ADMIN ID: ${ids?.join('-')}`);
     } else {
-      this.socketService.emit([user.id], {
-        name: SocketEvents.NEW_NOTIFICATION,
-        eventData,
-        type: 'info',
-        title: notification.title,
-        body: notification.body,
-      });
+      this.socketService.emit(
+        [user.id],
+        {
+          name: SocketEvents.NEW_NOTIFICATION,
+          eventData,
+          type: 'info',
+          title: notification.title,
+          body: notification.body,
+        },
+        UserRole.USER,
+      );
       await this.create({ id: user.id, role: UserRole.USER }, notification, eventData);
       console.log(`notif sent to USER ID: ${user.id}`);
     }

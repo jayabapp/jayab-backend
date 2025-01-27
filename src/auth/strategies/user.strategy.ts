@@ -27,12 +27,10 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         advisor_id: true,
         owner_id: true,
         notification_read_at: true,
-        is_banned: true,
       },
     });
 
     if (!user) throw new UnauthorizedException();
-    if (user.is_banned) throw new UnauthorizedException('AUTH10');
 
     return user;
   }

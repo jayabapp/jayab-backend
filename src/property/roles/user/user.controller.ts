@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/f
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { PropertyOwnerService } from '../owner/owner.service';
+import { RequestType } from 'src/common/interfaces/user.interface';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -68,14 +70,17 @@ export class PropertyUserController {
   }
 
   @ApiOperation({ operationId: 'Find One Calendar' })
+  @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/month-calendar')
   async findOneCalendar(
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Query('month', ParseIntPipe) month: number,
     @Query('year', ParseIntPipe) year: number,
+    @Headers('authorization') authorization?: string,
   ) {
+    const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const property = await this.propertyUserService.findById(propertyId);
-    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, true);
+    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, isAdvisor);
     // const peakDays =
     return { result };
   }

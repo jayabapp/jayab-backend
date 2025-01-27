@@ -547,8 +547,8 @@ model Property {
   max_capacity            Int?
   canceling_type          String?
   advisor_commission      Int       @default(0) @db.SmallInt
-  check_in_hour           Int?      @db.SmallInt
-  check_out_hour          Int?      @db.SmallInt
+  check_in_hour           String?
+  check_out_hour          String?
   subscription_expired_at DateTime? @db.Date
   sort_order              BigInt    @default(0) // timestamp - promote
   contact_type            Int       @default(1) @db.SmallInt

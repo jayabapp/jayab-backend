@@ -44,6 +44,10 @@ import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import { User } from '@prisma/client';
 import { PropertyAuthorizeto } from './dto/property-authorize.dto';
 import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -53,6 +57,7 @@ export class PropertyOwnerController {
   constructor(
     private readonly propertyOwnerService: PropertyOwnerService,
     private readonly attachmentService: AttachmentService,
+    private readonly notificationService: NotificationSharedService,
   ) {}
 
   @ApiOperation({ operationId: 'Get last init prop', description: '' })
@@ -179,6 +184,20 @@ export class PropertyOwnerController {
     const { user } = req;
     const property = req.interceptor_data as PropertyInterceptorData;
     await this.propertyOwnerService.updateTerms(property, dto);
+
+    /* -------------------------------------------------------------------------- */
+    // send notif to admin
+    if (property.status == PropertyStatuses.IN_PROCESS && !property.check_in_hour)
+      await this.notificationService.createNotification({
+        user: { id: null, role: UserRole.ADMIN },
+        mustSendNotif: true,
+        notification: {
+          title: 'ملک جدید',
+          body: `ملک جدیدی با عنوان ${property.title} ثبت و منتظر تایید است`,
+        },
+        notificationType: NotificationTypes.OWNER_PROPERTY,
+        notificationableId: property.id.toString(),
+      });
     return { messageCode: 'CREATE' };
   }
 
@@ -241,7 +260,7 @@ export class PropertyOwnerController {
     @Query('year', ParseIntPipe) year: number,
   ) {
     const property = req.interceptor_data as PropertyInterceptorData;
-    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year);
+    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, false, true);
     // const peakDays =
     return { result };
   }
