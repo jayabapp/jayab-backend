@@ -28,6 +28,7 @@ import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import createTopicKey from 'src/firebase/common/topic-generator.helper';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -55,7 +56,8 @@ export class ProfileUserController {
     const advisorRole = result?.advisor_id;
     const ownerRole = result?.owner_id;
     if (fcmToken) {
-      await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
+      await this.firebaseService.subscribeToTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
+      await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.USER);
       if (ownerRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.OWNER);
       if (advisorRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
     }
