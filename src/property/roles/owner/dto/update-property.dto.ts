@@ -127,7 +127,7 @@ export class UpdatePropertyStepOneOwnerDto {
   @ApiProperty({ required: true, title: 'سال ساخت', default: 1390 })
   @_IsInt()
   @_Max(moment().jYear())
-  @_Min(1300)
+  @_Min(1100)
   @_IsNotEmpty()
   construction_year: number;
 
@@ -236,7 +236,7 @@ export class UpdatePropertyEnvOwnerDto {
   @ApiProperty({ title: 'توضیحات بافت' })
   @_IsString()
   @_MaxLength(200)
-  @_IsNotEmpty()
+  @IsOptional()
   pattern_dscr: string;
 
   @ApiProperty({ title: 'توضیحات فاصله' })

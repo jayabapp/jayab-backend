@@ -109,6 +109,8 @@ export class NotificationSharedService {
       };
       if (user.id) q = { ...q, id: user.id };
       const admins = await this.db.admin.findMany({ where: q });
+      console.log({ admins });
+
       let ids = [];
       for (const admin of admins) {
         ids.push(admin.id);
@@ -139,14 +141,7 @@ export class NotificationSharedService {
         UserRole.USER,
       );
       await this.create({ id: user.id, role: UserRole.USER }, notification, eventData);
-      // await this.fcmService.sendNotification(
-      //   [
-      //     'djug9I9Zls1Qm1JwpoiggA:APA91bHWAj7_atz9_eexTjLcmLp_wPtK14BXeguqvew-H5m24ND6cWBoqTeUnIXtY7wrdGf8RdpNGkg5_4Iu94JcTYHHM6cBMx3TXHk4kgLKeu0_EPP5UMk',
-      //   ],
-      //   {
-      //     notification: { title: notification.title, body: notification.body },
-      //   },
-      // );
+
       await this.fcmService.sendNotificationToTopic(createTopicKey(user.id, UserRole.USER), {
         notification: { title: notification.title, body: notification.body },
       });
@@ -193,7 +188,9 @@ export class NotificationSharedService {
         { topic: FirebaseTopicType.USER },
         { topic: FirebaseTopicType.TEST },
       ],
+      created_at: { gte: user.created_at },
     };
+
     if (user?.advisor_id) query.OR.push({ topic: FirebaseTopicType.ADVISOR });
     if (user?.owner_id) query.OR.push({ topic: FirebaseTopicType.OWNER });
 

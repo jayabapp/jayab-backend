@@ -27,6 +27,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         advisor_id: true,
         owner_id: true,
         notification_read_at: true,
+        created_at: true,
       },
     });
 

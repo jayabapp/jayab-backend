@@ -175,7 +175,7 @@ export class PropertySerializer {
     if (!data) return;
     let single: PropertyJsonResType;
 
-    const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days');
+    const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
 
     let list: PropertyArrayResType = {
       owner: data?.owner

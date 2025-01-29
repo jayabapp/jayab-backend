@@ -83,7 +83,7 @@ export class SharedChatService {
       mc.property_id,
       p.title AS property_title,
       ROW_TO_JSON(att.*) as property_image,
-      ROW_TO_JSON(lm.*) as last_messagee,
+      ROW_TO_JSON(lm.*) as last_message,
       (
         SELECT COUNT(*)
         FROM messenger_messages mm

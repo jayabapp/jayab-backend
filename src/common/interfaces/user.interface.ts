@@ -8,6 +8,7 @@ export type PartialUser = {
   owner_id: number;
   advisor_id: number;
   notification_read_at: Date;
+  created_at: Date;
 };
 export type UserType = PartialUser & { accessToken: string };
 export type RequestType = Request & { user: UserType; interceptor_data?: any };
