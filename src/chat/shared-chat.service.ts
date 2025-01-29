@@ -83,6 +83,7 @@ export class SharedChatService {
       mc.property_id,
       p.title AS property_title,
       ROW_TO_JSON(att.*) as property_image,
+      ROW_TO_JSON(lm.*) as last_messagee,
       (
         SELECT COUNT(*)
         FROM messenger_messages mm
@@ -91,14 +92,14 @@ export class SharedChatService {
         AND mp2.user_id = ${userId}
         AND mm.participant_id != mp2.id
         AND mm.created_at > mp2.message_read_at
-      ) AS unread_count,
-      (
-        SELECT ROW_TO_JSON(last_msg.*)
-        FROM messenger_messages last_msg
-        WHERE last_msg.chatroom_id = mc.id
-        ORDER BY last_msg.created_at DESC
-        LIMIT 1
-    ) AS last_message
+      ) AS unread_count
+    --   (
+    --     SELECT ROW_TO_JSON(last_msg.*)
+    --     FROM messenger_messages last_msg
+    --     WHERE last_msg.chatroom_id = mc.id
+    --     ORDER BY last_msg.created_at DESC
+    --     LIMIT 1
+    -- ) AS last_message
     FROM 
       messenger_participants mp
     JOIN 
@@ -106,9 +107,12 @@ export class SharedChatService {
     JOIN 
       properties p ON mc.property_id = p.id
     LEFT JOIN 
+    messenger_messages lm ON lm.id = mc.last_message_id
+    LEFT JOIN 
       attachments att ON p.feature_image_id = att.id
     WHERE 
       mp.user_id = ${userId}
+    ORDER BY lm.created_at DESC
     `;
 
     return list;
@@ -126,10 +130,18 @@ export class SharedChatService {
     dto: SendMessageDto,
   ): Promise<MessengerMessages & { media: Attachment }> {
     /* -------------------------------------------------------------------------- */
-    // create new message
-    const message = await this.db.messengerMessages.create({
-      data: { ...dto, chatroom_id: chatroomId, participant_id: senderId },
-      include: { media: true },
+    let message;
+    await this.db.$transaction(async (tx) => {
+      // create new message
+      message = await tx.messengerMessages.create({
+        data: { ...dto, chatroom_id: chatroomId, participant_id: senderId },
+        include: { media: true },
+      });
+      //update last message in chatroom for speed up find all query
+      await tx.messengerChatroom.update({
+        where: { id: chatroomId },
+        data: { last_message_id: message.id },
+      });
     });
 
     return message;

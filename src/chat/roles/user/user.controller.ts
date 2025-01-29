@@ -95,11 +95,17 @@ export class ChatUserController {
     const user = request.user;
 
     /* -------------------------------------------------------------------------- */
-    if (!dto.media_id && !dto.text) throw new BadRequestException('CHAT2');
+    if (!dto.media_id && !dto.text) throw new BadRequestException('CHAT9');
 
     /* -------------------------------------------------------------------------- */
     // check and get the chatroom and participants from interceptor
     const chatroom: PartialChatroom = request.interceptor_data;
+
+    const isBlocked = await this.sharedChatService.checkIsBlocked(
+      chatroom.participants.recipient.user_id,
+      chatroom.participants.self.user_id,
+    );
+    if (isBlocked) throw new BadRequestException('CHAT3');
 
     /* -------------------------------------------------------------------------- */
     // create message
@@ -140,14 +146,12 @@ export class ChatUserController {
     const recipient = chatroom?.participants?.recipient;
     let isRecipientOnline = false;
     if (recipient) {
-      console.log({ s: await this.redis.keys(`${UserRole.USER}:${recipient.user_id}:status*`) });
-
       isRecipientOnline = !!first(await this.redis.keys(`${UserRole.USER}:${recipient.user_id}:status*`));
     }
 
     const isBlocked = await this.sharedChatService.checkIsBlocked(
-      chatroom.participants.recipient.participant_id,
-      chatroom.participants.self.participant_id,
+      chatroom.participants.recipient.user_id,
+      chatroom.participants.self.user_id,
     );
 
     const property = await this.propertyService.findOnPartial(chatroom.property_id, {

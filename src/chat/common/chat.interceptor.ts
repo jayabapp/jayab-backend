@@ -43,7 +43,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
     const sender = item.participants.find((e) => e.user_id === userId);
     const recipient = item.participants.find((e) => e.user_id !== userId);
 
-    console.log({ sender, recipient });
+    // console.log({ sender, recipient });
 
     if (!sender) throw new BadRequestException('CHAT3');
 
