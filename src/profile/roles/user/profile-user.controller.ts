@@ -51,17 +51,6 @@ export class ProfileUserController {
     const user = request.user;
     const result = await this.profileUserService.findOne(user.id);
 
-    /*  */
-    const fcmToken = result?.fcm_token;
-    const advisorRole = result?.advisor_id;
-    const ownerRole = result?.owner_id;
-    if (fcmToken) {
-      await this.firebaseService.subscribeToTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
-      await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.USER);
-      if (ownerRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.OWNER);
-      if (advisorRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
-    }
-
     return { result };
   }
 
@@ -217,7 +206,19 @@ export class ProfileUserController {
   @Patch('update-fcm')
   async updateFcm(@Req() request: RequestType, @Body() dto: UpdateFcmDto): Promise<SuccessResponseArgs> {
     const { user } = request;
-    await this.profileUserService.updateFcm(user, dto);
+    const result = await this.profileUserService.updateFcm(user.id, dto);
+    /*  */
+    const fcmToken = result?.fcm_token;
+    const advisorRole = result?.advisor_id;
+    const ownerRole = result?.owner_id;
+    console.log({ user, fcmToken });
+
+    if (fcmToken) {
+      await this.firebaseService.subscribeToTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
+      await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.USER);
+      if (ownerRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.OWNER);
+      if (advisorRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
+    }
     return;
   }
 }

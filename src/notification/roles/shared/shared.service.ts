@@ -11,6 +11,7 @@ import { SocketEvents } from 'src/socket/common/socket-event.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { RequestType, UserType } from 'src/common/interfaces/user.interface';
 import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
+import createTopicKey from 'src/firebase/common/topic-generator.helper';
 
 type NotificationUser = { id: number; role: UserRole };
 
@@ -138,6 +139,17 @@ export class NotificationSharedService {
         UserRole.USER,
       );
       await this.create({ id: user.id, role: UserRole.USER }, notification, eventData);
+      // await this.fcmService.sendNotification(
+      //   [
+      //     'djug9I9Zls1Qm1JwpoiggA:APA91bHWAj7_atz9_eexTjLcmLp_wPtK14BXeguqvew-H5m24ND6cWBoqTeUnIXtY7wrdGf8RdpNGkg5_4Iu94JcTYHHM6cBMx3TXHk4kgLKeu0_EPP5UMk',
+      //   ],
+      //   {
+      //     notification: { title: notification.title, body: notification.body },
+      //   },
+      // );
+      await this.fcmService.sendNotificationToTopic(createTopicKey(user.id, UserRole.USER), {
+        notification: { title: notification.title, body: notification.body },
+      });
       console.log(`notif sent to USER ID: ${user.id}`);
     }
   }

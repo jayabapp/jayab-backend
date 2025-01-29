@@ -6,7 +6,10 @@ import { MulticastMessage, TopicMessage } from 'firebase-admin/lib/messaging/mes
 
 @Injectable()
 export class FirebaseService {
-  constructor(@Inject(FCM_OPTIONS) private readonly fcmOptions: FcmOptions, private readonly logger: Logger) {
+  constructor(
+    @Inject(FCM_OPTIONS) private readonly fcmOptions: FcmOptions,
+    private readonly logger: Logger,
+  ) {
     this.__init();
   }
 
@@ -122,6 +125,7 @@ export class FirebaseService {
     if (!topic) {
       throw new Error('empty topic');
     }
+    console.log('HERE');
 
     /**
      * check firebase init
@@ -156,20 +160,22 @@ export class FirebaseService {
       webpush: {
         notification: {
           ...payload.notification,
-          badge: './assets/icons/logo/logo-w.png',
-          icon: './assets/icons/app/android-chrome-192x192.png',
+          // badge: './assets/icons/logo/logo-w.png',
+          // icon: './assets/icons/app/android-chrome-192x192.png',
         },
       },
       topic: topic,
     };
+    console.log({ body });
 
     /**
      * Send to topic
      */
     try {
-      await firebaseAdmin.messaging().send(body);
+      const res = await firebaseAdmin.messaging().send(body);
+      console.log({ res });
     } catch (error) {
-      // this.logger.error(error.message, error.stackTrace, 'FcmService');
+      console.log(error.message, error.stackTrace, 'FcmService');
       throw error;
     }
 

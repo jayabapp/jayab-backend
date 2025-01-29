@@ -134,6 +134,7 @@ export class ProfileUserService {
         owner_id: true,
         advisor_id: true,
         created_at: true,
+        fcm_token: true,
       },
     });
 
@@ -216,8 +217,8 @@ export class ProfileUserService {
    * @param dto
    * @returns
    */
-  async updateFcm(user: UserType, dto: UpdateFcmDto): Promise<void> {
-    await this.db.user.update({ where: { id: user.id }, data: { fcm_token: dto.fcm_token } });
+  async updateFcm(userId: number, dto: UpdateFcmDto): Promise<User> {
+    return await this.db.user.update({ where: { id: userId }, data: { fcm_token: dto.fcm_token } });
   }
 
   /**

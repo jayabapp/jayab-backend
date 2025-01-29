@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, ValidateIf } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -23,24 +23,24 @@ export class CreateNotificationAdminDto {
   type: NotificationType;
 
   @ApiProperty({ required: false, default: '' })
-  // @_Max(4096)
-  // @_Min(1)
+  @ValidateIf((obj) => obj.type === NotificationType.MOBILE)
   @_IsString()
-  @IsOptional()
+  @_IsNotEmpty()
   mobile_numbers: string;
 
   @ApiProperty({ required: false, default: '' })
+  @ValidateIf((obj) => obj.type === NotificationType.GROUP)
   @_IsEnum(FirebaseTopicType)
-  @IsOptional()
+  @_IsNotEmpty()
   topic: FirebaseTopicType;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, default: 'عنوان' })
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, default: 'متن' })
   @_Length(1, 2048)
   @_IsString()
   @_IsNotEmpty()

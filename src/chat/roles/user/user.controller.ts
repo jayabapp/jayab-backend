@@ -35,6 +35,8 @@ import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-messag
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
 import { PropertyUserService } from 'src/property/roles/user/user.service';
+import { FirebaseService } from 'src/firebase/firebase.service';
+import createTopicKey from 'src/firebase/common/topic-generator.helper';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -47,6 +49,7 @@ export class ChatUserController {
     private readonly socketService: SocketService,
     private readonly attachmentService: AttachmentService,
     private readonly propertyService: PropertyUserService,
+    private readonly fcmService: FirebaseService,
   ) {}
 
   @ApiOperation({ operationId: 'Find All' })
@@ -118,10 +121,19 @@ export class ChatUserController {
     /* -------------------------------------------------------------------------- */
     // emit the new message to the recipient if it's exists
     if (chatroom?.participants?.recipient) {
-      await this.socketService.emitNewChatMessage(
-        chatroom.uuid,
-        chatroom.participants.recipient,
-        MessengerMessagesSerializer.summarize(msg),
+      const m = MessengerMessagesSerializer.summarize(msg);
+      //socket
+      await this.socketService.emitNewChatMessage(chatroom.uuid, chatroom.participants.recipient, m);
+
+      //notif
+      this.fcmService.sendNotificationToTopic(
+        createTopicKey(chatroom.participants.recipient.user_id, UserRole.USER),
+        {
+          notification: {
+            title: '✉️ پیام جدید',
+            body: m.text,
+          },
+        },
       );
     }
 
