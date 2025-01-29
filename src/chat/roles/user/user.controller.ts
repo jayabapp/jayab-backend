@@ -98,17 +98,17 @@ export class ChatUserController {
     const user = request.user;
 
     /* -------------------------------------------------------------------------- */
-    if (!dto.media_id && !dto.text) throw new BadRequestException('CHAT9');
+    if (!dto.media_id && !dto.text) throw new BadRequestException('CHAT2');
 
     /* -------------------------------------------------------------------------- */
     // check and get the chatroom and participants from interceptor
     const chatroom: PartialChatroom = request.interceptor_data;
 
     const isBlocked = await this.sharedChatService.checkIsBlocked(
-      chatroom.participants.recipient.user_id,
-      chatroom.participants.self.user_id,
+      chatroom.participants.self.user_id, //من که بلاک شدم
+      chatroom.participants.recipient.user_id, //طرف مثابل که من رو بلاک کرده
     );
-    if (isBlocked) throw new BadRequestException('CHAT3');
+    if (isBlocked) throw new BadRequestException('CHAT9');
 
     /* -------------------------------------------------------------------------- */
     // create message
