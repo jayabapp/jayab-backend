@@ -387,6 +387,11 @@ export class PropertyUserService {
 
   /* ---------------------------- SEARCH SUGGESTION --------------------------- */
   async searchSuggestions(dto: PropertySearchSuggestuibUserDto): Promise<any> {
+    const exactProperty = await this.db.property.findFirst({
+      where: { title: dto.q },
+      select: { id: true, title: true, slug: true },
+    });
+
     const properties = await this.db.property.findMany({
       where: {
         ...this.validProperty(),
@@ -413,7 +418,7 @@ export class PropertyUserService {
       take: 5,
     });
 
-    return { properties, cities, landings };
+    return { properties: [exactProperty].concat(properties), cities, landings };
   }
 
   /* --------------------------------- HELPERS -------------------------------- */
