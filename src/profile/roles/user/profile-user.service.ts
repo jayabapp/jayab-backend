@@ -253,9 +253,10 @@ export class ProfileUserService {
         where: { advisor_id: advisorId, status: SubscriptionStatus.WAITING },
       });
 
+      const price = chosenSub?.price_with_discount || chosenSub.price;
       const pay = await this.paymentUserService.create(
         user,
-        chosenSub?.price_with_discount || chosenSub.price,
+        price,
         dto.redirect_url,
         dto.gateway,
         TurnoverType.PAY_ADVISOR_SUBSCRIPTION,
@@ -269,7 +270,7 @@ export class ProfileUserService {
           status: SubscriptionStatus.WAITING,
           title: chosenSub.title,
           duration: chosenSub.duration,
-          price: chosenSub.price,
+          price: price,
           payment_id: pay.payment.id,
         },
       });

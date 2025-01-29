@@ -246,7 +246,7 @@ export class PropertySerializer {
       reserveDays.push({ day_number: moment(date).day(), is_reserved: Boolean(calendar?.is_reserved) });
     }
 
-    let res: PropertyResType = { ...list, ...single, reserve_days: isAdvisor ? reserveDays : [] };
+    let res: PropertyResType = { ...list, ...single, reserve_days: isAdvisor || isOwner ? reserveDays : [] };
     return res;
   }
 }

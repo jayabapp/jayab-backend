@@ -81,7 +81,8 @@ export class PropertyUserController {
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const property = await this.propertyUserService.findById(propertyId);
     const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, isAdvisor);
-    // const peakDays =
+    console.log({ result });
+
     return { result };
   }
 

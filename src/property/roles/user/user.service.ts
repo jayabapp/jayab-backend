@@ -418,7 +418,11 @@ export class PropertyUserService {
       take: 5,
     });
 
-    return { properties: [exactProperty].concat(properties), cities, landings };
+    return {
+      properties: !!exactProperty ? [exactProperty].concat(properties) : properties,
+      cities,
+      landings,
+    };
   }
 
   /* --------------------------------- HELPERS -------------------------------- */

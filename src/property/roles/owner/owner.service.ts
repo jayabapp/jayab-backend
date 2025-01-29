@@ -614,6 +614,7 @@ export class PropertyOwnerService {
     });
 
     const daysRange = await this.dayHelper.daysRange(convertJalaaliDtoToDate({ year, month, day: 1 }), 31);
+    console.log({ isOwner, isAdvisor });
 
     let prices = [];
     for (let i = 1; i <= 31; i++) {
