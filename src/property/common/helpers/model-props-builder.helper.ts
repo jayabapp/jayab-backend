@@ -198,6 +198,10 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       title: 'صفحه ملک',
       route: `${process.env.BASE_URL}/property/${item.slug}`,
     },
+    {
+      title: 'تصاویر ملک',
+      route: `/properties/show/${item.id}/images`,
+    },
   ];
 
   return actions;

@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -23,6 +24,7 @@ import { AdminRequestType, AdminType } from 'src/common/interfaces/user.interfac
 import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
 import { SmsService } from 'src/sms/sms.service';
 import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
+import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -123,6 +125,20 @@ export class PropertyAdminController {
       property.title,
       statusText,
     );
+
+    return { result, messageCode: 'UPDATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update Images', description: '' })
+  @Put(':id/images')
+  async updateImages(
+    @Req() req: AdminRequestType,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePropertyImagesAdminDto,
+  ): Promise<SuccessResponseArgs> {
+    const admin = req.user;
+    const property = await this.propertyAdminService.findById(id);
+    const result = await this.propertyAdminService.updateImages(id, dto);
 
     return { result, messageCode: 'UPDATE' };
   }

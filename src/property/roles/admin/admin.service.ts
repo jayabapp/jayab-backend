@@ -32,6 +32,7 @@ import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 
 @Injectable()
 export class PropertyAdminService {
@@ -92,7 +93,9 @@ export class PropertyAdminService {
    * @param id
    * @returns
    */
-  async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
+  async findOne(
+    id: number,
+  ): Promise<{ showProps: ShowProps[]; actions?: ShowAction[]; item: PropertyJsonType }> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
     };
@@ -103,6 +106,7 @@ export class PropertyAdminService {
         owner: { include: { user: true } },
         feature_image: true,
         attachments: true,
+        temp_attachments: true,
         province: { select: { title: true } },
         city: { select: { title: true } },
         property_options: { select: { option: { select: { title: true, group: true } } } },
@@ -122,7 +126,7 @@ export class PropertyAdminService {
     const showProps = showPropsBuilder(serialized);
     const actions = showActionBuilder(item);
 
-    return { showProps, actions };
+    return { showProps, actions, item };
   }
 
   /**
@@ -180,6 +184,21 @@ export class PropertyAdminService {
       created_at: new Date(),
     };
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
+
+    await this.db.property.update({ where: { id }, data: updateData });
+  }
+
+  /**
+   * update property images
+   * @param id
+   * @param dto
+   */
+  async updateImages(id: number, dto: UpdatePropertyImagesAdminDto): Promise<void> {
+    let updateData: Prisma.PropertyUpdateInput = {
+      attachments: { set: [], connect: dto.images?.map((e) => ({ id: +e })) },
+      temp_attachments: { set: [], connect: dto.temp_images?.map((e) => ({ id: +e })) },
+      feature_image: { connect: { id: +dto.feature_image_id } },
+    };
 
     await this.db.property.update({ where: { id }, data: updateData });
   }
