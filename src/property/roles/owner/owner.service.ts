@@ -546,7 +546,7 @@ export class PropertyOwnerService {
         city: { select: { title: true } },
         property_options: true,
         daily_price: true,
-        calendar: { where: calendarDateQuery },
+        calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         bedrooms: { select: { total_bedrooms: true } },
         _count: { select: { attachments: true } },
         property_authorize: true,
@@ -578,7 +578,7 @@ export class PropertyOwnerService {
         province: { select: { title: true } },
         city: { select: { title: true } },
         daily_price: true,
-        calendar: { where: calendarDateQuery },
+        calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         property_authorize: true,
         favorites: true,
       },
@@ -588,6 +588,7 @@ export class PropertyOwnerService {
 
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, false, true);
+
     return serialized;
   }
 
