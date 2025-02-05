@@ -21,7 +21,7 @@ export class AdvisorUserService {
    */
   async findAll(dto: FindAllAdvisorUserDto): Promise<any> {
     /*  */
-    let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED };
+    let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED, is_special: true };
     if (dto.q)
       query = {
         ...query,
