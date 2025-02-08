@@ -81,17 +81,18 @@ export class SubscriptionPlanUserService {
   ): Promise<SubscriptionPlan | null> {
     if (property.status !== PropertyStatuses.PUBLISHED) return;
 
-    //
-    const timestamp = Number(property.sort_order);
-    const twoDaysAgo = moment().subtract(2, 'days');
-    if (moment(timestamp).isBefore(twoDaysAgo)) return;
+    // چون سناریو نبود غیرفعال کردیم
+    // const timestamp = Number(property.sort_order);
+    // const twoDaysAgo = moment().subtract(2, 'days');
+    // if (moment(timestamp).isBefore(twoDaysAgo)) return;
 
-    //
-    if (mustReturnPromote) {
-      const promote = await this.findOne(subscriptionPlanId, true);
-      return promote;
-    }
+    // //
+    // if (mustReturnPromote) {
+    //   const promote = await this.findOne(subscriptionPlanId, true);
+    //   return promote;
+    // }
+    const promote = await this.findOne(subscriptionPlanId, true);
 
-    return;
+    return promote;
   }
 }

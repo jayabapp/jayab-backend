@@ -211,7 +211,6 @@ export class ProfileUserController {
     const fcmToken = result?.fcm_token;
     const advisorRole = result?.advisor_id;
     const ownerRole = result?.owner_id;
-    console.log({ user, fcmToken });
 
     if (fcmToken) {
       await this.firebaseService.subscribeToTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
