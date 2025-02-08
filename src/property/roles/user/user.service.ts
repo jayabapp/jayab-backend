@@ -179,6 +179,9 @@ export class PropertyUserService {
       case 'price_desc':
         orderByQuery = { daily_price: { [today]: 'desc' } };
         break;
+      case 'commission_desc':
+        orderByQuery = { advisor_commission: 'desc' };
+        break;
       default:
         orderByQuery = { sort_order: 'desc' };
         break;

@@ -3,6 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { City, Prisma } from '@prisma/client';
 import { FindAllCityUserDto } from './roles/user/dto/find-all.dto';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class CitySharedService {
@@ -31,6 +33,13 @@ export class CitySharedService {
           select: { id: true, title: true },
           take: +dto.depth || 5,
         },
+        // _count: {
+        //   select: {
+        //     Property_province: {
+        //       where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
+        //     },
+        //   },
+        // },
       },
     });
 

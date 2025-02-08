@@ -116,7 +116,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ required: false, title: 'محبوب ترین ها' })
   @_IsString()
   @IsOptional()
-  sort_type?: 'popular' | 'newset' | 'price_asc' | 'price_desc';
+  sort_type?: 'popular' | 'newset' | 'price_asc' | 'price_desc' | 'commission_desc';
 
   @ApiProperty({ required: false, title: 'از قیمت' })
   @Type(() => Number)
