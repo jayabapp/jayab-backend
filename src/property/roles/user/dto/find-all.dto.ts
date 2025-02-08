@@ -129,6 +129,18 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsInt()
   @IsOptional()
   max_building_area?: number;
+
+  @ApiProperty({ required: false, title: 'از کمیسیون' })
+  @Type(() => Number)
+  @_IsInt()
+  @IsOptional()
+  min_commission?: number;
+
+  @ApiProperty({ required: false, title: 'تا کمیسیون' })
+  @Type(() => Number)
+  @_IsInt()
+  @IsOptional()
+  max_commission?: number;
 }
 
 export class PropertySearchSuggestuibUserDto {

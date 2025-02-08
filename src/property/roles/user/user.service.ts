@@ -63,40 +63,13 @@ export class PropertyUserService {
       max_price,
       max_building_area,
       min_building_area,
+      min_commission,
+      max_commission,
       q,
     } = dto;
 
     const today = await this.dayHelper.today();
     let options = [];
-
-    /**
-     * Ex: jayab.com/s/ramsar-lahijan/billiard
-     */
-    // if (dto.keys) {
-    //   const keys = parseQueryStringArray(dto.keys);
-    //   const c = await this.db.city.findMany({
-    //     where: { slug: { in: keys } },
-    //     select: { id: true },
-    //   });
-    //   if (c.length > 0) {
-    //     const cid = c.map((i) => i.id).join(',');
-    //     cities = cities ? `${cities},${cid}` : cid;
-    //   }
-    //   const o = await this.db.propertyOption.findMany({
-    //     where: { key: { in: keys } },
-    //     select: { id: true },
-    //   });
-    //   if (o.length > 0) {
-    //     options.push(...o.map((i) => i.id));
-    //   }
-    //   console.log({ keys, c, o, cities, options });
-    // }
-    // let startDay = null;
-
-    // if (isJson(start_day)) {
-    //   startDay = JSON.parse(dto.start_day) as DayDto;
-    //   if (!startDay?.day || !startDay?.month || !startDay?.year) startDay = null;
-    // }
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -153,6 +126,9 @@ export class PropertyUserService {
     /* ------------------------------ building area ----------------------------- */
     if (min_building_area >= 0 && max_building_area >= 0)
       query = { ...query, building_area: { gte: min_building_area, lte: max_building_area } };
+
+    if (min_commission >= 0 || max_commission >= 0)
+      query = { ...query, advisor_commission: { gte: min_commission || 0, lte: max_commission || 100 } };
 
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
