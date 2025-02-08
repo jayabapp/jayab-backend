@@ -15,6 +15,7 @@ import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 
 @Injectable()
 export class ProfileUserService {
@@ -279,6 +280,36 @@ export class ProfileUserService {
     });
 
     return pay.paymentUrl;
+  }
+
+  /**
+   * لغو اشتراک
+   * فعلا فقط از حالت ویژه خارجش میکنیم
+   * @param advisorId
+   * @returns
+   */
+  async revokeAdvisorSubscription(advisorId: number): Promise<void> {
+    // const sub = await this.db.subscription.findFirst({
+    //   where: { advisor_id: advisorId, status: SubscriptionStatus.SUCCESS },
+    //   orderBy: { id: 'desc' },
+    // });
+
+    // if (!sub) throw new NotFoundException('SUBSCRIPTION1');
+
+    // await this.db.subscription.update({
+    //   where: { id: sub.id },
+    //   data: {
+    //     status: SubscriptionStatus.REVOKED,
+    //     description: `${sub.description} \n لغو شده توسط کاربر در تاریخ ${moment().format(JALAALI_FORMAT)}`,
+    //   },
+    // });
+
+    await this.db.advisor.update({
+      where: { id: advisorId },
+      data: { is_special: false },
+    });
+
+    return;
   }
 
   /* --------------------------------- HELPERS -------------------------------- */

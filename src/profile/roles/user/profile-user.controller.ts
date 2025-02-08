@@ -10,6 +10,7 @@ import {
   ConflictException,
   Post,
   UnprocessableEntityException,
+  Delete,
 } from '@nestjs/common';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -183,7 +184,7 @@ export class ProfileUserController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'pay Advisor Subscription' })
+  @ApiOperation({ operationId: 'Pay Advisor Subscription' })
   @Post('pay-plan')
   async payAdvisorSubscription(
     @Req() request: RequestType,
@@ -195,6 +196,17 @@ export class ProfileUserController {
 
     /*  */
     const payUrl = await this.profileUserService.payAdvisorSubscription(user, dto);
+
+    return { result: payUrl };
+  }
+
+  @ApiOperation({ operationId: 'pay Advisor Subscription' })
+  @Delete('pay-plan')
+  async revokeAdvisorSubscription(@Req() request: RequestType): Promise<SuccessResponseArgs> {
+    const user = request.user as PartialUser;
+    if (!user.advisor_id) throw new UnprocessableEntityException('COMMON4');
+
+    const payUrl = await this.profileUserService.revokeAdvisorSubscription(user.advisor_id);
 
     return { result: payUrl };
   }

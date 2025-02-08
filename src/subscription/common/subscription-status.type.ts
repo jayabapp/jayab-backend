@@ -22,6 +22,7 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
 export enum SubscriptionStatus {
   WAITING = 10,
   SUCCESS = 20,
+  REVOKED = 90,
   FAILED = 100,
 }
 
@@ -35,6 +36,11 @@ export const SubscriptionStatusList: Array<EnumList> = [
     id: SubscriptionStatus.SUCCESS,
     title: 'پرداخت شده',
     hex: '#22c55e',
+  },
+  {
+    id: SubscriptionStatus.REVOKED,
+    title: 'لغو شده توسط کاربر',
+    hex: '#be123c ',
   },
   {
     id: SubscriptionStatus.FAILED,
