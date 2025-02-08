@@ -17,7 +17,7 @@ export class PropertyOptionUserService {
     const list = await this.db.propertyOption.findMany({
       where: { group: { in: dto.group } },
       orderBy: { sort: 'asc' },
-      select: { id: true, group: true, title: true },
+      select: { id: true, group: true, title: true, image: true },
     });
 
     return groupBy(list, 'group');

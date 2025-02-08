@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import {
   _IsInt,
@@ -36,6 +36,12 @@ export class CreatePropertyOptionAdminDto {
   @Transform(({ value }) => value || 0)
   @IsOptional()
   sort?: number;
+
+  @ApiProperty({ default: 'تصویر' })
+  @_IsInt()
+  @Type(() => Number)
+  @IsOptional()
+  image_id?: number;
 
   @ApiProperty({ required: false, default: '' })
   @_Length(0, 128)

@@ -1,4 +1,4 @@
-import { AccessControlList, PropertyOption, Prisma } from '@prisma/client';
+import { AccessControlList, PropertyOption, Prisma, Attachment } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -15,7 +15,7 @@ import { PropertyOptionGroup, PropertyOptionGroupList } from '../property-option
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  image = 'image',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyOptionScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -25,7 +25,7 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 /*                                    SHOW                                    */
 /* -------------------------------------------------------------------------- */
-export const showPropsBuilder = (item: PropertyOption): Array<ShowProps> => {
+export const showPropsBuilder = (item: PropertyOption & { image: Attachment }): Array<ShowProps> => {
   const props: Array<ShowProps> = [
     // { state: 'id', title: 'شناسه', value: item.id, type: 'number' },
     {
@@ -42,6 +42,9 @@ export const showPropsBuilder = (item: PropertyOption): Array<ShowProps> => {
     { type: 'divider' },
     { state: 'created_at', title: 'تاریخ ثبت', value: item.created_at, type: 'date' },
     { state: 'updated_at', title: 'تاریخ ویرایش', value: item.updated_at, type: 'date' },
+    { type: 'divider' },
+    { state: 'image', title: 'تصویر', value: item.image, type: 'image' },
+    { state: 'image_id', title: 'تصویر', value: item.image_id, ref: 'image', type: 'image', isHidden: true },
   ];
 
   return props;
@@ -95,11 +98,17 @@ export const createPropsBuilder = (): Array<CreateProps> => {
     },
     { type: 'break' },
     {
-      state: 'description',
-      type: 'input',
-      title: 'توضیحات',
-      options: { maxLength: 256, isMandatory: false, keyboard: 'text' },
+      state: 'image_id',
+      type: 'image',
+      title: 'تصویر',
+      options: { isMandatory: false, titleHint: '(اختیاری)' },
     },
+    // {
+    //   state: 'description',
+    //   type: 'input',
+    //   title: 'توضیحات',
+    //   options: { maxLength: 256, isMandatory: false, keyboard: 'text' },
+    // },
   ];
 
   return createProps;
@@ -115,6 +124,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
+      { id: 11, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: PropertyOptionGroupList },
       { id: 30, title: 'ترتیب', key: 'sort', cellType: 'number' },
       // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },

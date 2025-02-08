@@ -198,6 +198,7 @@ model Attachment {
   property_auth_nc            PropertyAuthorize[]  @relation("PropertyAuthNcImage")
   property_auth_docs          PropertyAuthorize[]  @relation("PropertyAuthDocsImage")
   landing_page_image          LandingPage[]
+  property_options            PropertyOption[]
 
   @@map("attachments")
 }
@@ -712,12 +713,14 @@ model PropertyOption {
   description String? @db.VarChar(256)
   group       String
   sort        Int?
+  image_id    Int?
 
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
   properties OptionsOnProperty[]
+  image      Attachment?         @relation(fields: [image_id], references: [id], onDelete: SetNull)
 
   @@map("property_options")
 }

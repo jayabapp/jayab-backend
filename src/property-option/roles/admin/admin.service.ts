@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, PropertyOption, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePropertyOptionAdminDto } from './dto/create.dto';
@@ -36,11 +36,13 @@ export class PropertyOptionAdminService {
    * @returns
    */
   async create(dto: CreatePropertyOptionAdminDto): Promise<PropertyOption> {
-    const isDuplicatedKey = await this.db.propertyOption.findFirst({ where: { key: dto.key } });
-    if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
+    if (dto.key) {
+      const isDuplicatedKey = await this.db.propertyOption.findFirst({ where: { key: dto.key } });
+      if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
 
-    const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
-    if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+      const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
+      if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+    }
 
     const newPropertyOption = await this.db.propertyOption.create({ data: dto });
     return newPropertyOption;
@@ -63,7 +65,7 @@ export class PropertyOptionAdminService {
   ): Promise<PaginatedResult<PropertyOption>> {
     const list = await paginate()<PropertyOption, Prisma.PropertyOptionFindManyArgs>(
       this.db.propertyOption,
-      { where: filters, orderBy: { sort: { sort: 'asc', nulls: 'last' } } },
+      { where: filters, include: { image: true }, orderBy: { sort: { sort: 'asc', nulls: 'last' } } },
       { page, perPage },
     );
 
@@ -77,7 +79,7 @@ export class PropertyOptionAdminService {
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.propertyOption.findUnique({ where: { id } });
+    const item = await this.db.propertyOption.findUnique({ where: { id }, include: { image: true } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const showProps = showPropsBuilder(item);
@@ -108,13 +110,15 @@ export class PropertyOptionAdminService {
    * @returns
    */
   async update(id: number, dto: UpdatePropertyOptionAdminDto): Promise<PropertyOption> {
-    const isDuplicatedKey = await this.db.propertyOption.findFirst({
-      where: { key: dto.key, id: { not: id } },
-    });
-    if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
+    if (dto.key) {
+      const isDuplicatedKey = await this.db.propertyOption.findFirst({
+        where: { key: dto.key, id: { not: id } },
+      });
+      if (isDuplicatedKey) throw new NotFoundException('PROP_OPTION1');
 
-    const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
-    if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+      const isDuplicatedCity = await this.db.city.findFirst({ where: { slug: dto.key } });
+      if (isDuplicatedCity) throw new NotFoundException('PROP_OPTION2');
+    }
 
     const item = await this.db.propertyOption.update({
       where: { id },
