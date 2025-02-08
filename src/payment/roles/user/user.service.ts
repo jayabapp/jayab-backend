@@ -140,7 +140,7 @@ export class PaymentUserService {
 
       let propertyUpdateData: Prisma.PropertyUpdateInput = {};
       if (subscription.is_promote) propertyUpdateData = { sort_order: Date.now() };
-      else propertyUpdateData = { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING };
+      else propertyUpdateData = { subscription_expired_at: newExpDate };
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
 
