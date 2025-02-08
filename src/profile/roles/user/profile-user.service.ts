@@ -136,6 +136,7 @@ export class ProfileUserService {
         advisor_id: true,
         created_at: true,
         fcm_token: true,
+        advisor: { select: { is_special: true } },
       },
     });
 
