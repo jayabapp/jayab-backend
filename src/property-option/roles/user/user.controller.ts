@@ -14,8 +14,8 @@ export class PropertyOptionUserController {
   constructor(private readonly propertyOptionUserService: PropertyOptionUserService) {}
 
   @ApiOperation({ operationId: 'Find All By Group', description: '' })
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(ONE_HOUR_TTL)
+  // @UseInterceptors(CacheInterceptor)
+  // @CacheTTL(ONE_HOUR_TTL)
   @Get()
   async findAllByGroup(@Query() dto: FindAllPropertyOptionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyOptionUserService.findAllByGroup(dto);

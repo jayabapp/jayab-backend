@@ -29,7 +29,7 @@ export class IsCorrectPropertyOption implements ValidatorConstraintInterface {
     const formattedValue = Array.isArray(value) ? value : [value];
 
     const queryCount = await this.db.propertyOption.count({
-      where: { id: { in: formattedValue }, group: group },
+      where: { id: { in: formattedValue }, group: group, deleted_at: new Date() },
     });
 
     if (Array.isArray(value) && queryCount == value?.length) return true;
