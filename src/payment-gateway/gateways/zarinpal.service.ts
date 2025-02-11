@@ -10,7 +10,6 @@ import { PaymentGatewayEnum, PaymentGatewayParams } from '../common/payment-gate
 @Injectable()
 export class ZarinpalService {
   private readonly logger = new Logger(HttpExceptionFilter.name);
-
   private readonly callbackUrl: string;
 
   constructor(
@@ -62,7 +61,7 @@ export class ZarinpalService {
       const zarinpal = await this._init();
 
       const verifyResponse: ZarinpalCheckout.PaymentVerificationOutput = await zarinpal.PaymentVerification({
-        Amount: payment?.amount,
+        Amount: payment?.amount * 10,
         Authority: payment?.authority,
       });
 

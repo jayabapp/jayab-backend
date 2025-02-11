@@ -50,7 +50,11 @@ export default () => ({
     maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,
     advisorShareLinkSecret: process.env.ADVISOR_SHARE_LINK_SECRET,
   },
-  payment: { paymentBaseUrl: process.env.PAYMENT_BASE_URL },
+  payment: {
+    paymentCallBackUrl: process.env.PAYMENT_CALLBACK_URL,
+    paymentBaseUrl: process.env.PAYMENT_BASE_URL,
+    zarinpalMerchant: process.env.ZARINPAL_MERCHANT,
+  },
   aws: {
     bucket: process.env.BUCKET_NAME,
     region: 'default',
