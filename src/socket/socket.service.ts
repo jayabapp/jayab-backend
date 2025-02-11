@@ -134,7 +134,6 @@ export class SocketService {
     msg: MessengerMessagesResType,
   ): Promise<void> {
     /* -------------------------------------------------------------------------- */
-    console.log({ recipient });
 
     // create key
     const key = this.createRoomKey(recipient.user_id, UserRole.USER);

@@ -109,7 +109,6 @@ export class NotificationSharedService {
       };
       if (user.id) q = { ...q, id: user.id };
       const admins = await this.db.admin.findMany({ where: q });
-      console.log({ admins });
 
       let ids = [];
       for (const admin of admins) {

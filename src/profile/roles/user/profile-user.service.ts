@@ -189,14 +189,11 @@ export class ProfileUserService {
   async findAdvisorProfile(userId: number): Promise<Partial<User>> {
     let data = await this.db.advisor.findFirst({
       where: { user: { id: userId } },
-      select: {
-        id: true,
-        user: { select: { full_name: true } },
-        status: true,
-        admin_descriptions: true,
-        is_special: true,
-        subscription_expired_at: true,
-        national_code: true,
+      include: {
+        user: { select: { full_name: true, profile_image: true } },
+        document_image: true,
+        national_card_image: true,
+        cities: true,
       },
     });
 
