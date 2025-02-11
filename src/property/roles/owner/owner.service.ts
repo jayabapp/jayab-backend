@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { random } from 'lodash';
+import { isEmpty, random, xor } from 'lodash';
 import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
@@ -185,23 +185,46 @@ export class PropertyOwnerService {
    * @param dto
    * @returns
    */
-  async updateMedia(propertyId: number, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
+  async updateMedia(property: Property, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
+    // اگر عکس ها تغییری نکرده باشن دیگه نیازی به ادامه فرایند نیست
+    const propertyAttachments = await this.db.property
+      .findUnique({ where: { id: property.id } })
+      .attachments();
+
+    const currentAttachmentIds = propertyAttachments.map((e) => e.id);
+    if (isEmpty(xor(dto.images, currentAttachmentIds))) {
+      // اگر عکس شاخص تغییر کرده باشد فقط اونو آپدیت میکنیم
+      // برای تغییر عکس شاخص نیازی به تغییر وضعیت ملک نیست
+      if (dto.feature_image_id !== property.feature_image_id)
+        await this.db.property.update({
+          where: { id: property.id },
+          data: { feature_image_id: dto.feature_image_id },
+        });
+
+      return;
+    }
+
     let attachments = [];
     dto.images.map((e) => attachments.push({ id: e }));
 
-    // delete all attachments
-    await this.db.property.update({ where: { id: propertyId }, data: { attachments: { set: [] } } });
+    // اگر عکس های ملک تغییر کنن وضعیت ملک باید به وضعیت در حال بررسی ادمین تغییر کند
+    let status = property.status;
+    if (property.status === PropertyStatuses.PUBLISHED) status = PropertyStatuses.WAITING;
 
-    const updatedProperty = await this.db.property.update({
-      where: { id: propertyId },
-      data: {
-        attachments: { connect: attachments },
-        feature_image_id: dto.feature_image_id,
-        // video_id: dto.video_id || null,
-      },
+    await this.db.$transaction(async (tx) => {
+      // delete all attachments
+      await this.db.property.update({ where: { id: property.id }, data: { attachments: { set: [] } } });
+
+      await this.db.property.update({
+        where: { id: property.id },
+        data: {
+          status,
+          attachments: { connect: attachments },
+          feature_image_id: dto.feature_image_id,
+          // video_id: dto.video_id || null,
+        },
+      });
     });
-
-    // return updatedProperty;
   }
 
   /**
