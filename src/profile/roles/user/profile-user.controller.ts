@@ -120,6 +120,8 @@ export class ProfileUserController {
     // TODO: validate the national code
     await this.profileUserService.validateNationalCodeWebService(owner);
 
+    const result = await this.profileUserService.findOne(user.id);
+
     /* -------------------------------------------------------------------------- */
     // send notif to admin
     await this.notificationService.createNotification({
@@ -127,7 +129,7 @@ export class ProfileUserController {
       mustSendNotif: true,
       notification: {
         title: 'مالک جدید',
-        body: `${dto.full_name} نقش مالک خود را ثبت کرد`,
+        body: `${result.full_name} نقش مالک خود را ثبت کرد`,
       },
       notificationType: NotificationTypes.NEW_OWNER_ACCOUNT,
       notificationableId: owner.id.toString(),
@@ -178,7 +180,7 @@ export class ProfileUserController {
       mustSendNotif: true,
       notification: {
         title: 'مشاور جدید',
-        body: `${dto.full_name} نقش مشاور خود را ثبت کرد`,
+        body: `${result.full_name} نقش مشاور خود را ثبت کرد`,
       },
       notificationType: NotificationTypes.NEW_ADVISOR_ACCOUNT,
       notificationableId: advisor.id.toString(),
