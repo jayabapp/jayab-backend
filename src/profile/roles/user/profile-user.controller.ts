@@ -30,6 +30,7 @@ import { NotificationSharedService } from 'src/notification/roles/shared/shared.
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import createTopicKey from 'src/firebase/common/topic-generator.helper';
+import { UpdateAdvisorUserDto, UpdateOwnerUserDto } from './dto/update.dto';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -231,5 +232,29 @@ export class ProfileUserController {
       if (advisorRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.ADVISOR);
     }
     return;
+  }
+
+  @ApiOperation({ operationId: 'Update owner profile image' })
+  @Patch('owner')
+  async updateOwnerProfileImage(
+    @Req() request: RequestType,
+    @Body() dto: UpdateOwnerUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const { user } = request;
+    if (!user.owner_id) throw new UnprocessableEntityException('COMMON4');
+    await this.profileUserService.updateOwnerProfileImage(user.owner_id, dto);
+    return { messageCode: 'UPDATE' };
+  }
+
+  @ApiOperation({ operationId: 'Update advisor profile image' })
+  @Patch('advisor')
+  async updateAdvisorProfileImage(
+    @Req() request: RequestType,
+    @Body() dto: UpdateAdvisorUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const { user } = request;
+    if (!user.owner_id) throw new UnprocessableEntityException('COMMON4');
+    await this.profileUserService.updateAdvisorProfileImage(user, dto);
+    return { messageCode: 'UPDATE' };
   }
 }
