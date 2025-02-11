@@ -66,6 +66,8 @@ export class PropertyUserService {
       min_commission,
       max_commission,
       q,
+      checkin,
+      checkout,
     } = dto;
 
     const today = await this.dayHelper.today();
@@ -133,7 +135,18 @@ export class PropertyUserService {
     /* -------------------------------- bookmark -------------------------------- */
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
 
-    /* ---------------------------------- LIST ---------------------------------- */
+    /* ------------------------------ RESERVE DAYS ------------------------------ */
+    if (moment(checkin).isValid() && moment(checkout).isValid)
+      query = {
+        ...query,
+        calendar: {
+          none: {
+            date: { gte: startOfDate(checkin), lte: startOfDate(checkout) },
+            is_reserved: true,
+          },
+        },
+      };
+    /* ---------------------------------- CALENDAR INCLUDE ---------------------------------- */
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
     };
@@ -248,7 +261,7 @@ export class PropertyUserService {
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
-      subscription_expired_at: { gte: new Date() },
+      subscription_expired_at: { gte: startOfToday() },
     };
   }
 

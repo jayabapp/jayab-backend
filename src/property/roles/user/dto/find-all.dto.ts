@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsNumber, IsOptional } from 'class-validator';
 import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
 import {
   _IsInt,
@@ -13,7 +13,6 @@ import {
   _IsNumberString,
   _IsIn,
 } from 'src/common/pipes/validator-translate.pipe';
-import { RentType } from 'src/property/common/types/property-rent-types.type';
 
 export class FindAllPropertyUserDto extends PaginationCursorDto {
   @ApiProperty({ title: 'سرچ', required: false })
@@ -141,6 +140,16 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @_IsInt()
   @IsOptional()
   max_commission?: number;
+
+  @ApiProperty({ required: false, title: 'از تاریخ' })
+  @Type(() => Date)
+  @IsOptional()
+  checkin?: Date;
+
+  @ApiProperty({ required: false, title: 'تا تاریخ' })
+  @Type(() => Date)
+  @IsOptional()
+  checkout?: Date;
 }
 
 export class PropertySearchSuggestuibUserDto {
