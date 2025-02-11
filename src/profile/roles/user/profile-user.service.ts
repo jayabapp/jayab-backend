@@ -16,6 +16,7 @@ import { SubscriptionStatus } from 'src/subscription/common/subscription-status.
 import { verifyUserTokenManualy } from 'src/auth/guards/verify-user-bearer';
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { UpdateProfileImageUserDto } from './dto/update.dto';
 
 @Injectable()
 export class ProfileUserService {
@@ -311,6 +312,44 @@ export class ProfileUserService {
     });
 
     return;
+  }
+
+  /**
+   *
+   * @param userId
+   * @param dto
+   */
+  async updateProfileImage(userId: number, dto: UpdateProfileImageUserDto): Promise<Partial<User>> {
+    const user = await this.db.user.findUnique({ where: { id: userId }, include: { advisor: true } });
+
+    // عکس تکراری رو دوباره آپدیت نمیکنیم
+    if (user.profile_image_id == dto.profile_image_id) return;
+
+    const result = await this.db.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: { profile_image_id: dto.profile_image_id },
+        select: {
+          id: true,
+          mobile_number: true,
+          full_name: true,
+          profile_image: true,
+          owner_id: true,
+          advisor_id: true,
+          created_at: true,
+          fcm_token: true,
+          advisor: { select: { is_special: true } },
+        },
+      });
+
+      // اگر مشاور ویژه بود، در وضعیت بررسی قرار میگیرد
+      if (user?.advisor?.is_special)
+        await tx.advisor.update({ where: { id: user.advisor.id }, data: { status: AdvisorStatus.PENDING } });
+
+      return updatedUser;
+    });
+
+    return result;
   }
 
   /* --------------------------------- HELPERS -------------------------------- */

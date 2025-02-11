@@ -105,6 +105,7 @@ export class PropertyOwnerController {
     @Body() dto: UpdatePropertyMediaOwnerDto,
   ) {
     const user = req.user;
+    const property = req.interceptor_data as PropertyInterceptorData;
 
     // check images and video
     // await this.attachmentService.validateFileOwner(dto.images, user.id, 1);//TODO: uncomment
@@ -112,7 +113,7 @@ export class PropertyOwnerController {
     // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
 
     //
-    await this.propertyOwnerService.updateMedia(propertyId, dto);
+    await this.propertyOwnerService.updateMedia(property, dto);
     return { messageCode: 'CREATE' };
   }
 
