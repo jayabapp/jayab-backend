@@ -117,7 +117,8 @@ export class ProfileUserService {
 
   async checkCanUpdateAdvisor(user: PartialUser, isSpecial: boolean): Promise<void> {
     const advisor = await this.db.advisor.findUnique({ where: { id: user.advisor_id } });
-    if (advisor.is_special && isSpecial) throw new BadRequestException('REGISTER1');
+    // if (advisor.is_special && isSpecial) throw new BadRequestException('REGISTER1');
+    if (advisor.status === AdvisorStatus.APPROVED) throw new BadRequestException('REGISTER3');
   }
 
   /**

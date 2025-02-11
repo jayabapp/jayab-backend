@@ -141,11 +141,12 @@ export class PropertyUserService {
         ...query,
         calendar: {
           none: {
-            date: { gte: startOfDate(checkin), lte: startOfDate(checkout) },
+            date: { gte: startOfDate(checkin), lt: startOfDate(checkout) },
             is_reserved: true,
           },
         },
       };
+
     /* ---------------------------------- CALENDAR INCLUDE ---------------------------------- */
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },

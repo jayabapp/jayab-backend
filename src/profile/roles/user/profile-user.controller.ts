@@ -169,6 +169,8 @@ export class ProfileUserController {
     /* -------------------------------------------------------------------------- */
     const advisor = await this.profileUserService.registerAdvisor(user, dto);
 
+    const result = await this.profileUserService.findOne(user.id);
+
     /* -------------------------------------------------------------------------- */
     // send notif to admin
     await this.notificationService.createNotification({
@@ -182,7 +184,7 @@ export class ProfileUserController {
       notificationableId: advisor.id.toString(),
     });
 
-    return { messageCode: 'CREATE' };
+    return { result, messageCode: 'CREATE' };
   }
 
   @ApiOperation({ operationId: 'Pay Advisor Subscription' })
