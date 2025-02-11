@@ -320,7 +320,7 @@ export class ProfileUserService {
    * @param dto
    */
   async updateProfileImage(userId: number, dto: UpdateProfileImageUserDto): Promise<void> {
-    const user = await this.db.user.findUnique({ where: { id: userId } });
+    const user = await this.db.user.findUnique({ where: { id: userId }, include: { advisor: true } });
 
     // عکس تکراری رو دوباره آپدیت نمیکنیم
     if (user.profile_image_id == dto.profile_image_id) return;
@@ -329,9 +329,8 @@ export class ProfileUserService {
       await tx.user.update({ where: { id: user.id }, data: { profile_image_id: dto.profile_image_id } });
 
       // اگر مشاور ویژه بود، در وضعیت بررسی قرار میگیرد
-      const advisor = await this.db.advisor.findUnique({ where: { id: user.advisor_id } });
-      if (advisor?.is_special)
-        await tx.advisor.update({ where: { id: advisor.id }, data: { status: AdvisorStatus.PENDING } });
+      if (user?.advisor?.is_special)
+        await tx.advisor.update({ where: { id: user.advisor.id }, data: { status: AdvisorStatus.PENDING } });
     });
   }
 
