@@ -221,4 +221,6 @@ const failedMessages = {
   RATE1: 'شما مجاز به ثبت امتیاز نیستید',
 
   NOTIFICATION1: 'موبایل های وارد شده در سیستم وجود ندارند',
+
+  DUPLICATE_MOBILE_NUMBER: 'شماره موبایل تکراری است',
 };

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, User, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { CreateUserAdminDto } from './dto/create.dto';
@@ -122,6 +122,13 @@ export class UserAdminService {
    * @returns
    */
   async update(id: number, dto: UpdateUserAdminDto): Promise<User> {
+    if (dto.mobile_number) {
+      const isDuplicated = await this.db.user.findUnique({
+        where: { mobile_number: dto.mobile_number },
+      });
+      if (isDuplicated && isDuplicated.id !== id) throw new BadRequestException('DUPLICATE_MOBILE_NUMBER');
+    }
+
     const item = await this.db.user.update({
       where: { id },
       data: dto,

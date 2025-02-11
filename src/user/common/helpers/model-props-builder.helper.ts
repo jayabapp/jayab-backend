@@ -43,7 +43,7 @@ export const showPropsBuilder = (
       title: 'شماره موبایل',
       value: item.mobile_number,
       type: 'string',
-      isEditable: false,
+      // isEditable: false,
     },
     { state: 'created_at', title: 'تاریخ ثبت نام', value: item.created_at, type: 'date' },
   ];
@@ -72,7 +72,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       state: 'mobile_number',
       type: 'input',
       title: 'شماره موبایل',
-      options: { maxLength: 11, isMandatory: true, keyboard: 'text', disabled: true },
+      options: { maxLength: 11, isMandatory: true, keyboard: 'text' },
     },
     {
       state: 'is_banned',
