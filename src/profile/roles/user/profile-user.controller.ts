@@ -241,7 +241,7 @@ export class ProfileUserController {
     @Body() dto: UpdateProfileImageUserDto,
   ): Promise<SuccessResponseArgs> {
     const { user } = request;
-    await this.profileUserService.updateProfileImage(user.id, dto);
-    return { messageCode: 'UPDATE' };
+    const result = await this.profileUserService.updateProfileImage(user.id, dto);
+    return { result, messageCode: 'UPDATE' };
   }
 }
