@@ -225,6 +225,13 @@ export class ProfileUserController {
     const ownerRole = result?.owner_id;
 
     if (fcmToken) {
+      //unsubscribe from all topics
+      await this.firebaseService.unsubscribeFromTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
+      await this.firebaseService.unsubscribeFromTopic(fcmToken, FirebaseTopicType.USER);
+      if (ownerRole) await this.firebaseService.unsubscribeFromTopic(fcmToken, FirebaseTopicType.OWNER);
+      if (advisorRole) await this.firebaseService.unsubscribeFromTopic(fcmToken, FirebaseTopicType.ADVISOR);
+
+      //subscribe to all topics
       await this.firebaseService.subscribeToTopic(fcmToken, createTopicKey(user.id, UserRole.USER));
       await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.USER);
       if (ownerRole) await this.firebaseService.subscribeToTopic(fcmToken, FirebaseTopicType.OWNER);
