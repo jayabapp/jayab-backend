@@ -14,16 +14,7 @@ import {
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 
-export class UpdateOwnerUserDto {
-  @ApiProperty({ required: true, default: 1 })
-  @_Min(1)
-  @_IsInt()
-  @Type(() => Number)
-  @_IsNotEmpty()
-  selfie_image_id: number;
-}
-
-export class UpdateAdvisorUserDto {
+export class UpdateProfileImageUserDto {
   @ApiProperty({ required: true, default: 1 })
   @_Min(1)
   @_IsInt()
