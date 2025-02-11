@@ -27,13 +27,20 @@ import { AccessControlList } from '@prisma/client';
 import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
 import { AdminRequestType } from 'src/common/interfaces/user.interface';
 import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
 
 @ApiTags('👨‍💻 Advisor - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
 export class AdvisorAdminController {
-  constructor(private readonly advisorAdminService: AdvisorAdminService) {}
+  constructor(
+    private readonly advisorAdminService: AdvisorAdminService,
+    private readonly notificationSharedService: NotificationSharedService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -122,9 +129,23 @@ export class AdvisorAdminController {
     @Body() dto: UpdatePartialAdvisorAdminDto,
   ): Promise<SuccessResponseArgs> {
     const admin = req.user;
-    await this.advisorAdminService.findById(id);
+    const advisor = await this.advisorAdminService.findById(id);
     const result = await this.advisorAdminService.updatePartial(admin, id, dto);
 
+    /* SEND NOTIFICATION */
+    let notifBody = `وضعیت ثبت نام شما به عنوان مشاور ویژه در جایاب به ${AdvisorStatusList.find((e) => e.id === dto.status)?.title} تغییر پیدا کرد`;
+    if (dto.admin_description) notifBody += `\n ${dto.admin_description}`;
+
+    await this.notificationSharedService.createNotification({
+      user: { id: advisor.user?.id, role: UserRole.USER },
+      mustSendNotif: true,
+      notification: {
+        title: 'تغییر وضعیت مشاور',
+        body: notifBody,
+      },
+      notificationType: NotificationTypes.ADVISOR_SUBSCRIPTION,
+      notificationableId: id?.toString(),
+    });
     return { result, messageCode: 'UPDATE' };
   }
 
