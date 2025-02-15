@@ -17,6 +17,7 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { isArray, isEmpty } from 'lodash';
 import { PropertyOptionGroupList } from 'src/property-option/common/property-option-groups.type';
+import { CancelingType, CancelingTypeList } from '../types/property-canceling-types.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -68,7 +69,8 @@ const options = (item: PropertyResType): Array<ShowProps> => {
       state: `${propertyOption.id.toLocaleString().toLowerCase()}`,
       title: `${propertyOption.title}`,
       value: propValue,
-      type: 'string',
+      type: 'longString',
+      titleClass: 'text-warning',
     });
   }
 
@@ -85,7 +87,8 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     /* -------------------------------------------------------------------------- */
     { type: 'dividerTitle', title: 'اطلاعات اصلی' },
     { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
-    { state: 'code', title: 'کد ملک', value: item.code, type: 'string' },
+    { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
+    { state: 'code', title: 'کد', value: item.code, type: 'string' },
     {
       state: 'status',
       title: 'وضعیت',
@@ -103,7 +106,13 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },
     { type: 'dividerTitle', title: 'اطلاعات مالک' },
-    { state: 'owner_mobile_number', title: 'شماره موبایل', value: item.owner.mobile_number, type: 'string' },
+    {
+      state: 'owner_mobile_number',
+      title: 'شماره موبایل',
+      value: item.owner.mobile_number,
+      type: 'string',
+      route: `/owners/show/${item.owner.id}`,
+    },
     { state: 'owner_full_name', title: 'نام و نام خانوادگی', value: item.owner.full_name, type: 'string' },
 
     /* -------------------------------------------------------------------------- */
@@ -113,16 +122,16 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { state: 'max_capacity', title: 'حداکثر ظرفیت میهمان', value: item.max_capacity, type: 'number' },
     { type: 'break' },
     { state: 'normal', title: 'قیمت شنبه تا سه شنبه', value: dailyPrice?.normal, type: 'number' },
-    { state: 'wednesday', title: 'قیمت چهارشنبه', value: dailyPrice.wednesday, type: 'number' },
-    { state: 'thursday', title: 'قیمت پنجشنبه', value: dailyPrice.thursday, type: 'number' },
-    { state: 'friday', title: 'قیمت جمعه', value: dailyPrice.friday, type: 'number' },
-    { state: 'peak', title: 'قیمت ایام پیک', value: dailyPrice.peak, type: 'number' },
-    { state: 'cleaning', title: 'هزینه نظافت', value: dailyPrice.cleaning, type: 'number' },
-    { state: 'today_offer', title: 'تخفیف امروز', value: dailyPrice.today_offer, type: 'number' },
+    { state: 'wednesday', title: 'قیمت چهارشنبه', value: dailyPrice?.wednesday, type: 'number' },
+    { state: 'thursday', title: 'قیمت پنجشنبه', value: dailyPrice?.thursday, type: 'number' },
+    { state: 'friday', title: 'قیمت جمعه', value: dailyPrice?.friday, type: 'number' },
+    { state: 'peak', title: 'قیمت ایام پیک', value: dailyPrice?.peak, type: 'number' },
+    { state: 'cleaning', title: 'هزینه نظافت', value: dailyPrice?.cleaning, type: 'number' },
+    { state: 'today_offer', title: 'تخفیف امروز', value: dailyPrice?.today_offer, type: 'number' },
     {
       state: 'additional_person',
       title: 'قیمت نفر اضافه و سه سال به بالا',
-      value: dailyPrice.additional_person,
+      value: dailyPrice?.additional_person,
       type: 'number',
     },
     /* -------------------------------------------------------------------------- */
@@ -137,7 +146,6 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { state: 'city', title: 'شهر', value: item.city, type: 'string' },
     { state: 'address', title: 'آدرس دقیق ملک', value: item.address, type: 'number' },
     { state: 'has_pool', title: 'استخر دارد', value: item.has_pool, type: 'boolean' },
-
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },
     { type: 'dividerTitle', title: 'اطلاعات اتاق و رخت خواب' },
@@ -145,24 +153,78 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { type: 'break' },
     ...bedroomsInfo(item),
     { type: 'break' },
-    { state: 'master_room', title: 'تعداد اتاق مستر', value: bedrooms.master_room, type: 'number' },
-    { state: 'additional_bed', title: 'رخت خواب اضافه', value: bedrooms.additional_bed, type: 'number' },
-    { state: 'additional_bed', title: 'مبل تخت خواب شو', value: bedrooms.additional_bed, type: 'number' },
+    { state: 'master_room', title: 'تعداد اتاق مستر', value: bedrooms?.master_room, type: 'number' },
+    { state: 'additional_bed', title: 'رخت خواب اضافه', value: bedrooms?.additional_bed, type: 'number' },
+    { state: 'additional_bed', title: 'مبل تخت خواب شو', value: bedrooms?.additional_bed, type: 'number' },
 
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },
-    { type: 'dividerTitle', title: 'امکانات محیطی' },
+    { type: 'dividerTitle', title: 'امکانات' },
     ...options(item),
+    {
+      type: 'longString',
+      value: item.canceling_type?.title,
+      title: 'قوانین کنسلی',
+      titleClass: 'text-warning',
+    },
 
-    /* -------------------------------------------------------------------------- */
     { type: 'divider' },
     { type: 'dividerTitle', title: 'امکانات عمومی ویلا' },
-    { state: 'wc', title: 'سرویس بهداشتی فرنگی', value: bedrooms.wc, type: 'number' },
-    { state: 'wc_ir', title: 'سرویس بهداشتی ایرانی', value: bedrooms.wc_ir, type: 'number' },
-    { state: 'bathroom_general', title: 'حمام مشترک', value: bedrooms.bathroom_general, type: 'number' },
-    { state: 'bathroom_tub', title: 'حمام وان دار', value: bedrooms.bathroom_tub, type: 'number' },
-    { state: 'bathroom_in_wc', title: 'حمام در سرویس', value: bedrooms.bathroom_in_wc, type: 'number' },
-    { state: 'bathroom_master', title: 'حمام در اتاق', value: bedrooms.bathroom_master, type: 'number' },
+    { state: 'wc', title: 'سرویس بهداشتی فرنگی', value: bedrooms?.wc, type: 'number' },
+    { state: 'wc_ir', title: 'سرویس بهداشتی ایرانی', value: bedrooms?.wc_ir, type: 'number' },
+    { state: 'bathroom_general', title: 'حمام مشترک', value: bedrooms?.bathroom_general, type: 'number' },
+    { state: 'bathroom_tub', title: 'حمام وان دار', value: bedrooms?.bathroom_tub, type: 'number' },
+    { state: 'bathroom_in_wc', title: 'حمام در سرویس', value: bedrooms?.bathroom_in_wc, type: 'number' },
+    { state: 'bathroom_master', title: 'حمام در اتاق', value: bedrooms?.bathroom_master, type: 'number' },
+
+    /* -------------------------------------------------------------------------- */
+    { type: 'divider' },
+    { type: 'dividerTitle', title: 'توضیحات' },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.distance_dscr,
+      title: 'فاصله از مراکز خرید',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.facility_dscr,
+      title: 'توضیحات امکانات',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.pattern_dscr,
+      title: 'توضیحات بافت',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.property_dscr,
+      title: 'توضیحات ملک',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.ad_dscr,
+      title: 'توضیحات تبلیغی',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.guest_dscr,
+      title: 'توضیحات نوع مهمان',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.party_dscr,
+      title: 'توضیحات برگزاری جشن',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.pet_dscr,
+      title: 'توضیحات پذیرش حیوانات خانگی',
+    },
+    {
+      type: 'longString',
+      value: item.property_descriptions?.property_dscr,
+      title: 'توضیحات ملک',
+    },
 
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },

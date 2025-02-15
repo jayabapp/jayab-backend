@@ -50,7 +50,7 @@ export type PropertyJsonType = Property & {
 };
 
 export type PropertyArrayResType = {
-  owner?: { mobile_number: string; full_name: string };
+  owner?: { id: number; mobile_number: string; full_name: string };
   id: number;
   code: string;
   title: string;
@@ -83,7 +83,7 @@ export type PropertyArrayResType = {
 };
 
 export type PropertyJsonResType = {
-  owner?: { mobile_number: string; full_name: string };
+  owner?: { id: number; mobile_number: string; full_name: string };
   latitude: number;
   longitude: number;
   land_area: number;
@@ -178,9 +178,6 @@ export class PropertySerializer {
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
 
     let list: PropertyArrayResType = {
-      owner: data?.owner
-        ? { mobile_number: data.owner.user.mobile_number, full_name: data.owner.user.full_name }
-        : null,
       id: data.id,
       code: data.code,
       title: data.title,
@@ -219,7 +216,11 @@ export class PropertySerializer {
     if (!isList)
       single = {
         owner: data?.owner
-          ? { mobile_number: data.owner.user.mobile_number, full_name: data.owner.user.full_name }
+          ? {
+              id: data.owner_id,
+              mobile_number: data.owner.user.mobile_number,
+              full_name: data.owner.user.full_name,
+            }
           : null,
         admin_descriptions: data.admin_descriptions,
         canceling_type: CancelingTypeList.find((e) => e.id == data.canceling_type),

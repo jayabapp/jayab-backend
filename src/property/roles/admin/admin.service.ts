@@ -121,7 +121,7 @@ export class PropertyAdminService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, false);
+    const serialized = await this.propertySerializer.toJSON(item, today, false, true); //اطلاعاتی که ادمین میبینه با مالک یکسانه
 
     const showProps = showPropsBuilder(serialized);
     const actions = showActionBuilder(item);
