@@ -221,7 +221,10 @@ export class PropertyUserService {
         attachments: true,
         province: { select: { title: true } },
         city: { select: { title: true } },
-        property_options: { select: { option: { select: { title: true, group: true } } } },
+        property_options: {
+          where: { option: { deleted_at: { not: null } } },
+          select: { option: { select: { title: true, group: true } } },
+        },
         bedrooms: true,
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
