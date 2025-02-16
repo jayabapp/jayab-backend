@@ -70,8 +70,8 @@ export class FirebaseService {
       webpush: {
         notification: {
           ...payload.notification,
-          badge: './assets/icons/logo/logo-w.png',
-          icon: './assets/icons/app/android-chrome-192x192.png',
+          badge: './favicon-96x96.png',
+          icon: './web-app-manifest-192x192.png',
         },
       },
     };
@@ -125,7 +125,6 @@ export class FirebaseService {
     if (!topic) {
       throw new Error('empty topic');
     }
-    console.log('HERE');
 
     /**
      * check firebase init
@@ -166,14 +165,12 @@ export class FirebaseService {
       },
       topic: topic,
     };
-    console.log({ body });
 
     /**
      * Send to topic
      */
     try {
-      const res = await firebaseAdmin.messaging().send(body);
-      console.log({ res });
+      await firebaseAdmin.messaging().send(body);
     } catch (error) {
       console.log(error.message, error.stackTrace, 'FcmService');
       throw error;
