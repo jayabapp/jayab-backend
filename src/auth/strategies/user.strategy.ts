@@ -20,8 +20,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
 
   public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
     const user = await this.db.user.findFirst({
-      // where: { id: payload.id, jwt_level: payload.jwtLevel },
-      where: { id: payload.id },
+      where: { id: payload.id, jwt_level: payload.jwtLevel },
       select: {
         id: true,
         mobile_number: true,
