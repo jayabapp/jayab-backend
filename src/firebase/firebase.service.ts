@@ -160,8 +160,8 @@ export class FirebaseService {
       webpush: {
         notification: {
           ...payload.notification,
-          // badge: './assets/icons/logo/logo-w.png',
-          // icon: './assets/icons/app/android-chrome-192x192.png',
+          badge: './favicon-96x96.png',
+          icon: './web-app-manifest-192x192.png',
         },
       },
       topic: topic,
