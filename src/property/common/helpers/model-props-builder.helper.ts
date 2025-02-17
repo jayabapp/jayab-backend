@@ -225,6 +225,16 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
       value: item.property_descriptions?.property_dscr,
       title: 'توضیحات ملک',
     },
+    {
+      type: 'string',
+      value: item.check_in_hour,
+      title: 'ساعت ورود',
+    },
+    {
+      type: 'string',
+      value: item.check_out_hour,
+      title: 'ساعت خروج',
+    },
 
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },

@@ -102,6 +102,8 @@ export type PropertyJsonResType = {
   status_number?: number;
   canceling_type?: EnumList;
   admin_descriptions?: any;
+  check_in_hour: string;
+  check_out_hour: string;
 };
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
@@ -238,6 +240,8 @@ export class PropertySerializer {
         property_descriptions: data.description,
         rent_type: RentType.DAILY,
         is_chat_enabled: data.is_chat_enabled,
+        check_in_hour: data.check_in_hour,
+        check_out_hour: data.check_out_hour,
       };
 
     let reserveDays: ReserveDay[] = [];
