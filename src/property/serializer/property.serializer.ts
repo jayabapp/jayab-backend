@@ -203,7 +203,15 @@ export class PropertySerializer {
       has_blue_tick: data.has_blue_tick,
       favorite_count: data?.favorite_count,
       status_number: data.status,
-      status: PropertyStatusesList.find((_) => _.id === data.status),
+      //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
+      status:
+        (!remainingDays || remainingDays <= 0) && data.status === PropertyStatuses.INIT
+          ? {
+              id: 1,
+              title: 'در انتظار پرداخت',
+              hex: '#F53E4F',
+            }
+          : PropertyStatusesList.find((_) => _.id === data.status),
       created_at: data.created_at,
       //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
