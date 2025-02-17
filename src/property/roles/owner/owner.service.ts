@@ -562,7 +562,7 @@ export class PropertyOwnerService {
     };
 
     const list = await this.db.property.findMany({
-      where: { owner_id: ownerId },
+      where: { owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
       include: {
         feature_image: true,
         province: { select: { title: true } },
