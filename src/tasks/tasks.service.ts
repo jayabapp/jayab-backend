@@ -46,7 +46,7 @@ export class TasksService {
 
   /* ------------------------ یادآوری تمدید اشتراک ملک ------------------------ */
   @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'property-subscription-remider',
+    name: 'property-subscription-reminder',
     timeZone: 'Asia/Tehran',
   })
   async propertySubscriptionReminderTask(): Promise<void> {
