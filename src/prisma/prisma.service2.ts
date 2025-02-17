@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '../../generated/schema';
+import { Prisma, PrismaClient } from '../../generated/schema2';
 
 const ModelsWithSoftDelete = [
   'City',
@@ -37,7 +37,7 @@ const prisma = new PrismaClient().$extends({
 });
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService2 extends PrismaClient implements OnModuleInit {
   constructor() {
     super();
   }
@@ -75,10 +75,5 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     /* -------------------------------------------------------------------------- */
     /*                               END SOFT DELETE                              */
     /* -------------------------------------------------------------------------- */
-  }
-
-  // Expose the extended Prisma client with custom methods
-  get client() {
-    return prisma;
   }
 }
