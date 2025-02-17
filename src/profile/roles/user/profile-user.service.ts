@@ -191,7 +191,7 @@ export class ProfileUserService {
     let data = await this.db.advisor.findFirst({
       where: { user: { id: userId } },
       include: {
-        user: { select: { full_name: true, profile_image: true } },
+        user: { select: { full_name: true, profile_image: true, referral_code: true, referrer_code: true } },
         document_image: true,
         national_card_image: true,
         cities: true,
@@ -201,6 +201,7 @@ export class ProfileUserService {
     if (data) {
       data = {
         ...data,
+        user: { ...data.user, referral_code: data.is_special ? data.user.referral_code : null },
         // @ts-ignore
         admin_description: last(data.admin_descriptions)?.description,
         // @ts-ignore
