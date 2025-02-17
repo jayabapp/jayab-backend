@@ -100,6 +100,11 @@ export class RegisterAdvisorUserDto {
   @Type(() => Number)
   @IsOptional()
   document_image_id: number;
+
+  @ApiProperty({ required: false, default: 1 })
+  @_IsString()
+  @_IsNotEmpty()
+  referrer_code: string;
 }
 
 export class BuySubscriptionAdvisorDto {

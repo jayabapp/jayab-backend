@@ -106,6 +106,7 @@ export class ProfileUserService {
           full_name: fullName,
           profile_image_id: profileImageId,
           advisor_id: advisor.id,
+          referrer_code: dto.referrer_code || null,
         },
       });
 
