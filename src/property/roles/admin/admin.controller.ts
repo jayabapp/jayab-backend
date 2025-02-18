@@ -26,6 +26,7 @@ import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper'
 import { SmsService } from 'src/sms/sms.service';
 import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { PropertyAdminMigrationService } from './admin-migration.service';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -34,6 +35,7 @@ import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 export class PropertyAdminController {
   constructor(
     private readonly propertyAdminService: PropertyAdminService,
+    private readonly propertyAdminMigrationService: PropertyAdminMigrationService,
     private readonly smsService: SmsService,
   ) {}
 
@@ -147,10 +149,26 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                  MIGRATION                                 */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Migrate', description: '' })
-  @Post(':id/migrate')
+  @ApiOperation({ operationId: 'Migrate Users', description: '' })
+  @Post('migrate/users')
   async migrate(): Promise<SuccessResponseArgs> {
-    await this.propertyAdminService.migrateFromV1();
+    await this.propertyAdminMigrationService.migrateFromV1Users();
+
+    return {};
+  }
+
+  @ApiOperation({ operationId: 'Migrate Owners', description: '' })
+  @Post('migrate/owners')
+  async migrateOwners(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminMigrationService.migrateFromV1Owners();
+
+    return {};
+  }
+
+  @ApiOperation({ operationId: 'Migrate Attachments', description: '' })
+  @Post('migrate/attachments')
+  async migrateAttachments(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminMigrationService.migrateFromV1Attachments();
 
     return {};
   }

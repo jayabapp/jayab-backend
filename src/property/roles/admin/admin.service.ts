@@ -244,16 +244,6 @@ export class PropertyAdminService {
     return url;
   }
 
-  /**
-   * migrate jayab v1 data to v2
-   * @param id
-   */
-  async migrateFromV1(): Promise<void> {
-    console.log('OK');
-    const x = await this.dbv1.property.findFirst();
-    console.log({ x });
-  }
-
   /* -------------------------------------------------------------------------- */
   /*                                   HELPER                                   */
   /* -------------------------------------------------------------------------- */
