@@ -34,6 +34,12 @@ import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-crea
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 import { PrismaService2 } from 'src/prisma/prisma.service2';
+import { AttachmentService } from 'src/attachment/attachment.service';
+import fs from 'fs/promises';
+import { __baseDir } from 'src/config/settings';
+import { IMAGES_OWNER_PROPERTY_FOLDER, PROFILE_FOLDER } from 'src/common/utils/constants/storage-folders';
+import { ConfigService } from '@nestjs/config';
+import { UserRole } from 'src/common/interfaces/role.enum';
 
 @Injectable()
 export class PropertyAdminMigrationService {
@@ -42,6 +48,8 @@ export class PropertyAdminMigrationService {
     private readonly dbv1: PrismaService2,
     private readonly dayHelper: DayHelper,
     private readonly propertySerializer: PropertySerializer,
+    private readonly attachmentService: AttachmentService,
+    private config: ConfigService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -82,17 +90,75 @@ export class PropertyAdminMigrationService {
   }
 
   async migrateFromV1Attachments(): Promise<void> {
-    const attachments = await this.dbv1.attachment.findMany({ take: 1 });
-    // for (const owner of owners) {
-    //   await this.db.user.upsert({
-    //     where: { mobile_number: user.mobile_number },
-    //     create: {
-    //       mobile_number: user.mobile_number,
-    //       notification_read_at: new Date(),
-    //     },
-    //     update: {},
-    //   });
-    // }
-    console.log({ attachments });
+    const attachments = await this.dbv1.attachment.findMany({
+      // where: { property: { some: {} } },
+      where: { owner: { some: {} } },
+      // take: 10,
+      orderBy: { id: 'asc' },
+    });
+    for (const attachment of attachments) {
+      console.log({ id: attachment.id });
+
+      const isExist = await this.db.attachment.findFirst({ where: { name: attachment.name } });
+      if (isExist) continue;
+
+      const fileName = attachment.name;
+
+      const path = __baseDir + '/storage/v1/images/' + fileName;
+      const isFileExist = await this.fileExists(path);
+      if (!isFileExist) continue;
+
+      await fs.copyFile(
+        __baseDir + '/storage/v1/images/' + fileName,
+        __baseDir + '/storage/v1/images_3/' + fileName,
+      );
+      await fs.copyFile(
+        __baseDir + '/storage/v1/images/' + fileName,
+        __baseDir + '/storage/v1/images_3/' + `medium-v1-${fileName}`,
+      );
+      await fs.copyFile(
+        __baseDir + '/storage/v1/images/' + `thumbnail-${fileName}`,
+        __baseDir + '/storage/v1/images_3/' + `thumbnail-${fileName}`,
+      );
+
+      await this.db.attachment.create({
+        data: {
+          id: attachment.id,
+          name: fileName,
+          medium: `medium-v1-${fileName}`,
+          thumbnail: `thumbnail-${fileName}`,
+          bucket: this.config.get('aws.bucket'),
+          end_point: this.config.get('aws.fs1.endPoint'),
+          alt: '',
+          type: 1,
+          user_id: attachment.user_id || null,
+          user_role: UserRole.OWNER,
+          // path: IMAGES_OWNER_PROPERTY_FOLDER,
+          path: PROFILE_FOLDER,
+        },
+      });
+
+      // const fileName = attachment.name;
+      // const file = await fs.readFile(__baseDir + '/storage/v1/' + fileName);
+      // console.log({ file });
+      // const args = {
+      //   fileName,
+      //   file,
+      //   folder: IMAGES_OWNER_PROPERTY_FOLDER,
+      //   userId: attachment.user_id || null,
+      // };
+      // const result = await this.attachmentService.createAttachmentInMigration(args);
+      // console.log({ result });
+    }
+    // console.log({ attachments });
+  }
+
+  async fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.stat(path);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }

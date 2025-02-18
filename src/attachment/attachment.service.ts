@@ -286,4 +286,94 @@ export class AttachmentService {
     await this.db.attachment.delete({ where: { id } });
     return;
   }
+
+  async createAttachmentInMigration(args: {
+    fileName: string;
+    file: Buffer;
+    folder: string;
+    userId?: number;
+    adminId?: number;
+  }): Promise<Attachment> {
+    const { fileName, file, folder, adminId, userId } = args;
+
+    // const storagePath = STORAGE_PUBLIC + folder;
+    const MIN_WIDTH = 32;
+    const MIN_HEIGHT = 32;
+
+    const image = sharp(file);
+    const largeImage = sharp(file);
+    const mediumImage = sharp(file);
+    const thumbImage = sharp(file);
+
+    const metadata = await image.metadata();
+    const { width, height } = metadata;
+
+    /**
+     * Create file name
+     */
+
+    // const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.webp`;
+    const largeName = `${fileName}`;
+    const mediumName = `medium-${fileName}`;
+    const thumbName = `thumb-${fileName}`;
+    const fitMode = 'contain';
+
+    /**
+     * resize image
+     */
+    const l = await largeImage.webp().toBuffer();
+
+    const m = await mediumImage
+      .resize({
+        width: 400,
+        height: 400,
+        fit: fitMode,
+      })
+      .webp()
+      .toBuffer();
+
+    const t = await thumbImage.webp().toBuffer();
+
+    /**
+     * save to S3
+     */
+
+    //original
+    const mainOnS3 = await this.s3ManagerService.uploadObject({
+      fullPath: `${folder}/${largeName}`,
+      buffer: l,
+    });
+
+    //medium
+    await this.s3ManagerService.uploadObject({
+      fullPath: `${folder}/${mediumName}`,
+      buffer: m,
+      fs: mainOnS3.fs,
+    });
+
+    //thumbnail
+    await this.s3ManagerService.uploadObject({
+      fullPath: `${folder}/${thumbName}`,
+      buffer: t,
+      fs: mainOnS3.fs,
+    });
+
+    let updateData: Prisma.AttachmentUncheckedCreateInput = {
+      name: largeName,
+      medium: mediumName,
+      thumbnail: thumbName,
+      // meta: (metadata || {}) as Prisma.JsonValue,
+      bucket: mainOnS3.bucket,
+      end_point: mainOnS3.end_point,
+      alt: '',
+      type: 1,
+      path: folder,
+    };
+
+    const data = await this.db.attachment.create({
+      data: { ...updateData, admin_id: adminId || null, user_id: userId || null },
+    });
+
+    return data;
+  }
 }
