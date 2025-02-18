@@ -37,7 +37,11 @@ import { PrismaService2 } from 'src/prisma/prisma.service2';
 import { AttachmentService } from 'src/attachment/attachment.service';
 import fs from 'fs/promises';
 import { __baseDir } from 'src/config/settings';
-import { IMAGES_OWNER_PROPERTY_FOLDER, PROFILE_FOLDER } from 'src/common/utils/constants/storage-folders';
+import {
+  IMAGES_OWNER_PROPERTY_FOLDER,
+  IMAGES_PROFILE_FOLDER,
+  PROFILE_FOLDER,
+} from 'src/common/utils/constants/storage-folders';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
@@ -93,8 +97,8 @@ export class PropertyAdminMigrationService {
 
   async migrateFromV1Attachments(): Promise<void> {
     const attachments = await this.dbv1.attachment.findMany({
-      // where: { property: { some: {} } },
-      where: { owner: { some: {} } },
+      where: { property: { some: {} } },
+      // where: { owner: { some: {} } },
       // take: 10,
       orderBy: { id: 'asc' },
     });
@@ -156,7 +160,7 @@ export class PropertyAdminMigrationService {
   }
 
   async convertToWebp(): Promise<void> {
-    const path = __baseDir + '/storage/v1/properties/';
+    const path = __baseDir + '/storage/v1/images_3/';
 
     const files = await fs.readdir(path);
 
@@ -182,7 +186,7 @@ export class PropertyAdminMigrationService {
       if (!isFileExist) continue;
 
       const isDuplicated = await this.fileExists(
-        __baseDir + '/storage/v1/testwebp/' + fileName.replace('.jpg', '.webp'),
+        __baseDir + '/storage/v1/ownerwebp/' + fileName.replace('.jpg', '.webp'),
       );
       console.log({ isDuplicated });
 
@@ -203,23 +207,24 @@ export class PropertyAdminMigrationService {
   }
 
   async uploadAttachments(): Promise<void> {
-    const files = await fs.readdir(__baseDir + '/storage/v1/testwebp/');
+    const files = await fs.readdir(__baseDir + '/storage/v1/ownerwebp/');
 
     console.log({ l: files.length });
     let counter = files.length;
-    for (const file of files.splice(0, 100)) {
+    for (const file of files) {
       counter--;
       console.log(counter);
       const fileName = file;
       console.log({ fileName });
-      const path = __baseDir + '/storage/v1/testwebp/' + fileName;
+      const path = __baseDir + '/storage/v1/ownerwebp/' + fileName;
       const fileData = await fs.readFile(path);
 
-      await this.s3Manager.uploadObject({
-        fullPath: `${IMAGES_OWNER_PROPERTY_FOLDER}/${fileName}`,
+      this.s3Manager.uploadObject({
+        // fullPath: `jayab/images/properties3/${fileName}`,
+        fullPath: `${IMAGES_PROFILE_FOLDER}/${fileName}`,
         buffer: fileData,
       });
-      await fs.unlink(path);
+      // await fs.unlink(path);
     }
   }
 
@@ -232,3 +237,4 @@ export class PropertyAdminMigrationService {
     }
   }
 }
+//https://kian-cdn1.s3.ir-thr-at1.arvanstorage.ir/jayab/images/properties/a4e9dcb59de9652095f9ab4e452f4a0e-1695593435444-750x1000.webp

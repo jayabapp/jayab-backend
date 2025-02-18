@@ -338,9 +338,9 @@ export class AttachmentService {
 
       const t = await thumbImage.webp().toBuffer();
 
-      await fs.writeFile(`${__baseDir}/storage/v1/testwebp/${largeName}`, l);
-      await fs.writeFile(`${__baseDir}/storage/v1/testwebp/${mediumName}`, m);
-      await fs.writeFile(`${__baseDir}/storage/v1/testwebp/${thumbName}`, t);
+      await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${largeName}`, l);
+      await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${mediumName}`, m);
+      await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${thumbName}`, t);
       /**
        * save to S3
        */
