@@ -172,4 +172,19 @@ export class PropertyAdminController {
 
     return {};
   }
+
+  @ApiOperation({ operationId: 'Convert to webp', description: '' })
+  @Post('migrate/convertToWebp')
+  async convertToWebp(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminMigrationService.convertToWebp();
+
+    return {};
+  }
+  @ApiOperation({ operationId: 'Upload Attachments', description: '' })
+  @Post('migrate/upload')
+  async uploadAttachments(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminMigrationService.uploadAttachments();
+
+    return {};
+  }
 }

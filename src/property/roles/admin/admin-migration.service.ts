@@ -40,6 +40,7 @@ import { __baseDir } from 'src/config/settings';
 import { IMAGES_OWNER_PROPERTY_FOLDER, PROFILE_FOLDER } from 'src/common/utils/constants/storage-folders';
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from 'src/common/interfaces/role.enum';
+import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 
 @Injectable()
 export class PropertyAdminMigrationService {
@@ -50,6 +51,7 @@ export class PropertyAdminMigrationService {
     private readonly propertySerializer: PropertySerializer,
     private readonly attachmentService: AttachmentService,
     private config: ConfigService,
+    private s3Manager: S3ManagerService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -151,6 +153,74 @@ export class PropertyAdminMigrationService {
       // console.log({ result });
     }
     // console.log({ attachments });
+  }
+
+  async convertToWebp(): Promise<void> {
+    const path = __baseDir + '/storage/v1/properties/';
+
+    const files = await fs.readdir(path);
+
+    // for (const file of files) {
+    //   if (file.startsWith('thumb')) {
+    //     const filePath = path + file;
+    //     await fs.unlink(filePath);
+    //     console.log(`Deleted: ${file}`);
+    //   }
+    // }
+
+    // return;
+    let counter = files.length;
+    for (const file of files) {
+      counter--;
+      console.log(counter);
+      if (file.startsWith('medium')) continue;
+      if (file.startsWith('thumb')) continue;
+      const fileName = file;
+      console.log({ fileName });
+      if (fileName === '.DS_Store') continue;
+      const isFileExist = await this.fileExists(path + fileName);
+      if (!isFileExist) continue;
+
+      const isDuplicated = await this.fileExists(
+        __baseDir + '/storage/v1/testwebp/' + fileName.replace('.jpg', '.webp'),
+      );
+      console.log({ isDuplicated });
+
+      if (isDuplicated) continue;
+
+      const fileData = await fs.readFile(path + fileName);
+      const thumbFileData = await fs.readFile(path + 'thumbnail-' + fileName);
+
+      const args = {
+        fileName,
+        file: fileData,
+        thumbFile: thumbFileData,
+        folder: IMAGES_OWNER_PROPERTY_FOLDER,
+        userId: null,
+      };
+      await this.attachmentService.createAttachmentInMigration(args);
+    }
+  }
+
+  async uploadAttachments(): Promise<void> {
+    const files = await fs.readdir(__baseDir + '/storage/v1/testwebp/');
+
+    console.log({ l: files.length });
+    let counter = files.length;
+    for (const file of files.splice(0, 100)) {
+      counter--;
+      console.log(counter);
+      const fileName = file;
+      console.log({ fileName });
+      const path = __baseDir + '/storage/v1/testwebp/' + fileName;
+      const fileData = await fs.readFile(path);
+
+      await this.s3Manager.uploadObject({
+        fullPath: `${IMAGES_OWNER_PROPERTY_FOLDER}/${fileName}`,
+        buffer: fileData,
+      });
+      await fs.unlink(path);
+    }
   }
 
   async fileExists(path: string): Promise<boolean> {
