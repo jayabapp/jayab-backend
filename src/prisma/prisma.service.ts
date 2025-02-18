@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '../../generated/schema';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const ModelsWithSoftDelete = [
   'City',

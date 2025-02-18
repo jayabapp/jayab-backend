@@ -33,11 +33,13 @@ import { AdminType } from 'src/common/interfaces/user.interface';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { PrismaService2 } from 'src/prisma/prisma.service2';
 
 @Injectable()
 export class PropertyAdminService {
   constructor(
     private readonly db: PrismaService,
+    private readonly dbv1: PrismaService2,
     private readonly dayHelper: DayHelper,
     private readonly propertySerializer: PropertySerializer,
   ) {}
@@ -242,15 +244,14 @@ export class PropertyAdminService {
     return url;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
   /**
-   * remove
+   * migrate jayab v1 data to v2
    * @param id
    */
-  async remove(id: number): Promise<void> {
-    await this.db.property.delete({ where: { id } });
+  async migrateFromV1(): Promise<void> {
+    console.log('OK');
+    const x = await this.dbv1.property.findFirst();
+    console.log({ x });
   }
 
   /* -------------------------------------------------------------------------- */

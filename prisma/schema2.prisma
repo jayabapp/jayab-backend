@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/schema2"
+  output   = "../node_modules/@prisma-client2/prisma/client"
   // previewFeatures = ["clientExtensions", "fieldReference", "filteredRelationCount"]
 }
 

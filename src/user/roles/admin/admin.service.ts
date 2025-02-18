@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, User, Prisma } from '../../../../generated/schema';
+import { AccessControlList, User, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { CreateUserAdminDto } from './dto/create.dto';
 import { UpdateUserAdminDto } from './dto/update.dto';

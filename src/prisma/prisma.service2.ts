@@ -1,40 +1,15 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '../../generated/schema2';
+import { Prisma, PrismaClient } from '@prisma-client2/prisma/client';
 
 const ModelsWithSoftDelete = [
   'City',
   'Category',
   'OfferCode',
   'FormBuilder',
-  'Property',
+  // 'Property',
   'PropertyOption',
   'SubscriptionPlan',
 ];
-
-const prisma = new PrismaClient().$extends({
-  model: {
-    turnover: {
-      // async createWithBalanceUpdate(data: Prisma.TurnoverUncheckedCreateInput) {
-      //   const { user_id } = data;
-      //   let turnover;
-      //   await prisma.$transaction(async (tx) => {
-      //     turnover = await tx.turnover.create({ data });
-      //     const aggregate = await tx.turnover.aggregate({
-      //       where: { user_id: user_id },
-      //       _sum: { amount: true },
-      //     });
-      //     await tx.user.update({
-      //       where: { id: user_id },
-      //       data: {
-      //         wallet_balance: aggregate._sum.amount,
-      //       },
-      //     });
-      //   });
-      //   return turnover;
-      // },
-    },
-  },
-});
 
 @Injectable()
 export class PrismaService2 extends PrismaClient implements OnModuleInit {

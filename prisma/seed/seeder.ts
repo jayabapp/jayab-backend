@@ -92,12 +92,12 @@ async function main(): Promise<void> {
     case 'all':
       await superadminSeeder();
       await moduleSeeder();
-      await contentSeeder();
-      await citySeeder();
+      // await contentSeeder();
+      // await citySeeder();
       await settingSeeder();
       await paymentGatewaySeeder();
       await paymentMethodSeeder();
-      await propertyOptionsSeeder();
+      // await propertyOptionsSeeder();
       await subscriptionPlanSeeder();
 
       break;

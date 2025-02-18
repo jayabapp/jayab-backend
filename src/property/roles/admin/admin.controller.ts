@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Put,
   Query,
   Req,
@@ -144,14 +145,13 @@ export class PropertyAdminController {
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
+  /*                                  MIGRATION                                 */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
-  // @Delete(':id')
-  // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyAdminService.findById(id);
-  //   await this.propertyAdminService.remove(id);
+  @ApiOperation({ operationId: 'Migrate', description: '' })
+  @Post(':id/migrate')
+  async migrate(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminService.migrateFromV1();
 
-  //   return { messageCode: 'DELETE' };
-  // }
+    return {};
+  }
 }
