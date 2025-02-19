@@ -199,4 +199,12 @@ export class PropertyAdminController {
 
     return {};
   }
+
+  @ApiOperation({ operationId: 'Migrate Property', description: '' })
+  @Post('migrate/properties')
+  async migrateProperties(): Promise<SuccessResponseArgs> {
+    await this.propertyAdminMigrationService.migrateFromV1Properties();
+
+    return {};
+  }
 }

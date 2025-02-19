@@ -27,7 +27,7 @@ import {
   PropertyJsonType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
+import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
@@ -46,6 +46,8 @@ import { ConfigService } from '@nestjs/config';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 import { OwnerStatus } from 'src/owner/common/owner-status.type';
+import { slugify } from 'src/common/helpers/slugify';
+import { omit } from 'lodash';
 
 @Injectable()
 export class PropertyAdminMigrationService {
@@ -123,6 +125,128 @@ export class PropertyAdminMigrationService {
         create: city,
         update: {},
       });
+    }
+  }
+
+  async migrateFromV1Properties(): Promise<void> {
+    const properties = await this.dbv1.property.findMany({
+      where: { status_step: 30 },
+      include: {
+        bedrooms: true,
+        daily_price: true,
+        description: true,
+        status: true,
+        temp_attachments: true,
+        attachments: true,
+        property_options: true,
+        owner: { include: { user: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+    for (const prop of properties) {
+      const optionsArray = prop.property_options.map((opt) => opt.option_id);
+
+      const newProp = await this.db.property.findFirst({ where: { id: prop.id } });
+      if (newProp) continue;
+
+      await this.db.$transaction(
+        async (tx) => {
+          const p = await tx.property.create({
+            data: {
+              code: `${prop.code}`,
+              owner: { connect: { id: prop.owner_id } },
+              title: prop.title,
+              slug: `${prop.code}-${slugify(prop.title)}`,
+              land_area: prop.land_area,
+              building_area: prop.building_area,
+              floors: prop.floors,
+              unit_per_floor: prop.unit_per_floor,
+              floor: prop.floor,
+              construction_year: prop.construction_year,
+              // region: { connect: { id: prop.region_id } },
+              city: { connect: { id: prop.city_id } },
+              province: { connect: { id: prop.province_id } },
+              address: prop.address,
+              lat: prop.lat,
+              lng: prop.lng,
+              // feature_image: { connect: { id: prop.feature_image_id } },
+              // video_id: prop.video_id,
+              is_chat_enabled: true,
+              is_location_visible: true,
+              has_pool: prop.has_pool,
+              std_capacity: prop.std_capacity,
+              max_capacity: prop.max_capacity,
+              canceling_type: prop.canceling_type,
+              advisor_commission: prop.advisor_commission,
+              check_in_hour: '14',
+              check_out_hour: '12',
+              subscription_expired_at: startOfDate(moment().add(30, 'days').toDate()),
+              sort_order: moment(prop.updated_at).unix(),
+              contact_type: 1,
+              status: prop.status_step || 20,
+              admin_descriptions: [],
+              is_authorized: false,
+              has_blue_tick: false,
+              options_array: optionsArray,
+              bedrooms: { create: omit(prop.bedrooms, ['id', 'property_id']) },
+              daily_price: { create: omit(prop.daily_price, ['id', 'property_id']) },
+              description: { create: omit(prop.description, ['id', 'property_id']) },
+              assistants: {
+                create: {
+                  is_owner: true,
+                  assistant_mobile_number: prop.owner.user.mobile_number,
+                  assistant_full_name: prop.owner.full_name,
+                },
+              },
+              created_at: prop.created_at,
+              updated_at: prop.updated_at,
+            },
+            // update: {},
+          });
+          const x: Prisma.OptionsOnPropertyUncheckedCreateInput[] = [];
+          for (const opt of prop.property_options) {
+            if (await tx.propertyOption.findFirst({ where: { id: opt.option_id } })) {
+              x.push({
+                property_id: p.id,
+                option_id: opt.option_id,
+                assigned_at: new Date(),
+              });
+            }
+          }
+
+          let y = [];
+          for (const att of prop.attachments) {
+            if (await tx.attachment.findFirst({ where: { id: att.id } })) {
+              y.push({ id: att.id });
+            }
+          }
+
+          let z = [];
+          for (const att of prop.temp_attachments) {
+            if (await tx.attachment.findFirst({ where: { id: att.id } })) {
+              z.push({ id: att.id });
+            }
+          }
+
+          let xprime;
+          if (await tx.attachment.findFirst({ where: { id: prop.feature_image_id } }))
+            xprime = { id: prop.feature_image_id };
+
+          await tx.property.update({
+            where: { id: p.id },
+            data: {
+              attachments: { connect: y },
+              temp_attachments: { connect: z },
+              feature_image: { connect: xprime },
+            },
+          });
+          console.log({ p: p.id, x });
+          await tx.optionsOnProperty.createMany({
+            data: x,
+          });
+        },
+        { timeout: 20000 },
+      );
     }
   }
 
