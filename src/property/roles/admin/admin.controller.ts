@@ -190,4 +190,13 @@ export class PropertyAdminController {
 
     return {};
   }
+
+  @ApiOperation({ operationId: 'Migrate options', description: '' })
+  @Post('migrate/options')
+  async migrateOptions(): Promise<SuccessResponseArgs> {
+    // await this.propertyAdminMigrationService.migrateFromV1Options();
+    await this.propertyAdminMigrationService.migrateFromV1Cities();
+
+    return {};
+  }
 }

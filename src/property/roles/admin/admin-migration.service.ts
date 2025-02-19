@@ -102,6 +102,30 @@ export class PropertyAdminMigrationService {
     // console.log({ owners });
   }
 
+  async migrateFromV1Options(): Promise<void> {
+    const options = await this.dbv1.propertyOption.findMany({});
+    for (const opt of options) {
+      console.log({ opt });
+      await this.db.propertyOption.upsert({
+        where: { id: opt.id },
+        create: opt,
+        update: {},
+      });
+    }
+  }
+
+  async migrateFromV1Cities(): Promise<void> {
+    const cities = await this.dbv1.city.findMany({ orderBy: { id: 'asc' } });
+    for (const city of cities) {
+      console.log({ city });
+      await this.db.city.upsert({
+        where: { id: city.id },
+        create: city,
+        update: {},
+      });
+    }
+  }
+
   async migrateFromV1Attachments(): Promise<void> {
     const attachments = await this.dbv1.attachment.findMany({
       where: { property: { some: {} } },
