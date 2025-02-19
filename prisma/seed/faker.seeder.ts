@@ -122,7 +122,7 @@ export async function fakerSeeder(): Promise<void> {
   }
 
   for (const e of owners()) {
-    const item = await prisma.owner.findUnique({ where: { national_code: e.national_code } });
+    const item = await prisma.owner.findFirst({ where: { national_code: e.national_code } });
     if (!item) await prisma.owner.create({ data: e });
   }
 

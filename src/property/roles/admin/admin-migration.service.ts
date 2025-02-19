@@ -45,6 +45,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { OwnerStatus } from 'src/owner/common/owner-status.type';
 
 @Injectable()
 export class PropertyAdminMigrationService {
@@ -81,18 +82,24 @@ export class PropertyAdminMigrationService {
   }
 
   async migrateFromV1Owners(): Promise<void> {
-    const owners = await this.dbv1.owner.findMany();
-    // for (const owner of owners) {
-    //   await this.db.user.upsert({
-    //     where: { mobile_number: user.mobile_number },
-    //     create: {
-    //       mobile_number: user.mobile_number,
-    //       notification_read_at: new Date(),
-    //     },
-    //     update: {},
-    //   });
-    // }
-    console.log({ owners });
+    const owners = await this.dbv1.owner.findMany({ include: { user: { select: { id: true } } } });
+    for (const owner of owners) {
+      const user = owner.user;
+      console.log({ ownerId: owner.id, userId: user.id });
+
+      if (!user) continue;
+      await this.db.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            owner: { create: { id: owner.id, national_code: '1111111111', status: OwnerStatus.APPROVED } },
+            full_name: owner.full_name,
+            profile_image: { connect: { id: owner.profile_image_id } },
+          },
+        });
+      });
+    }
+    // console.log({ owners });
   }
 
   async migrateFromV1Attachments(): Promise<void> {

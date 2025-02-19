@@ -448,15 +448,15 @@ model User {
 
 model Owner {
   id                 Int    @id() @default(autoincrement())
-  national_code      String @unique @db.VarChar(10)
-  selfie_image_id    Int    @unique
+  national_code      String @db.VarChar(10) //چون دیتاهای جایاب قبلی کد ملی نداره مجبوریم از یکتایی دربیاریم و اونها رو ۱۱۱۱۱۱۱۱۱۱ بزاریم
+  selfie_image_id    Int?   @unique
   status             Int    @db.SmallInt
   admin_descriptions Json[] @db.JsonB
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  selfie_image Attachment @relation(fields: [selfie_image_id], references: [id])
+  selfie_image Attachment? @relation(fields: [selfie_image_id], references: [id])
   user         User?
   properties   Property[]
 

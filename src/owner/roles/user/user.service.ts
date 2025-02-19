@@ -56,7 +56,7 @@ export class OwnerUserService {
    * @returns
    */
   async findOneByNationalCode(nationalCode: string): Promise<Owner> {
-    const item = await this.db.owner.findUnique({ where: { national_code: nationalCode } });
+    const item = await this.db.owner.findFirst({ where: { national_code: nationalCode } });
     return item;
   }
 
