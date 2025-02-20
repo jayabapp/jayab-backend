@@ -6,6 +6,7 @@ import {
   _Min,
   _IsInt,
   _IsNotEmpty,
+  _IsArray,
 } from 'src/common/pipes/validator-translate.pipe';
 import { CreatePropertyAdminDto } from './create.dto';
 
@@ -19,7 +20,7 @@ export class UpdatePropertyImagesAdminDto {
   @ApiProperty({ required: true, title: 'تصاویر', default: [1] })
   @_ArrayMaxSize(30)
   @IsNumber({}, { each: true })
-  @_ArrayNotEmpty()
+  @_IsArray()
   temp_images: number[];
 
   @ApiProperty({ required: true, default: 1 })

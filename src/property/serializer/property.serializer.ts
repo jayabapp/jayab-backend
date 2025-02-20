@@ -186,7 +186,9 @@ export class PropertySerializer {
       slug: data.slug,
       feature_image: data.feature_image,
       attachments_count: data._count?.attachments || 0,
-      images: data.attachments || [],
+      images:
+        [data.feature_image].concat(data.attachments?.filter((e) => e.id !== data.feature_image_id) || []) ||
+        [],
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
