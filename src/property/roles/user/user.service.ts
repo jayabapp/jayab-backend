@@ -188,7 +188,10 @@ export class PropertyUserService {
           feature_image: true,
           province: { select: { title: true } },
           city: { select: { title: true } },
-          property_options: true,
+          property_options: {
+            where: { option: { deleted_at: null } },
+            select: { option: { select: { title: true, group: true } } },
+          },
           daily_price: true,
           calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
           bedrooms: { select: { total_bedrooms: true } },
@@ -199,7 +202,7 @@ export class PropertyUserService {
       { cursor: dto.cursor, perPage: dto.per_page },
     );
 
-    const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor);
+    const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor, false);
     return { data: serialized };
   }
 
@@ -222,7 +225,7 @@ export class PropertyUserService {
         province: { select: { title: true } },
         city: { select: { title: true } },
         property_options: {
-          where: { option: { deleted_at: { not: null } } },
+          where: { option: { deleted_at: null } },
           select: { option: { select: { title: true, group: true } } },
         },
         bedrooms: true,
@@ -444,6 +447,7 @@ export class PropertyUserService {
    * @param propertyId
    */
   async duplicate(propertyId: number): Promise<void> {
+    return;
     const propPure = await this.db.property.findUnique({ where: { id: propertyId }, omit: { id: true } });
     const prop = await this.db.property.findUnique({
       where: { id: propertyId },

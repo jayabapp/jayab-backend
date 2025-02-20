@@ -579,7 +579,7 @@ export class PropertyOwnerService {
     });
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toArray(list, today, false);
+    const serialized = await this.propertySerializer.toArray(list, today, false, true);
     return serialized;
   }
 

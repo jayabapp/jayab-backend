@@ -347,7 +347,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'کد', state: 'code', type: 'input' },
-    { type: 'break' },
+    { title: 'عنوان', state: 'title', type: 'input' },
+
     { title: 'منقضی شده', state: 'expired', type: 'switch' },
     { title: 'احراز شده', state: 'authorized', type: 'switch' },
     /*  */

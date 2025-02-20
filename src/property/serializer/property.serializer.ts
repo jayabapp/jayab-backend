@@ -112,12 +112,13 @@ export class PropertySerializer {
   async toArray(
     data: PropertyJsonType[],
     today: DayColumn,
-    isAdvisor: boolean,
+    isAdvisor = false,
+    isOwner: boolean,
   ): Promise<Array<PropertyArrayResType>> {
     const res: PropertyArrayResType[] = [];
     for (const e of data) {
       res.push({
-        ...this.summarize(e, today, true, isAdvisor, false),
+        ...this.summarize(e, today, true, isAdvisor, isOwner),
       });
     }
 
@@ -178,12 +179,20 @@ export class PropertySerializer {
     let single: PropertyJsonResType;
 
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
+    console.log({ isAdvisor, isOwner });
 
     let list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
       title: data.title,
       slug: data.slug,
+      owner: data?.owner
+        ? {
+            id: data.owner_id,
+            mobile_number: data.owner.user.mobile_number,
+            full_name: data.owner.user.full_name,
+          }
+        : null,
       feature_image: data.feature_image,
       attachments_count: data._count?.attachments || 0,
       images:
@@ -227,13 +236,6 @@ export class PropertySerializer {
 
     if (!isList)
       single = {
-        owner: data?.owner
-          ? {
-              id: data.owner_id,
-              mobile_number: data.owner.user.mobile_number,
-              full_name: data.owner.user.full_name,
-            }
-          : null,
         admin_descriptions: data.admin_descriptions,
         canceling_type: CancelingTypeList.find((e) => e.id == data.canceling_type),
         daily_price: data.daily_price || null,

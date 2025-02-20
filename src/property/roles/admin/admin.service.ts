@@ -84,7 +84,7 @@ export class PropertyAdminService {
     );
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toArray(list.data, today, false);
+    const serialized = await this.propertySerializer.toArray(list.data, today, true, true);
 
     return { data: serialized, meta: list.meta };
   }
@@ -238,6 +238,9 @@ export class PropertyAdminService {
       { header: 'احراز شده', key: 'is_authorized', width: 15 },
       { header: 'تیک آبی دارد', key: 'has_blue_tick', width: 15 },
       { header: 'استخر دارد', key: 'has_pool', width: 15 },
+      { header: 'تعداد خواب', key: 'total_bedrooms', width: 15 },
+      { header: 'کمیسیون مشاور', key: 'advisor_commission', width: 15 },
+      { header: 'تعداد لایک', key: 'favorite_count', width: 15 },
     ];
 
     const url = await saveToExcel(excelCols, newList, SHEET_NAME.USERS);
