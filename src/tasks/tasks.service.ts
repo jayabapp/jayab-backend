@@ -3,12 +3,14 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { promises as fsPromises } from 'fs';
 import moment from 'moment-jalaali';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { nDaysLaterNow, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { STORAGE_EXCEL } from 'src/common/utils/constants/storage-folders';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { SmsService } from 'src/sms/sms.service';
 
 @Injectable()
@@ -45,13 +47,13 @@ export class TasksService {
   }
 
   /* ------------------------ یادآوری تمدید اشتراک ملک ------------------------ */
-  @Cron(CronExpression.EVERY_MINUTE, {
+  @Cron(CronExpression.EVERY_5_SECONDS, {
     name: 'property-subscription-reminder',
     timeZone: 'Asia/Tehran',
   })
   async propertySubscriptionReminderTask(): Promise<void> {
     console.log(
-      `<><><> CRON JOB (property subscription remider) RAN AT : ${moment().format('HH:MM:ss')} <><><>`,
+      `<><><> CRON JOB (property subscription reminder) RAN AT : ${moment().format('HH:MM:ss')} <><><>`,
     );
     const threeDaysLater = nDaysLaterNow(3);
     const today = startOfToday();
@@ -59,6 +61,7 @@ export class TasksService {
     const property = await this.db.property.findFirst({
       where: {
         OR: [{ subscription_expired_at: threeDaysLater }, { subscription_expired_at: today }],
+        status: PropertyStatuses.PUBLISHED,
         subscription_reminders: { none: { created_at: today } },
       },
       select: {
@@ -69,8 +72,16 @@ export class TasksService {
       },
     });
 
+    console.log({ property, today, threeDaysLater });
+
     if (property) {
       console.log('property found: ', property.id);
+      await this.db.subscriptionReminder.create({
+        data: {
+          property_id: property.id,
+          type: 'sms-notif',
+        },
+      });
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
@@ -89,13 +100,6 @@ export class TasksService {
         },
         notificationType: NotificationTypes.OWNER_PROPERTY,
         notificationableId: property.id.toString(),
-      });
-
-      await this.db.subscriptionReminder.create({
-        data: {
-          property_id: property.id,
-          type: 'sms-notif',
-        },
       });
     }
 
@@ -120,6 +124,7 @@ export class TasksService {
     const advisor = await this.db.advisor.findFirst({
       where: {
         OR: [{ subscription_expired_at: threeDaysLater }, { subscription_expired_at: today }],
+        status: AdvisorStatus.APPROVED,
         subscription_reminders: { none: { created_at: today } },
       },
       select: {
@@ -129,8 +134,16 @@ export class TasksService {
       },
     });
 
+    console.log({ advisor, today, threeDaysLater });
+
     if (advisor) {
       console.log('advisor found: ', advisor.id);
+      await this.db.subscriptionReminder.create({
+        data: {
+          advisor_id: advisor.id,
+          type: 'sms-notif',
+        },
+      });
       const days = advisor.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
       await this.smsService.sendAdvisorSubscriptionReminder(
         advisor.user.mobile_number,
@@ -146,13 +159,6 @@ export class TasksService {
         },
         notificationType: NotificationTypes.ADVISOR_SUBSCRIPTION,
         notificationableId: '',
-      });
-
-      await this.db.subscriptionReminder.create({
-        data: {
-          advisor_id: advisor.id,
-          type: 'sms-notif',
-        },
       });
     }
 
