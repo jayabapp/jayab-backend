@@ -10,7 +10,7 @@
     "build": "npx prisma generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "TZ='Asia/Tehran' NODE_OPTIONS='--max-old-space-size=4096' nest start --watch",
+    "start:dev": "TZ='Asia/Tehran' nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

@@ -149,6 +149,8 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                  MIGRATION                                 */
   /* -------------------------------------------------------------------------- */
+
+  /*
   @ApiOperation({ operationId: 'Migrate Users', description: '' })
   @Post('migrate/users')
   async migrate(): Promise<SuccessResponseArgs> {
@@ -207,4 +209,5 @@ export class PropertyAdminController {
 
     return {};
   }
+    */
 }

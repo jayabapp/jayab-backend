@@ -47,7 +47,7 @@ export class TasksService {
   }
 
   /* ------------------------ یادآوری تمدید اشتراک ملک ------------------------ */
-  @Cron(CronExpression.EVERY_5_SECONDS, {
+  @Cron(CronExpression.EVERY_MINUTE, {
     name: 'property-subscription-reminder',
     timeZone: 'Asia/Tehran',
   })
