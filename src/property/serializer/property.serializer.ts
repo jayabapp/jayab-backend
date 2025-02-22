@@ -214,7 +214,7 @@ export class PropertySerializer {
       status_number: data.status,
       //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
       status:
-        (!remainingDays || remainingDays <= 0) && data.status === PropertyStatuses.INIT
+        (!remainingDays || remainingDays <= 0) && data.status === PropertyStatuses.WAITING
           ? {
               id: 1,
               title: 'در انتظار پرداخت',
