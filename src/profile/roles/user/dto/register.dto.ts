@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, Validate } from 'class-validator';
+import { IsNumber, IsOptional, Validate, ValidateIf } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -103,7 +103,7 @@ export class RegisterAdvisorUserDto {
 
   @ApiProperty({ required: false, default: 1 })
   @_IsString()
-  @_IsNotEmpty()
+  @IsOptional()
   referrer_code: string;
 }
 

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Advisor, Owner, Prisma, User } from '@prisma/client';
 import { PartialUser, UserType } from 'src/common/interfaces/user.interface';
@@ -90,6 +95,10 @@ export class ProfileUserService {
     };
 
     if (dto.is_special) {
+      if (!dto.referrer_code) throw new UnprocessableEntityException('REGISTER4');
+      const referrer = await this.db.user.findUnique({ where: { referral_code: dto.referrer_code } });
+      if (!referrer) throw new UnprocessableEntityException('REGISTER5');
+
       const cityIds = dto.cityIds.map((e) => ({ id: e }));
       delete dto.cityIds;
       data = { ...data, ...dto, cities: { connect: cityIds } };
@@ -106,7 +115,6 @@ export class ProfileUserService {
           full_name: fullName,
           profile_image_id: profileImageId,
           advisor_id: advisor.id,
-          referrer_code: dto.referrer_code || null,
         },
       });
 
