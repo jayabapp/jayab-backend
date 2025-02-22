@@ -40,7 +40,7 @@ export class PaymentUserController {
     let result: Payment;
 
     /** FAILED PAYMENT */
-    if (!isAuthValid || !isGatewayValid)
+    if (!isAuthValid || !isGatewayValid) {
       res.render('failed-payment', {
         pageTitle: `پرداخت ناموفق|‌ ${getB2cConfig('APP_FA_NAME')}`,
         status: 'پرداخت ناموفق',
@@ -48,6 +48,8 @@ export class PaymentUserController {
         redirectButtonTitle: `بازگشت به ${getB2cConfig('APP_FA_NAME')}`,
         redirect_url: redirectUrl,
       });
+      return;
+    }
 
     /* -------------------------------------------------------------------------- */
     switch (payment.type) {

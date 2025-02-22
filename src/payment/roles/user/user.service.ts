@@ -1,27 +1,16 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { Payment, Prisma, Property, Subscription, User } from '@prisma/client';
+import { BadGatewayException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Payment, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CommonStatuses } from 'src/common/interfaces/common-status.interface';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { PaymentGatewayEnum } from 'src/payment-gateway/common/payment-gateway.enum';
 import { v7 as uuidv7 } from 'uuid';
 import { ZarinpalService } from 'src/payment-gateway/gateways/zarinpal.service';
-import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
-import { NotificationTypes } from 'src/firebase/constants/notif-types';
-import { UserRole } from 'src/common/interfaces/role.enum';
 import { ConfigService } from '@nestjs/config';
 import { MD5 } from 'crypto-js';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { PartialUser } from 'src/common/interfaces/user.interface';
-import { first } from 'lodash';
 import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
@@ -31,7 +20,6 @@ export class PaymentUserService {
     private readonly db: PrismaService,
     private readonly config: ConfigService,
     private readonly zarinpalService: ZarinpalService,
-    // private readonly notificationSharedService: NotificationSharedService,
   ) {}
 
   /**
@@ -300,6 +288,8 @@ export class PaymentUserService {
       default:
         break;
     }
+
+    if (!isVerified) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
 
     return isVerified;
   }
