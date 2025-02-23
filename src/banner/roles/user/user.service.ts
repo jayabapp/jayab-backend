@@ -25,7 +25,7 @@ export class BannerUserService {
         image: true,
         link: true,
         image_sm: true,
-        property: { select: { id: true } },
+        property: { select: { id: true, slug: true } },
       },
       take,
     });

@@ -7,7 +7,7 @@ export enum BannerPosition {
   MAIN_SIDEBAR = 'main_sidebar',
 }
 export const BannerPositionList: EnumList[] = [
-  { id: BannerPosition.MAIN_1, title: 'اصلی - نسبت یک به دو پنجم', hex: '#4f46e5', sub_title: 'بنر اصلی' },
+  { id: BannerPosition.MAIN_1, title: 'اصلی - نسبت دو به پنج', hex: '#4f46e5', sub_title: 'بنر اصلی' },
   {
     id: BannerPosition.MAIN_2,
     title: 'وسط صفحه اصلی',
@@ -20,12 +20,12 @@ export const BannerPositionList: EnumList[] = [
     hex: '#06b6d4',
     sub_title: '',
   },
-  {
-    id: BannerPosition.MAIN_SIDEBAR,
-    title: 'سایدبار',
-    hex: '#E11D48',
-    sub_title: '',
-  },
+  // {
+  //   id: BannerPosition.MAIN_SIDEBAR,
+  //   title: 'سایدبار',
+  //   hex: '#E11D48',
+  //   sub_title: '',
+  // },
   // {
   //   id: BannerPosition.MAIN_BOTTOM,
   //   title: 'بنر پنجم',
