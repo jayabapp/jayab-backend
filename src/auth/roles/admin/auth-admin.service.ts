@@ -98,7 +98,7 @@ export class AuthAdminService {
 
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('adminAuth.signinSecret'),
-      expiresIn: '5m',
+      expiresIn: '7d',
     });
 
     return token;

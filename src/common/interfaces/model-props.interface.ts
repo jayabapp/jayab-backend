@@ -136,7 +136,11 @@ export type FormOptions = {
   switchUncheckedTitle?: string;
 };
 /* --------------------------------- ACTIONS -------------------------------- */
-export type ShowAction = { title: string; route: string };
+export type ShowAction = {
+  title: string;
+  route: string;
+  color?: 'primary' | 'default' | 'secondary' | 'success' | 'warning' | 'danger' | undefined;
+};
 
 export type OperatorItems = {
   id: number;

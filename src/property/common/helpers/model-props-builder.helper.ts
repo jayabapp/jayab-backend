@@ -274,6 +274,11 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       title: 'تصاویر ملک',
       route: `/properties/show/${item.id}/images`,
     },
+    {
+      title: 'ویرایش',
+      route: `/properties/edit/${item.id}`,
+      color: 'success',
+    },
   ];
 
   return actions;

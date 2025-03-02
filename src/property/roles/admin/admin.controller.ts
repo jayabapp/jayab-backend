@@ -93,21 +93,6 @@ export class PropertyAdminController {
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                   UPDATE                                   */
-  /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Update', description: '' })
-  // @Put(':id')
-  // async update(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() dto: UpdatePropertyAdminDto,
-  // ): Promise<SuccessResponseArgs> {
-  //   await this.propertyAdminService.findById(id);
-  //   const result = await this.propertyAdminService.update(id, dto);
-
-  //   return { result, messageCode: 'UPDATE' };
-  // }
-
-  /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
   @ApiOperation({ operationId: 'Update Partial', description: '' })
@@ -144,6 +129,17 @@ export class PropertyAdminController {
     const result = await this.propertyAdminService.updateImages(id, dto);
 
     return { result, messageCode: 'UPDATE' };
+  }
+
+  @ApiOperation({ operationId: 'Owner SSO', description: '' })
+  @Get(':id/sso')
+  async generateSSOToken(
+    @Req() req: AdminRequestType,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.generateSSOToken(id);
+
+    return { result };
   }
 
   /* -------------------------------------------------------------------------- */

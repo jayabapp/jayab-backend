@@ -33,6 +33,10 @@ import { AdminType } from 'src/common/interfaces/user.interface';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class PropertyAdminService {
@@ -40,6 +44,8 @@ export class PropertyAdminService {
     private readonly db: PrismaService,
     private readonly dayHelper: DayHelper,
     private readonly propertySerializer: PropertySerializer,
+    private readonly configService: ConfigService,
+    private jwtService: JwtService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -150,22 +156,35 @@ export class PropertyAdminService {
   }
 
   /* -------------------------------------------------------------------------- */
-  /*                                   UPDATE                                   */
+  /*                                 ADMIN SSO                                  */
   /* -------------------------------------------------------------------------- */
-  // /**
-  //  * update
-  //  * @param id
-  //  * @param dto
-  //  * @returns
-  //  */
-  // async update(id: number, dto: UpdatePropertyAdminDto): Promise<Property> {
-  //   const item = await this.db.property.update({
-  //     where: { id },
-  //     data: dto,
-  //   });
 
-  //   return item;
-  // }
+  /**
+   * generate token to admin login to owner profile
+   * @param propertyId
+   * @returns
+   */
+  async generateSSOToken(propertyId: number): Promise<any> {
+    const property = await this.db.property.findFirst({
+      where: { id: propertyId },
+      select: { owner: { select: { user: true } } },
+    });
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const user = property.owner.user;
+    const payload: TokenPayload = {
+      id: user.id,
+      jwtLevel: user.jwt_level || 1,
+      role: UserRole.USER,
+    };
+
+    const token = this.jwtService.sign(payload, {
+      secret: this.configService.get('auth.secret'),
+      expiresIn: '30m',
+    });
+
+    return token;
+  }
 
   /**
    * Update editable columns in admin panel table
