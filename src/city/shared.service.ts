@@ -23,7 +23,7 @@ export class CitySharedService {
 
     const cities = await this.db.city.findMany({
       where: query,
-      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
       select: {
         id: true,
         title: true,
@@ -54,7 +54,7 @@ export class CitySharedService {
   async findChildren(parentId: number): Promise<Array<Partial<City>>> {
     const cities = await this.db.city.findMany({
       where: { parent_id: parentId },
-      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
       select: {
         id: true,
         title: true,

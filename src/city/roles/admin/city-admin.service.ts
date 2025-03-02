@@ -87,6 +87,7 @@ export class CityAdminService {
           slug: true,
           slug_fa: true,
         },
+        orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
       },
       { page, perPage },
     );

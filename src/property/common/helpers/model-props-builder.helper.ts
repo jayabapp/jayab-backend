@@ -267,12 +267,14 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       route: `/subscriptions/create?property_id=${item.id}`,
     },
     {
-      title: 'صفحه ملک',
-      route: `${process.env.BASE_URL}/property/${item.slug}`,
-    },
-    {
       title: 'تصاویر ملک',
       route: `/properties/show/${item.id}/images`,
+    },
+    {
+      title: 'صفحه ملک در سایت',
+      route: `${process.env.BASE_URL}/property/${item.slug}`,
+      color: 'secondary',
+      targetBlank: true,
     },
     {
       title: 'ویرایش',
