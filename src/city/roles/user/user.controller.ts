@@ -1,15 +1,19 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CITY_USER_ROUTE_GROUP } from 'src/city/common/route-group.constant';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { CitySharedService } from '../../shared.service';
 import { FindAllCityUserDto } from './dto/find-all.dto';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('Cities - USER')
 @Controller(CITY_USER_ROUTE_GROUP)
 export class CityUserController {
   constructor(private readonly citySharedService: CitySharedService) {}
 
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(FIVE_MINUTES_TTL)
   @ApiOperation({ operationId: 'Find All' })
   @Get()
   async findAll(@Query() dto: FindAllCityUserDto): Promise<SuccessResponseArgs> {

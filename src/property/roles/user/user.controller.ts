@@ -14,6 +14,7 @@ import {
   Req,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
@@ -24,6 +25,8 @@ import { ProfileUserService } from 'src/profile/roles/user/profile-user.service'
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { PropertyOwnerService } from '../owner/owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -64,6 +67,7 @@ export class PropertyUserController {
      * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
      */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
+    console.log({ isAdvisor });
 
     const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
     return { result };

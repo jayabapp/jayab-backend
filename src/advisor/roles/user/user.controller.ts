@@ -10,6 +10,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
@@ -21,6 +22,8 @@ import { UpdateAdvisorUserDto } from './dto/update.dto';
 import { FindAllAdvisorUserDto } from './dto/find-all.dto';
 import { AddRateUserDto } from '../admin/dto/create.dto';
 import { RequestType } from 'src/common/interfaces/user.interface';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('Advisor - USER')
 @Controller(USER_ROUTE_GROUP)
@@ -28,6 +31,8 @@ export class AdvisorUserController {
   constructor(private readonly advisorUserService: AdvisorUserService) {}
 
   @ApiOperation({ operationId: 'Find All', description: '' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(FIVE_MINUTES_TTL)
   @Get()
   async findAll(@Query() dto: FindAllAdvisorUserDto): Promise<SuccessResponseArgs> {
     const result = await this.advisorUserService.findAll(dto);

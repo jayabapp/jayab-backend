@@ -6,7 +6,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllPropertyOptionUserDto } from './dto/find-all.dto';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { ONE_HOUR_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { FIVE_MINUTES_TTL, ONE_HOUR_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('PropertyOption - USER')
 @Controller(USER_ROUTE_GROUP)
@@ -14,8 +14,8 @@ export class PropertyOptionUserController {
   constructor(private readonly propertyOptionUserService: PropertyOptionUserService) {}
 
   @ApiOperation({ operationId: 'Find All By Group', description: '' })
-  // @UseInterceptors(CacheInterceptor)
-  // @CacheTTL(ONE_HOUR_TTL)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(FIVE_MINUTES_TTL)
   @Get()
   async findAllByGroup(@Query() dto: FindAllPropertyOptionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyOptionUserService.findAllByGroup(dto);

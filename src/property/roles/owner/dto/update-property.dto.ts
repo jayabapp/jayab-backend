@@ -499,7 +499,7 @@ export class UpdatePropertyTermsOwnerDto {
   @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
-  @IsOptional()
+  @_IsNotEmpty()
   doc_dscr: string;
 
   @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
