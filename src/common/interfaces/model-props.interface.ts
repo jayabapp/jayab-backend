@@ -140,6 +140,7 @@ export type ShowAction = {
   title: string;
   route: string;
   color?: 'primary' | 'default' | 'secondary' | 'success' | 'warning' | 'danger' | undefined;
+  targetBlank?: boolean;
 };
 
 export type OperatorItems = {

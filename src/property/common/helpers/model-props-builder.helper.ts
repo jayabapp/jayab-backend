@@ -278,6 +278,7 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       title: 'ویرایش',
       route: `/properties/edit/${item.id}`,
       color: 'success',
+      targetBlank: true,
     },
   ];
 
