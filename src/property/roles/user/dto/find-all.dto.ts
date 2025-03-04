@@ -62,10 +62,39 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   total_guests?: number;
 
   @ApiProperty({ required: false, title: 'نوع ملک' })
-  @Type(() => Number)
+  @_IsString()
   @IsOptional()
-  @_IsInt()
-  property_type?: number;
+  property_type?: string;
+
+  @ApiProperty({ required: false, title: 'نوع بافت' })
+  @_IsString()
+  @IsOptional()
+  pattern?: string;
+
+  @ApiProperty({ required: false, title: 'تهویه' })
+  @_IsString()
+  @IsOptional()
+  cool_heat?: string;
+
+  @ApiProperty({ required: false, title: 'تهویه' })
+  @_IsString()
+  @IsOptional()
+  welfare?: string;
+
+  @ApiProperty({ required: false, title: 'تهویه' })
+  @_IsString()
+  @IsOptional()
+  neighborhood?: string;
+
+  @ApiProperty({ required: false, title: 'تهویه' })
+  @_IsString()
+  @IsOptional()
+  kitchen?: string;
+
+  @ApiProperty({ required: false, title: 'تهویه' })
+  @_IsString()
+  @IsOptional()
+  guest_type?: string;
 
   @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
   @_IsString()

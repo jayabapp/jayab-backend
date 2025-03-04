@@ -53,6 +53,12 @@ export class PropertyUserService {
       total_bedrooms,
       total_guests,
       property_type,
+      pattern,
+      welfare,
+      kitchen,
+      cool_heat,
+      neighborhood,
+      guest_type,
       pool_type,
       entertainment,
       has_pool,
@@ -69,6 +75,8 @@ export class PropertyUserService {
       checkin,
       checkout,
     } = dto;
+
+    console.log({ dto });
 
     const today = await this.dayHelper.today();
     let options = [];
@@ -97,7 +105,13 @@ export class PropertyUserService {
 
     /* ------------------------------ options query ----------------------------- */
 
-    if (property_type) options.push(property_type);
+    if (property_type) options.push(...parseQueryNumberArray(pattern));
+    if (pattern) options.push(...parseQueryNumberArray(pattern));
+    if (welfare) options.push(...parseQueryNumberArray(welfare));
+    if (kitchen) options.push(...parseQueryNumberArray(kitchen));
+    if (cool_heat) options.push(...parseQueryNumberArray(cool_heat));
+    if (neighborhood) options.push(...parseQueryNumberArray(neighborhood));
+    if (guest_type) options.push(...parseQueryNumberArray(guest_type));
 
     if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
 
@@ -176,6 +190,8 @@ export class PropertyUserService {
         orderByQuery = { sort_order: 'desc' };
         break;
     }
+
+    console.log({ options });
 
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,

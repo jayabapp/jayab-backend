@@ -110,7 +110,7 @@ export class PaymentUserService {
       });
 
       /* update subscription */
-      const subscription = await this.db.subscription.update({
+      const subscription = await tx.subscription.update({
         where: { payment_id: payment.id },
         data: { status: SubscriptionStatus.SUCCESS },
         include: { property: { select: { id: true, subscription_expired_at: true } } },
