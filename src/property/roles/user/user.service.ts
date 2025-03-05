@@ -105,7 +105,7 @@ export class PropertyUserService {
 
     /* ------------------------------ options query ----------------------------- */
 
-    if (property_type) options.push(...parseQueryNumberArray(pattern));
+    if (property_type) options.push(...parseQueryNumberArray(property_type));
     if (pattern) options.push(...parseQueryNumberArray(pattern));
     if (welfare) options.push(...parseQueryNumberArray(welfare));
     if (kitchen) options.push(...parseQueryNumberArray(kitchen));
