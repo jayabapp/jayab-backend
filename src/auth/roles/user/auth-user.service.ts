@@ -37,7 +37,7 @@ export class AuthUserService {
     if (!user) {
       let referralCode: string;
       do {
-        referralCode = `${random(10_000, 99_999)}`;
+        referralCode = `${random(100_000, 999_999)}`;
       } while (await this.db.user.findUnique({ where: { referral_code: referralCode } }));
 
       user = await this.db.user.create({
