@@ -76,8 +76,6 @@ export class PropertyUserService {
       checkout,
     } = dto;
 
-    console.log({ dto });
-
     const today = await this.dayHelper.today();
     let options = [];
 
@@ -190,8 +188,6 @@ export class PropertyUserService {
         orderByQuery = { sort_order: 'desc' };
         break;
     }
-
-    console.log({ options });
 
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
