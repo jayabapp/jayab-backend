@@ -11,7 +11,7 @@ import { UpdateFcmDto, UpdateProfileDto } from 'src/profile/dto/update-profile.d
 import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { OwnerStatus, OwnerStatusList } from 'src/owner/common/owner-status.type';
 import { AdvisorStatus, AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
-import { first, last } from 'lodash';
+import { first, last, omit } from 'lodash';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import moment from 'moment-jalaali';
 import { PaymentUserService } from 'src/payment/roles/user/user.service';
@@ -84,10 +84,10 @@ export class ProfileUserService {
    * @returns
    */
   async registerAdvisor(user: PartialUser, dto: RegisterAdvisorUserDto): Promise<Advisor> {
-    const fullName = dto.full_name;
-    const profileImageId = dto.profile_image_id;
+    const { full_name: fullName, profile_image_id: profileImageId, referrer_code: referrerCode } = dto;
     delete dto.full_name;
     delete dto.profile_image_id;
+    delete dto.referrer_code;
 
     /*  */
     let data: Prisma.AdvisorUncheckedCreateInput = {
@@ -95,8 +95,9 @@ export class ProfileUserService {
     };
 
     if (dto.is_special) {
-      if (!dto.referrer_code) throw new UnprocessableEntityException('REGISTER4');
-      const referrer = await this.db.user.findUnique({ where: { referral_code: dto.referrer_code } });
+      if (!referrerCode) throw new UnprocessableEntityException('REGISTER4');
+      const referrer = await this.db.user.findUnique({ where: { referral_code: referrerCode } });
+
       if (!referrer) throw new UnprocessableEntityException('REGISTER5');
 
       const cityIds = dto.cityIds.map((e) => ({ id: e }));
@@ -115,6 +116,7 @@ export class ProfileUserService {
           full_name: fullName,
           profile_image_id: profileImageId,
           advisor_id: advisor.id,
+          referrer_code: dto.is_special ? referrerCode : null,
         },
       });
 

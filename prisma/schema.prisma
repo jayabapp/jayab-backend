@@ -487,10 +487,6 @@ model Advisor {
   //
   national_card_image_id      Int?      @unique
   document_image_id           Int?      @unique
-  //
-  // rate                   Float?
-  // special_advisor_info   Json?
-  // statistics             Json    @default("{}")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
