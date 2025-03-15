@@ -9,7 +9,7 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { PropertyStatusesList } from '../types/property-status.type';
+import { PropertyStatuses, PropertyStatusesList } from '../types/property-status.type';
 import {
   PropertyArrayResType,
   PropertyJsonResType,
@@ -271,18 +271,20 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       route: `/properties/show/${item.id}/images`,
     },
     {
-      title: 'صفحه ملک در سایت',
-      route: `${process.env.BASE_URL}/property/${item.slug}`,
-      color: 'secondary',
-      targetBlank: true,
-    },
-    {
       title: 'ویرایش',
       route: `/properties/edit/${item.id}`,
       color: 'success',
       targetBlank: true,
     },
   ];
+
+  if (item.status === PropertyStatuses.PUBLISHED)
+    actions.push({
+      title: 'صفحه ملک در سایت',
+      route: `${process.env.BASE_URL}/property/${item.slug}`,
+      color: 'secondary',
+      targetBlank: true,
+    });
 
   return actions;
 };

@@ -25,6 +25,7 @@ import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/pro
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 import { startOfDate } from 'src/common/helpers/date.helper';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
+import { isEmpty } from 'lodash';
 
 type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
 
@@ -168,6 +169,20 @@ export class PropertySerializer {
     return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
+  /**
+   * حالتهای مختلف وجود تصاویر آگهی
+   * @param feature_image
+   * @param attachments
+   * @returns
+   */
+  findImages(feature_image?: Attachment, attachments?: Attachment[]) {
+    if (!feature_image && isEmpty(attachments)) return [];
+    if (!feature_image && !isEmpty(attachments)) return attachments;
+    if (feature_image && isEmpty(attachments)) return [feature_image];
+    if (feature_image && !isEmpty(attachments))
+      return [feature_image].concat(attachments?.filter((e) => e.id !== feature_image.id) || []) || [];
+  }
+
   summarize(
     data: PropertyJsonType,
     today: DayColumn,
@@ -193,9 +208,7 @@ export class PropertySerializer {
         : null,
       feature_image: data.feature_image,
       attachments_count: data._count?.attachments || 0,
-      images:
-        [data.feature_image].concat(data.attachments?.filter((e) => e.id !== data.feature_image_id) || []) ||
-        [],
+      images: this.findImages(data.feature_image, data.attachments),
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
