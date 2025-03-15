@@ -151,7 +151,6 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       state: 'description',
       type: 'textarea',
       title: 'توضیحات',
-      options: { maxLength: 128, keyboard: 'text' },
     },
   ];
 
