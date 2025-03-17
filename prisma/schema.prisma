@@ -322,8 +322,8 @@ model City {
   deleted_at DateTime? @db.Timestamp(6)
 
   image             Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
-  advisor           Advisor?    @relation(fields: [advisorId], references: [id])
-  advisorId         Int?
+  advisors          Advisor[] //@relation(fields: [advisorId], references: [id])
+  // advisorId         Int?
   property_city     Property[]  @relation("PropertyCity")
   Property_province Property[]  @relation("PropertyProvince")
   Property_region   Property[]  @relation("PropertyRegion")

@@ -210,7 +210,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       title: 'شهر های حوزه فعالیت',
       options: { isMandatory: true },
       searchRoute: '/admin/cities',
-      searchColumn: 'is_parent=0',
+      fixQuery: 'is_parent=0',
     },
     { type: 'divider' },
     {

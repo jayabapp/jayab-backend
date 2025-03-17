@@ -111,6 +111,7 @@ export type CreateProps = {
   selectItems?: Array<any>;
   searchRoute?: string;
   searchColumn?: string;
+  fixQuery?: string;
 };
 
 export type FormOptions = {
