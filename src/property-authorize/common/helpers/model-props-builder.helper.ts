@@ -30,7 +30,13 @@ export const showPropsBuilder = (
 ): Array<ShowProps> => {
   const props: Array<ShowProps> = [
     { state: 'id', title: 'شناسه', value: item.id, type: 'number', isEditable: false },
-    { state: 'title', title: 'ملک', value: item.property.title, type: 'string', route: '/properties/show/' },
+    {
+      state: 'title',
+      title: 'ملک',
+      value: item.property.title,
+      type: 'string',
+      route: `/properties/show/${item.property_id}`,
+    },
     {
       state: 'status',
       title: 'وضعیت',
