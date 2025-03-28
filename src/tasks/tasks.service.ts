@@ -86,22 +86,22 @@ export class TasksService {
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
-      // await this.smsService.sendPropertySubscriptionReminder(
-      //   property.owner.user.mobile_number,
-      //   property.owner.user.full_name,
-      //   property.title,
-      //   days,
-      // );
-      // await this.notificationSharedService.createNotification({
-      //   user: { id: property.owner.user.id, role: UserRole.USER },
-      //   mustSendNotif: true,
-      //   notification: {
-      //     title: 'یادآوری تمدید اشتراک ملک',
-      //     body: `ملک ${property.title} تا سه روز دیگر منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
-      //   },
-      //   notificationType: NotificationTypes.OWNER_PROPERTY,
-      //   notificationableId: property.id.toString(),
-      // });
+      await this.smsService.sendPropertySubscriptionReminder(
+        property.owner.user.mobile_number,
+        property.owner.user.full_name,
+        property.title,
+        days,
+      );
+      await this.notificationSharedService.createNotification({
+        user: { id: property.owner.user.id, role: UserRole.USER },
+        mustSendNotif: true,
+        notification: {
+          title: 'یادآوری تمدید اشتراک ملک',
+          body: `ملک ${property.title} تا سه روز دیگر منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
+        },
+        notificationType: NotificationTypes.OWNER_PROPERTY,
+        notificationableId: property.id.toString(),
+      });
     }
 
     try {
