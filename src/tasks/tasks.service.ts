@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { promises as fsPromises } from 'fs';
 import moment from 'moment-jalaali';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
-import { nDaysLaterNow, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { nDaysBeforeNow, nDaysLaterNow, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { STORAGE_EXCEL } from 'src/common/utils/constants/storage-folders';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
@@ -62,7 +62,7 @@ export class TasksService {
       where: {
         OR: [{ subscription_expired_at: threeDaysLater }, { subscription_expired_at: today }],
         status: PropertyStatuses.PUBLISHED,
-        subscription_reminders: { none: { created_at: today } },
+        subscription_reminders: { none: { sent_at: today } },
       },
       select: {
         id: true,
@@ -80,27 +80,28 @@ export class TasksService {
         data: {
           property_id: property.id,
           type: 'sms-notif',
+          sent_at: today,
         },
       });
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
-      await this.smsService.sendPropertySubscriptionReminder(
-        property.owner.user.mobile_number,
-        property.owner.user.full_name,
-        property.title,
-        days,
-      );
-      await this.notificationSharedService.createNotification({
-        user: { id: property.owner.user.id, role: UserRole.USER },
-        mustSendNotif: true,
-        notification: {
-          title: 'یادآوری تمدید اشتراک ملک',
-          body: `ملک ${property.title} تا سه روز دیگر منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
-        },
-        notificationType: NotificationTypes.OWNER_PROPERTY,
-        notificationableId: property.id.toString(),
-      });
+      // await this.smsService.sendPropertySubscriptionReminder(
+      //   property.owner.user.mobile_number,
+      //   property.owner.user.full_name,
+      //   property.title,
+      //   days,
+      // );
+      // await this.notificationSharedService.createNotification({
+      //   user: { id: property.owner.user.id, role: UserRole.USER },
+      //   mustSendNotif: true,
+      //   notification: {
+      //     title: 'یادآوری تمدید اشتراک ملک',
+      //     body: `ملک ${property.title} تا سه روز دیگر منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
+      //   },
+      //   notificationType: NotificationTypes.OWNER_PROPERTY,
+      //   notificationableId: property.id.toString(),
+      // });
     }
 
     try {
