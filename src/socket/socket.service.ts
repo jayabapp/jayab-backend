@@ -41,9 +41,9 @@ export class SocketService {
    * @param socket
    */
   async handleConnection(payload: TokenPayload, socket: Socket): Promise<void> {
-    console.log(`\n--------------------- SOCKET ---------------------`);
-    console.log('🚀 Client Connected');
-    console.log('🆔 Socket id: ', socket.id);
+    // console.log(`\n--------------------- SOCKET ---------------------`);
+    // console.log('🚀 Client Connected');
+    // console.log('🆔 Socket id: ', socket.id);
 
     /* -------------------------------------------------------------------------- */
     // check the role and connect the user
@@ -88,10 +88,10 @@ export class SocketService {
   async handleDisconnect(socket: Socket): Promise<void> {
     const key = first(await this.redis.keys(`*status:${socket.id}`));
 
-    console.log('\n--------------------- SOCKET ---------------------');
-    console.log('🚀 Client Disconnected');
-    console.log('🆔 Socket id: ', socket.id);
-    console.log('🔑 Redis key: ', key);
+    // console.log('\n--------------------- SOCKET ---------------------');
+    // console.log('🚀 Client Disconnected');
+    // console.log('🆔 Socket id: ', socket.id);
+    // console.log('🔑 Redis key: ', key);
 
     if (key) {
       const userId = parseInt(key.split(':')[1]);
@@ -203,7 +203,7 @@ export class SocketService {
 
   async fetchRedisDataForTest(key: string): Promise<void> {
     const data = await this.redis.get(key);
-    console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
+    // console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
   }
 
   /**
