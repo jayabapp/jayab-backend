@@ -38,7 +38,7 @@ export function ApiImageFile(fileName = 'image', required = false): any {
       'gif',
     ),
     limits: {
-      fileSize: 1024 * 1024 * 4,
+      fileSize: 1024 * 1024 * 15,
     },
   });
 }
