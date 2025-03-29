@@ -158,7 +158,11 @@ export class PropertySerializer {
     return groupByOption;
   }
 
-  findTodayPrice(calendar: PropertyCalendar, today: DayColumn, dailyPrice: PropertyDailyPrice): TodayPrice {
+  private findTodayPrice(
+    calendar: PropertyCalendar,
+    today: DayColumn,
+    dailyPrice: PropertyDailyPrice,
+  ): TodayPrice {
     if (calendar?.effective_price)
       return {
         price: calendar.price,
@@ -175,12 +179,31 @@ export class PropertySerializer {
    * @param attachments
    * @returns
    */
-  findImages(feature_image?: Attachment, attachments?: Attachment[]) {
+  private findImages(feature_image?: Attachment, attachments?: Attachment[]) {
     if (!feature_image && isEmpty(attachments)) return [];
     if (!feature_image && !isEmpty(attachments)) return attachments;
     if (feature_image && isEmpty(attachments)) return [feature_image];
     if (feature_image && !isEmpty(attachments))
       return [feature_image].concat(attachments?.filter((e) => e.id !== feature_image.id) || []) || [];
+  }
+
+  private findStatus(remainingDays: number, status: PropertyStatuses): EnumList {
+    if (!remainingDays || remainingDays <= 0) {
+      if (status === PropertyStatuses.WAITING)
+        return {
+          id: 1,
+          title: 'در انتظار پرداخت',
+          hex: '#F53E4F',
+        };
+      else if (status === PropertyStatuses.PUBLISHED)
+        return {
+          id: 11,
+          title: 'منقضی شده',
+          hex: '#EF4444',
+        };
+    }
+
+    return PropertyStatusesList.find((_) => _.id === status);
   }
 
   summarize(
@@ -226,14 +249,7 @@ export class PropertySerializer {
       favorite_count: data?.favorite_count,
       status_number: data.status,
       //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
-      status:
-        (!remainingDays || remainingDays <= 0) && data.status === PropertyStatuses.WAITING
-          ? {
-              id: 1,
-              title: 'در انتظار پرداخت',
-              hex: '#F53E4F',
-            }
-          : PropertyStatusesList.find((_) => _.id === data.status),
+      status: this.findStatus(remainingDays, data.status),
       created_at: data.created_at,
       //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
