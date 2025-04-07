@@ -138,8 +138,12 @@ export class PropertyUserService {
       };
 
     /* ------------------------------ building area ----------------------------- */
-    if (min_building_area >= 0 && max_building_area >= 0)
-      query = { ...query, building_area: { gte: min_building_area, lte: max_building_area } };
+    if (min_building_area >= 0 || max_building_area >= 0) {
+      query = {
+        ...query,
+        building_area: { gte: min_building_area ?? 0, lte: max_building_area || 100_000_000 },
+      };
+    }
 
     if (min_commission >= 0 || max_commission >= 0)
       query = { ...query, advisor_commission: { gte: min_commission || 0, lte: max_commission || 100 } };
