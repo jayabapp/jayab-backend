@@ -25,10 +25,10 @@ export class AttachmentService {
     const MIN_WIDTH = 32;
     const MIN_HEIGHT = 32;
 
-    const image = sharp(file.buffer);
-    const largeImage = sharp(file.buffer);
-    const mediumImage = sharp(file.buffer);
-    const thumbImage = sharp(file.buffer);
+    const image = sharp(file.buffer).rotate();
+    const largeImage = sharp(file.buffer).rotate();
+    const mediumImage = sharp(file.buffer).rotate();
+    const thumbImage = sharp(file.buffer).rotate();
 
     const metadata = await image.metadata();
     const { width, height } = metadata;
