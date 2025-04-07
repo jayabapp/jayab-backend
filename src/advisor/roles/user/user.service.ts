@@ -48,6 +48,7 @@ export class AdvisorUserService {
           cities: { select: { title: true } },
           user: { select: { full_name: true, referral_code: true, profile_image: true } },
         },
+        orderBy: { created_at: 'asc' },
       },
       { cursor: dto.cursor },
     );
