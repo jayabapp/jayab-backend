@@ -72,7 +72,7 @@ export class TasksService {
       },
     });
 
-    console.log({ property, today, threeDaysLater });
+    // console.log({ property, today, threeDaysLater });
 
     if (property) {
       console.log('property found: ', property.id);
@@ -126,7 +126,7 @@ export class TasksService {
       where: {
         OR: [{ subscription_expired_at: threeDaysLater }, { subscription_expired_at: today }],
         status: AdvisorStatus.APPROVED,
-        subscription_reminders: { none: { created_at: today } },
+        subscription_reminders: { none: { sent_at: today } },
       },
       select: {
         id: true,
@@ -143,6 +143,7 @@ export class TasksService {
         data: {
           advisor_id: advisor.id,
           type: 'sms-notif',
+          sent_at: today,
         },
       });
       const days = advisor.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
