@@ -131,11 +131,17 @@ export class PropertyUserService {
     if (title) query = { ...query, title: { contains: title } };
 
     /* ---------------------------------- price --------------------------------- */
-    if (min_price >= 0 && max_price >= 0)
+    if (min_price >= 0 || max_price >= 0) {
       query = {
         ...query,
-        daily_price: { AND: [{ normal: { gte: min_price } }, { normal: { lte: max_price } }] },
+        daily_price: {
+          AND: [
+            { [today]: { gte: min_price ?? 0 } },
+            { [today]: { lte: max_price || Number.MAX_SAFE_INTEGER } },
+          ],
+        },
       };
+    }
 
     /* ------------------------------ building area ----------------------------- */
     if (min_building_area >= 0 || max_building_area >= 0) {
@@ -152,15 +158,20 @@ export class PropertyUserService {
     if (propertyIds) query = { ...query, id: { in: propertyIds } };
 
     /* ------------------------------ RESERVE DAYS ------------------------------ */
-    if (moment(checkin).isValid() && moment(checkout).isValid)
+    if (checkin && checkout && moment(checkin).isValid() && moment(checkout).isValid)
       query = {
         ...query,
-        calendar: {
-          none: {
-            date: { gte: startOfDate(checkin), lt: startOfDate(checkout) },
-            is_reserved: true,
+        AND: [
+          {
+            calendar: {
+              none: {
+                date: { gte: startOfDate(checkin), lt: startOfDate(checkout) },
+                is_reserved: true,
+              },
+            },
           },
-        },
+          { calendar: query.calendar || {} }, //to prevent overwrite discount calendar query
+        ],
       };
 
     /* ---------------------------------- CALENDAR INCLUDE ---------------------------------- */
@@ -350,7 +361,6 @@ export class PropertyUserService {
     const encryptedParams = await this.encryptShareLink(propertyId, advisorId, dto.elements);
 
     const url = `${advisorShareUrl}/s?content=${encryptedParams}`;
-    console.log({ url });
 
     return url;
   }
