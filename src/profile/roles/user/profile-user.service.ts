@@ -95,10 +95,12 @@ export class ProfileUserService {
     };
 
     if (dto.is_special) {
-      if (!referrerCode) throw new UnprocessableEntityException('REGISTER4');
-      const referrer = await this.db.user.findUnique({ where: { referral_code: referrerCode } });
+      // if (!referrerCode) throw new UnprocessableEntityException('REGISTER4');
 
-      if (!referrer) throw new UnprocessableEntityException('REGISTER5');
+      if (referrerCode) {
+        const referrer = await this.db.user.findUnique({ where: { referral_code: referrerCode } });
+        if (!referrer) throw new UnprocessableEntityException('REGISTER5');
+      }
 
       const cityIds = dto.cityIds.map((e) => ({ id: e }));
       delete dto.cityIds;
