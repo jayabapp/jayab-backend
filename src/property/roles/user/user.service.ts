@@ -59,6 +59,7 @@ export class PropertyUserService {
       cool_heat,
       neighborhood,
       guest_type,
+      party,
       pool_type,
       entertainment,
       has_pool,
@@ -78,7 +79,9 @@ export class PropertyUserService {
 
     const today = await this.dayHelper.today();
     let options = [];
-    let poolTypes = [];
+    let optionsOR = [];
+
+    console.log({ dto });
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -100,7 +103,7 @@ export class PropertyUserService {
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
 
     /* ----------------------------- total guests ----------------------------- */
-    if (total_guests > 0) query = { ...query, std_capacity: { gte: total_guests } };
+    if (total_guests > 0) query = { ...query, max_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
     if (property_type) options.push(...parseQueryNumberArray(property_type));
@@ -112,12 +115,16 @@ export class PropertyUserService {
     if (guest_type) options.push(...parseQueryNumberArray(guest_type));
     if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
 
-    /* --------------------------- نوع های استخر - OR --------------------------- */
-    if (!isEmpty(pool_type)) {
-      poolTypes = parseQueryNumberArray(pool_type);
+    /* --------------------------- نوع های استخر و مهمانی - OR --------------------------- */
+    if (party) optionsOR.push(...parseQueryNumberArray(party));
+    if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
+
+    console.log({ optionsOR, dto });
+
+    if (!isEmpty(optionsOR)) {
       query = {
         ...query,
-        AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: poolTypes } }],
+        AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: optionsOR } }],
       };
     } else query = { ...query, options_array: { hasEvery: options } };
 

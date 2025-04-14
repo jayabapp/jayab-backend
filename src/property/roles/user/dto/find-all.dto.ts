@@ -76,25 +76,30 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   cool_heat?: string;
 
-  @ApiProperty({ required: false, title: 'تهویه' })
+  @ApiProperty({ required: false, title: '' })
   @_IsString()
   @IsOptional()
   welfare?: string;
 
-  @ApiProperty({ required: false, title: 'تهویه' })
+  @ApiProperty({ required: false, title: '' })
   @_IsString()
   @IsOptional()
   neighborhood?: string;
 
-  @ApiProperty({ required: false, title: 'تهویه' })
+  @ApiProperty({ required: false, title: '' })
   @_IsString()
   @IsOptional()
   kitchen?: string;
 
-  @ApiProperty({ required: false, title: 'تهویه' })
+  @ApiProperty({ required: false, title: '' })
   @_IsString()
   @IsOptional()
   guest_type?: string;
+
+  @ApiProperty({ required: false, title: '', example: '68,69' })
+  @_IsString()
+  @IsOptional()
+  party?: string;
 
   @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
   @_IsString()
