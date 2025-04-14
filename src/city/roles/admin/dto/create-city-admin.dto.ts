@@ -31,7 +31,7 @@ export class CreateCityAdminDto {
 
   @ApiProperty({ required: true, default: '' })
   @_IsString()
-  @_IsNotEmpty()
+  @IsOptional()
   slug: string;
 
   @ApiProperty({ required: false, default: 1 })

@@ -28,10 +28,11 @@ export class CityAdminService {
    * @returns
    */
   async create(dto: CreateCityAdminDto): Promise<City> {
-    const isDuplicatedSlug = await this.db.city.findFirst({ where: { slug: dto.slug } });
-    if (isDuplicatedSlug) throw new BadRequestException('CITY2');
-
-    if (hasPersianLetter(dto.slug)) throw new UnprocessableEntityException('CITY3');
+    if (dto.slug) {
+      const isDuplicatedSlug = await this.db.city.findFirst({ where: { slug: dto.slug } });
+      if (isDuplicatedSlug) throw new BadRequestException('CITY2');
+      if (hasPersianLetter(dto.slug)) throw new UnprocessableEntityException('CITY3');
+    }
 
     const city = await this.db.city.create({ data: dto });
     return city;
@@ -45,6 +46,14 @@ export class CityAdminService {
    * @returns
    */
   async update(cityId: number, dto: UpdateCityAdminDto): Promise<void> {
+    if (dto.slug) {
+      const isDuplicatedSlug = await this.db.city.findFirst({
+        where: { slug: dto.slug, id: { not: cityId } },
+      });
+      if (isDuplicatedSlug) throw new BadRequestException('CITY2');
+      if (hasPersianLetter(dto.slug)) throw new UnprocessableEntityException('CITY3');
+    }
+
     const city = await this.db.city.findUnique({ where: { id: cityId } });
     if (!city) throw new NotFoundException('COMMON1');
 
