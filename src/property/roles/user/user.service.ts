@@ -78,6 +78,7 @@ export class PropertyUserService {
 
     const today = await this.dayHelper.today();
     let options = [];
+    let poolTypes = [];
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -102,7 +103,6 @@ export class PropertyUserService {
     if (total_guests > 0) query = { ...query, std_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
-
     if (property_type) options.push(...parseQueryNumberArray(property_type));
     if (pattern) options.push(...parseQueryNumberArray(pattern));
     if (welfare) options.push(...parseQueryNumberArray(welfare));
@@ -110,11 +110,16 @@ export class PropertyUserService {
     if (cool_heat) options.push(...parseQueryNumberArray(cool_heat));
     if (neighborhood) options.push(...parseQueryNumberArray(neighborhood));
     if (guest_type) options.push(...parseQueryNumberArray(guest_type));
-
     if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
 
     /* --------------------------- نوع های استخر - OR --------------------------- */
-    if (!isEmpty(pool_type)) options.push(...parseQueryNumberArray(pool_type));
+    if (!isEmpty(pool_type)) {
+      poolTypes = parseQueryNumberArray(pool_type);
+      query = {
+        ...query,
+        AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: poolTypes } }],
+      };
+    } else query = { ...query, options_array: { hasEvery: options } };
 
     /* ------------------------------ فقط استخردار ------------------------------ */
     if (has_pool === 1) query = { ...query, has_pool: true };
@@ -207,10 +212,7 @@ export class PropertyUserService {
     const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
-        where: {
-          options_array: { hasEvery: options },
-          ...query,
-        },
+        where: query,
         include: {
           feature_image: true,
           province: { select: { title: true } },
