@@ -44,6 +44,7 @@ export class SubscriptionPlanUserService {
         description: true,
         is_special: true,
       },
+      orderBy: { sort: { sort: 'asc', nulls: 'last' } },
     });
 
     return { list, can_promote: canPromote };

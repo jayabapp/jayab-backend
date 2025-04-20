@@ -31,7 +31,7 @@ class CommonDto {
   @_Max(10000000)
   @_Min(0)
   @_IsNumber()
-  @_IsNotEmpty()
+  @IsOptional()
   price_with_discount: number;
 
   @ApiProperty({ required: true, default: true })
@@ -41,7 +41,7 @@ class CommonDto {
 
   @ApiProperty({ required: true, default: 1 })
   @_IsInt()
-  @_IsNotEmpty()
+  @IsOptional()
   sort: number;
 
   @ApiProperty({ required: true, default: 'توضیحات' })

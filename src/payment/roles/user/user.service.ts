@@ -122,53 +122,15 @@ export class PaymentUserService {
       const now = moment();
       let newExpDate = null;
 
-      if (now.isAfter(lastSubExpiredAt))
+      //اگر فقط نردبان باشه در زمان سیو کردن اشتراک تعداد روز رو صفر میزاریم که اینجا تاثیری نداشته باشه
+      if (lastSubExpiredAt && now.isAfter(lastSubExpiredAt))
         newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
       else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
 
-      let propertyUpdateData: Prisma.PropertyUpdateInput = {};
-      if (subscription.is_promote) propertyUpdateData = { sort_order: Date.now() };
-      else propertyUpdateData = { subscription_expired_at: newExpDate };
+      let propertyUpdateData: Prisma.PropertyUpdateInput = { subscription_expired_at: newExpDate };
+      if (subscription.is_promote) propertyUpdateData['sort_order'] = Date.now();
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
-
-      // // update payment
-      // const item = await tx.payment.update({
-      //   where: { id: payment.id },
-      //   data: {
-      //     status: PaymentStatuses.APPROVED,
-      //     ref_id: refId,
-      //     subscriptions: {
-      //       updateMany: { where: { payment_id: payment.id }, data: { status: PropertySubscription.SUCCESS } },
-      //     },
-      //   },
-      //   include: {
-      //     subscriptions: {
-      //       select: {
-      //         property: { select: { id: true, subscription_expired_at: true } },
-      //         is_promote: true,
-      //         duration: true,
-      //       },
-      //     },
-      //   },
-      // });
-
-      // const property = first(item.subscriptions)?.property;
-
-      // for (const e of item.subscriptions) {
-      //   if (e?.is_promote) {
-      //     await tx.property.update({ where: { id: property.id }, data: { sort_order: Date.now() } });
-      //   } else {
-      //     const lastSubExpiredAt = property?.subscription_expired_at || undefined;
-      //     const newExpDate = endOfDate(moment(lastSubExpiredAt).add(e.duration, 'days').toDate());
-
-      //     //
-      //     await tx.property.update({
-      //       where: { id: property.id },
-      //       data: { subscription_expired_at: newExpDate, status: PropertyStatuses.WAITING },
-      //     });
-      //   }
-      // }
 
       return item;
     });

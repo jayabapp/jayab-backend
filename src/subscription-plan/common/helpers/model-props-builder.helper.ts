@@ -100,7 +100,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
     {
       state: 'is_active',
       type: 'switch',
-      title: 'فعال (غیر قابل تغییر)',
+      title: 'فعال',
       options: { isMandatory: true, disabled: true },
     },
     { type: 'break' },
@@ -171,6 +171,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 30, title: 'قیمت (تومان)	', key: 'price', cellType: 'number' },
       { id: 40, title: 'فعال بودن', key: 'is_active', cellType: 'boolean' },
       { id: 50, title: 'مدت زمان (روز)	', key: 'duration', cellType: 'number' },
+      { id: 60, title: 'ترتیب نمایش', key: 'sort', cellType: 'number' },
     ],
     availableActions,
   };
@@ -201,7 +202,7 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    // if (act === 'create' && rbac.c) availableActions.push('create');
+    if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
     if (act === 'edit' && rbac.u) availableActions.push('edit');
     // if (act === 'delete' && rbac.d) availableActions.push('delete');
