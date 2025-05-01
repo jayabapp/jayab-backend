@@ -106,12 +106,12 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Duplicate', description: '' })
-  @Post(':propertyId/duplicate')
-  async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
-    const result = await this.propertyUserService.duplicate(propertyId);
-    return { result };
-  }
+  // @ApiOperation({ operationId: 'Duplicate', description: '' })
+  // @Post(':propertyId/duplicate')
+  // async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
+  //   const result = await this.propertyUserService.duplicate(propertyId);
+  //   return { result };
+  // }
 
   /* -------------------------------------------------------------------------- */
   /*                                    SHARE                                   */

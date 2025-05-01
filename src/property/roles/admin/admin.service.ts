@@ -27,7 +27,7 @@ import {
   PropertyJsonType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
+import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { AdminType } from 'src/common/interfaces/user.interface';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
@@ -187,12 +187,12 @@ export class PropertyAdminService {
   }
 
   /**
-   * Update editable columns in admin panel table
+   * Update Property status
    * @param id
    * @param dto
    * @returns
    */
-  async updatePartial(admin: AdminType, id: number, dto: UpdatePartialPropertyAdminDto): Promise<void> {
+  async updateStatus(admin: AdminType, id: number, dto: UpdatePartialPropertyAdminDto): Promise<void> {
     let updateData: Prisma.PropertyUpdateInput = { status: dto.status };
     const adminDscr: AdminDescription = {
       description: dto.admin_description || '',
@@ -203,6 +203,10 @@ export class PropertyAdminService {
       created_at: new Date(),
     };
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
+    /**
+     * اپدیت سورت ملک بعد از تایید آگهی
+     */
+    if (dto.status === PropertyStatuses.PUBLISHED) updateData = { sort_order: Date.now() };
 
     await this.db.property.update({ where: { id }, data: updateData });
   }

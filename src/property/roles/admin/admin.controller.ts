@@ -95,16 +95,16 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Partial', description: '' })
+  @ApiOperation({ operationId: 'Update Status', description: '' })
   @Patch(':id')
-  async updatePartial(
+  async updateStatus(
     @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePartialPropertyAdminDto,
   ): Promise<SuccessResponseArgs> {
     const admin = req.user;
     const property = await this.propertyAdminService.findById(id);
-    const result = await this.propertyAdminService.updatePartial(admin, id, dto);
+    const result = await this.propertyAdminService.updateStatus(admin, id, dto);
 
     //send sms to owner
     const statusText = PropertyStatusesList.find((e) => e.id === dto.status)?.title;
