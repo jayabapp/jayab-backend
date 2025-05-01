@@ -76,7 +76,7 @@ export const showPropsBuilder = (
       title: 'نام و نام خانوادگی',
       value: item.user.full_name,
       type: 'string',
-      // route: `/users/edit/${item.user.id}`,
+      route: `/users/edit/${item.user.id}`,
     },
     {
       state: 'national_code',
