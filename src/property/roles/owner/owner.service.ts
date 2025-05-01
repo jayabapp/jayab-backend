@@ -518,12 +518,17 @@ export class PropertyOwnerService {
         where: { property_id: property.id, status: SubscriptionStatus.WAITING },
       });
 
+      //create title
+      let subscriptionTitle = '';
+      if (subscription?.title) subscriptionTitle += `${subscription.title}`;
+      if (promote?.title) subscriptionTitle += `${subscription.title ? ' - ' : ''}${promote.title}`;
+
       await tx.subscription.create({
         data: {
           property_id: property.id,
           is_promote: !!dto.promote_id ? true : false,
           payment_id: pay.payment.id,
-          title: `${subscription?.title || ''} - ${promote?.title || ''}`,
+          title: subscriptionTitle,
           duration: subscription?.duration || 0,
           price: pay.payment.amount,
           status: SubscriptionStatus.WAITING,

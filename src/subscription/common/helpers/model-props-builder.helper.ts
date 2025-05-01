@@ -129,6 +129,37 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       type: 'input',
     },
     {
+      title: 'نوع',
+      state: 'type',
+      type: 'select',
+      selectItems: [
+        { id: 'property', title: 'ملک' },
+        { id: 'advisor', title: 'مشاور' },
+      ],
+    },
+    {
+      title: 'گزینه ها',
+      state: 'extra_type',
+      type: 'select',
+      selectItems: [
+        { id: 'is_renew', title: 'انتشار یا تمدید ملک' },
+        { id: 'is_promote', title: 'نردبان' },
+        { id: 'is_special_advisor', title: 'مشاور ویژه' },
+        { id: 'is_normal_advisor', title: 'مشاور عادی' },
+      ],
+    },
+    {
+      title: 'از تاریخ',
+      state: 'from_date',
+      type: 'date',
+    },
+    {
+      title: 'تا تاریخ',
+      state: 'to_date',
+      type: 'date',
+    },
+
+    {
       title: '',
       state: 'property_id',
       type: 'input',

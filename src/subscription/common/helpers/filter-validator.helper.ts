@@ -2,6 +2,9 @@ import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { FindAllSubscriptionAdminDto } from 'src/subscription/roles/admin/dto/find-all.dto';
+import moment from 'moment-jalaali';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { convertJalaaliDtoToDate, startOfDate } from 'src/common/helpers/date.helper';
 
 /**
  * validate filters
@@ -29,11 +32,18 @@ export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.Su
     const checkField = items.find((e) => e.state === field);
     if (!checkField && !['page', 'per_page'].includes(field)) return;
 
+    const { from_date, to_date } = filters;
+
+    const fromDate = from_date ? convertJalaaliDtoToDate(from_date) : null;
+    const toDate = to_date ? convertJalaaliDtoToDate(to_date) : null;
+
+    if (fromDate && toDate)
+      query = { ...query, AND: [{ created_at: { gte: fromDate } }, { created_at: { lte: toDate } }] };
+    else if (fromDate) query = { ...query, created_at: { gte: fromDate } };
+    else if (toDate) query = { ...query, created_at: { lte: toDate } };
+
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
       case 'mobile_number':
         query = {
           ...query,
@@ -51,12 +61,23 @@ export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.Su
       case 'property_id':
         query = { ...query, property_id: +filters.property_id };
         break;
-      // case 'user_fullname':
-      //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
-      //   break;
-      // case 'user_mobile':
-      //   query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
-      //   break;
+      case 'type':
+        if (filters.type === 'property') {
+          if (filters.property_id) break;
+          query = { ...query, property_id: { gt: 0 } };
+        } else if (filters.type === 'advisor') query = { ...query, advisor_id: { gt: 0 } };
+        break;
+
+      case 'extra_type':
+        if (filters.extra_type === 'is_renew')
+          query = { ...query, is_promote: false, property_id: { gt: 0 } };
+        else if (filters.extra_type === 'is_normal_advisor')
+          query = { ...query, is_special_advisor: false, advisor_id: { gt: 0 } };
+        else query = { ...query, [filters.extra_type]: true };
+        break;
+      case 'from_date':
+      case 'to_date':
+        break;
 
       default:
         break;

@@ -17,7 +17,7 @@ export class IsJalaaliDate implements ValidatorConstraintInterface {
   async validate(value: DateType, validationArguments: ValidationArguments): Promise<boolean> {
     if (!value) return false;
     if (!value?.year || !value?.month || !value?.day) return false;
-    if (!isInteger(value?.year) || !isInteger(value?.month) || !isInteger(value?.day)) return false;
+    if (!isInteger(+value?.year) || !isInteger(+value?.month) || !isInteger(+value?.day)) return false;
 
     const MIN_DATE = (validationArguments?.constraints?.[2] as number) || '1300/01/01';
 
