@@ -142,7 +142,6 @@ export class PaymentGatewayAdminService {
         if (!param.value || !reg.test(param.value)) throw new UnprocessableEntityException('GATEWAY4');
       }
     }
-    console.log({ dto });
 
     const item = await this.db.paymentGateway.update({
       where: { id },

@@ -17,6 +17,8 @@ import { __baseDir } from 'src/config/settings';
 import fs from 'fs/promises';
 import { ConfigService } from '@nestjs/config';
 import moment from 'moment-jalaali';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 type Sitemap = {
   loc: string;
@@ -186,38 +188,42 @@ Allow: *
     const contentCategory = await this.db.contentCategory.findMany({
       where: { show_in_sitemap: true },
     });
+    const properties = await this.db.property.findMany({
+      where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
+      select: { slug: true, updated_at: true },
+    });
 
     const siteUrl = this.config.get('url.websiteUrl');
 
     const sitemap: Sitemap[] = [];
 
     sitemap.push({ loc: siteUrl, lastmod: moment().toISOString(), priority: 1.0, changefreq: 'never' });
-    // sitemap.push({
-    //   loc: `${siteUrl}/about-us`,
-    //   lastmod: moment().toISOString(),
-    //   priority: 0.8,
-    //   changefreq: 'weekly',
-    // });
-    // sitemap.push({
-    //   loc: `${siteUrl}/contact-us`,
-    //   lastmod: moment().toISOString(),
-    //   priority: 0.8,
-    //   changefreq: 'weekly',
-    // });
-    // sitemap.push({
-    //   loc: `${siteUrl}/gallery`,
-    //   lastmod: moment().toISOString(),
-    //   priority: 0.8,
-    //   changefreq: 'daily',
-    // });
-    // sitemap.push({
-    //   loc: `${siteUrl}/faq`,
-    //   lastmod: moment().toISOString(),
-    //   priority: 0.8,
-    //   changefreq: 'daily',
-    // });
     sitemap.push({
-      loc: `${siteUrl}/products`,
+      loc: `${siteUrl}/about-us`,
+      lastmod: moment().toISOString(),
+      priority: 0.8,
+      changefreq: 'weekly',
+    });
+    sitemap.push({
+      loc: `${siteUrl}/contact-us`,
+      lastmod: moment().toISOString(),
+      priority: 0.8,
+      changefreq: 'weekly',
+    });
+    sitemap.push({
+      loc: `${siteUrl}/blog?page=1`,
+      lastmod: moment().toISOString(),
+      priority: 0.8,
+      changefreq: 'daily',
+    });
+    sitemap.push({
+      loc: `${siteUrl}/faq`,
+      lastmod: moment().toISOString(),
+      priority: 0.8,
+      changefreq: 'daily',
+    });
+    sitemap.push({
+      loc: `${siteUrl}/terms`,
       lastmod: moment().toISOString(),
       priority: 1.0,
       changefreq: 'daily',
@@ -245,6 +251,15 @@ Allow: *
       sitemap.push({
         loc: `${siteUrl}/${cat.key}`,
         lastmod: moment(cat.updated_at).toISOString(),
+        priority: 0.8,
+        changefreq: 'weekly',
+      });
+    }
+
+    for (const p of properties) {
+      sitemap.push({
+        loc: `${siteUrl}/rooms/${p.slug}`,
+        lastmod: moment(p.updated_at).toISOString(),
         priority: 0.8,
         changefreq: 'weekly',
       });

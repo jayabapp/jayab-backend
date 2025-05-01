@@ -81,8 +81,6 @@ export class PropertyUserService {
     let options = [];
     let optionsOR = [];
 
-    console.log({ dto });
-
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
     if (code) query = { ...query, code };
