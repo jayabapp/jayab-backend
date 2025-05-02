@@ -280,7 +280,6 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
     { type: 'break' },
     { title: 'اشتراک فعال', state: 'no_sub', type: 'switch' },
     { title: 'مشاور ویژه', state: 'is_special', type: 'switch' },
-    /*  */
     { title: '', state: 'status', type: 'select', isHidden: true },
   ];
 
