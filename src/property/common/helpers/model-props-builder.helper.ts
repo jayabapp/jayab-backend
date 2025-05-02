@@ -281,7 +281,7 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
   if (item.status === PropertyStatuses.PUBLISHED)
     actions.push({
       title: 'صفحه ملک در سایت',
-      route: `${process.env.BASE_URL}/property/${item.slug}`,
+      route: `${process.env.WEBSITE_URL}/rooms/${item.slug}`,
       color: 'secondary',
       targetBlank: true,
     });
