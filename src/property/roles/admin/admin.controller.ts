@@ -104,7 +104,7 @@ export class PropertyAdminController {
   ): Promise<SuccessResponseArgs> {
     const admin = req.user;
     const property = await this.propertyAdminService.findById(id);
-    const result = await this.propertyAdminService.updateStatus(admin, id, dto);
+    const result = await this.propertyAdminService.updateStatus(admin, id, dto, property);
 
     //send sms to owner
     const statusText = PropertyStatusesList.find((e) => e.id === dto.status)?.title;

@@ -192,7 +192,12 @@ export class PropertyAdminService {
    * @param dto
    * @returns
    */
-  async updateStatus(admin: AdminType, id: number, dto: UpdatePartialPropertyAdminDto): Promise<void> {
+  async updateStatus(
+    admin: AdminType,
+    id: number,
+    dto: UpdatePartialPropertyAdminDto,
+    property: Property,
+  ): Promise<void> {
     let updateData: Prisma.PropertyUpdateInput = { status: dto.status };
     const adminDscr: AdminDescription = {
       description: dto.admin_description || '',
@@ -204,9 +209,10 @@ export class PropertyAdminService {
     };
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
     /**
-     * اپدیت سورت ملک بعد از تایید آگهی
+     * اپدیت سورت ملک بعد از تایید آگهی در دفعه اول
      */
-    if (dto.status === PropertyStatuses.PUBLISHED) updateData = { ...updateData, sort_order: Date.now() };
+    if (dto.status === PropertyStatuses.PUBLISHED && !property.sort_order)
+      updateData = { ...updateData, sort_order: Date.now() };
 
     await this.db.property.update({ where: { id }, data: updateData });
   }
