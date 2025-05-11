@@ -32,7 +32,7 @@ export class TransformInterceptor implements NestInterceptor {
         const targetModule = getModuleFromUrl(request.originalUrl); // required
         const admin = request.user as Admin;
 
-        if (false && admin && request.method !== 'GET' && targetModule && admin?.role_id) {
+        if (admin && request.method !== 'GET' && targetModule && admin?.role_id) {
           const response = context.switchToHttp().getResponse();
           const userAgentString = request.header('user-agent');
           const parser = new UAParser(userAgentString);

@@ -211,8 +211,7 @@ export class PropertyAdminService {
     /**
      * اپدیت سورت ملک بعد از تایید آگهی در دفعه اول
      */
-    if (dto.status === PropertyStatuses.PUBLISHED && !property.sort_order)
-      updateData = { ...updateData, sort_order: Date.now() };
+    if (dto.status === PropertyStatuses.PUBLISHED) updateData = { ...updateData, sort_order: Date.now() };
 
     await this.db.property.update({ where: { id }, data: updateData });
   }
