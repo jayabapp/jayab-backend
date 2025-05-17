@@ -521,7 +521,7 @@ export class PropertyOwnerService {
       //create title
       let subscriptionTitle = '';
       if (subscription?.title) subscriptionTitle += `${subscription.title}`;
-      if (promote?.title) subscriptionTitle += `${subscription.title ? ' - ' : ''}${promote.title}`;
+      if (promote?.title) subscriptionTitle += `${subscription?.title ? ' - ' : ''}${promote.title}`;
 
       await tx.subscription.create({
         data: {
