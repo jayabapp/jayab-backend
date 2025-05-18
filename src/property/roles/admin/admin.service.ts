@@ -210,8 +210,10 @@ export class PropertyAdminService {
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
     /**
      * اپدیت سورت ملک بعد از تایید آگهی در دفعه اول
+     * اگر تا حالا تایید نشده باشه مقدار سورت صفره
      */
-    if (dto.status === PropertyStatuses.PUBLISHED) updateData = { ...updateData, sort_order: Date.now() };
+    if (dto.status === PropertyStatuses.PUBLISHED && !property.sort_order)
+      updateData = { ...updateData, sort_order: Date.now() };
 
     await this.db.property.update({ where: { id }, data: updateData });
   }

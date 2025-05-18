@@ -71,9 +71,6 @@ export class PropertyOwnerService {
         select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
       },
       bedrooms: true,
-      // property_authorize: true,
-      // propertyReservedDays: { where: { timestamp: this.dayHelper.todayUnix() } },
-      // propertyReservedDays: { where: { AND: [{ timestamp: { gte: from } }, { timestamp: { lt: to } }] } },
     };
 
     /* -------------------------------------------------------------------------- */
@@ -81,15 +78,6 @@ export class PropertyOwnerService {
     const initProp = await this.db.property.findFirst({ where: query, include });
     if (propertyId && !initProp) throw new NotFoundException('PROPERTY_NOT_FOUND');
     if (initProp) return initProp;
-
-    /* -------------------------------------------------------------------------- */
-    // property statistics
-    // const propertyStatistics: PropertyStatisticType = {
-    //   approved_rent: 0,
-    //   approved_direct_rent: 0,
-    //   approved_agreement: 0,
-    //   approved_direct_agreement: 0,
-    // };
 
     /* -------------------------------------------------------------------------- */
     // generate a random unique code
@@ -101,9 +89,8 @@ export class PropertyOwnerService {
     /* -------------------------------------------------------------------------- */
     // create new property
     const newProp = await this.db.property.create({
-      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code, sort_order: Date.now() },
+      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
       include,
-      // data: { owner_id: user.owner_id, status: PropertyStatuses.INIT, statistics: propertyStatistics },
     });
 
     return newProp;
