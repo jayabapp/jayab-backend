@@ -160,21 +160,21 @@ export class AuthUserController {
   //   return { result: { access_token: guestToken } };
   // }
 
-  // @Throttle({ default: { limit: 10, ttl: 30000 } })
-  // @UseInterceptors(CacheInterceptor)
-  // @CacheTTL(5000)
-  // @ApiOperation({ operationId: 'Get Init Settings' })
-  // @Get('init-settings')
-  // async findInitSettings(): Promise<SuccessResponseArgs> {
-  //   const init = await this.authUserService.findInitSettings();
-  //   return { result: init };
-  // }
+  @Throttle({ default: { limit: 30, ttl: 30000 } })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(5000)
+  @ApiOperation({ operationId: 'Get Init Settings' })
+  @Get('init-settings')
+  async findInitSettings(): Promise<SuccessResponseArgs> {
+    const init = await this.authUserService.findInitSettings();
+    return { result: init };
+  }
 
-  @ApiOperation({ operationId: 'Get Init Profile' })
+  @ApiOperation({ operationId: 'Get Init User' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
-  @Get('init-settings')
-  async findInitSettings(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+  @Get('init-user')
+  async findInitUser(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const user = req.user;
     const bookmarks = await this.bookmarkUserService.findAllIds(user.id);
     const favorites = await this.favoriteUserService.findAllIds(user.id);

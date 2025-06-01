@@ -10,6 +10,7 @@ import { getB2cConfig } from 'src/config/b2c.config';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { random } from 'lodash';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 
 @Injectable()
 export class AuthUserService {
@@ -17,6 +18,7 @@ export class AuthUserService {
     private readonly db: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private readonly settingService: SettingAdminService,
   ) {}
 
   /**
@@ -153,12 +155,8 @@ export class AuthUserService {
   /* -------------------------------------------------------------------------- */
 
   async findInitSettings(): Promise<object> {
-    const hasProductAttribute = getB2cConfig('HAS_MULTI_PRODUCT_ATTRIBUTE') == '1';
-    const isMarketplace = getB2cConfig('IS_MARKETPLACE') == '1';
-    const hasPayment = getB2cConfig('HAS_PAYMENT') == '1';
-    const settings = await this.db.setting.findMany();
-    const googleTagManagerId = settings.find((e) => e.key == SettingKey.GOOGLE_TAG_MANAGER_KEY)?.value;
+    const googleTagManagerId = await this.settingService.get(SettingKey.GOOGLE_TAG_MANAGER_KEY);
 
-    return { isMarketplace, hasProductAttribute, googleTagManagerId, hasPayment };
+    return { googleTagManagerId };
   }
 }
