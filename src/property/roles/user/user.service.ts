@@ -117,7 +117,7 @@ export class PropertyUserService {
     if (party) optionsOR.push(...parseQueryNumberArray(party));
     if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
 
-    console.log({ optionsOR, dto });
+    // console.log({ optionsOR, dto });
 
     if (!isEmpty(optionsOR)) {
       query = {

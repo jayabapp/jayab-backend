@@ -23,7 +23,7 @@ import moment from 'moment-jalaali';
 import { RentType } from '../common/types/property-rent-types.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
-import { startOfDate } from 'src/common/helpers/date.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
 import { isEmpty } from 'lodash';
 
@@ -216,7 +216,12 @@ export class PropertySerializer {
     if (!data) return;
     let single: PropertyJsonResType;
 
+    console.dir(data);
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
+    const todayInPropertyCalendar = data.calendar?.find(
+      (e) => moment(e.date).diff(startOfToday(), 'm') === 0,
+    );
+
     let list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
@@ -241,9 +246,11 @@ export class PropertySerializer {
       city: data.city?.title,
       region: data.region?.title,
       advisor_commission:
-        !isAdvisor && !isOwner ? null : data.calendar?.[0]?.advisor_commission ?? data.advisor_commission,
-      today_price: this.findTodayPrice(data.calendar?.[0], today, data.daily_price),
-      is_today_reserved: !!data.calendar?.[0]?.is_reserved,
+        !isAdvisor && !isOwner
+          ? null
+          : todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission,
+      today_price: this.findTodayPrice(todayInPropertyCalendar, today, data.daily_price),
+      is_today_reserved: !!todayInPropertyCalendar?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
       favorite_count: data?.favorite_count,
