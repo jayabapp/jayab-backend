@@ -36,4 +36,12 @@ export class DashboardController {
     const result = await this.dashboardService.findCount();
     return { result };
   }
+
+  @ApiOperation({ summary: 'Find Badge For Sidebar' })
+  @Get('sidebar-badge')
+  async findAllSidebarBadge(): Promise<SuccessResponseArgs> {
+    let result;
+    result = await this.dashboardService.findAllSidebarBadge();
+    return { result };
+  }
 }

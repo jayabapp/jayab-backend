@@ -196,7 +196,7 @@ export class PropertyOwnerService {
 
     // اگر عکس های ملک تغییر کنن وضعیت ملک باید به وضعیت در حال بررسی ادمین تغییر کند
     let status = property.status;
-    if (property.status === PropertyStatuses.PUBLISHED) status = PropertyStatuses.WAITING;
+    if (property.status === PropertyStatuses.PUBLISHED) status = PropertyStatuses.EDITED;
 
     await this.db.$transaction(async (tx) => {
       // delete all attachments

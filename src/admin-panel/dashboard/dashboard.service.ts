@@ -171,4 +171,16 @@ export class DashboardService {
       users,
     };
   }
+
+  async findAllSidebarBadge(): Promise<any> {
+    const waitingProperties = await this.db.property.count({ where: { status: PropertyStatuses.WAITING } });
+    const editedProperties = await this.db.property.count({ where: { status: PropertyStatuses.EDITED } });
+    const pendingOwnersOwners = await this.db.owner.count({ where: { status: OwnerStatus.PENDING } });
+
+    return {
+      waitingProperties,
+      editedProperties,
+      pendingOwnersOwners,
+    };
+  }
 }

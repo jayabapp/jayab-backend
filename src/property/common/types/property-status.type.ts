@@ -25,6 +25,7 @@ export enum PropertyStatuses {
   WAITING = 20,
   REJECTED = 25,
   PUBLISHED = 30,
+  EDITED = 31,
   DELETED = 60,
 }
 
@@ -48,6 +49,11 @@ export const PropertyStatusesList: Array<EnumList> = [
     id: PropertyStatuses.PUBLISHED,
     title: 'منتشر شده',
     hex: '#22c55e',
+  },
+  {
+    id: PropertyStatuses.EDITED,
+    title: 'در حال بررسی مجدد',
+    hex: '#f59e0b',
   },
   {
     id: PropertyStatuses.REJECTED,
