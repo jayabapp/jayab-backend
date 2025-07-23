@@ -189,13 +189,14 @@ export class PropertySerializer {
 
   private findStatus(remainingDays: number, status: PropertyStatuses): EnumList {
     if (!remainingDays || remainingDays <= 0) {
-      if (status === PropertyStatuses.WAITING)
-        return {
-          id: 1,
-          title: 'در انتظار پرداخت',
-          hex: '#F53E4F',
-        };
-      else if (status === PropertyStatuses.PUBLISHED)
+      // if (status === PropertyStatuses.WAITING)
+      //   return {
+      //     id: 1,
+      //     title: 'در انتظار پرداخت',
+      //     hex: '#F53E4F',
+      //   };
+      // else
+      if (status === PropertyStatuses.PUBLISHED)
         return {
           id: 11,
           title: 'منقضی شده',

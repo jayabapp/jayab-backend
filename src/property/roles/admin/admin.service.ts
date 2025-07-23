@@ -19,7 +19,7 @@ import {
   tablePropsBuilder,
 } from 'src/property/common/helpers/model-props-builder.helper';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { endOfDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import {
@@ -37,6 +37,7 @@ import TokenPayload from 'src/auth/common/interface/token-payload.interface';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class PropertyAdminService {
@@ -212,10 +213,35 @@ export class PropertyAdminService {
      * اپدیت سورت ملک بعد از تایید آگهی در دفعه اول
      * اگر تا حالا تایید نشده باشه مقدار سورت صفره
      */
-    if (dto.status === PropertyStatuses.PUBLISHED && !property.sort_order)
-      updateData = { ...updateData, sort_order: Date.now() };
+    await this.db.$transaction(async (tx) => {
+      if (
+        dto.status === PropertyStatuses.PUBLISHED &&
+        !property.sort_order &&
+        property.status !== PropertyStatuses.EDITED
+      ) {
+        const freeSubscriptionDays = 30;
+        //چون پرداخت اولیه حذف شد انقضا دستی زده می شود
+        updateData = {
+          ...updateData,
+          sort_order: Date.now(),
+          subscription_expired_at: endOfDate(moment().add(freeSubscriptionDays, 'days').toDate()),
+        };
+        //به دلیل حذف پرداخت این قسمت اضافه شد
+        await tx.subscription.create({
+          data: {
+            property_id: property.id,
+            is_promote: false,
+            payment_id: null,
+            title: 'ثبت رایگان آگهی ملک',
+            duration: freeSubscriptionDays,
+            price: 0,
+            status: SubscriptionStatus.SUCCESS,
+          },
+        });
+      }
 
-    await this.db.property.update({ where: { id }, data: updateData });
+      await tx.property.update({ where: { id }, data: updateData });
+    });
   }
 
   /**
