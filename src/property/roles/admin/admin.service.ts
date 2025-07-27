@@ -219,25 +219,7 @@ export class PropertyAdminService {
         !property.sort_order &&
         property.status !== PropertyStatuses.EDITED
       ) {
-        const freeSubscriptionDays = 30;
-        //چون پرداخت اولیه حذف شد انقضا دستی زده می شود
-        updateData = {
-          ...updateData,
-          sort_order: Date.now(),
-          subscription_expired_at: endOfDate(moment().add(freeSubscriptionDays, 'days').toDate()),
-        };
-        //به دلیل حذف پرداخت این قسمت اضافه شد
-        await tx.subscription.create({
-          data: {
-            property_id: property.id,
-            is_promote: false,
-            payment_id: null,
-            title: 'ثبت رایگان آگهی ملک',
-            duration: freeSubscriptionDays,
-            price: 0,
-            status: SubscriptionStatus.SUCCESS,
-          },
-        });
+        updateData = { ...updateData, sort_order: Date.now() };
       }
 
       await tx.property.update({ where: { id }, data: updateData });
