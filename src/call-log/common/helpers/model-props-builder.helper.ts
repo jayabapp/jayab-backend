@@ -14,7 +14,8 @@ import { operators } from 'src/common/utils/constants/filter-operators.constant'
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  user = 'user',
+  property = 'property',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.CallLogScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -99,10 +100,37 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'callLog',
-    modelTitle: 'بیس',
+    modelTitle: 'سابقه کلیک تماس',
     columns: [
       { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
+      {
+        id: 10,
+        title: 'کاربر',
+        key: 'user',
+        cellType: 'object',
+        nestedKey: 'full_name',
+      },
+      {
+        id: 21,
+        title: 'موبایل کاربر',
+        key: 'user',
+        cellType: 'object',
+        nestedKey: 'mobile_number',
+      },
+      {
+        id: 20,
+        title: 'عنوان آگهی',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'title',
+        link: '/properties/show',
+      },
+      {
+        id: 30,
+        title: 'تعداد کلیک در یک روز',
+        key: 'attempts',
+        cellType: 'number',
+      },
       // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
       // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
       // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
@@ -112,8 +140,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
 
       /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -127,10 +155,9 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
-      title: '',
-      state: 'user_id',
+      title: 'عنوان آگهی',
+      state: 'property_title',
       type: 'input',
-      isHidden: true,
     },
   ];
 
@@ -145,11 +172,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
-    if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'show' && rbac.r) availableActions.push('show');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

@@ -57,12 +57,4 @@ export class CallLogAdminController {
 
     return { result };
   }
-
-  @ApiOperation({ operationId: 'Find One', description: '' })
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-    const result = await this.callLogAdminService.findOne(id);
-
-    return { result };
-  }
 }

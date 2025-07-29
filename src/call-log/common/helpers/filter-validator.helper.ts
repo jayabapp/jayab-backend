@@ -18,7 +18,7 @@ export const filterValidator = (filters: FindAllCallLogAdminDto): Prisma.CallLog
    */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
-  
+
   // eslint-disable-next-line
   let query: Prisma.CallLogWhereInput = {};
 
@@ -34,8 +34,8 @@ export const filterValidator = (filters: FindAllCallLogAdminDto): Prisma.CallLog
       // case 'status':
       //   query = { ...query, status: +filters.status };
       //   break;
-      case 'user_id':
-        // query = { ...query, user_id: +filters.user_id };
+      case 'property_title':
+        query = { ...query, property: { title: { contains: filters.property_title, mode: 'insensitive' } } };
         break;
       // case 'user_fullname':
       //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };

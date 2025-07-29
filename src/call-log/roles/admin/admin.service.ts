@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, CallLog, Prisma } from '@prisma/client';
+import { AccessControlList, CallLog, Prisma, Property, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCallLogAdminDto } from './dto/create.dto';
 import { UpdateCallLogAdminDto } from './dto/update.dto';
@@ -41,42 +41,23 @@ export class CallLogAdminService {
     filters: Prisma.CallLogWhereInput,
     page: number,
     perPage = 50,
-  ): Promise<PaginatedResult<CallLog>> {
-    const list = await paginate()<CallLog, Prisma.CallLogFindManyArgs>(
+  ): Promise<PaginatedResult<CallLog & { property: Partial<Property>; user: Partial<User> }>> {
+    const list = await paginate()<
+      CallLog & { property: Partial<Property>; user: Partial<User> },
+      Prisma.CallLogFindManyArgs
+    >(
       this.db.callLog,
-      { where: filters },
+      {
+        where: filters,
+        include: {
+          property: { select: { id: true, title: true } },
+          user: { select: { id: true, full_name: true, mobile_number: true } },
+        },
+      },
       { page, perPage },
     );
 
     return list;
-  }
-
-  /**
-   * find one callLog
-   * this method is used in the findOne controller to include or select items
-   * @param id
-   * @returns
-   */
-  async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    const item = await this.db.callLog.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException('NOT_FOUND');
-
-    const showProps = showPropsBuilder(item);
-    const actions = showActionBuilder(item);
-
-    return { showProps, actions };
-  }
-
-  /**
-   * find by id
-   * @param id
-   * @returns
-   */
-  async findById(id: number): Promise<CallLog> {
-    const item = await this.db.callLog.findUnique({ where: { id } });
-    if (!item) throw new NotFoundException('NOT_FOUND');
-
-    return item;
   }
 
   /* -------------------------------------------------------------------------- */

@@ -5,14 +5,14 @@ import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import { _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllCallLogAdminDto extends PaginationDto {
-  @ApiProperty({ required: false, default: 1 })
-  @Type(() => Number)
-  @_IsInt()
-  @IsOptional()
-  user_id: number;
-
-  // @ApiProperty({ required: false, default: '' })
-  // @_IsString()
+  // @ApiProperty({ required: false, default: 1 })
+  // @Type(() => Number)
+  // @_IsInt()
   // @IsOptional()
-  // mobile_number: string;
+  // user_id: number;
+
+  @ApiProperty({ required: false, default: '' })
+  @_IsString()
+  @IsOptional()
+  property_title: string;
 }

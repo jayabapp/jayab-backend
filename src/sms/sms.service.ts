@@ -174,9 +174,6 @@ export class SmsService {
       const templateId = this.configService.get('sms.callLogTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
-      console.log({ mobile, ownerMobile });
-      return;
-
       const body = {
         parameters: [{ name: 'MOBILE', value: ownerMobile }],
         mobile: mobile,
