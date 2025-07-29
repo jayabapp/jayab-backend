@@ -16,7 +16,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
@@ -27,6 +27,8 @@ import { PropertyOwnerService } from '../owner/owner.service';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { User } from '@prisma/client';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -67,7 +69,6 @@ export class PropertyUserController {
      * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
      */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-    console.log({ isAdvisor });
 
     const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
     return { result };
@@ -99,10 +100,23 @@ export class PropertyUserController {
     return {};
   }
 
+  @UseGuards(UserJwtGuard)
+  @ApiBearerAuth('user-jwt')
   @ApiOperation({ operationId: 'Find Contact Info', description: '' })
   @Get(':propertySlug/contact-info')
-  async findContactInfo(@Param('propertySlug') propertySlug: string): Promise<SuccessResponseArgs> {
+  async findContactInfo(
+    @Req() req: RequestType,
+    @Param('propertySlug') propertySlug: string,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user as unknown as User;
+
     const result = await this.propertyUserService.findContactInfo(propertySlug);
+
+    if (result?.length > 0) {
+      const ownerMobile = result[0].assistant_mobile_number;
+      await this.propertyUserService.storeCallLog(result[0].property_id, user, ownerMobile);
+    }
+
     return { result };
   }
 

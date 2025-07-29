@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, PropertyOwnerAssistant } from '@prisma/client';
+import { Property, Prisma, PropertyOwnerAssistant, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
@@ -24,6 +24,7 @@ import { ConfigService } from '@nestjs/config';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { AES, enc } from 'crypto-js';
 import isJson from 'src/common/helpers/is-json.helper';
+import { SmsService } from 'src/sms/sms.service';
 
 @Injectable()
 export class PropertyUserService {
@@ -33,6 +34,7 @@ export class PropertyUserService {
     private readonly propertySerializer: PropertySerializer,
     private readonly dayHelper: DayHelper,
     private readonly config: ConfigService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -293,10 +295,28 @@ export class PropertyUserService {
 
     const list = await this.db.propertyOwnerAssistant.findMany({
       where: { property: { ...this.validProperty(), code } },
-      select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
+      select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true, property_id: true },
+      orderBy: { is_owner: 'desc' },
     });
 
     return list;
+  }
+
+  async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
+    const userId = user.id;
+    const todayRec = await this.db.callLog.findFirst({
+      where: { property_id: propertyId, user_id: userId, created_at: { gte: startOfToday() } },
+      select: { id: true, attempts: true, created_at: true },
+    });
+
+    if (todayRec)
+      await this.db.callLog.update({ where: { id: todayRec.id }, data: { attempts: { increment: 1 } } });
+    else {
+      await this.db.callLog.create({
+        data: { property_id: propertyId, user_id: userId, attempts: 1 },
+      });
+      this.smsService.sendCallLogToOwner(user.mobile_number, ownerMobile);
+    }
   }
 
   validProperty() {

@@ -159,4 +159,37 @@ export class SmsService {
       this.logger.error(error);
     }
   }
+
+  /**
+   * ارسال پیامک به مالک وقتی کاربر روی تماس کلیک میکنه
+   * @param mobile
+   * @param ownerMobile
+   * @returns
+   */
+  async sendCallLogToOwner(mobile: string, ownerMobile: string): Promise<void> {
+    // if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.callLogTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      console.log({ mobile, ownerMobile });
+      return;
+
+      const body = {
+        parameters: [{ name: 'MOBILE', value: ownerMobile }],
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }

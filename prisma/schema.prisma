@@ -442,6 +442,7 @@ model User {
   favorites  Favorite[]
   black_list MessengerBlackList[]
   bookmarks  Bookmark[]
+  call_logs  CallLog[]
 
   @@map("users")
 }
@@ -590,6 +591,7 @@ model Property {
   favorites              Favorite[]
   bookmarks              Bookmark[]
   subscription_reminders SubscriptionReminder[]
+  call_logs              CallLog[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -1242,4 +1244,20 @@ model LandingPage {
 
   @@index([url])
   @@map("landing_pages")
+}
+
+model CallLog {
+  id          Int @id() @default(autoincrement())
+  user_id     Int
+  property_id Int
+  attempts    Int @default(1)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, property_id])
+  @@map("call_logs")
 }

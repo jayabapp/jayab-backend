@@ -72,6 +72,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { TicketModule } from './ticket/ticket.module';
+import { CallLogModule } from './call-log/call-log.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 
 @Module({
@@ -153,6 +154,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     BookmarkModule,
     SubscriptionModule,
     TicketModule,
+    CallLogModule,
     BaseModule,
   ],
   providers: [

@@ -43,6 +43,7 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'صفحات لندینگ', key: 'landing-pages' },
    { name: 'املاک', key: 'properties'},
   { name: 'اشتراک کاربران', key: 'subscriptions'},
+  { name: 'سابقهخ کلیک تماس', key: 'call-logs'},
  ];
 
   return data;

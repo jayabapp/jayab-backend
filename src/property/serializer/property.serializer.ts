@@ -216,7 +216,6 @@ export class PropertySerializer {
     if (!data) return;
     let single: PropertyJsonResType;
 
-    console.dir(data);
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
     const todayInPropertyCalendar = data.calendar?.find(
       (e) => moment(e.date).diff(startOfToday(), 'm') === 0,
