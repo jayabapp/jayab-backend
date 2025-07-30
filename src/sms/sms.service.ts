@@ -166,8 +166,8 @@ export class SmsService {
    * @param ownerMobile
    * @returns
    */
-  async sendCallLogToOwner(mobile: string, ownerMobile: string): Promise<void> {
-    // if (!this.isProduction) return;
+  async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -175,7 +175,7 @@ export class SmsService {
       const sendUrl = this.configService.get('sms.sendUrl');
 
       const body = {
-        parameters: [{ name: 'MOBILE', value: ownerMobile }],
+        parameters: [{ name: 'MOBILE', value: targetUserMobile }],
         mobile: mobile,
         templateId: templateId,
       };

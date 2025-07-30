@@ -315,7 +315,15 @@ export class PropertyUserService {
       await this.db.callLog.create({
         data: { property_id: propertyId, user_id: userId, attempts: 1 },
       });
-      this.smsService.sendCallLogToOwner(user.mobile_number, ownerMobile);
+      const maskedUserMobile = user.mobile_number
+        .split('')
+        .map((char, i) => {
+          if (i > 6 && i <= 8) return 'x';
+          return char;
+        })
+        .join('');
+
+      this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile);
     }
   }
 
