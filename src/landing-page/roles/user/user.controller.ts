@@ -28,8 +28,6 @@ export class LandingPageUserController {
   @CacheTTL(FIVE_MINUTES_TTL)
   @Get()
   async findAll(@Query() dto: FindAllLandingPageUserDto): Promise<SuccessResponseArgs> {
-    console.log('<><><><><><');
-
     const result = await this.landingPageUserService.findAll(dto);
 
     return { result };

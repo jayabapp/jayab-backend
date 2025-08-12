@@ -87,17 +87,22 @@ export class LandingPageUserService {
       });
     }
 
-    return {
+    let result: Record<string, any> = {
       query: {
-        has_pool: landing.has_pool ? 1 : 2, //دو میدیم که توی فیلتر ملک ها اشتباهی بدون استخرها رو نیاره
-        has_discount: landing.min_discount_percentage > 0 ? 1 : 0,
-        is_premium: landing.is_premium ? 1 : 0,
-        cities: cities.map((e) => e.id),
         ...options,
       },
       content: landing.main_content,
       related_landings: relatedLandings,
-      cities,
     };
+
+    if (landing.has_pool) result['query'] = { ...result['query'], has_pool: 1 };
+    if (landing.min_discount_percentage > 0) result['query'] = { ...result['query'], has_discount: 1 };
+    if (landing.is_premium) result['query'] = { ...result['query'], is_premium: 1 };
+    // if (landing.province_id) result['query'] = { ...result['query'], province_id: landing.province_id };
+    // else
+    if (!isEmpty(cities)) result['query'] = { ...result['query'], cities: cities.map((e) => e.id) };
+
+    console.dir(result);
+    return result;
   }
 }

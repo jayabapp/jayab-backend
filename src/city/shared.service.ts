@@ -30,8 +30,9 @@ export class CitySharedService {
         slug: true,
         image: true,
         child: {
+          where: { deleted_at: null },
           select: { id: true, title: true },
-          take: +dto.depth || 5,
+          // take: +dto.depth || 5,
         },
         // _count: {
         //   select: {
