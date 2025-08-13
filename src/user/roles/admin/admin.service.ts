@@ -26,6 +26,7 @@ import { UserStatusList } from 'src/user/common/user-status.type';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
 import moment from 'moment-jalaali';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
 
 @Injectable()
 export class UserAdminService {
@@ -121,17 +122,18 @@ export class UserAdminService {
    * @param dto
    * @returns
    */
-  async update(id: number, dto: UpdateUserAdminDto): Promise<User> {
+  async update(user: User, dto: UpdateUserAdminDto): Promise<User> {
     if (dto.mobile_number) {
       const isDuplicated = await this.db.user.findUnique({
         where: { mobile_number: dto.mobile_number },
       });
-      if (isDuplicated && isDuplicated.id !== id) throw new BadRequestException('DUPLICATE_MOBILE_NUMBER');
+      if (isDuplicated && isDuplicated.id !== user.id)
+        throw new BadRequestException('DUPLICATE_MOBILE_NUMBER');
     }
 
     const item = await this.db.user.update({
-      where: { id },
-      data: dto,
+      where: { id: user.id },
+      data: { ...dto, jwt_level: { increment: dto.is_banned ? MAX_ACTIVE_DEVICES : 0 } },
     });
 
     return item;

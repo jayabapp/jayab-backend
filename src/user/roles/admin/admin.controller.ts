@@ -119,8 +119,8 @@ export class UserAdminController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserAdminDto,
   ): Promise<SuccessResponseArgs> {
-    await this.userAdminService.findById(id);
-    const result = await this.userAdminService.update(id, dto);
+    const user = await this.userAdminService.findById(id);
+    const result = await this.userAdminService.update(user, dto);
 
     return { result, messageCode: 'UPDATE' };
   }

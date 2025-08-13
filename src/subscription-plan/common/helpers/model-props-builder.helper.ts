@@ -34,7 +34,7 @@ export const showPropsBuilder = (item: SubscriptionPlan): Array<ShowProps> => {
       value: SubscriptionPlanGroupList.find((e) => e.id == item.group),
       type: 'chip',
     },
-    { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean', isEditable: false },
+    { state: 'is_active', title: 'فعال', value: item.is_active, type: 'boolean' },
     { type: 'break' },
     { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
     { state: 'sort', title: 'ترتیب', value: item.sort, type: 'number' },
@@ -101,7 +101,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       state: 'is_active',
       type: 'switch',
       title: 'فعال',
-      options: { isMandatory: true, disabled: true },
+      options: { isMandatory: true },
     },
     { type: 'break' },
     {

@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
@@ -20,8 +21,8 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
 
   public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
     const user = await this.db.user.findFirst({
-      // where: { id: payload.id, jwt_level: payload.jwtLevel },
-      where: { id: payload.id },
+      where: { id: payload.id, jwt_level: { lt: payload.jwtLevel + MAX_ACTIVE_DEVICES } },
+      // where: { id: payload.id },
       select: {
         id: true,
         mobile_number: true,
