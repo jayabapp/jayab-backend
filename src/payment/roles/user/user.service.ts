@@ -124,8 +124,11 @@ export class PaymentUserService {
 
       //اگر فقط نردبان باشه در زمان سیو کردن اشتراک تعداد روز رو صفر میزاریم که اینجا تاثیری نداشته باشه
       if (lastSubExpiredAt && now.isAfter(lastSubExpiredAt))
-        newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
-      else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
+        newExpDate = now.add(subscription.duration + 1, 'days').toDate();
+      else
+        newExpDate = moment(lastSubExpiredAt)
+          .add(subscription.duration + 1, 'days')
+          .toDate();
 
       let propertyUpdateData: Prisma.PropertyUpdateInput = { subscription_expired_at: newExpDate };
       if (subscription.is_promote) propertyUpdateData['sort_order'] = Date.now();
@@ -178,8 +181,11 @@ export class PaymentUserService {
       let newExpDate = null;
 
       if (now.isAfter(lastSubExpiredAt) || advisor.is_special !== subscription.is_special_advisor)
-        newExpDate = endOfDate(now.add(subscription.duration, 'days').toDate());
-      else newExpDate = endOfDate(moment(lastSubExpiredAt).add(subscription.duration, 'days').toDate());
+        newExpDate = now.add(subscription.duration + 1, 'days').toDate();
+      else
+        newExpDate = moment(lastSubExpiredAt)
+          .add(subscription.duration + 1, 'days')
+          .toDate();
 
       /**
        * وضعیت کاربری که ویژه نیست و اشتراک ویژه میخرد باید به در انتظار تایید تغییر کند
