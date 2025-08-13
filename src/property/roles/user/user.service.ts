@@ -90,11 +90,14 @@ export class PropertyUserService {
     /* ------------------------------------ q ----------------------------------- */
     if (q) query = { ...query, OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[] };
 
-    /* -------------------------------- province -------------------------------- */
-    if (province_id) query = { ...query, province_id };
-
-    /* --------------------------------- cities --------------------------------- */
-    if (!isEmpty(cities)) query = { ...query, city_id: { in: parseQueryNumberArray(cities) } };
+    /* -------------------------------- province and city -------------------------------- */
+    if (province_id && !isEmpty(cities))
+      query = {
+        ...query,
+        OR: [{ city_id: { in: parseQueryNumberArray(cities) } }, { province_id: province_id }],
+      };
+    else if (province_id) query = { ...query, province_id };
+    else if (!isEmpty(cities)) query = { ...query, city_id: { in: parseQueryNumberArray(cities) } };
 
     /* --------------------------------- regions -------------------------------- */
     if (!isEmpty(regions)) query = { ...query, region_id: { in: regions } };
