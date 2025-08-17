@@ -15,7 +15,7 @@ import {
 import { Type } from 'class-transformer';
 
 export class UpdateProfileImageUserDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_Min(1)
   @_IsInt()
   @Type(() => Number)

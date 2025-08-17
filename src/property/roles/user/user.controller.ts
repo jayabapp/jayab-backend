@@ -41,7 +41,7 @@ export class PropertyUserController {
     private readonly propertyOwnerService: PropertyOwnerService,
   ) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get()
   async findAll(
@@ -58,7 +58,7 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One By Slug', description: '' })
+  @ApiOperation({ summary: 'Find One By Slug', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertySlug')
   async findOne(
@@ -74,7 +74,7 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One Calendar' })
+  @ApiOperation({ summary: 'Find One Calendar' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/month-calendar')
   async findOneCalendar(
@@ -90,7 +90,7 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update View', description: '' })
+  @ApiOperation({ summary: 'Update View', description: '' })
   @Put(':propertyId/view')
   async updateView(
     @Param('propertyId') propertyId: number,
@@ -102,7 +102,7 @@ export class PropertyUserController {
 
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
-  @ApiOperation({ operationId: 'Find Contact Info', description: '' })
+  @ApiOperation({ summary: 'Find Contact Info', description: '' })
   @Get(':propertySlug/contact-info')
   async findContactInfo(
     @Req() req: RequestType,
@@ -120,7 +120,7 @@ export class PropertyUserController {
     return { result };
   }
 
-  // @ApiOperation({ operationId: 'Duplicate', description: '' })
+  // @ApiOperation({ summary: 'Duplicate', description: '' })
   // @Post(':propertyId/duplicate')
   // async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
   //   const result = await this.propertyUserService.duplicate(propertyId);
@@ -130,7 +130,7 @@ export class PropertyUserController {
   /* -------------------------------------------------------------------------- */
   /*                                    SHARE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Generate Advisor Share Link', description: '' })
+  @ApiOperation({ summary: 'Generate Advisor Share Link', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share/link')
   async generateAdvisorShare(
@@ -150,7 +150,7 @@ export class PropertyUserController {
    * @param dto
    * @returns
    */
-  @ApiOperation({ operationId: 'Retrive Share Link Data', description: '' })
+  @ApiOperation({ summary: 'Retrive Share Link Data', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share')
   async findAdvisorShareData(@Query() dto: FindAdvisorShareDto): Promise<SuccessResponseArgs> {
@@ -158,7 +158,7 @@ export class PropertyUserController {
     return { result };
   }
   /* ---------------------------- SEARCH SUGGESTION --------------------------- */
-  @ApiOperation({ operationId: 'Search Suggestion', description: '' })
+  @ApiOperation({ summary: 'Search Suggestion', description: '' })
   @Get('search/suggestions')
   async searchSuggestions(@Query() dto: PropertySearchSuggestuibUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestions(dto);

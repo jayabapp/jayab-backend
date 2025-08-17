@@ -10,19 +10,19 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreatePropertyAuthorizeAdminDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   property_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   nc_image_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()

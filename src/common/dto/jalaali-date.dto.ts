@@ -3,7 +3,7 @@ import { _IsInt, _Min, _Max, _IsNotEmpty } from '../pipes/validator-translate.pi
 import { Type } from 'class-transformer';
 
 export class JalaaliDateDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @Type(() => Number)
   @_IsInt()
   @_Min(1)
@@ -11,7 +11,7 @@ export class JalaaliDateDto {
   @_IsNotEmpty()
   day: number;
 
-  @ApiProperty({ required: true, default: 12 })
+  @ApiProperty({ required: true, example: 12 })
   @Type(() => Number)
   @_IsInt()
   @_Min(1)
@@ -19,7 +19,7 @@ export class JalaaliDateDto {
   @_IsNotEmpty()
   month: number;
 
-  @ApiProperty({ required: true, default: 1402 })
+  @ApiProperty({ required: true, example: 1402 })
   @Type(() => Number)
   @_IsInt()
   @_Min(1300)

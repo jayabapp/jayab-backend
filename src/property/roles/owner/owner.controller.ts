@@ -60,7 +60,7 @@ export class PropertyOwnerController {
     private readonly notificationService: NotificationSharedService,
   ) {}
 
-  @ApiOperation({ operationId: 'Get last init prop', description: '' })
+  @ApiOperation({ summary: 'Get last init prop', description: '' })
   @Get('init')
   async getLastInit(
     @Req() req: RequestType,
@@ -71,7 +71,7 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId')
   async create(
@@ -84,7 +84,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: location' })
+  @ApiOperation({ summary: 'Update property: location' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/location')
   async updateLocation(
@@ -96,7 +96,7 @@ export class PropertyOwnerController {
   }
 
   /* ---------------------------------- MEDIA --------------------------------- */
-  @ApiOperation({ operationId: 'Update property: media' })
+  @ApiOperation({ summary: 'Update property: media' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/media')
   async updateMedia(
@@ -117,7 +117,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: environment' })
+  @ApiOperation({ summary: 'Update property: environment' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/environment')
   async updateEnvironment(
@@ -128,7 +128,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: bedroom' })
+  @ApiOperation({ summary: 'Update property: bedroom' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/bedroom')
   async updateBedroom(
@@ -139,7 +139,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: facility' })
+  @ApiOperation({ summary: 'Update property: facility' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/facility')
   updateFacility(
@@ -150,7 +150,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: price' })
+  @ApiOperation({ summary: 'Update property: price' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/price')
   updatePrices(
@@ -161,7 +161,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: assistant' })
+  @ApiOperation({ summary: 'Update property: assistant' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/assistants')
   async updateAssistant(
@@ -174,7 +174,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update property: terms' })
+  @ApiOperation({ summary: 'Update property: terms' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/terms')
   async updateTerms(
@@ -202,7 +202,7 @@ export class PropertyOwnerController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Update Commission' })
+  @ApiOperation({ summary: 'Update Commission' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/commission')
   async updateCommission(
@@ -215,7 +215,7 @@ export class PropertyOwnerController {
     return { result: dto.advisor_commission, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Pay Subscription' })
+  @ApiOperation({ summary: 'Pay Subscription' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId/pay-subscription')
   async paySubscription(
@@ -234,7 +234,7 @@ export class PropertyOwnerController {
   /* -------------------------------------------------------------------------- */
   /*                                    FIND                                    */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find All' })
+  @ApiOperation({ summary: 'Find All' })
   @Get()
   async findAll(@Req() req: RequestType) {
     const user = req.user as PartialUser;
@@ -243,7 +243,7 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One' })
+  @ApiOperation({ summary: 'Find One' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Get(':propertyId')
   async findOne(@Param('propertyId', ParseIntPipe) propertyId: number, @Req() req: RequestType) {
@@ -251,7 +251,7 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One Calendar' })
+  @ApiOperation({ summary: 'Find One Calendar' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Get(':propertyId/month-calendar')
   async findOneCalendar(
@@ -267,7 +267,7 @@ export class PropertyOwnerController {
   }
 
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @ApiOperation({ operationId: 'Find Statistics', description: '' })
+  @ApiOperation({ summary: 'Find Statistics', description: '' })
   @Get(':propertyId/statistics')
   async findStatistics(
     @Req() req: RequestType,
@@ -281,7 +281,7 @@ export class PropertyOwnerController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Delete' })
+  @ApiOperation({ summary: 'Delete' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Delete(':propertyId')
   async delete(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {

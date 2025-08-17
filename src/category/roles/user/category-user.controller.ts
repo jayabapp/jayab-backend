@@ -25,7 +25,7 @@ export class CategoryUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(ONE_MINUTE_TTL)
-  @ApiOperation({ operationId: 'Filter' })
+  @ApiOperation({ summary: 'Filter' })
   @Get('/filter')
   async filter(@Query() dto: FilterCategoryUserDto): Promise<SuccessResponseArgs> {
     const result = await this.categoryUserService.filter(dto);
@@ -33,7 +33,7 @@ export class CategoryUserController {
   }
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(ONE_MINUTE_TTL)
-  @ApiOperation({ operationId: 'Find all parents' })
+  @ApiOperation({ summary: 'Find all parents' })
   @Get('/parents')
   async findParents(): Promise<SuccessResponseArgs> {
     const result = await this.categoryUserService.findParents();
@@ -42,7 +42,7 @@ export class CategoryUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(ONE_MINUTE_TTL)
-  @ApiOperation({ operationId: 'Find Childs' })
+  @ApiOperation({ summary: 'Find Childs' })
   @Get()
   async findAll(@Query() findAllCategoryUserDto: FindAllCategoryUserDto): Promise<SuccessResponseArgs> {
     const category = await this.categoryUserService.findById(findAllCategoryUserDto.parent_id);
@@ -57,7 +57,7 @@ export class CategoryUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(ONE_MINUTE_TTL)
-  @ApiOperation({ operationId: 'Find Cascade' })
+  @ApiOperation({ summary: 'Find Cascade' })
   @Get('cascade')
   async findAllRecursively(): Promise<SuccessResponseArgs> {
     const result = await this.categoryUserService.findAllRecursively();
@@ -65,7 +65,7 @@ export class CategoryUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find one' })
+  @ApiOperation({ summary: 'Find one' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.categoryUserService.findById(id);

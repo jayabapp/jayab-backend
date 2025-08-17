@@ -5,73 +5,64 @@ import {
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 
 export class CreateSubscriptionUserDto {
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  property_id: number
-        
+  property_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  advisor_id: number
-        
+  advisor_id: number;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @_IsNotEmpty()
-  is_promote: boolean
-        
+  is_promote: boolean;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @IsOptional()
-  is_special_advisor: boolean
-        
+  is_special_advisor: boolean;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @_IsNotEmpty()
-  title: string
-        
+  title: string;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  duration: number
-        
+  duration: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  price: number
-        
+  price: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  payment_id: number
-        
+  payment_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  status: number
-        
+  status: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  description: string
+  description: string;
 }

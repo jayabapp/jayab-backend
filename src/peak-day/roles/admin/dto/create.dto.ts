@@ -12,25 +12,25 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreatePeakDayAdminDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   day: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   month: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   year: number;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @IsOptional()
   is_nowruz: boolean;

@@ -13,7 +13,7 @@ import { FIVE_MINUTES_TTL, ONE_HOUR_TTL } from 'src/common/utils/constants/cache
 export class PropertyOptionUserController {
   constructor(private readonly propertyOptionUserService: PropertyOptionUserService) {}
 
-  @ApiOperation({ operationId: 'Find All By Group', description: '' })
+  @ApiOperation({ summary: 'Find All By Group', description: '' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
   @Get()

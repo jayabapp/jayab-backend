@@ -5,227 +5,195 @@ import {
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 
 export class CreatePropertyAdminDto {
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @_IsNotEmpty()
-  code: string
-        
+  code: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  owner_id: number
-        
+  owner_id: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  title: string
-        
+  title: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  slug: string
-        
+  slug: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  slug_hash: string
-        
+  slug_hash: string;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  land_area: number
-        
+  land_area: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  building_area: number
-        
+  building_area: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  floors: number
-        
+  floors: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  unit_per_floor: number
-        
+  unit_per_floor: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  floor: number
-        
+  floor: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  construction_year: number
-        
+  construction_year: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  region_id: number
-        
+  region_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  province_id: number
-        
+  province_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  city_id: number
-        
+  city_id: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  address: string
-        
+  address: string;
 
-  @ApiProperty({ required: false, default: 40.456 })
+  @ApiProperty({ required: false, example: 40.456 })
   @_IsNumber()
   @Type(() => Number)
   @IsOptional()
-  lat: number
-        
+  lat: number;
 
-  @ApiProperty({ required: false, default: 40.456 })
+  @ApiProperty({ required: false, example: 40.456 })
   @_IsNumber()
   @Type(() => Number)
   @IsOptional()
-  lng: number
-        
+  lng: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  feature_image_id: number
-        
+  feature_image_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  video_id: number
-        
+  video_id: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @IsOptional()
-  is_chat_enabled: boolean
-        
+  is_chat_enabled: boolean;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @IsOptional()
-  is_location_visible: boolean
-        
+  is_location_visible: boolean;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @IsOptional()
-  has_pool: boolean
-        
+  has_pool: boolean;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  std_capacity: number
-        
+  std_capacity: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  max_capacity: number
-        
+  max_capacity: number;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
-  canceling_type: string
-        
+  canceling_type: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  advisor_commission: number
-        
+  advisor_commission: number;
 
-  @ApiProperty({ required: false, default: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  check_in_hour: number
-        
-
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  check_out_hour: number
-        
+  check_in_hour: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
+  @_IsInt()
+  @Type(() => Number)
+  @IsOptional()
+  check_out_hour: number;
+
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  contact_type: number
-        
+  contact_type: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  status: number
-        
+  status: number;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @_IsNotEmpty()
-  is_authorized: boolean
-        
+  is_authorized: boolean;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsBoolean()
   @_IsNotEmpty()
-  has_blue_tick: boolean
-        
+  has_blue_tick: boolean;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  options_array: number
+  options_array: number;
 }

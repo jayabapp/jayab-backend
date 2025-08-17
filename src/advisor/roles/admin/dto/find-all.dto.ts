@@ -6,28 +6,28 @@ import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import { _IsBoolean, _IsEnum, _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllAdvisorAdminDto extends PaginationDto {
-  @ApiProperty({ required: false, default: '123456' })
+  @ApiProperty({ required: false, example: '123456' })
   @_IsString()
   @IsOptional()
   referral_code: string;
 
-  @ApiProperty({ required: false, default: 'موبایل' })
+  @ApiProperty({ required: false, example: 'موبایل' })
   @_IsString()
   @IsOptional()
   mobile_number: string;
 
-  @ApiProperty({ required: false, default: 'رضا' })
+  @ApiProperty({ required: false, example: 'رضا' })
   @_IsString()
   @IsOptional()
   full_name: string;
 
-  @ApiProperty({ required: false, default: AdvisorStatus.APPROVED })
+  @ApiProperty({ required: false, example: AdvisorStatus.APPROVED })
   @_IsEnum(AdvisorStatus)
   @Type(() => Number)
   @IsOptional()
   status: AdvisorStatus;
 
-  @ApiProperty({ required: false, default: 'مشاور ویژه' })
+  @ApiProperty({ required: false, example: 'مشاور ویژه' })
   @_IsBoolean()
   @Transform(({ value }) => (value && value == 'true' ? true : false))
   @IsOptional()

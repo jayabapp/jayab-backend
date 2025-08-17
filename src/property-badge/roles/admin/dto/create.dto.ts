@@ -10,7 +10,7 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreatePropertyBadgeAdminDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()

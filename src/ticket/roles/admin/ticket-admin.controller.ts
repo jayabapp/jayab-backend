@@ -37,7 +37,7 @@ export class TicketAdminController {
   ) {}
 
   /* -------------------------------- FIND ALL -------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllTicketAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -48,7 +48,7 @@ export class TicketAdminController {
     return { result };
   }
   /* ------------------------------- MODEL PROPS ------------------------------ */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -57,7 +57,7 @@ export class TicketAdminController {
   }
 
   // show
-  @ApiOperation({ operationId: 'Find one', description: '' })
+  @ApiOperation({ summary: 'Find one', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) ticketId: number): Promise<SuccessResponseArgs> {
     const result = await this.ticketAdminService.findOne(ticketId);
@@ -66,7 +66,7 @@ export class TicketAdminController {
   }
 
   // Reply
-  @ApiOperation({ operationId: 'Reply', description: '' })
+  @ApiOperation({ summary: 'Reply', description: '' })
   @Patch(':id')
   async replyTicket(
     @Param('id', ParseIntPipe) ticketId: number,
@@ -89,7 +89,7 @@ export class TicketAdminController {
   }
 
   // Close
-  @ApiOperation({ operationId: 'Close ticket', description: '' })
+  @ApiOperation({ summary: 'Close ticket', description: '' })
   @Put(':id')
   async closeTicket(@Param('id', ParseIntPipe) ticketId: number): Promise<SuccessResponseArgs> {
     await this.ticketAdminService.closeTicket(ticketId);
@@ -98,7 +98,7 @@ export class TicketAdminController {
   }
 
   // Delete
-  @ApiOperation({ operationId: 'Delete', description: '' })
+  @ApiOperation({ summary: 'Delete', description: '' })
   @Delete(':id')
   async deleteTicket(@Param('id', ParseIntPipe) ticketId: number): Promise<SuccessResponseArgs> {
     await this.ticketAdminService.deleteTicket(ticketId);

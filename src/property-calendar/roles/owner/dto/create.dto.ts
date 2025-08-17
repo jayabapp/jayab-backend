@@ -28,7 +28,7 @@ export class UpdatePropertyReservedStatusOwnerDto extends JalaaliDateDto {}
 
 //also is in update property steps
 export class UpdatePropertyAdvisorCommissionOwnerDto extends JalaaliDateDto {
-  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', example: 5 })
   @_IsInt()
   @_Max(50)
   @_Min(0)
@@ -37,13 +37,13 @@ export class UpdatePropertyAdvisorCommissionOwnerDto extends JalaaliDateDto {
 }
 
 export class UpdatePropertyDayPriceOwnerDto extends JalaaliDateDto {
-  @ApiProperty({ required: true, title: 'قیمت', default: 1500000 })
+  @ApiProperty({ required: true, title: 'قیمت', example: 1500000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice)
   @_IsNotEmpty()
   price: number;
 
-  @ApiProperty({ required: false, title: 'قیمت با تخفیف', default: 1000000 })
+  @ApiProperty({ required: false, title: 'قیمت با تخفیف', example: 1000000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @IsOptional()

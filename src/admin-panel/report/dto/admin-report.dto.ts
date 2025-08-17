@@ -7,35 +7,35 @@ import { _IsIn, _IsInt, _IsString } from 'src/common/pipes/validator-translate.p
 import { IsJalaaliDate, DateType } from 'src/common/validators/is-date.validator';
 
 export class AdminReportDto {
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   category_id: number;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   product_id: number;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   attribute_id: number;
 
-  @ApiProperty({ required: false, default: { year: 1402, month: 10, day: 10 } })
+  @ApiProperty({ required: false, example: { year: 1402, month: 10, day: 10 } })
   @Validate(IsJalaaliDate)
   @IsOptional()
   from_date: DateType;
 
-  @ApiProperty({ required: false, default: { year: 1402, month: 12, day: 10 } })
+  @ApiProperty({ required: false, example: { year: 1402, month: 12, day: 10 } })
   @Validate(IsJalaaliDate)
   @IsOptional()
   to_date: DateType;
 
-  @ApiProperty({ required: false, default: null })
+  @ApiProperty({ required: false, example: null })
   @_IsInt()
   @IsOptional()
   business_id: number;

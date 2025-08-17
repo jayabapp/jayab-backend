@@ -13,7 +13,7 @@ import { THREE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
-  @ApiOperation({ operationId: 'Find all' })
+  @ApiOperation({ summary: 'Find all' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(THREE_MINUTES_TTL)
   @Get()
@@ -22,7 +22,7 @@ export class DashboardController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find Dashboard for business' })
+  @ApiOperation({ summary: 'Find Dashboard for business' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(THREE_MINUTES_TTL)
   @Get('business')

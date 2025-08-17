@@ -4,7 +4,7 @@ import { IsOptional } from 'class-validator';
 import { _IsBoolean, _IsInt, _IsNotEmpty } from 'src/common/pipes/validator-translate.pipe';
 
 export class FilterCategoryUserDto {
-  @ApiProperty({ required: false, default: false })
+  @ApiProperty({ required: false, example: false })
   @_IsBoolean()
   @Transform(({ value }) => {
     if (value === 'true') return true;

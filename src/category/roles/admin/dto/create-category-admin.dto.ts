@@ -12,14 +12,14 @@ import {
 import { IsExist } from 'src/common/validators/is-exists.validator';
 
 export class CreateCategoryAdminDto {
-  @ApiProperty({ required: true, default: 'عنوان تست' })
+  @ApiProperty({ required: true, example: 'عنوان تست' })
   @_MinLength(1)
   @_MaxLength(50)
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: false, title: 'عکس', default: 1 })
+  @ApiProperty({ required: false, title: 'عکس', example: 1 })
   @Transform(({ value }) => {
     if (!value) return null;
     return value;
@@ -29,27 +29,27 @@ export class CreateCategoryAdminDto {
   @IsOptional()
   image_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @IsOptional()
   parent_id: number;
 
-  @ApiProperty({ required: true, default: true })
+  @ApiProperty({ required: true, example: true })
   @_IsBoolean()
   @_IsNotEmpty()
   is_active: boolean;
 
-  @ApiProperty({ required: false, default: false })
+  @ApiProperty({ required: false, example: false })
   @_IsBoolean()
   @_IsNotEmpty()
   is_feature_category: boolean;
 
-  @ApiProperty({ required: false, default: null })
+  @ApiProperty({ required: false, example: null })
   @_IsInt()
   @IsOptional()
   sort_order: number;
 
-  @ApiProperty({ required: false, default: null })
+  @ApiProperty({ required: false, example: null })
   @_IsString()
   @IsOptional()
   hex_color: string;

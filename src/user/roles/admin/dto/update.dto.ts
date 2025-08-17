@@ -11,12 +11,12 @@ import {
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
 export class UpdateUserAdminDto {
-  @ApiProperty({ required: true, default: 'کاربر تست' })
+  @ApiProperty({ required: true, example: 'کاربر تست' })
   @_IsBoolean()
   @_IsNotEmpty()
   is_banned: boolean;
 
-  @ApiProperty({ required: true, default: '' })
+  @ApiProperty({ required: true, example: '' })
   @Validate(IsMobileNumber)
   @_IsNotEmpty()
   mobile_number: string;

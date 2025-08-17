@@ -5,13 +5,13 @@ import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
 import { _IsDate } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllSubscriptionUserDto extends PaginationCursorDto {
-  @ApiProperty({ required: false, default: new Date() })
+  @ApiProperty({ required: false, example: new Date() })
   @_IsDate()
   @Type(() => Date)
   @IsOptional()
   from: Date;
 
-  @ApiProperty({ required: false, default: new Date() })
+  @ApiProperty({ required: false, example: new Date() })
   @_IsDate()
   @Type(() => Date)
   @IsOptional()

@@ -32,28 +32,28 @@ export class CategoryAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findModelProps();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all parents', summary: 'دریافت همه والد ها' })
+  @ApiOperation({ summary: 'Find all parents' })
   @Get('parents')
   async findParents(): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findParents();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Cascade', summary: 'دریافت همه با فرزندان' })
+  @ApiOperation({ summary: 'Cascade' })
   @Get('cascade')
   async findAllRecursively(): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findAllCascade();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Create', summary: 'ساخت کتگوری و ساب کتگوری در صورت وجود شناسه پرنت' })
+  @ApiOperation({ summary: 'Create' })
   @Post()
   async create(@Body() createCategoryAdminDto: CreateCategoryAdminDto): Promise<SuccessResponseArgs> {
     /**
@@ -70,7 +70,7 @@ export class CategoryAdminController {
     return { result, messageCode: 'CREATE' };
   }
 
-  // @ApiOperation({ operationId: 'Find all categories', summary: 'دریافت همه دسته بندی ها' })
+  // @ApiOperation({ summary: 'Find all categories', summary: 'دریافت همه دسته بندی ها' })
   // @Get()
   // async findAll(): Promise<SuccessResponseArgs> {
 
@@ -78,28 +78,28 @@ export class CategoryAdminController {
   //   return { result };
   // }
 
-  @ApiOperation({ operationId: 'Find All', description: 'دریافت همه دسته بندی ها' })
+  @ApiOperation({ summary: 'Find All', description: 'دریافت همه دسته بندی ها' })
   @Get()
   async findAll(@Query() dto: FindAllCategoryAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findAll(dto);
     return { result: result };
   }
 
-  @ApiOperation({ operationId: 'Find All Parents', description: 'دریافت همه دسته بندی های والد' })
+  @ApiOperation({ summary: 'Find All Parents', description: 'دریافت همه دسته بندی های والد' })
   @Get('parents-with-query')
   async findAllParents(@Query() dto: FindAllCategoryAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findParents([], dto);
 
     return { result: { data: result } };
   }
-  @ApiOperation({ operationId: 'Find one category', summary: 'دریافت دسته بندی' })
+  @ApiOperation({ summary: 'Find one category' })
   @Get(':categoryId')
   async findOne(@Param('categoryId', ParseIntPipe) categoryId: number): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findOne(categoryId);
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all children by parent id', summary: 'دریافت ساب کتگوری ها' })
+  @ApiOperation({ summary: 'Find all children by parent id' })
   @Get('parents/:parentId')
   async findChildren(@Param('parentId') parentId: number | null): Promise<SuccessResponseArgs> {
     /**
@@ -109,14 +109,14 @@ export class CategoryAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find Last Level Categories' })
+  @ApiOperation({ summary: 'Find Last Level Categories' })
   @Get('last-levels')
   async findLastLevels(@Param('parentId') parentId: number | null): Promise<SuccessResponseArgs> {
     const result = await this.categoryAdminService.findLastLevels();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update', summary: 'ویرایش کتگوری' })
+  @ApiOperation({ summary: 'Update' })
   @Put(':categoryId')
   async update(
     @Param('categoryId', ParseIntPipe) categoryId: number,
@@ -141,7 +141,7 @@ export class CategoryAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Delete', summary: 'حذف کتگوری' })
+  @ApiOperation({ summary: 'Delete' })
   @Delete(':categoryId')
   async remove(@Param('categoryId', ParseIntPipe) categoryId: number): Promise<SuccessResponseArgs> {
     /**

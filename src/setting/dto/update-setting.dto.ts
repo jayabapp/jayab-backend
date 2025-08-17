@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { _IsInt, _IsNotEmpty, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
 export class UpdateSettingDto {
-  @ApiProperty({ default: 'مقدار', required: true })
+  @ApiProperty({ example: 'مقدار', required: true })
   @_IsString()
   @_IsNotEmpty()
   value: string;

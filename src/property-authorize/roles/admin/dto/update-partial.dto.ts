@@ -10,12 +10,12 @@ import { _IsEnum, _IsNotEmpty, _Length, _IsString } from 'src/common/pipes/valid
 import { Transform } from 'class-transformer';
 
 export class UpdatePartialPropertyAuthorizeAdminDto {
-  @ApiProperty({ required: true, default: PropertyAuthorizeStatuses.PENDING })
+  @ApiProperty({ required: true, example: PropertyAuthorizeStatuses.PENDING })
   @_IsEnum(PropertyAuthorizeStatuses)
   @_IsNotEmpty()
   status: number;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @Transform(({ value }) => value.trim())
   @_Length(0, 1024)
   @_IsString()

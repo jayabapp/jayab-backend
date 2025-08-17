@@ -15,7 +15,7 @@ import { FindAllFavoriteUserDto } from './dto/find-all.dto';
 export class FavoriteUserController {
   constructor(private readonly favoriteUserService: FavoriteUserService) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async createOrDelete(
     @Req() request: RequestType,
@@ -26,7 +26,7 @@ export class FavoriteUserController {
     return { result: { favorites: result } };
   }
 
-  // @ApiOperation({ operationId: 'Find All', description: '' })
+  // @ApiOperation({ summary: 'Find All', description: '' })
   // @Get()
   // async findAll(
   //   @Req() request: RequestType,
@@ -38,7 +38,7 @@ export class FavoriteUserController {
   //   return { result };
   // }
 
-  @ApiOperation({ operationId: 'Find All Employee ids', description: '' })
+  @ApiOperation({ summary: 'Find All Employee ids', description: '' })
   @Get('property-ids')
   async findAllIds(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;

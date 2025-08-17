@@ -24,7 +24,7 @@ export class TicketUserController {
     private readonly notificationService: NotificationSharedService,
   ) {}
 
-  @ApiOperation({ operationId: 'Create' })
+  @ApiOperation({ summary: 'Create' })
   @Post()
   async create(@Req() request: RequestType, @Body() dto: CreateTicketDto): Promise<SuccessResponseArgs> {
     const userId = request.user.id;
@@ -44,7 +44,7 @@ export class TicketUserController {
     return { messageCode: 'TICKET_SUBMITED_SUCCESSFULLY' };
   }
 
-  @ApiOperation({ operationId: 'Find all' })
+  @ApiOperation({ summary: 'Find all' })
   @Get()
   async findAll(
     @Req() request: RequestType,
@@ -56,7 +56,7 @@ export class TicketUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find one', description: '' })
+  @ApiOperation({ summary: 'Find one', description: '' })
   @Get(':id')
   async findOne(
     @Req() request: RequestType,
@@ -68,7 +68,7 @@ export class TicketUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Reply', description: '' })
+  @ApiOperation({ summary: 'Reply', description: '' })
   @Post(':id')
   async replyTicket(
     @Req() request: RequestType,

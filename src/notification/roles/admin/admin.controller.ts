@@ -37,7 +37,7 @@ export class NotificationAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    SEND                                    */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req, @Query() dto: { type: NotificationType }): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -45,7 +45,7 @@ export class NotificationAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateNotificationAdminDto): Promise<SuccessResponseArgs> {
     if (dto.type == NotificationType.GROUP) await this.sendNotificationAdminService.sendToGroup(dto);
@@ -54,7 +54,7 @@ export class NotificationAdminController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find All Sent', description: '' })
+  @ApiOperation({ summary: 'Find All Sent', description: '' })
   @Get('sent')
   async findAllSent(@Query() dto: FindAllSentNotificationAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -65,7 +65,7 @@ export class NotificationAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Delete', description: '' })
+  @ApiOperation({ summary: 'Delete', description: '' })
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     await this.sendNotificationAdminService.findById(id);
@@ -77,7 +77,7 @@ export class NotificationAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    PANEL                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find all' })
+  @ApiOperation({ summary: 'Find all' })
   @Get()
   async findAll(
     @Req() req: AdminRequestType,
@@ -88,7 +88,7 @@ export class NotificationAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Badge count' })
+  @ApiOperation({ summary: 'Badge count' })
   @Get('badge')
   async getBadgeCount(@Req() req: AdminRequestType): Promise<SuccessResponseArgs> {
     const admin = req.user as AdminType;
@@ -98,7 +98,7 @@ export class NotificationAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update seen all' })
+  @ApiOperation({ summary: 'Update seen all' })
   @Patch('seen-all')
   async updateSeenAll(@Req() req: AdminRequestType): Promise<SuccessResponseArgs> {
     const admin = req.user as AdminType;
@@ -106,7 +106,7 @@ export class NotificationAdminController {
     return;
   }
 
-  @ApiOperation({ operationId: 'Update seen at' })
+  @ApiOperation({ summary: 'Update seen at' })
   @Patch('seen-at/:notifId')
   async updateSeenAt(
     @Req() req: AdminRequestType,

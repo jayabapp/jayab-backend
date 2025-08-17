@@ -24,14 +24,14 @@ export class SettingAdminController {
     return { messageCode: 'COMMON4' };
   }
 
-  @ApiOperation({ operationId: 'Update robot.txt' })
+  @ApiOperation({ summary: 'Update robot.txt' })
   @Post('robot')
   async updateRobot(@Body() dto: UpdateRobotTxtDto): Promise<SuccessResponseArgs> {
     await this.settingAdminService.updateRobot(dto);
     return { messageCode: 'COMMON4' };
   }
 
-  @ApiOperation({ operationId: 'Update ' })
+  @ApiOperation({ summary: 'Update ' })
   @Post('sitemap')
   async updateSitemap(): Promise<SuccessResponseArgs> {
     const result = await this.settingAdminService.generateSitemap();

@@ -16,7 +16,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 export class PaymentGatewayUserController {
   constructor(private readonly paymentGatewayUserService: PaymentGatewayUserService) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(): Promise<SuccessResponseArgs> {
     const result = await this.paymentGatewayUserService.findAll();

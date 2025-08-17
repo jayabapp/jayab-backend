@@ -12,13 +12,13 @@ import { AdminReportDto } from './dto/admin-report.dto';
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  @ApiOperation({ operationId: 'Sale' })
+  @ApiOperation({ summary: 'Sale' })
   @Post('sale')
   async findSaleReport(@Body() dto: AdminReportDto): Promise<SuccessResponseArgs> {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Commission' })
+  @ApiOperation({ summary: 'Commission' })
   @Post('commission')
   async findCommissionReport(@Body() dto: AdminReportDto): Promise<SuccessResponseArgs> {
     // const bId = businessId ?? dto.business_id;
@@ -28,7 +28,7 @@ export class ReportController {
     return;
   }
 
-  // @ApiOperation({ operationId: 'Find all' })
+  // @ApiOperation({ summary: 'Find all' })
   // @Post()
   // async findAll(
   //   @Body() dto: AdminReportDto,

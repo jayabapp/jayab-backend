@@ -14,7 +14,7 @@ export class BannerUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(THREE_MINUTES_TTL)
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllBannerUserDto): Promise<SuccessResponseArgs> {
     const result = await this.bannerUserService.findAll(dto);

@@ -18,7 +18,7 @@ export class BookmarkUserController {
     private readonly propertyUserService: PropertyUserService,
   ) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async createOrDelete(
     @Req() request: RequestType,
@@ -29,7 +29,7 @@ export class BookmarkUserController {
     return { result: { bookmarks: result } };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -38,7 +38,7 @@ export class BookmarkUserController {
     return { result: result.data };
   }
 
-  @ApiOperation({ operationId: 'Find All Property ids', description: '' })
+  @ApiOperation({ summary: 'Find All Property ids', description: '' })
   @Get('property-ids')
   async findAllIds(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;

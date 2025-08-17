@@ -6,7 +6,7 @@ import { _IsEnum } from 'src/common/pipes/validator-translate.pipe';
 import { TicketCommonStatuses } from 'src/ticket/common/ticket-status.constant';
 
 export class FindAllTicketAdminDto extends PaginationDto {
-  @ApiProperty({ required: false, default: TicketCommonStatuses.CLOSED })
+  @ApiProperty({ required: false, example: TicketCommonStatuses.CLOSED })
   @_IsEnum(TicketCommonStatuses)
   @Type(() => Number)
   @IsOptional()

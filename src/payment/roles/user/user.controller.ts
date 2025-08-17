@@ -25,7 +25,7 @@ export class PaymentUserController {
     private readonly smsService: SmsService,
   ) {}
 
-  @ApiOperation({ operationId: 'Callback' })
+  @ApiOperation({ summary: 'Callback' })
   @Get('callback')
   async paymentCallback(
     @Res() res: Response,

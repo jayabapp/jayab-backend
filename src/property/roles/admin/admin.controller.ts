@@ -42,7 +42,7 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -56,7 +56,7 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    EXCEL                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Get Excel', description: '' })
+  @ApiOperation({ summary: 'Get Excel', description: '' })
   @Get('excel')
   async getExcel(@Query() dto: FindAllPropertyAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -73,7 +73,7 @@ export class PropertyAdminController {
     return { result: url };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllPropertyAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -84,7 +84,7 @@ export class PropertyAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.propertyAdminService.findOne(id);
@@ -95,7 +95,7 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Status', description: '' })
+  @ApiOperation({ summary: 'Update Status', description: '' })
   @Patch(':id')
   async updateStatus(
     @Req() req: AdminRequestType,
@@ -117,7 +117,7 @@ export class PropertyAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Update Images', description: '' })
+  @ApiOperation({ summary: 'Update Images', description: '' })
   @Put(':id/images')
   async updateImages(
     @Req() req: AdminRequestType,
@@ -131,7 +131,7 @@ export class PropertyAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Owner SSO', description: '' })
+  @ApiOperation({ summary: 'Owner SSO', description: '' })
   @Get(':id/sso')
   async generateSSOToken(
     @Req() req: AdminRequestType,
@@ -147,7 +147,7 @@ export class PropertyAdminController {
   /* -------------------------------------------------------------------------- */
 
   /*
-  @ApiOperation({ operationId: 'Migrate Users', description: '' })
+  @ApiOperation({ summary: 'Migrate Users', description: '' })
   @Post('migrate/users')
   async migrate(): Promise<SuccessResponseArgs> {
     await this.propertyAdminMigrationService.migrateFromV1Users();
@@ -155,7 +155,7 @@ export class PropertyAdminController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Migrate Owners', description: '' })
+  @ApiOperation({ summary: 'Migrate Owners', description: '' })
   @Post('migrate/owners')
   async migrateOwners(): Promise<SuccessResponseArgs> {
     await this.propertyAdminMigrationService.migrateFromV1Owners();
@@ -163,7 +163,7 @@ export class PropertyAdminController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Migrate Attachments', description: '' })
+  @ApiOperation({ summary: 'Migrate Attachments', description: '' })
   @Post('migrate/attachments')
   async migrateAttachments(): Promise<SuccessResponseArgs> {
     return;
@@ -172,7 +172,7 @@ export class PropertyAdminController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Convert to webp', description: '' })
+  @ApiOperation({ summary: 'Convert to webp', description: '' })
   @Post('migrate/convertToWebp')
   async convertToWebp(): Promise<SuccessResponseArgs> {
     return;
@@ -180,7 +180,7 @@ export class PropertyAdminController {
 
     return {};
   }
-  @ApiOperation({ operationId: 'Upload Attachments', description: '' })
+  @ApiOperation({ summary: 'Upload Attachments', description: '' })
   @Post('migrate/upload')
   async uploadAttachments(): Promise<SuccessResponseArgs> {
     return;
@@ -189,7 +189,7 @@ export class PropertyAdminController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Migrate options', description: '' })
+  @ApiOperation({ summary: 'Migrate options', description: '' })
   @Post('migrate/options')
   async migrateOptions(): Promise<SuccessResponseArgs> {
     // await this.propertyAdminMigrationService.migrateFromV1Options();
@@ -198,7 +198,7 @@ export class PropertyAdminController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Migrate Property', description: '' })
+  @ApiOperation({ summary: 'Migrate Property', description: '' })
   @Post('migrate/properties')
   async migrateProperties(): Promise<SuccessResponseArgs> {
     await this.propertyAdminMigrationService.migrateFromV1Properties();

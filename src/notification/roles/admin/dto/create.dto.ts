@@ -16,31 +16,31 @@ import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
 import { NotificationType } from 'src/notification/common/notification-type.type';
 
 export class CreateNotificationAdminDto {
-  @ApiProperty({ required: true, default: '' })
+  @ApiProperty({ required: true, example: '' })
   @_IsEnum(NotificationType)
   @Type(() => Number)
   @_IsNotEmpty()
   type: NotificationType;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @ValidateIf((obj) => obj.type === NotificationType.MOBILE)
   @_IsString()
   @_IsNotEmpty()
   mobile_numbers: string;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @ValidateIf((obj) => obj.type === NotificationType.GROUP)
   @_IsEnum(FirebaseTopicType)
   @_IsNotEmpty()
   topic: FirebaseTopicType;
 
-  @ApiProperty({ required: true, default: 'عنوان' })
+  @ApiProperty({ required: true, example: 'عنوان' })
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 'متن' })
+  @ApiProperty({ required: true, example: 'متن' })
   @_Length(1, 2048)
   @_IsString()
   @_IsNotEmpty()

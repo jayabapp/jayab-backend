@@ -18,7 +18,7 @@ export class SubscriptionPlanUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(
     @Req() req: RequestType,

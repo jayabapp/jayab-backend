@@ -7,42 +7,42 @@ import { IsExist } from 'src/common/validators/is-exists.validator';
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
 export class SignUpAdminDto extends AdminUserPassDto {
-  @ApiProperty({ required: true, default: '09126048740' })
+  @ApiProperty({ required: true, example: '09126048740' })
   @_IsString()
   @Validate(IsMobileNumber)
   @_IsNotEmpty()
   mobile_number: string;
 
-  @ApiProperty({ required: true, default: 'سوپر ادمین' })
+  @ApiProperty({ required: true, example: 'سوپر ادمین' })
   @_IsString()
   @_IsNotEmpty()
   full_name: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @_IsNotEmpty()
   role_id: number;
 }
 
 export class EditAdminDto extends PartialType(AdminUserPassDto) {
-  @ApiProperty({ required: true, default: '09126048740' })
+  @ApiProperty({ required: true, example: '09126048740' })
   @_IsString()
   @Validate(IsMobileNumber)
   @_IsNotEmpty()
   mobile_number: string;
 
-  @ApiProperty({ required: true, default: 'سوپر ادمین' })
+  @ApiProperty({ required: true, example: 'سوپر ادمین' })
   @_IsString()
   @_IsNotEmpty()
   full_name: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Validate(IsExist, ['accessControlRole', 'id'])
   @_IsNotEmpty()
   role_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_IsInt()
   @IsOptional()
   business_id: number;

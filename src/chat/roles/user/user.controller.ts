@@ -52,7 +52,7 @@ export class ChatUserController {
     private readonly fcmService: FirebaseService,
   ) {}
 
-  @ApiOperation({ operationId: 'Find All' })
+  @ApiOperation({ summary: 'Find All' })
   @Get()
   async findAll(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -67,7 +67,7 @@ export class ChatUserController {
    * هر درخواست یک چتروم دارد
    * چت همیشه از سمت کاربر ایجاد میشود
    */
-  @ApiOperation({ operationId: 'Create Or Find Chatroom' })
+  @ApiOperation({ summary: 'Create Or Find Chatroom' })
   @Post()
   async findOrCreate(
     @Req() request: RequestType,
@@ -87,7 +87,7 @@ export class ChatUserController {
     return { result: { chatroom_id: chatroomId } };
   }
 
-  @ApiOperation({ operationId: 'Send message' })
+  @ApiOperation({ summary: 'Send message' })
   @UseInterceptors(FindOneChatInterceptor)
   @Post(':chatroomId/send-message')
   async sendMessage(
@@ -146,7 +146,7 @@ export class ChatUserController {
     };
   }
 
-  @ApiOperation({ operationId: 'Find one' })
+  @ApiOperation({ summary: 'Find one' })
   @UseInterceptors(FindOneChatInterceptor)
   @Get(':chatroomId')
   async findOne(
@@ -185,7 +185,7 @@ export class ChatUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find messages' })
+  @ApiOperation({ summary: 'Find messages' })
   @UseInterceptors(FindOneChatInterceptor)
   @Get(':chatroomId/messages')
   async findMessages(
@@ -204,7 +204,7 @@ export class ChatUserController {
     return { result: { data: serialized } };
   }
 
-  @ApiOperation({ operationId: 'Delete message' })
+  @ApiOperation({ summary: 'Delete message' })
   @UseInterceptors(FindOneChatInterceptor)
   @Delete(':chatroomId/messages/:messageId')
   async deleteMessage(
@@ -230,7 +230,7 @@ export class ChatUserController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Update read at' })
+  @ApiOperation({ summary: 'Update read at' })
   @UseInterceptors(FindOneChatInterceptor)
   @Patch(':chatroomId/read-at')
   async updateReadAt(
@@ -244,7 +244,7 @@ export class ChatUserController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Unread messages count' })
+  @ApiOperation({ summary: 'Unread messages count' })
   @Get('unread/count')
   async unreadCount(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -253,7 +253,7 @@ export class ChatUserController {
     return { result: { unread_count: unreadCount } };
   }
 
-  @ApiOperation({ operationId: 'Black List' })
+  @ApiOperation({ summary: 'Black List' })
   @UseInterceptors(FindOneChatInterceptor)
   @Post(':chatroomId/blacklist')
   async blacklist(

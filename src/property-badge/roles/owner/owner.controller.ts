@@ -37,7 +37,7 @@ export class PropertyBadgeOwnerController {
     private readonly notificationSharedService: NotificationSharedService,
   ) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
     const result = await this.propertyBadgeOwnerService.create(propertyId);
@@ -57,7 +57,7 @@ export class PropertyBadgeOwnerController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get()
   async findOne(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
     const result = await this.propertyBadgeOwnerService.findOne(propertyId);

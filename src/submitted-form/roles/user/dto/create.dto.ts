@@ -15,47 +15,47 @@ import { FormBuilderInputType } from 'src/form-builder/common/form-builder-input
 import { IsExist } from 'src/common/validators/is-exists.validator';
 
 export class FormItemDto {
-  @ApiProperty({ required: true, default: 'عنوان' })
+  @ApiProperty({ required: true, example: 'عنوان' })
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم' })
   @_IsString()
   @_IsNotEmpty()
   value: string;
 
-  @ApiProperty({ required: false, default: null })
+  @ApiProperty({ required: false, example: null })
   @_IsArray()
   @IsOptional()
   images: number[];
 
-  @ApiProperty({ enum: FormBuilderInputType, required: true, default: FormBuilderInputType.INPUT })
+  @ApiProperty({ enum: FormBuilderInputType, required: true, example: FormBuilderInputType.INPUT })
   @_IsEnum(FormBuilderInputType)
   @_IsNotEmpty()
   type: FormBuilderInputType;
 }
 
 export class SubmitFormItemDto {
-  @ApiProperty({ type: [FormItemDto], required: true, default: FormItemDto })
+  @ApiProperty({ type: [FormItemDto], required: true, example: FormItemDto })
   @_ArrayNotEmpty()
   @Type(() => FormItemDto)
   items: FormItemDto[];
 }
 
 export class CreateSubmittedFormUserDto extends SubmitFormItemDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
   content_id: number;
 
-  @ApiProperty({ required: false, default: '09120000000' })
+  @ApiProperty({ required: false, example: '09120000000' })
   @_IsString()
   @IsOptional()
   mobile_number: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
   full_name: string;

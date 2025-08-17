@@ -5,7 +5,7 @@ import { Type } from 'class-transformer';
 import { IsExist } from 'src/common/validators/is-exists.validator';
 
 export class CreateFavoriteUserDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @Validate(IsExist, ['property', 'id'])
   @_Min(1)
   @_IsInt()

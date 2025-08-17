@@ -7,12 +7,12 @@ import { PropertyBadgeStatus } from 'src/property-badge/common/property-badge-st
 import { Transform } from 'class-transformer';
 
 export class UpdatePartialPropertyBadgeAdminDto {
-  @ApiProperty({ enum: PropertyBadgeStatus, required: true, default: PropertyBadgeStatus.APPROVED })
+  @ApiProperty({ enum: PropertyBadgeStatus, required: true, example: PropertyBadgeStatus.APPROVED })
   @_IsEnum(PropertyBadgeStatus)
   @_IsNotEmpty()
   status: PropertyBadgeStatus;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @Transform(({ value }) => value.trim())
   @_Length(0, 1024)
   @_IsString()

@@ -5,12 +5,12 @@ import { _IsEnum, _IsInt, _IsNotEmpty, _Min } from 'src/common/pipes/validator-t
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
 export class FindAllSubscriptionPlanUserDto {
-  @ApiProperty({ required: true, enum: SubscriptionPlanGroup, default: SubscriptionPlanGroup.PROPERTY })
+  @ApiProperty({ required: true, enum: SubscriptionPlanGroup, example: SubscriptionPlanGroup.PROPERTY })
   @_IsEnum(SubscriptionPlanGroup)
   @_IsNotEmpty()
   type: SubscriptionPlanGroup;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_Min(1)
   @_IsInt()
   @Type(() => Number)

@@ -34,35 +34,35 @@ export class CityAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findModelProps();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all categories', summary: 'دریافت همه دسته بندی ها' })
+  @ApiOperation({ summary: 'Find all categories' })
   @Get()
   async findAll(@Query() dto: FindAllCityAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findAll(dto, dto.page, dto.per_page);
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all parents', summary: 'دریافت همه والد ها' })
+  @ApiOperation({ summary: 'Find all parents' })
   @Get('parents')
   async findParents(): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findParents();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all cascade', summary: 'دریافت همه با فرزندان' })
+  @ApiOperation({ summary: 'Find all cascade' })
   @Get('cascade')
   async findAllRecursively(): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findAllCascade();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Create', summary: 'ساخت کتگوری و ساب کتگوری در صورت وجود شناسه پرنت' })
+  @ApiOperation({ summary: 'Create' })
   @Post()
   async create(@Body() createCityAdminDto: CreateCityAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.create(createCityAdminDto);
@@ -70,14 +70,14 @@ export class CityAdminController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find one city', summary: 'دریافت دسته بندی' })
+  @ApiOperation({ summary: 'Find one city' })
   @Get(':cityId')
   async findOne(@Param('cityId', ParseIntPipe) cityId: number): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findOne(cityId);
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find all children by parent id', summary: 'دریافت ساب کتگوری ها' })
+  @ApiOperation({ summary: 'Find all children by parent id' })
   @Get('parents/:parentId')
   async findChildren(@Param('parentId') parentId: number | null): Promise<SuccessResponseArgs> {
     /**
@@ -87,14 +87,14 @@ export class CityAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find Last Level Categories' })
+  @ApiOperation({ summary: 'Find Last Level Categories' })
   @Get('last-levels')
   async findLastLevels(@Param('parentId') parentId: number | null): Promise<SuccessResponseArgs> {
     const result = await this.cityAdminService.findLastLevels();
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update', summary: 'ویرایش کتگوری' })
+  @ApiOperation({ summary: 'Update' })
   @Put(':cityId')
   async update(
     @Param('cityId', ParseIntPipe) cityId: number,
@@ -120,7 +120,7 @@ export class CityAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Delete', summary: 'حذف کتگوری' })
+  @ApiOperation({ summary: 'Delete' })
   @Delete(':cityId')
   async remove(@Param('cityId', ParseIntPipe) cityId: number): Promise<SuccessResponseArgs> {
     /**

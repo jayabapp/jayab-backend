@@ -65,33 +65,33 @@ export class DayDto {
 }
 
 export class UpdatePropertyStepOneOwnerDto {
-  @ApiProperty({ required: true, title: 'نوع ملک', default: 7 })
+  @ApiProperty({ required: true, title: 'نوع ملک', example: 7 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PROPERTY_TYPE])
   @_IsNotEmpty()
   property_type: number;
 
-  @ApiProperty({ required: true, title: 'اسم ملک', default: 'ویلا کردان یک' })
+  @ApiProperty({ required: true, title: 'اسم ملک', example: 'ویلا کردان یک' })
   @_IsString()
   @_MaxLength(100)
   @_MinLength(2)
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, title: 'متراژ زمین', default: 1000 })
+  @ApiProperty({ required: true, title: 'متراژ زمین', example: 1000 })
   @_IsInt()
   @_Max(100000)
   @_Min(0)
   @_IsNotEmpty()
   land_area: number;
 
-  @ApiProperty({ required: true, title: 'متراژ زیربنا', default: 120 })
+  @ApiProperty({ required: true, title: 'متراژ زیربنا', example: 120 })
   @_IsInt()
   @_Max(100000)
   @_Min(10)
   @_IsNotEmpty()
   building_area: number;
 
-  @ApiProperty({ required: true, title: 'طبقات', default: 1 })
+  @ApiProperty({ required: true, title: 'طبقات', example: 1 })
   @Transform(({ value }) => {
     if (value) return value;
     else return 1;
@@ -102,7 +102,7 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   floors: number;
 
-  @ApiProperty({ required: true, title: 'طبقه', default: 0 })
+  @ApiProperty({ required: true, title: 'طبقه', example: 0 })
   @Transform(({ value }) => {
     if (value) return value;
     else return 0;
@@ -113,7 +113,7 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   floor: number;
 
-  @ApiProperty({ required: true, title: 'تعداد واحد در طبقه', default: 1 })
+  @ApiProperty({ required: true, title: 'تعداد واحد در طبقه', example: 1 })
   @Transform(({ value }) => {
     if (value) return value;
     else return 1;
@@ -124,19 +124,19 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   unit_per_floor: number;
 
-  @ApiProperty({ required: true, title: 'سال ساخت', default: 1390 })
+  @ApiProperty({ required: true, title: 'سال ساخت', example: 1390 })
   @_IsInt()
   @_Max(moment().jYear())
   @_Min(1100)
   @_IsNotEmpty()
   construction_year: number;
 
-  @ApiProperty({ required: true, title: 'جهت ساختمان', default: 25 })
+  @ApiProperty({ required: true, title: 'جهت ساختمان', example: 25 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.BUILDING_DIRECTION])
   @_IsNotEmpty()
   building_direction: number;
 
-  @ApiProperty({ required: true, title: 'نوع مالکیت', default: 26 })
+  @ApiProperty({ required: true, title: 'نوع مالکیت', example: 26 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.OWNERSHIP])
   @_IsNotEmpty()
   ownership: number;
@@ -147,13 +147,13 @@ export class UpdatePropertyStepOneOwnerDto {
   // @_IsNotEmpty()
   // country_id: number;
 
-  @ApiProperty({ required: true, title: 'استان', default: 5 })
+  @ApiProperty({ required: true, title: 'استان', example: 5 })
   @_IsInt()
   @Validate(IsExist, ['city', 'id', { parent_id: null }])
   @_IsNotEmpty()
   province_id: number;
 
-  @ApiProperty({ required: true, title: 'شهر', default: 147 })
+  @ApiProperty({ required: true, title: 'شهر', example: 147 })
   @_IsInt()
   @Validate(IsExist, ['city', 'id', { parent_id: { not: null } }])
   @_IsNotEmpty()
@@ -165,32 +165,32 @@ export class UpdatePropertyStepOneOwnerDto {
   @IsOptional()
   region_id: number;
 
-  @ApiProperty({ required: true, title: 'آدرس', default: 'آدرس تست تست آدرس تست' })
+  @ApiProperty({ required: true, title: 'آدرس', example: 'آدرس تست تست آدرس تست' })
   @_IsString()
   @_MaxLength(200)
   @_MinLength(5)
   @_IsNotEmpty()
   address: string;
 
-  @ApiProperty({ required: true, default: false })
+  @ApiProperty({ required: true, example: false })
   @_IsBoolean()
   @IsOptional()
   is_chat_enabled = false;
 
-  @ApiProperty({ required: true, default: false })
+  @ApiProperty({ required: true, example: false })
   @_IsBoolean()
   @IsOptional()
   is_location_visible = false;
 }
 
 export class UpdatePropertyLocationOwnerDto {
-  @ApiProperty({ required: true, title: 'عرض جغرافیایی', default: 35.771329 })
+  @ApiProperty({ required: true, title: 'عرض جغرافیایی', example: 35.771329 })
   @_IsNumber()
   @_IsLatitude()
   @_IsNotEmpty()
   lat: number;
 
-  @ApiProperty({ required: true, title: 'طول جغرافیایی', default: 51.377648 })
+  @ApiProperty({ required: true, title: 'طول جغرافیایی', example: 51.377648 })
   @_IsNumber()
   @_IsLongitude()
   @_IsNotEmpty()
@@ -198,14 +198,14 @@ export class UpdatePropertyLocationOwnerDto {
 }
 
 export class UpdatePropertyMediaOwnerDto {
-  @ApiProperty({ required: true, title: 'تصاویر', default: [1] })
+  @ApiProperty({ required: true, title: 'تصاویر', example: [1] })
   @_ArrayMaxSize(30)
   // @_ArrayMinSize(4) //TODO:uncomment
   @IsNumber({}, { each: true })
   @_ArrayNotEmpty()
   images: number[];
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_Min(1)
   @_IsInt()
   @_IsNotEmpty()
@@ -218,17 +218,17 @@ export class UpdatePropertyMediaOwnerDto {
 }
 
 export class UpdatePropertyEnvOwnerDto {
-  @ApiProperty({ required: true, title: 'بافت محیط', default: 11 })
+  @ApiProperty({ required: true, title: 'بافت محیط', example: 11 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PATTERN])
   @_IsNotEmpty()
   pattern: number;
 
-  @ApiProperty({ required: true, title: 'مسیر دسترسی', default: 10 })
+  @ApiProperty({ required: true, title: 'مسیر دسترسی', example: 10 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ACCESS])
   @IsOptional()
   access: number;
 
-  @ApiProperty({ required: true, title: 'همسایگی', default: 14 })
+  @ApiProperty({ required: true, title: 'همسایگی', example: 14 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.NEIGHBORHOOD])
   @_IsNotEmpty()
   neighborhood: number;
@@ -247,7 +247,7 @@ export class UpdatePropertyEnvOwnerDto {
 }
 
 export class UpdatePropertyBedroomOwnerDto {
-  @ApiProperty({ required: true, title: 'تعداد اتاق', default: [1, 2] })
+  @ApiProperty({ required: true, title: 'تعداد اتاق', example: [1, 2] })
   @_IsArray()
   @IsNumber({}, { each: true })
   @Max(10, { each: true })
@@ -319,35 +319,35 @@ export class UpdatePropertyBedroomOwnerDto {
 }
 
 export class UpdatePropertyFacilityOwnerDto {
-  @ApiProperty({ required: true, title: 'سرمایش', default: [17] })
+  @ApiProperty({ required: true, title: 'سرمایش', example: [17] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.COOL_HEAT])
   @_ArrayNotEmpty()
   cool_heat: number[];
 
-  @ApiProperty({ required: true, title: 'رفاهی', default: [19] })
+  @ApiProperty({ required: true, title: 'رفاهی', example: [19] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.WELFARE])
   // @_ArrayNotEmpty()
   @IsOptional()
   welfare: number[];
 
-  @ApiProperty({ required: true, title: 'تفریحی', default: [1, 2] })
+  @ApiProperty({ required: true, title: 'تفریحی', example: [1, 2] })
   // @_ArrayNotEmpty()
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.ENTERTAINMENT])
   @IsOptional()
   entertainment: number[];
 
-  @ApiProperty({ required: true, title: 'آشپزخانه', default: [15] })
+  @ApiProperty({ required: true, title: 'آشپزخانه', example: [15] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.KITCHEN])
   // @_ArrayNotEmpty()
   @IsOptional()
   kitchen: number[];
 
-  @ApiProperty({ required: true, title: 'استخر دارد؟', default: true })
+  @ApiProperty({ required: true, title: 'استخر دارد؟', example: true })
   @_IsBoolean()
   @_IsNotEmpty()
   has_pool: boolean;
 
-  @ApiProperty({ required: true, title: 'استخر', default: [29] })
+  @ApiProperty({ required: true, title: 'استخر', example: [29] })
   @ValidateIf((e) => e.has_pool == true)
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.POOL_TYPE])
   @Transform((params) => {
@@ -365,28 +365,28 @@ export class UpdatePropertyFacilityOwnerDto {
 }
 
 export class UpdatePropertyPriceOwnerDto {
-  @ApiProperty({ required: true, title: 'ظرفیت', default: 2 })
+  @ApiProperty({ required: true, title: 'ظرفیت', example: 2 })
   @_IsInt()
   @_Max(100)
   @_Min(1)
   @_IsNotEmpty()
   std_capacity: number;
 
-  @ApiProperty({ required: true, title: 'ظرفیت حداکثر', default: 6 })
+  @ApiProperty({ required: true, title: 'ظرفیت حداکثر', example: 6 })
   @_IsInt()
   @_Max(100)
   @_Min(1)
   @_IsNotEmpty()
   max_capacity: number;
 
-  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', example: 5 })
   @_IsInt()
   @_Max(50)
   @_Min(0)
   @_IsNotEmpty()
   advisor_commission: number;
 
-  // @ApiProperty({ enum: RentType, required: true, title: 'نوع اجاره', default: [RentType.DAILY] })
+  // @ApiProperty({ enum: RentType, required: true, title: 'نوع اجاره', example: [RentType.DAILY] })
   // // @Transform(({ value }) => value.map(e=> e.toUpperCase()))
   // @_IsArray()
   // @IsEnum(RentType, { each: true })
@@ -395,37 +395,37 @@ export class UpdatePropertyPriceOwnerDto {
   // rent_type: RentType[];
 
   //DAILY
-  @ApiProperty({ required: true, title: 'عادی', default: 1000000 })
+  @ApiProperty({ required: true, title: 'عادی', example: 1000000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @_IsNotEmpty()
   normal: number;
 
-  @ApiProperty({ required: true, title: 'چهارشنبه', default: 1500000 })
+  @ApiProperty({ required: true, title: 'چهارشنبه', example: 1500000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @_IsNotEmpty()
   wednesday: number;
 
-  @ApiProperty({ required: true, title: 'پنج شنبه', default: 2500000 })
+  @ApiProperty({ required: true, title: 'پنج شنبه', example: 2500000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @_IsNotEmpty()
   thursday: number;
 
-  @ApiProperty({ required: true, title: 'جمعه', default: 2000000 })
+  @ApiProperty({ required: true, title: 'جمعه', example: 2000000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @_IsNotEmpty()
   friday: number;
 
-  @ApiProperty({ required: true, title: 'ایام پیک', default: 3000000 })
+  @ApiProperty({ required: true, title: 'ایام پیک', example: 3000000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])
   @_IsNotEmpty()
   peak: number;
 
-  @ApiProperty({ required: true, title: 'هزینه نظافت', default: 200000 })
+  @ApiProperty({ required: true, title: 'هزینه نظافت', example: 200000 })
   @Transform(({ value }) => {
     if (value) return normalizePropertyPrice(value, true);
     else return 0;
@@ -434,7 +434,7 @@ export class UpdatePropertyPriceOwnerDto {
   @_IsNotEmpty()
   cleaning: number;
 
-  @ApiProperty({ required: true, title: 'نفر اضافه و سه سال به بالا', default: 200000 })
+  @ApiProperty({ required: true, title: 'نفر اضافه و سه سال به بالا', example: 200000 })
   @Transform(({ value }) => {
     if (value) return normalizePropertyPrice(value, true);
     else return 0;
@@ -445,17 +445,17 @@ export class UpdatePropertyPriceOwnerDto {
 }
 
 export class UpdatePropertyTermsOwnerDto {
-  @ApiProperty({ required: true, default: [4] })
+  @ApiProperty({ required: true, example: [4] })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.GUEST_TYPE])
   @_ArrayNotEmpty()
   guest_type: number[];
 
-  @ApiProperty({ required: true, default: 21 })
+  @ApiProperty({ required: true, example: 21 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PET])
   @_IsNotEmpty()
   pet: number;
 
-  @ApiProperty({ required: true, default: 23 })
+  @ApiProperty({ required: true, example: 23 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PARTY])
   @_IsNotEmpty()
   party: number;
@@ -466,55 +466,55 @@ export class UpdatePropertyTermsOwnerDto {
   @_IsNotEmpty()
   canceling_type: CancelingType;
 
-  @ApiProperty({ required: true, default: 14 })
+  @ApiProperty({ required: true, example: 14 })
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
   check_in_hour: string;
 
-  @ApiProperty({ required: true, default: 12 })
+  @ApiProperty({ required: true, example: 12 })
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
   check_out_hour: string;
 
-  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @IsOptional()
   guest_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @IsOptional()
   pet_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @IsOptional()
   party_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @_IsNotEmpty()
   doc_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @IsOptional()
   other_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات تبلیغاتی', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات تبلیغاتی', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(800)
   @IsOptional()
   ad_dscr: string;
 
-  @ApiProperty({ title: 'توضیحات ملک', default: 'توضیحات تستی' })
+  @ApiProperty({ title: 'توضیحات ملک', example: 'توضیحات تستی' })
   @_IsString()
   @_MaxLength(1000)
   @IsOptional()
@@ -522,19 +522,19 @@ export class UpdatePropertyTermsOwnerDto {
 }
 
 export class UpdatePropertyOwnerAssistantOwnerDto {
-  @ApiProperty({ required: true, default: 'نام تستی' })
+  @ApiProperty({ required: true, example: 'نام تستی' })
   @_Length(1, 128)
   @_IsString()
   @IsOptional()
   assistant_full_name: string;
 
-  @ApiProperty({ required: true, default: '09120000000' })
+  @ApiProperty({ required: true, example: '09120000000' })
   @_IsNumberString()
   @Validate(IsMobileNumber)
   @IsOptional()
   assistant_mobile: string;
 
-  @ApiProperty({ required: true, enum: [1, 2, 4], default: 1 })
+  @ApiProperty({ required: true, enum: [1, 2, 4], example: 1 })
   @_IsEnum([1, 2, 3])
   @_IsInt()
   @_IsNotEmpty()
@@ -542,7 +542,7 @@ export class UpdatePropertyOwnerAssistantOwnerDto {
 }
 
 export class UpdatePropertyCommissionOwnerDto {
-  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', example: 5 })
   @_IsInt()
   @_Max(50)
   @_Min(0)

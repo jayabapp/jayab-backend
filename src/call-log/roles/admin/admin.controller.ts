@@ -36,7 +36,7 @@ export class CallLogAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -47,7 +47,7 @@ export class CallLogAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllCallLogAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);

@@ -26,7 +26,7 @@ import { FindAllBaseOwnerDto } from './dto/find-all.dto';
 export class BaseOwnerController {
   constructor(private readonly baseOwnerService: BaseOwnerService) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateBaseOwnerDto): Promise<SuccessResponseArgs> {
     const result = await this.baseOwnerService.create(dto);
@@ -34,7 +34,7 @@ export class BaseOwnerController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllBaseOwnerDto): Promise<SuccessResponseArgs> {
     const result = await this.baseOwnerService.findAll(dto);
@@ -42,7 +42,7 @@ export class BaseOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':baseId')
   async findOne(@Param('baseId', ParseIntPipe) baseId: number): Promise<SuccessResponseArgs> {
     const result = await this.baseOwnerService.findOne(baseId);
@@ -50,7 +50,7 @@ export class BaseOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @Put(':baseId')
   async update(
     @Param('baseId', ParseIntPipe) baseId: number,
@@ -62,7 +62,7 @@ export class BaseOwnerController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  // @ApiOperation({ operationId: 'Remove', description: '' })
+  // @ApiOperation({ summary: 'Remove', description: '' })
   // @Delete(':baseId')
   // async remove(@Param('baseId', ParseIntPipe) baseId: number): Promise<SuccessResponseArgs> {
   //   await this.baseOwnerService.findOne(baseId);

@@ -13,7 +13,7 @@ import { Throttle } from '@nestjs/throttler';
 export class SettingSharedController {
   constructor(private readonly settingAdminService: SettingAdminService) {}
 
-  @ApiOperation({ operationId: 'Find robots.txt' })
+  @ApiOperation({ summary: 'Find robots.txt' })
   @Get('robots')
   async findRobot(): Promise<SuccessResponseArgs> {
     const result = await this.settingAdminService.findRobot();
@@ -21,7 +21,7 @@ export class SettingSharedController {
   }
 
   @Throttle({ default: { limit: 3, ttl: 15000 } })
-  @ApiOperation({ operationId: 'Find sitemap.xml' })
+  @ApiOperation({ summary: 'Find sitemap.xml' })
   @Get('sitemap')
   async findSitemap(): Promise<SuccessResponseArgs> {
     const result = await this.settingAdminService.generateSitemap();

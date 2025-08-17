@@ -15,19 +15,19 @@ import { RegisterAdvisorUserDto } from 'src/profile/roles/user/dto/register.dto'
 export class CreateAdvisorAdminDto extends RegisterAdvisorUserDto {}
 
 export class AddRateUserDto {
-  @ApiProperty({ required: true, default: 25 })
+  @ApiProperty({ required: true, example: 25 })
   @_IsEnum([25, 50, 75, 100])
   @_IsInt()
   @_IsNotEmpty()
   advisor_behavior: number;
 
-  @ApiProperty({ required: true, default: 50 })
+  @ApiProperty({ required: true, example: 50 })
   @_IsEnum([25, 50, 75, 100])
   @_IsInt()
   @_IsNotEmpty()
   advisor_responsibility: number;
 
-  @ApiProperty({ required: true, default: 75 })
+  @ApiProperty({ required: true, example: 75 })
   @_IsEnum([25, 50, 75, 100])
   @_IsInt()
   @_IsNotEmpty()

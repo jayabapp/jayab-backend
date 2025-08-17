@@ -45,7 +45,7 @@ export class AuthUserController {
   ) {}
 
   @Throttle({ default: { limit: 3, ttl: 30000 } })
-  @ApiOperation({ operationId: 'Create OTP code' })
+  @ApiOperation({ summary: 'Create OTP code' })
   @Post('/otp')
   async createOtpCode(@Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
     /* -------------------------------------------------------------------------- */
@@ -69,7 +69,7 @@ export class AuthUserController {
     return { result: code, messageCode: resultMessage };
   }
 
-  @ApiOperation({ operationId: 'Verify OTP code' })
+  @ApiOperation({ summary: 'Verify OTP code' })
   // @ApiHeader({ name: 'authorization', required: false })
   @Post('/otp/verify')
   async verifyOtpCode(@Req() req: Request, @Body() dto: VerifyOTPDto): Promise<SuccessResponseArgs> {
@@ -108,7 +108,7 @@ export class AuthUserController {
   // /**
   //  * @description This api can only be used after registration.
   //  */
-  // @ApiOperation({ operationId: 'Update profile after register' })
+  // @ApiOperation({ summary: 'Update profile after register' })
   // @ApiBearerAuth('user-auth-jwt')
   // @UseGuards(UserAuthJwtGuard)
   // @Put('profile')
@@ -151,7 +151,7 @@ export class AuthUserController {
   // }
 
   // @Throttle({ default: { limit: 3, ttl: 30000 } })
-  // @ApiOperation({ operationId: 'Get Guest Token' })
+  // @ApiOperation({ summary: 'Get Guest Token' })
   // @Post('guest-token')
   // async createGuestToken(@Req() request: Request): Promise<SuccessResponseArgs> {
   //   const fingerprint = createGuestBrowserFingerprint(request.headers['user-agent']);
@@ -163,14 +163,14 @@ export class AuthUserController {
   @Throttle({ default: { limit: 30, ttl: 30000 } })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(5000)
-  @ApiOperation({ operationId: 'Get Init Settings' })
+  @ApiOperation({ summary: 'Get Init Settings' })
   @Get('init-settings')
   async findInitSettings(): Promise<SuccessResponseArgs> {
     const init = await this.authUserService.findInitSettings();
     return { result: init };
   }
 
-  @ApiOperation({ operationId: 'Get Init User' })
+  @ApiOperation({ summary: 'Get Init User' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
   @Get('init-user')
@@ -182,7 +182,7 @@ export class AuthUserController {
     return { result: { bookmarks, favorites, isValidAdvisor } };
   }
 
-  // @ApiOperation({ operationId: 'Get private key' })
+  // @ApiOperation({ summary: 'Get private key' })
   // @Post('test')
   // async findPublicKey(
   //   @Req() request: RequestType,

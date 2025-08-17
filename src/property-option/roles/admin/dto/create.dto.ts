@@ -14,13 +14,13 @@ import {
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 
 export class CreatePropertyOptionAdminDto {
-  @ApiProperty({ required: true, default: 'عنوان' })
+  @ApiProperty({ required: true, example: 'عنوان' })
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 'توضیحات' })
+  @ApiProperty({ required: true, example: 'توضیحات' })
   @_Length(0, 256)
   @_IsString()
   @IsOptional()
@@ -31,19 +31,19 @@ export class CreatePropertyOptionAdminDto {
   @_IsNotEmpty()
   group: PropertyOptionGroup;
 
-  @ApiProperty({ default: 'ترتیب' })
+  @ApiProperty({ example: 'ترتیب' })
   @_IsInt()
   @Transform(({ value }) => value || 0)
   @IsOptional()
   sort?: number;
 
-  @ApiProperty({ default: 'تصویر' })
+  @ApiProperty({ example: 'تصویر' })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   image_id?: number;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_Length(0, 128)
   @_IsString()
   @IsOptional()

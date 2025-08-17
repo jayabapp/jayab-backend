@@ -46,7 +46,7 @@ export class PropertyBadgeAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -57,7 +57,7 @@ export class PropertyBadgeAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllPropertyBadgeAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -68,7 +68,7 @@ export class PropertyBadgeAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.propertyBadgeAdminService.findOne(id);
@@ -79,7 +79,7 @@ export class PropertyBadgeAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Partial', description: '' })
+  @ApiOperation({ summary: 'Update Partial', description: '' })
   @Patch(':id/status')
   async updateStatus(
     @Req() req: Request,
@@ -109,7 +109,7 @@ export class PropertyBadgeAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Remove', description: '' })
+  @ApiOperation({ summary: 'Remove', description: '' })
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const pb = await this.propertyBadgeAdminService.findById(id);

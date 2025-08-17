@@ -53,7 +53,7 @@ export class AttachmentController {
 
   @ApiOperation({
     description: 'آپلود عکس - کاربر',
-    operationId: 'USER - image uploader',
+    summary: 'USER - image uploader',
   })
   @ApiBearerAuth('user-jwt')
   @UseGuards(UserJwtGuard)
@@ -151,7 +151,7 @@ export class AttachmentController {
   /* -------------------------------------------------------------------------- */
   /*                                    ADMIN                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ description: 'آپلود - ادمین', operationId: 'ADMIN - Create attachment' })
+  @ApiOperation({ description: 'آپلود - ادمین', summary: 'ADMIN - Create attachment' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
   @Post('admin/attachments')
@@ -224,7 +224,7 @@ export class AttachmentController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Upload video' })
+  @ApiOperation({ summary: 'Upload video' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
   @Post('admin/attachments/video')
@@ -239,7 +239,7 @@ export class AttachmentController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ description: '', operationId: 'ADMIN - Delete attachment' })
+  @ApiOperation({ description: '', summary: 'ADMIN - Delete attachment' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
   @Delete('admin/attachments/:id')

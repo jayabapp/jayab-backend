@@ -4,7 +4,7 @@ import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator
 import { Validate } from 'class-validator';
 
 export class CreateOTPDto {
-  @ApiProperty({ required: true, default: '09120000000' })
+  @ApiProperty({ required: true, example: '09120000000' })
   @_IsNumberString()
   @Validate(IsMobileNumber)
   @_IsNotEmpty()
@@ -12,7 +12,7 @@ export class CreateOTPDto {
 }
 
 export class VerifyOTPDto extends CreateOTPDto {
-  @ApiProperty({ default: '12345', required: true })
+  @ApiProperty({ example: '12345', required: true })
   @_Length(4, 4)
   @_IsNumberString()
   @_IsNotEmpty()

@@ -4,7 +4,7 @@ import { _IsAlphanumeric, _IsArray, _IsNotEmpty } from 'src/common/pipes/validat
 import { PaymentGatewayParams } from 'src/payment-gateway/common/payment-gateway.enum';
 
 export class UpdatePaymentGatewayAdminDto {
-  @ApiProperty({ required: true, default: '' })
+  @ApiProperty({ required: true, example: '' })
   @_IsArray()
   @_IsNotEmpty()
   params: PaymentGatewayParams[];

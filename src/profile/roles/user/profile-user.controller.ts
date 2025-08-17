@@ -47,7 +47,7 @@ export class ProfileUserController {
     private readonly notificationService: NotificationSharedService,
   ) {}
 
-  @ApiOperation({ operationId: 'Get user profile' })
+  @ApiOperation({ summary: 'Get user profile' })
   @Get()
   async getProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -56,7 +56,7 @@ export class ProfileUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Get owner profile' })
+  @ApiOperation({ summary: 'Get owner profile' })
   @Get('/owner')
   async getOwnerProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -64,7 +64,7 @@ export class ProfileUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Get advisor profile' })
+  @ApiOperation({ summary: 'Get advisor profile' })
   @Get('/advisor')
   async getAdvisorProfile(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
@@ -75,7 +75,7 @@ export class ProfileUserController {
   /* -------------------------------------------------------------------------- */
   /*                                  REGISTER                                  */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Update profile' })
+  // @ApiOperation({ summary: 'Update profile' })
   // @Put()
   // async updateProfile(
   //   @Req() request: RequestType,
@@ -91,7 +91,7 @@ export class ProfileUserController {
   /**
    * ابتدا مالکو ایجاد میکنیم و سپس صحت آن را بررسی میکنیم
    */
-  @ApiOperation({ operationId: 'Register owner' })
+  @ApiOperation({ summary: 'Register owner' })
   @Put('register/owner')
   async registerOwner(
     @Req() request: RequestType,
@@ -141,7 +141,7 @@ export class ProfileUserController {
   /* -------------------------------------------------------------------------- */
   /*                                   ADVISOR                                  */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Register advisor' })
+  @ApiOperation({ summary: 'Register advisor' })
   @Put('register/advisor')
   async registerAdvisor(
     @Req() request: RequestType,
@@ -189,7 +189,7 @@ export class ProfileUserController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Pay Advisor Subscription' })
+  @ApiOperation({ summary: 'Pay Advisor Subscription' })
   @Post('pay-plan')
   async payAdvisorSubscription(
     @Req() request: RequestType,
@@ -205,7 +205,7 @@ export class ProfileUserController {
     return { result: payUrl };
   }
 
-  @ApiOperation({ operationId: 'pay Advisor Subscription' })
+  @ApiOperation({ summary: 'pay Advisor Subscription' })
   @Delete('pay-plan')
   async revokeAdvisorSubscription(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user as PartialUser;
@@ -219,7 +219,7 @@ export class ProfileUserController {
   /* -------------------------------------------------------------------------- */
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update fcm' })
+  @ApiOperation({ summary: 'Update fcm' })
   @Patch('update-fcm')
   async updateFcm(@Req() request: RequestType, @Body() dto: UpdateFcmDto): Promise<SuccessResponseArgs> {
     const { user } = request;
@@ -245,7 +245,7 @@ export class ProfileUserController {
     return;
   }
 
-  @ApiOperation({ operationId: 'Update profile image' })
+  @ApiOperation({ summary: 'Update profile image' })
   @Patch('profile-image')
   async updateProfileImage(
     @Req() request: RequestType,

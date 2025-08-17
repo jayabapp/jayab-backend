@@ -21,7 +21,7 @@ export class AuthAdminController {
     private configService: ConfigService,
   ) {}
 
-  @ApiOperation({ operationId: 'Signin admin' })
+  @ApiOperation({ summary: 'Signin admin' })
   @Post('signin')
   async createOtpCode(@Body() dto: SignInAdminDto): Promise<SuccessResponseArgs> {
     const adminData = await this.authAdminService.verifyAdminCredential(dto);
@@ -47,7 +47,7 @@ export class AuthAdminController {
     return { result: { code: null, signin_token: signinToken }, messageCode: 'AUTH1' }; //TODO: remove code
   }
 
-  @ApiOperation({ operationId: 'Check otp code' })
+  @ApiOperation({ summary: 'Check otp code' })
   @ApiBearerAuth('admin-auth-jwt')
   @UseGuards(AdminAuthJwtGuard)
   @Post('two-step-verification')
@@ -63,7 +63,7 @@ export class AuthAdminController {
     return { result: { admin: adminData, tokens }, messageCode: 'AUTH3' };
   }
 
-  @ApiOperation({ operationId: 'Get Init Settings' })
+  @ApiOperation({ summary: 'Get Init Settings' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
   @Get('init-settings')
@@ -72,7 +72,7 @@ export class AuthAdminController {
     return { result: init };
   }
 
-  @ApiOperation({ operationId: 'Validate site edit mode' })
+  @ApiOperation({ summary: 'Validate site edit mode' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
   @Get('validate-edit-mode')

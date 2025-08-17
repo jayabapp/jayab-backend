@@ -3,7 +3,7 @@ import { IsOptional } from 'class-validator';
 import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
 
 export class FindAllPaymentUserDto extends PaginationCursorDto {
-  @ApiProperty({ required: false, default: {} })
+  @ApiProperty({ required: false, example: {} })
   @IsOptional()
   filters: Object;
 }

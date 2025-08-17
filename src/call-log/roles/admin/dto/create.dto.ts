@@ -5,28 +5,26 @@ import {
   _IsNotEmpty,
   _IsString,
   _IsNumber,
-  _IsBoolean
+  _IsBoolean,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 
 export class CreateCallLogAdminDto {
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  user_id: number
-        
+  user_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  property_id: number
-        
+  property_id: number;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
-  attempts: number
+  attempts: number;
 }

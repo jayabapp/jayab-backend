@@ -30,7 +30,7 @@ import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant'
 export class AdvisorUserController {
   constructor(private readonly advisorUserService: AdvisorUserService) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
   @Get()
@@ -39,7 +39,7 @@ export class AdvisorUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
   @Get(':advisorId')
@@ -52,7 +52,7 @@ export class AdvisorUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Init rate', description: '' })
+  @ApiOperation({ summary: 'Init rate', description: '' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
   @Post(':advisorId/rate/init')
@@ -70,7 +70,7 @@ export class AdvisorUserController {
     return {};
   }
 
-  @ApiOperation({ operationId: 'Add rate', description: '' })
+  @ApiOperation({ summary: 'Add rate', description: '' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
   @Post(':advisorId/rate/add')

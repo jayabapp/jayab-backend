@@ -23,7 +23,7 @@ import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant'
 export class LandingPageUserController {
   constructor(private readonly landingPageUserService: LandingPageUserService) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
   @Get()
@@ -33,7 +33,7 @@ export class LandingPageUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
   @Get(':landingPageUrl')

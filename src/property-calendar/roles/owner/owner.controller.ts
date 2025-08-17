@@ -38,7 +38,7 @@ export class PropertyCalendarOwnerController {
   constructor(private readonly propertyCalendarOwnerService: PropertyCalendarOwnerService) {}
 
   /* ---------------------------------- NOTE ---------------------------------- */
-  @ApiOperation({ operationId: 'Upser Note', description: '' })
+  @ApiOperation({ summary: 'Upser Note', description: '' })
   @Post('notes')
   async upsertNote(
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -50,7 +50,7 @@ export class PropertyCalendarOwnerController {
   }
 
   /* --------------------------------- RESERVE -------------------------------- */
-  @ApiOperation({ operationId: 'Update Reserve Status', description: '' })
+  @ApiOperation({ summary: 'Update Reserve Status', description: '' })
   @Post('reserves')
   async createReserveDay(
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -62,7 +62,7 @@ export class PropertyCalendarOwnerController {
   }
 
   /* ------------------------------- COMMISSION ------------------------------- */
-  @ApiOperation({ operationId: 'Update Advisor Commission', description: '' })
+  @ApiOperation({ summary: 'Update Advisor Commission', description: '' })
   @Post('commission')
   async updateAdvisorCommission(
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -73,7 +73,7 @@ export class PropertyCalendarOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Acceptable Price Range', description: '' })
+  @ApiOperation({ summary: 'Acceptable Price Range', description: '' })
   @Get('price')
   async findAcceptablePriceRange(
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -84,7 +84,7 @@ export class PropertyCalendarOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update Price', description: '' })
+  @ApiOperation({ summary: 'Update Price', description: '' })
   @Post('price')
   async updatePrice(
     @Param('propertyId', ParseIntPipe) propertyId: number,
@@ -95,7 +95,7 @@ export class PropertyCalendarOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: 'Find one too, with an optional query' })
+  @ApiOperation({ summary: 'Find All', description: 'Find one too, with an optional query' })
   @ApiQuery({ name: 'day', required: false, type: Number })
   @Get()
   async findAll(

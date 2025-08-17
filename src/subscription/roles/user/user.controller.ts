@@ -14,7 +14,7 @@ import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
 export class SubscriptionUserController {
   constructor(private readonly subscriptionUserService: SubscriptionUserService) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(
     @Req() req: RequestType,

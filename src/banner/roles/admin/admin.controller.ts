@@ -32,7 +32,7 @@ export class BannerAdminController {
   constructor(private readonly bannerAdminService: BannerAdminService) {}
 
   /* --------------------------------- CREATE --------------------------------- */
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateBannerAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.bannerAdminService.create(dto);
@@ -41,7 +41,7 @@ export class BannerAdminController {
   }
 
   /* -------------------------------- FIND ALL -------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Req() req, @Query() dto: FindAllBannerAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -53,7 +53,7 @@ export class BannerAdminController {
   }
 
   /* ------------------------------- MODEL PROPS ------------------------------ */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -64,7 +64,7 @@ export class BannerAdminController {
   }
 
   /* -------------------------------- FIND ONE -------------------------------- */
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.bannerAdminService.findOne(id);
@@ -73,7 +73,7 @@ export class BannerAdminController {
   }
 
   /* --------------------------------- UPDATE --------------------------------- */
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -86,7 +86,7 @@ export class BannerAdminController {
   }
 
   /* --------------------------------- REMOVE --------------------------------- */
-  @ApiOperation({ operationId: 'Remove', description: '' })
+  @ApiOperation({ summary: 'Remove', description: '' })
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     await this.bannerAdminService.findById(id);

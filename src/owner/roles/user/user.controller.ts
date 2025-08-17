@@ -26,7 +26,7 @@ import { FindAllOwnerUserDto } from './dto/find-all.dto';
 export class OwnerUserController {
   constructor(private readonly ownerUserService: OwnerUserService) {}
 
-  // @ApiOperation({ operationId: "Create", description: "" })
+  // @ApiOperation({ summary: "Create", description: "" })
   // @Post()
   // async create(@Body() dto: CreateOwnerUserDto): Promise<SuccessResponseArgs> {
   //   const result = await this.ownerUserService.create(dto);
@@ -34,7 +34,7 @@ export class OwnerUserController {
   //   return { result, messageCode: "CREATE" };
   // }
 
-  // @ApiOperation({ operationId: "Find All", description: "" })
+  // @ApiOperation({ summary: "Find All", description: "" })
   // @Get()
   // async findAll(
   //   @Query() dto: FindAllOwnerUserDto
@@ -44,7 +44,7 @@ export class OwnerUserController {
   //   return { result };
   // }
 
-  // @ApiOperation({ operationId: "Find One", description: "" })
+  // @ApiOperation({ summary: "Find One", description: "" })
   // @Get(":ownerId")
   // async findOne(
   //   @Param("ownerId", ParseIntPipe) ownerId: number
@@ -54,7 +54,7 @@ export class OwnerUserController {
   //   return { result };
   // }
 
-  // @ApiOperation({ operationId: "Update", description: "" })
+  // @ApiOperation({ summary: "Update", description: "" })
   // @Put(":ownerId")
   // async update(
   //   @Param("ownerId", ParseIntPipe) ownerId: number,
@@ -66,7 +66,7 @@ export class OwnerUserController {
   //   return { result, messageCode: "UPDATE" };
   // }
 
-  // // @ApiOperation({ operationId: 'Remove', description: '' })
+  // // @ApiOperation({ summary: 'Remove', description: '' })
   // // @Delete(':ownerId')
   // // async remove(@Param('ownerId', ParseIntPipe) ownerId: number): Promise<SuccessResponseArgs> {
   // //   await this.ownerUserService.findOne(ownerId);

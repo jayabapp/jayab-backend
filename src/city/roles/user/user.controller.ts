@@ -14,14 +14,14 @@ export class CityUserController {
 
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(FIVE_MINUTES_TTL)
-  @ApiOperation({ operationId: 'Find All' })
+  @ApiOperation({ summary: 'Find All' })
   @Get()
   async findAll(@Query() dto: FindAllCityUserDto): Promise<SuccessResponseArgs> {
     const result = await this.citySharedService.findAll(dto);
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find children' })
+  @ApiOperation({ summary: 'Find children' })
   @Get(':parentId')
   async findChildren(@Param('parentId', ParseIntPipe) parentId: number): Promise<SuccessResponseArgs> {
     const result = await this.citySharedService.findChildren(parentId);

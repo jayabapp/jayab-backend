@@ -46,7 +46,7 @@ export class PropertyAuthorizeOwnerController {
     private readonly notificationSharedService: NotificationSharedService,
   ) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Post()
   async create(
@@ -72,7 +72,7 @@ export class PropertyAuthorizeOwnerController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllPropertyAuthorizeOwnerDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyAuthorizeOwnerService.findAll(dto);
@@ -80,7 +80,7 @@ export class PropertyAuthorizeOwnerController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Get(':propertyId')
   async findOne(
@@ -97,7 +97,7 @@ export class PropertyAuthorizeOwnerController {
     return { result: formatted };
   }
 
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Put(':propertyId')
   async update(

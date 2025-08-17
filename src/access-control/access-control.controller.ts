@@ -22,14 +22,14 @@ export class AccessControlController {
   /* -------------------------------------------------------------------------- */
   /*                                   MODULES                                  */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Create RBAC module' })
+  @ApiOperation({ summary: 'Create RBAC module' })
   @Post('modules')
   async create(@Body() dto: CreateAccessControlModuleDto): Promise<SuccessResponseArgs> {
     await this.accessControlService.create(dto);
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find all RBAC module' })
+  @ApiOperation({ summary: 'Find all RBAC module' })
   @Get('modules')
   async findAll(): Promise<SuccessResponseArgs> {
     const result = await this.accessControlService.findAll();
@@ -43,7 +43,7 @@ export class AccessControlController {
   /* -------------------------------------------------------------------------- */
   /*                                    ROLES                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Create RBAC role' })
+  @ApiOperation({ summary: 'Create RBAC role' })
   @Post('roles')
   async createRole(
     @Req() req: RequestType,
@@ -55,7 +55,7 @@ export class AccessControlController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find all RBAC role' })
+  @ApiOperation({ summary: 'Find all RBAC role' })
   @Get('roles')
   async findAllRoles(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const admin = req.user as unknown as Admin & { role: AccessControlRole };
@@ -64,14 +64,14 @@ export class AccessControlController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find one RBAC role' })
+  @ApiOperation({ summary: 'Find one RBAC role' })
   @Get('roles/:roleId')
   async findOneRole(@Param('roleId', ParseIntPipe) roleId: number): Promise<SuccessResponseArgs> {
     const result = await this.accessControlService.findOneRole(roleId);
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update one RBAC role' })
+  @ApiOperation({ summary: 'Update one RBAC role' })
   @Put('roles/:roleId')
   async updateOneRole(
     @Param('roleId', ParseIntPipe) roleId: number,
@@ -88,7 +88,7 @@ export class AccessControlController {
   /* -------------------------------------------------------------------------- */
   /*                                    RBAC                                    */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Create RBAC list' })
+  @ApiOperation({ summary: 'Create RBAC list' })
   @Post('rbac-list')
   async createRBACList(
     @Req() req: RequestType,
@@ -100,7 +100,7 @@ export class AccessControlController {
     return { messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find the role RBAC list' })
+  @ApiOperation({ summary: 'Find the role RBAC list' })
   @Post('rbac-list/:roleId')
   async findOneRBACList(
     @Req() req: RequestType,
@@ -116,7 +116,7 @@ export class AccessControlController {
   /* -------------------------------------------------------------------------- */
   /*                                   ADMINS                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Signup admin' })
+  @ApiOperation({ summary: 'Signup admin' })
   @Post('admins/signup')
   async signupAdmin(@Req() req: RequestType, @Body() dto: SignUpAdminDto): Promise<SuccessResponseArgs> {
     const admin = req.user as unknown as Admin & { role: AccessControlRole };
@@ -125,7 +125,7 @@ export class AccessControlController {
     return { result, messageCode: 'CREATE' };
   }
 
-  @ApiOperation({ operationId: 'Find all admins' })
+  @ApiOperation({ summary: 'Find all admins' })
   @Get('admins')
   async findAllAdmins(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const admin = req.user as unknown as Admin & { role: AccessControlRole };
@@ -134,7 +134,7 @@ export class AccessControlController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find one admin' })
+  @ApiOperation({ summary: 'Find one admin' })
   @Get('admins/:adminId')
   async findOneAdmin(
     @Req() req: RequestType,
@@ -146,7 +146,7 @@ export class AccessControlController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update admin' })
+  @ApiOperation({ summary: 'Update admin' })
   @Put('admins/:adminId')
   async updateAdmin(
     @Req() req: RequestType,
@@ -162,7 +162,7 @@ export class AccessControlController {
   /* -------------------------------------------------------------------------- */
   /*                           NOTIFICATION PERMISSION                          */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find notif permission selectable items' })
+  @ApiOperation({ summary: 'Find notif permission selectable items' })
   @Get('noitification-permissions/:roleId')
   async findAdminRoleNotifPermission(
     @Req() req: AdminRequestType,
@@ -173,7 +173,7 @@ export class AccessControlController {
 
     return { result: { permissions: np, selectable_items: items } };
   }
-  @ApiOperation({ operationId: 'Update notif permission for ' })
+  @ApiOperation({ summary: 'Update notif permission for ' })
   @Post('noitification-permissions')
   async updateAdminRoleNotifPermission(
     @Req() req: RequestType,

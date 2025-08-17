@@ -26,7 +26,7 @@ import { Request } from 'express';
 export class SubmittedFormUserController {
   constructor(private readonly submittedFormUserService: SubmittedFormUserService) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Req() req: Request, @Body() dto: CreateSubmittedFormUserDto): Promise<SuccessResponseArgs> {
     const ipv4: string = req?.clientIp;

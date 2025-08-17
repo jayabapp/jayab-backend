@@ -30,12 +30,12 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @Type(() => Number)
   province_id?: number;
 
-  @ApiProperty({ required: false, default: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
+  @ApiProperty({ required: false, example: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
   @_IsString()
   @IsOptional()
   keys?: string;
 
-  @ApiProperty({ required: false, title: 'شهر', default: '147,2' })
+  @ApiProperty({ required: false, title: 'شهر', example: '147,2' })
   @_IsString()
   @IsOptional()
   cities?: string;
@@ -101,7 +101,7 @@ export class FindAllPropertyUserDto extends PaginationCursorDto {
   @IsOptional()
   party?: string;
 
-  @ApiProperty({ type: String, required: false, title: 'استخر', default: 29 })
+  @ApiProperty({ type: String, required: false, title: 'استخر', example: 29 })
   @_IsString()
   @IsOptional()
   pool_type?: string;

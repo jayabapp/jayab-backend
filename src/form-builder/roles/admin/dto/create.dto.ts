@@ -13,24 +13,24 @@ import { IsExist } from 'src/common/validators/is-exists.validator';
 import { FormBuilderInputType } from 'src/form-builder/common/form-builder-input-type.enum';
 
 export class CreateFormBuilderAdminDto {
-  @ApiProperty({ enum: FormBuilderInputType, required: true, default: FormBuilderInputType.INPUT })
+  @ApiProperty({ enum: FormBuilderInputType, required: true, example: FormBuilderInputType.INPUT })
   @_IsEnum(FormBuilderInputType)
   @_IsNotEmpty()
   type: FormBuilderInputType;
 
-  @ApiProperty({ required: true, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @Validate(IsExist, ['content', 'id'])
   @_IsInt()
   @_Min(1)
   @_IsNotEmpty()
   content_id: number;
 
-  @ApiProperty({ required: true, default: ['ایتم یک'] })
+  @ApiProperty({ required: true, example: ['ایتم یک'] })
   @Transform((data) => {
     if ([FormBuilderInputType.SELECT, FormBuilderInputType.MULTI_SELECT].includes(data.obj?.type))
       return data.value;
@@ -39,23 +39,23 @@ export class CreateFormBuilderAdminDto {
   @_IsNotEmpty()
   options: string[];
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_IsString()
   @IsOptional()
   key: string;
 
-  @ApiProperty({ required: false, default: null })
+  @ApiProperty({ required: false, example: null })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   sort_order: number;
 
-  @ApiProperty({ required: false, default: false })
+  @ApiProperty({ required: false, example: false })
   @_IsBoolean()
   @_IsNotEmpty()
   is_mandatory: boolean;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
   description: string;

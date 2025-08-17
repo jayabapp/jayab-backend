@@ -17,7 +17,7 @@ import { USER_NOTIFICATION_ROUTE_GROUP } from 'src/notification/common/route-gro
 export class NotificationUserController {
   constructor(private readonly notificationSharedService: NotificationSharedService) {}
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(
     @Req() req: RequestType,
@@ -28,7 +28,7 @@ export class NotificationUserController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Badge count' })
+  @ApiOperation({ summary: 'Badge count' })
   @Get('badge')
   async getBadgeCount(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const user = req.user;
@@ -41,7 +41,7 @@ export class NotificationUserController {
     return { result };
   }
 
-  // @ApiOperation({ operationId: 'Find One', description: '' })
+  // @ApiOperation({ summary: 'Find One', description: '' })
   // @Get(':notifId')
   // async findOne(
   //   @Req() req: UserType,

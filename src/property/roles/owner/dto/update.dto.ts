@@ -3,7 +3,7 @@ import { _IsInt, _Max, _Min, _IsNotEmpty } from 'src/common/pipes/validator-tran
 
 export class UpdatePropertyAdvisorCommissionOwnerDto {
   //also is in update property steps
-  @ApiProperty({ required: true, title: 'کمیسیون مشاور', default: 5 })
+  @ApiProperty({ required: true, title: 'کمیسیون مشاور', example: 5 })
   @_IsInt()
   @_Max(50)
   @_Min(0)

@@ -13,12 +13,12 @@ import { IsExist } from 'src/common/validators/is-exists.validator';
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
 export class AdminUserPassDto {
-  @ApiProperty({ required: true, default: 'superadmin' })
+  @ApiProperty({ required: true, example: 'superadmin' })
   @_IsString()
   @_IsNotEmpty()
   username: string;
 
-  @ApiProperty({ required: true, default: 'admin@@1133' })
+  @ApiProperty({ required: true, example: 'admin@@1133' })
   @_IsString()
   @_MinLength(6)
   @_IsNotEmpty()
@@ -28,7 +28,7 @@ export class AdminUserPassDto {
 export class SignInAdminDto extends AdminUserPassDto {}
 
 export class VerifyAdminOTPDto {
-  @ApiProperty({ default: '12345', required: true })
+  @ApiProperty({ example: '12345', required: true })
   @_Length(5, 5)
   @_IsNumberString()
   @_IsNotEmpty()

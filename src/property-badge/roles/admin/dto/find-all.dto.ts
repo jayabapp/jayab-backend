@@ -6,13 +6,13 @@ import { _IsEnum, _IsInt, _IsNotEmpty, _IsString } from 'src/common/pipes/valida
 import { PropertyBadgeStatus } from 'src/property-badge/common/property-badge-status.type';
 
 export class FindAllPropertyBadgeAdminDto extends PaginationDto {
-  @ApiProperty({ enum: PropertyBadgeStatus, required: true, default: PropertyBadgeStatus.APPROVED })
+  @ApiProperty({ enum: PropertyBadgeStatus, required: true, example: PropertyBadgeStatus.APPROVED })
   @Type(() => Number)
   @_IsEnum(PropertyBadgeStatus)
   @_IsNotEmpty()
   status: PropertyBadgeStatus;
 
-  @ApiProperty({ required: false, default: '' })
+  @ApiProperty({ required: false, example: '' })
   @_IsString()
   @IsOptional()
   property_title?: string;

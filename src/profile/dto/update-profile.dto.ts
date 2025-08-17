@@ -4,7 +4,7 @@ import { RegisterProfileDto } from 'src/auth/roles/user/dto/register-profile.dto
 import { _IsInt, _IsNumberString, _IsString, _Length, _Min } from 'src/common/pipes/validator-translate.pipe';
 
 export class UpdateProfileDto extends RegisterProfileDto {
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @_Min(1)
   @_IsInt()
   @IsOptional()

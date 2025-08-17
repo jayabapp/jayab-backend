@@ -45,7 +45,7 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -56,7 +56,7 @@ export class AdvisorAdminController {
   // /* -------------------------------------------------------------------------- */
   // /*                                   CREATE                                   */
   // /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Create', description: '' })
+  // @ApiOperation({ summary: 'Create', description: '' })
   // @Post()
   // async create(@Body() dto: CreateAdvisorAdminDto): Promise<SuccessResponseArgs> {
   //   const result = await this.advisorAdminService.create(dto);
@@ -67,7 +67,7 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllAdvisorAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -78,7 +78,7 @@ export class AdvisorAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Get Excel', description: '' })
+  @ApiOperation({ summary: 'Get Excel', description: '' })
   @Get('excel')
   async getExcel(@Query() dto: FindAllAdvisorAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -95,7 +95,7 @@ export class AdvisorAdminController {
     return { result: url };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.advisorAdminService.findOne(id);
@@ -106,7 +106,7 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   UPDATE                                   */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -121,7 +121,7 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               UPDATE PARTIAL                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Partial', description: '' })
+  @ApiOperation({ summary: 'Update Partial', description: '' })
   @Patch(':id/update-partial')
   async updatePartial(
     @Req() req: AdminRequestType,
@@ -152,7 +152,7 @@ export class AdvisorAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
-  // @ApiOperation({ operationId: 'Remove', description: '' })
+  // @ApiOperation({ summary: 'Remove', description: '' })
   // @Delete(':id')
   // async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
   //   await this.advisorAdminService.findById(id);

@@ -18,7 +18,7 @@ export class ProfileAdminController {
     private readonly accessControlService: AccessControlService,
   ) {}
 
-  @ApiOperation({ operationId: 'Find admin profile' })
+  @ApiOperation({ summary: 'Find admin profile' })
   @Get()
   async profile(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const admin = req.user;
@@ -26,7 +26,7 @@ export class ProfileAdminController {
     return { result: result, messageCode: 'ADMIN_AUTH2' };
   }
 
-  @ApiOperation({ operationId: 'Find admin rbac list' })
+  @ApiOperation({ summary: 'Find admin rbac list' })
   @Get('rbac-list')
   async findAccess(@Req() req: RequestType): Promise<SuccessResponseArgs> {
     const admin = req.user as unknown as Admin & { role: AccessControlRole };
