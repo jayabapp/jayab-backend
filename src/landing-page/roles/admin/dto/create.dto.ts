@@ -61,7 +61,7 @@ export class CreateLandingPageAdminDto {
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
-  province_id: number;
+  province_id: number = null;
 
   @ApiProperty({ required: false, example: 1 })
   @_IsArray()
