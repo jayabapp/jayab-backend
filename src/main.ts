@@ -15,6 +15,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { LoggerService } from './logger/logger.service';
 import * as requestIp from 'request-ip';
 import { P2EInterceptor } from './common/interceptors/p2e.interceptor';
+import { RapidocModule } from '@b8n/nestjs-rapidoc';
 
 declare global {
   interface BigInt {
@@ -109,15 +110,34 @@ async function bootstrap(): Promise<void> {
     const document = SwaggerModule.createDocument(app, config, {});
     // SwaggerModule.setup('api', app, document,{swaggerOptions:{}});
 
-    // Instead of using SwaggerModule.setup() you call this module
-    const options: StoplightElementsOptions = {
-      layout: 'sidebar',
-      router: 'memory',
-    };
-
-    const StoplightElements = new StoplightElementsModule(app, document, options);
-
-    await StoplightElements.start('/docs');
+    RapidocModule.setup('docs', app, document, {
+      customLogo: process.env.APP_LOGO,
+      customSiteTitle: 'Jayab Docs',
+      rapidocOptions: {
+        defaultSchemaTab: 'schema',
+        allowTry: true,
+        allowAuthentication: true,
+        allowServerSelection: true,
+        layout: 'row',
+        navBgColor: '#0f172b',
+        bgColor: '#1d293d',
+        headerColor: '#0f172b',
+        primaryColor: '#00bc7d',
+        // textColor: '#171717',
+        navTextColor: '#cad5e2',
+        persistAuth: true,
+        showInfo: true,
+        usePathInNavBar: false,
+        showMethodInNavBar: 'as-colored-text',
+        navItemSpacing: 'relaxed',
+        infoDescriptionHeadingsInNavbar: false,
+        headingText: 'Jayab',
+        renderStyle: 'focused',
+        // showCurlBeforeTry: true,
+        sortEndpointsBy: 'method',
+        fillRequestFieldsWithExample: true,
+      },
+    });
   }
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });

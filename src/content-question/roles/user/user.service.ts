@@ -21,35 +21,39 @@ export class ContentQuestionUserService {
 
   /**
    * find all ContentQuestion
+   * پرسش های متصل به محتوا
+   * متصل به دسته بندی محتوا
+   * یا برای  کل یک دسته بندی محتوا مثلا همه پرسش های مربوط به بلاگ
    * @param page
    * @param perPage
    * @returns
    */
   async findAll(dto: FindAllContentQuestionUserDto): Promise<PaginatedResult<ContentQuestion>> {
+    let q: Prisma.ContentQuestionWhereInput = { is_publish: true };
+    if (dto.content_id) q = { ...q, content_id: dto.content_id };
+    else if (dto.content_key) q = { ...q, content: { key: dto.content_key } };
+    else if (dto.content_category_id) q = { ...q, content_category_id: dto.content_category_id };
+    else if (dto.content_parent_category_id)
+      q = {
+        ...q,
+        content: {
+          OR: [
+            { category_id: dto.content_parent_category_id },
+            { category: { parent_id: dto.content_parent_category_id } },
+          ],
+        },
+      };
+
     const list = paginate()<ContentQuestion, Prisma.ContentQuestionFindManyArgs>(
       this.db.contentQuestion,
-      { where: { content_id: dto.content_id, is_publish: true }, include: { image: true } },
+      {
+        where: q,
+        include: { image: true },
+        omit: { mobile_number: true, admin_id: true, content_id: true, content_category_id: true },
+      },
       { page: dto.page, perPage: dto.per_page },
     );
 
     return list;
-  }
-
-  /**
-   * find many
-   * this method used for selectable lists with less than 50 items
-   * @returns
-   */
-  async findMany(): Promise<ContentQuestion[]> {
-    const list = await this.db.contentQuestion.findMany();
-    return list;
-  }
-
-  /**
-   * remove
-   * @param contentQuestionId
-   */
-  async remove(contentQuestionId: number): Promise<void> {
-    await this.db.contentQuestion.delete({ where: { id: contentQuestionId } });
   }
 }

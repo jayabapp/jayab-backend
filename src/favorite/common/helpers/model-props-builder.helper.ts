@@ -101,15 +101,12 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'favorite',
     modelTitle: 'بیس',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
       // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
       // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-
       /* ---------------------------------- enum ---------------------------------- */
       // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
       // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
-
       /* ---------------------------------- date ---------------------------------- */
       // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'date' },
       // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'date' },

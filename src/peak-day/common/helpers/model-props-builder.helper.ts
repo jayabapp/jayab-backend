@@ -108,7 +108,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'peakDay',
     modelTitle: 'روزهای پیک',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'روز', key: 'day', cellType: 'string' },
       { id: 20, title: 'مـاه', key: 'month', cellType: 'string' },
       { id: 30, title: 'سـال', key: 'year', cellType: 'string' },

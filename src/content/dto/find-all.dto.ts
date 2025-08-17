@@ -9,18 +9,18 @@ export enum ContentSort {
   NEWEST = 'newest',
 }
 export class FindAllContentSharedDto extends PaginationDto {
-  @ApiProperty({ required: true, default: 'blog' })
+  @ApiProperty({ required: true, example: 'blog' })
   @_IsString()
   @_IsNotEmpty()
   key: string;
 
-  @ApiProperty({ required: false, default: 'مقاله' })
+  @ApiProperty({ required: false, example: 'مقاله' })
   @_IsString()
   @IsOptional()
-  q?: string;
+  q: string;
 
-  @ApiProperty({ enum: ContentSort, required: false, default: ContentSort.DEFAULT })
+  @ApiProperty({ enum: ContentSort, required: false, example: ContentSort.DEFAULT })
   @_IsEnum(ContentSort)
   @IsOptional()
-  sort?: ContentSort;
+  sort: ContentSort;
 }

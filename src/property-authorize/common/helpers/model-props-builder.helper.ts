@@ -121,7 +121,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'PropertyAuthorize',
     modelTitle: 'احراز ملک',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       {
         id: 10,
         title: 'ملک',

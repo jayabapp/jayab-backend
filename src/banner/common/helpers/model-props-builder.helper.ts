@@ -182,7 +182,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'banner',
     modelTitle: 'بنر',
     columns: [
-      { id: 1, title: 'شناسه', key: 'id', cellType: 'number' },
       { id: 5, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 6, title: 'تصویر سایز کوچک', key: 'image_sm', cellType: 'image' },
       { id: 2, title: 'عنوان', key: 'title', cellType: 'string' },

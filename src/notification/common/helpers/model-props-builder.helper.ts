@@ -105,7 +105,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'notifications',
     modelTitle: 'اعلان',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 2, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 3, title: 'متن', key: 'body', cellType: 'string', optionalClass: 'text-sm line-clamp-5' },
       { id: 3, title: 'ارسال به موبایل', key: 'data', cellType: 'object', nestedKey: 'mobile_number' },

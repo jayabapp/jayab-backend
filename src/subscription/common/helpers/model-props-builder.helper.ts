@@ -103,7 +103,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'subscription',
     modelTitle: 'اشتراک',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'موبایل', key: 'mobile_number', cellType: 'string' },
       { id: 11, title: 'نوع اشتراک', key: 'type', cellType: 'string' },
       { id: 20, title: 'تاریخ ثبت', key: 'created_at', cellType: 'date' },

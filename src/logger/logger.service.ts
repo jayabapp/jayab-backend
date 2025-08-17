@@ -23,9 +23,7 @@ export class LoggerService {
             format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
             format.metadata({ fillExcept: ['message', 'level', 'timestamp'] }),
             format.printf((data) => {
-              return `[${data.timestamp}] [${data.level.toUpperCase()}]: ${data.message}\n${
-                data.metadata.stack
-              }`;
+              return `[${data.timestamp}] [${data.level.toUpperCase()}]: ${data.message}\n`;
             }),
           ),
         }),

@@ -122,7 +122,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'propertyOption',
     modelTitle: 'آپشن',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 11, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: PropertyOptionGroupList },

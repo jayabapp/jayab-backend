@@ -102,7 +102,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'formBuilder',
     modelTitle: 'فرم ساز',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 22, title: 'نوع ورودی', key: 'type', cellType: 'enum', enumList: formBuilderInputList },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'ایتم های انتخابی', key: 'options', cellType: 'arrayOfStrings' },

@@ -327,7 +327,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'property',
     modelTitle: 'ملک',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 5, title: 'تصویر', key: 'feature_image', cellType: 'image' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 15, title: 'کد', key: 'code', cellType: 'string', optionalClass: 'text-warning' },

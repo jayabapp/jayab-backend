@@ -32,7 +32,7 @@ import { filterValidator } from 'src/content-category/common/helpers/filter-vali
 export class ContentCategoryAdminController {
   constructor(private readonly contentCategoryAdminService: ContentCategoryAdminService) {}
 
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateContentCategoryAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.contentCategoryAdminService.create(dto);
@@ -41,7 +41,7 @@ export class ContentCategoryAdminController {
   }
 
   /* -------------------------------- FIND ALL -------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Req() req, @Query() dto: FindAllContentCategoryAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -52,7 +52,7 @@ export class ContentCategoryAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -62,7 +62,7 @@ export class ContentCategoryAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.contentCategoryAdminService.findOne(id);
@@ -70,7 +70,7 @@ export class ContentCategoryAdminController {
     return { result };
   }
 
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -82,7 +82,7 @@ export class ContentCategoryAdminController {
     return { result, messageCode: 'UPDATE' };
   }
 
-  @ApiOperation({ operationId: 'Remove', description: '' })
+  @ApiOperation({ summary: 'Remove', description: '' })
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     await this.contentCategoryAdminService.findById(id);
@@ -94,7 +94,7 @@ export class ContentCategoryAdminController {
   /* -------------------------------------------------------------------------- */
   /*                               DYNAMIC FIELDS                               */
   /* -------------------------------------------------------------------------- */
-  @ApiOperation({ operationId: 'Update Dynamic fields' })
+  @ApiOperation({ summary: 'Update Dynamic fields' })
   @Post(':id/dynamic-fields')
   async updateDynamicFields(
     @Param('id', ParseIntPipe) id: number,
@@ -105,7 +105,7 @@ export class ContentCategoryAdminController {
 
     return { result, messageCode: 'UPDATE' };
   }
-  @ApiOperation({ operationId: 'Update Dynamic fields' })
+  @ApiOperation({ summary: 'Update Dynamic fields' })
   @Delete(':id/dynamic-fields/:key')
   async removeDynamicFields(
     @Param('id', ParseIntPipe) id: number,

@@ -102,7 +102,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'ticket',
     modelTitle: 'تیکت',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 41, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 40, title: 'پیام', key: 'message', cellType: 'string' },
       {

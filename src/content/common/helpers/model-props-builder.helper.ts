@@ -302,7 +302,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'content',
     modelTitle: 'محتوا',
     columns: [
-      { id: 1, title: 'شناسه', key: 'id', cellType: 'number' },
       { id: 5, title: 'تصویر', key: 'feature_image', cellType: 'image' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 11, title: 'کلید', key: 'key', cellType: 'string' },

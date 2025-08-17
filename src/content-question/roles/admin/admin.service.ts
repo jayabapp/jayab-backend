@@ -60,7 +60,14 @@ export class ContentQuestionAdminService {
   async findAll(filters: object, page: number, perPage = 50): Promise<PaginatedResult<ContentQuestion>> {
     const list = await paginate()<ContentQuestion, Prisma.ContentQuestionFindManyArgs>(
       this.db.contentQuestion,
-      { where: filters, include: { image: true, content: true, content_category: true } },
+      {
+        where: filters,
+        include: {
+          image: true,
+          content: true,
+          content_category: true,
+        },
+      },
       { page, perPage },
     );
 

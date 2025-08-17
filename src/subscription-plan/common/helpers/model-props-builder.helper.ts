@@ -165,7 +165,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'subscriptionPlan',
     modelTitle: 'پلن',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: SubscriptionPlanGroupList },
       { id: 30, title: 'قیمت (تومان)	', key: 'price', cellType: 'number' },

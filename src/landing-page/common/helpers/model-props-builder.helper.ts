@@ -102,7 +102,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'landingPage',
     modelTitle: 'صفحهات فرود',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'url', key: 'url', cellType: 'string' },
       { id: 30, title: 'تصویر', key: 'image', cellType: 'image' },

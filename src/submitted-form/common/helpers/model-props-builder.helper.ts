@@ -150,7 +150,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'submittedForm',
     modelTitle: 'فـرم های ثـبت شده',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 20, title: 'مربوط به', key: 'content', cellType: 'object', nestedKey: 'title' },
       // { id: 30, title: 'نام', key: 'full_name', cellType: 'string' },
       // { id: 40, title: 'موبایل', key: 'mobile_number', cellType: 'string' },

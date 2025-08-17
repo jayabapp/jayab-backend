@@ -18,7 +18,7 @@ import { ADMIN_ROUTE_GROUP } from 'src/content/common/route-group.constant';
 import { ContentAdminService } from './admin.service';
 import { CreateContentAdminDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateContentAdminDto } from './dto/update.dto';
+import { UpdateContentAdminDto, UpdateContentProductCategoryAdminDto } from './dto/update.dto';
 import { FindAllContentAdminDto } from './dto/find-all.dto';
 import qs from 'qs';
 import { ShowProps } from 'src/common/interfaces/model-props.interface';
@@ -34,7 +34,7 @@ export class ContentAdminController {
   constructor(private readonly contentAdminService: ContentAdminService) {}
 
   /* --------------------------------- CREATE --------------------------------- */
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateContentAdminDto): Promise<SuccessResponseArgs> {
     const result = await this.contentAdminService.create(dto);
@@ -42,7 +42,7 @@ export class ContentAdminController {
   }
 
   /* -------------------------------- FIND ALL -------------------------------- */
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Req() req, @Query() dto: FindAllContentAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
@@ -54,7 +54,7 @@ export class ContentAdminController {
   }
 
   /* ------------------------------- MODEL PROPS ------------------------------ */
-  @ApiOperation({ operationId: 'Find model props', description: '' })
+  @ApiOperation({ summary: 'Find model props', description: '' })
   @Get('model-props')
   async findModelProps(@Req() req): Promise<SuccessResponseArgs> {
     const rbac = req.adminRbac as AccessControlList;
@@ -65,7 +65,7 @@ export class ContentAdminController {
   }
 
   /* -------------------------------- FIND ONE -------------------------------- */
-  @ApiOperation({ operationId: 'Find One', description: '' })
+  @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     const result = await this.contentAdminService.findOne(id);
@@ -74,7 +74,7 @@ export class ContentAdminController {
   }
 
   /* --------------------------------- UPDATE --------------------------------- */
-  @ApiOperation({ operationId: 'Update', description: '' })
+  @ApiOperation({ summary: 'Update', description: '' })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -87,7 +87,7 @@ export class ContentAdminController {
   }
 
   /* --------------------------------- DELETE --------------------------------- */
-  @ApiOperation({ operationId: 'Remove', description: '' })
+  @ApiOperation({ summary: 'Remove', description: '' })
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
     await this.contentAdminService.findById(id);

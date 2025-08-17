@@ -251,7 +251,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'advisor',
     modelTitle: 'مشاور',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'تصویر', key: 'user', cellType: 'image', nestedKey: 'profile_image' },
       { id: 20, title: 'نام و نام خانوادگی', key: 'user', cellType: 'object', nestedKey: 'full_name' },
       { id: 30, title: 'موبایل', key: 'user', cellType: 'object', nestedKey: 'mobile_number' },

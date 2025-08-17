@@ -25,7 +25,6 @@ export class ContentSharedService {
     const category = await this.db.contentCategory.findFirst({
       where: { key },
       include: {
-        questions: { where: { is_publish: true }, include: { image: true } },
         child: { include: { image: true } },
       },
     });
@@ -55,9 +54,8 @@ export class ContentSharedService {
         feature_image: true,
         attachments: { include: { attachment: true } },
         video: true,
-        questions: { where: { is_publish: true }, include: { image: true } },
       },
-      orderBy: { order: { sort: 'asc', nulls: 'last' } },
+      orderBy: [{ order: { sort: 'asc', nulls: 'last' } }, { created_at: 'desc' }],
     };
 
     const list = await paginate()<Content, Prisma.ContentFindManyArgs>(this.db.content, query, {
@@ -79,7 +77,6 @@ export class ContentSharedService {
       include: {
         category: {
           include: {
-            questions: { where: { is_publish: true }, include: { image: true } },
             parent: true,
             image: true,
           },
@@ -87,7 +84,6 @@ export class ContentSharedService {
         feature_image: true,
         attachments: { include: { attachment: true } },
         video: true,
-        questions: { where: { is_publish: true }, include: { image: true } },
         forms: { orderBy: { sort_order: { sort: 'asc', nulls: 'last' } } },
       },
     });
@@ -106,11 +102,10 @@ export class ContentSharedService {
     const item = await this.db.content.findFirst({
       where: { key: `${key}` },
       include: {
-        category: { include: { questions: { where: { is_publish: true }, include: { image: true } } } },
+        category: true,
         feature_image: true,
         video: true,
         attachments: { include: { attachment: true } },
-        questions: { where: { is_publish: true }, include: { image: true } },
         forms: { orderBy: { sort_order: { sort: 'asc', nulls: 'last' } } },
       },
     });
@@ -132,13 +127,11 @@ export class ContentSharedService {
           include: {
             parent: true,
             image: true,
-            questions: { where: { is_publish: true }, include: { image: true } },
           },
         },
         feature_image: true,
         attachments: { include: { attachment: true } },
         video: true,
-        questions: { where: { is_publish: true }, include: { image: true } },
         forms: { orderBy: { sort_order: { sort: 'asc', nulls: 'last' } } },
       },
       data: { view_count: { increment: 1 } },
@@ -149,7 +142,7 @@ export class ContentSharedService {
   }
 
   /**
-   * find the category by user
+   * find the category by key
    * @param categoryKey
    * @returns
    */
@@ -158,6 +151,25 @@ export class ContentSharedService {
       where: { key: categoryKey },
       include: {
         image: true,
+        child: { include: { image: true } },
+      },
+    });
+    if (!item) throw new NotFoundException('NOT_FOUND');
+
+    return item;
+  }
+
+  /**
+   * find the category by slug
+   * @param categorySlug
+   * @returns
+   */
+  async findOneCategoryBySlug(categorySlug: string): Promise<ContentCategory> {
+    const item = await this.db.contentCategory.findFirst({
+      where: { slug: categorySlug },
+      include: {
+        image: true,
+        child: { include: { image: true } },
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');

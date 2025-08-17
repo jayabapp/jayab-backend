@@ -42,6 +42,9 @@ export const filterValidator = (
       case 'not_answered':
         if (filters.not_answered) query = { ...query, answer: null };
         break;
+      case 'is_not_published':
+        if (filters.is_not_published) query = { ...query, is_publish: false };
+        break;
 
       default:
         break;

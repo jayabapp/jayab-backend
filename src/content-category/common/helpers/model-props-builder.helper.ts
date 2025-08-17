@@ -169,7 +169,7 @@ export const createPropsBuilder = (formattedCategories: any): Array<CreateProps>
       state: 'show_in_sitemap',
       type: 'switch',
       title: 'نمایش در سایت مپ',
-      options: { initValue: true },
+      // options: { initValue:  },
     },
     {
       state: 'description',
@@ -199,7 +199,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'contentCategory',
     modelTitle: 'دسته بندی محتوا',
     columns: [
-      { id: 1, title: 'شناسه', key: 'id', cellType: 'number' },
       { id: 2, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'کلید', key: 'key', cellType: 'string' },

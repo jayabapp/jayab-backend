@@ -37,11 +37,18 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 export const showPropsBuilder = (
   item: ContentQuestion & {
     image: Attachment;
-    content: Content;
-    content_category: ContentCategory;
+    content?: Content;
+    content_category?: ContentCategory;
   },
 ): Array<ShowProps> => {
   const props: Array<ShowProps> = [
+    {
+      state: 'is_publish',
+      type: 'boolean',
+      title: 'منتشر شده',
+      value: item.is_publish,
+    },
+    { type: 'break' },
     {
       state: 'content',
       type: 'object',
@@ -57,12 +64,6 @@ export const showPropsBuilder = (
       value: item.content_id,
       isHidden: true,
       // isEditable: false,
-    },
-    {
-      state: 'is_publish',
-      type: 'boolean',
-      title: 'منتشر شده',
-      value: item.is_publish,
     },
     { type: 'break' },
     {
@@ -169,7 +170,7 @@ export const createPropsBuilder = (contents: any, formattedCategories: any): Arr
       selectItems: contents,
       searchColumn: 'title',
       searchRoute: '/admin/contents',
-      options: { isMandatory: true, hint: 'محتوای مرتبط به این پرسش', disabled: true },
+      options: { isMandatory: false, hint: 'محتوای مرتبط به این پرسش', disabled: true },
     },
     {
       state: 'content_category_id',
@@ -178,7 +179,15 @@ export const createPropsBuilder = (contents: any, formattedCategories: any): Arr
       selectItems: formattedCategories,
       searchColumn: 'title',
       searchRoute: '/admin/content-categories',
-      options: { isMandatory: true, hint: 'دسته بندی مرتبط به این پرسش', disabled: true },
+      options: { isMandatory: false, hint: 'دسته بندی مرتبط به این پرسش', disabled: true },
+    },
+    {
+      state: 'product_id',
+      type: 'select',
+      title: 'محصول',
+      searchColumn: 'title',
+      searchRoute: '/admin/products',
+      options: { isMandatory: false, hint: 'محصول مرتبط به این پرسش', disabled: true },
     },
     { type: 'divider' },
     {
@@ -214,7 +223,8 @@ export const createPropsBuilder = (contents: any, formattedCategories: any): Arr
     {
       state: 'is_publish',
       type: 'switch',
-      title: 'منتشر شود؟',
+      title: 'منتشر شده',
+      options: { initValue: true },
     },
     { type: 'divider' },
     {
@@ -236,11 +246,10 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'contentQuestion',
     modelTitle: 'پرسش و پاسخ',
     columns: [
-      { id: 1, title: 'شناسه', key: 'id', cellType: 'number' },
-      { id: 5, title: 'تصویر', key: 'image', cellType: 'image' },
+      // { id: 5, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 10, title: 'سوال', key: 'question', cellType: 'string' },
       { id: 20, title: 'پاسخ', key: 'answer', cellType: 'string' },
-      { id: 220, title: 'منتشر شده', key: 'is_publish', cellType: 'boolean' },
+      { id: 223, title: 'منتشر شده', key: 'is_publish', cellType: 'boolean' },
       { id: 21, title: 'موبایل کاربر', key: 'mobile_number', cellType: 'string' },
       { id: 22, title: 'توسط ادمین', key: 'admin_id', cellType: 'boolean' },
       {
@@ -251,14 +260,14 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
         nestedKey: 'title',
         link: '/contents/edit',
       },
-      {
-        id: 252,
-        title: 'دسته بندی',
-        key: 'content_category',
-        cellType: 'object',
-        nestedKey: 'title',
-        link: '/content_categories/edit',
-      },
+      // {
+      //   id: 252,
+      //   title: 'دسته بندی',
+      //   key: 'content_category',
+      //   cellType: 'object',
+      //   nestedKey: 'title',
+      //   link: '/content_categories/edit',
+      // },
       { id: 90, title: 'تاریخ به روز رسانی', key: 'updated_at', cellType: 'date', optionalClass: '!text-xs' },
       { id: 100, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'date', optionalClass: '!text-xs' },
     ],
@@ -274,13 +283,18 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (keys?: any): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
-      title: 'عنوان',
-      state: 'title',
+      title: 'پرسش',
+      state: 'question',
       type: 'input',
     },
     {
       title: 'بدون پاسخ',
       state: 'not_answered',
+      type: 'switch',
+    },
+    {
+      title: 'منتشر نشده',
+      state: 'is_not_published',
       type: 'switch',
     },
     {

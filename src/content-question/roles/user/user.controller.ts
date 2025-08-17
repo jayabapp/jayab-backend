@@ -6,14 +6,15 @@ import { CreateContentQuestionUserDto } from './dto/create.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { FindAllContentQuestionUserDto } from './dto/find-all.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @ApiTags('ContentQuestion - USER')
 @Controller(USER_ROUTE_GROUP)
 export class ContentQuestionUserController {
   constructor(private readonly contentQuestionUserService: ContentQuestionUserService) {}
 
-  @Throttle({ default: { limit: 2, ttl: 120 } })
-  @ApiOperation({ operationId: 'Create', description: '' })
+  @Throttle({ default: { limit: 4, ttl: ONE_MINUTE_TTL } })
+  @ApiOperation({ summary: 'Create', description: '' })
   @Post()
   async create(@Body() dto: CreateContentQuestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.contentQuestionUserService.create(dto);
@@ -21,7 +22,7 @@ export class ContentQuestionUserController {
     return { result, messageCode: 'CONTENT_QUESTION1' };
   }
 
-  @ApiOperation({ operationId: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllContentQuestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.contentQuestionUserService.findAll(dto);

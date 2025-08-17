@@ -7,19 +7,19 @@ import { Transform } from 'class-transformer';
 export class UpdateContentCategoryAdminDto extends CreateContentCategoryAdminDto {}
 
 export class UpdateContentCategoryDynamicFieldsAdminDto {
-  @ApiProperty({ required: true, default: 'قوانین' })
+  @ApiProperty({ required: true, example: 'قوانین' })
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: true, default: 'terms' })
+  @ApiProperty({ required: true, example: 'terms' })
   @_IsString()
   @IsAlpha()
   @Transform(({ value }) => value?.replace(/ /g, ''))
   @_IsNotEmpty()
   key: string;
 
-  @ApiProperty({ required: true, default: 'type' })
+  @ApiProperty({ required: true, example: 'type' })
   @_IsString()
   @IsAlpha()
   @Transform(({ value }) => value?.replace(/ /g, ''))

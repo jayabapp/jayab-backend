@@ -9,7 +9,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateContentAdminDto } from './dto/create.dto';
-import { UpdateContentAdminDto } from './dto/update.dto';
+import { UpdateContentAdminDto, UpdateContentProductCategoryAdminDto } from './dto/update.dto';
 import {
   AvailableAction,
   Column,

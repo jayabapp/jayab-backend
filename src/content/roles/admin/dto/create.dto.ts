@@ -10,38 +10,38 @@ import {
 import { Transform, Type } from 'class-transformer';
 
 export class CreateContentAdminDto {
-  @ApiProperty({ required: true, default: 'عنوان' })
+  @ApiProperty({ required: true, example: 'عنوان' })
   @_IsString()
   @_IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: false, default: 'tel' })
+  @ApiProperty({ required: false, example: 'tel' })
   // @IsAlpha()
   @Transform(({ value }) => value?.trim()?.replace(/ /g, ''))
   @IsOptional()
   key: string;
 
-  @ApiProperty({ required: true, default: '' })
+  @ApiProperty({ required: true, example: '' })
   @Transform(({ value }) => value?.trim()?.replace(/ /g, ''))
   @_IsNotEmpty()
   slug: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
   small_text: string;
 
-  @ApiProperty({ required: false, default: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @IsOptional()
   full_text: string;
 
-  @ApiProperty({ required: false, default: '<p>تست</p>' })
+  @ApiProperty({ required: false, example: '<p>تست</p>' })
   @_IsString()
   @IsOptional()
   html: string;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @Transform(({ value }) => {
     if (!value) return null;
     return value;
@@ -51,7 +51,7 @@ export class CreateContentAdminDto {
   @IsOptional()
   feature_image_id: number;
 
-  @ApiProperty({ required: false, default: 1 })
+  @ApiProperty({ required: false, example: 1 })
   @Transform(({ value }) => {
     if (!value) return null;
     return value;
@@ -61,23 +61,23 @@ export class CreateContentAdminDto {
   @IsOptional()
   video_id: number;
 
-  @ApiProperty({ required: true, default: true })
+  @ApiProperty({ required: true, example: true })
   @_IsBoolean()
   @_IsNotEmpty()
   is_active: boolean;
 
-  @ApiProperty({ required: true, default: true })
+  @ApiProperty({ required: true, example: true })
   @_IsBoolean()
   @_IsNotEmpty()
   show_in_sitemap: boolean;
 
-  @ApiProperty({ required: true, default: 1 })
+  @ApiProperty({ required: true, example: 1 })
   @_IsInt()
   @Type(() => Number)
   @IsOptional()
   category_id: number;
 
-  @ApiProperty({ title: 'عکس های بیشتر', default: [1] })
+  @ApiProperty({ title: 'عکس های بیشتر', example: [1] })
   @IsOptional()
   @_IsArray()
   attachments: number[];
@@ -93,9 +93,10 @@ export class CreateContentAdminDto {
   seo: object;
 
   @ApiProperty({ title: 'ترتیب' })
+  @Transform(({ value }) => (value === '' ? null : value))
   @_IsInt()
   @IsOptional()
-  order: number;
+  order?: number;
 
   @ApiProperty({ title: 'لینک' })
   @_IsString()

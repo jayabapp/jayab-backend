@@ -101,7 +101,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'paymentGateway',
     modelTitle: 'درگاه',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'فعال', key: 'is_active', cellType: 'boolean' },
       { id: 30, title: 'کلید', key: 'key', cellType: 'string' },

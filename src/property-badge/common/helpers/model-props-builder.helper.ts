@@ -102,7 +102,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'propertyBadge',
     modelTitle: 'ملک های ممتاز',
     columns: [
-      { id: 1, title: 'ردیف', key: 'id', cellType: 'number' },
       {
         id: 2,
         title: 'نام ملک',
