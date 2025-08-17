@@ -1,21 +1,20 @@
-/**
- * JAYAB V1 DB CONNECTION
- */
 // import { Injectable, OnModuleInit } from '@nestjs/common';
-// import { Prisma, PrismaClient } from '@prisma-client2/prisma/client';
+// import { PrismaClient } from '@prisma/client';
 
 // const ModelsWithSoftDelete = [
-//   // 'City',
-//   // 'Category',
-//   // 'OfferCode',
-//   // 'FormBuilder',
-//   // // 'Property',
-//   // 'PropertyOption',
-//   // 'SubscriptionPlan',
+//   'City',
+//   'Category',
+//   'OfferCode',
+//   'FormBuilder',
+//   'Property',
+//   'PropertyOption',
+//   'SubscriptionPlan',
 // ];
 
+// const prisma = new PrismaClient();
+
 // @Injectable()
-// export class PrismaService2 extends PrismaClient implements OnModuleInit {
+// export class PrismaService extends PrismaClient implements OnModuleInit {
 //   constructor() {
 //     super();
 //   }
@@ -53,5 +52,10 @@
 //     /* -------------------------------------------------------------------------- */
 //     /*                               END SOFT DELETE                              */
 //     /* -------------------------------------------------------------------------- */
+//   }
+
+//   // Expose the extended Prisma client with custom methods
+//   get client() {
+//     return prisma;
 //   }
 // }

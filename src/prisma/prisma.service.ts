@@ -9,62 +9,63 @@ const ModelsWithSoftDelete = [
   'Property',
   'PropertyOption',
   'SubscriptionPlan',
-];
-
-const isSoftDeleteModel = (model: string, args: any): boolean => {
-  return ModelsWithSoftDelete.includes(model);
-};
-
-// Create an extended Prisma client instance
-const extendedClient = new PrismaClient().$extends({
-  query: {
-    $allModels: {
-      findMany({ model, args, query }) {
-        if (isSoftDeleteModel(model, args) && args?.where?.['deleted_at'] == undefined) {
-          args.where = { ...args.where, deleted_at: null };
-        }
-        return query(args);
-      },
-      findFirst({ model, args, query }) {
-        if (isSoftDeleteModel(model, args) && args?.where?.['deleted_at'] == undefined) {
-          args.where = { ...args.where, deleted_at: null };
-        }
-        return query(args);
-      },
-      findUnique({ model, args, query }) {
-        if (isSoftDeleteModel(model, args) && args?.where?.['deleted_at'] == undefined) {
-          args.where = { ...args.where, deleted_at: null };
-        }
-        return query(args);
-      },
-      delete({ model, args }) {
-        if (isSoftDeleteModel(model, args)) {
-          return (extendedClient as any)[model].update({
-            where: args.where,
-            data: { deleted_at: new Date() },
-          });
-        }
-        return (extendedClient as any)[model].delete(args);
-      },
-      deleteMany({ model, args }) {
-        if (isSoftDeleteModel(model, args)) {
-          return (extendedClient as any)[model].updateMany({
-            where: args.where,
-            data: { deleted_at: new Date() },
-          });
-        }
-        return (extendedClient as any)[model].deleteMany(args);
-      },
-    },
-  },
-});
+] as const;
 
 @Injectable()
-export class PrismaService extends (PrismaClient as any) implements OnModuleInit {
+export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    // @ts-ignore: assign extended instance to this
     super();
-    Object.assign(this, extendedClient);
+
+    // Extend only query behavior for soft delete
+    const extended = this.$extends({
+      query: {
+        $allModels: {
+          findMany({ model, args, query }) {
+            if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
+              args.where = { ...args.where, deleted_at: null };
+            }
+            return query(args);
+          },
+
+          findFirst({ model, args, query }) {
+            if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
+              args.where = { ...args.where, deleted_at: null };
+            }
+            return query(args);
+          },
+
+          findUnique({ model, args, query }) {
+            if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
+              args.where = { ...args.where, deleted_at: null };
+            }
+            return query(args);
+          },
+
+          delete({ model, args }) {
+            if (ModelsWithSoftDelete.includes(model as any)) {
+              return (this as any)[model].update({
+                where: args.where,
+                data: { deleted_at: new Date() },
+              });
+            }
+            return (this as any)[model].delete(args);
+          },
+
+          deleteMany({ model, args }) {
+            if (ModelsWithSoftDelete.includes(model as any)) {
+              return (this as any)[model].updateMany({
+                where: args.where,
+                data: { deleted_at: new Date() },
+              });
+            }
+            return (this as any)[model].deleteMany(args);
+          },
+        },
+      },
+    });
+
+    // Merge the extended client back into this
+    Object.assign(this, extended);
   }
 
   async onModuleInit() {
