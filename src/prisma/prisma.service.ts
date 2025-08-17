@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { camelCase } from 'lodash';
 
 const ModelsWithSoftDelete = [
   'City',
@@ -41,24 +42,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             return query(args);
           },
 
-          delete({ model, args }) {
+          delete({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
-              return (this as any)[model].update({
-                where: args.where,
-                data: { deleted_at: new Date() },
-              });
+              args.where = { ...args.where, deleted_at: null };
             }
-            return (this as any)[model].delete(args);
+            return query(args);
           },
 
-          deleteMany({ model, args }) {
+          deleteMany({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
-              return (this as any)[model].updateMany({
-                where: args.where,
-                data: { deleted_at: new Date() },
-              });
+              args.where = { ...args.where, deleted_at: null };
             }
-            return (this as any)[model].deleteMany(args);
+            return query(args);
           },
         },
       },
