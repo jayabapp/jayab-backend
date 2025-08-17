@@ -157,7 +157,7 @@ Allow: *
   async initSitemap(): Promise<any> {
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-<!--  created with Kian Sitemap Generator www.kiantc.com  -->
+<!--  created by Kian Sitemap Generator www.kiantc.com  -->
 `;
     const sitemapInJson = await this.generateContentSitemap();
     for (const item of sitemapInJson) {
@@ -165,8 +165,6 @@ Allow: *
 <url>      
   <loc>${item.loc}</loc>  
   <lastmod>${item.lastmod}</lastmod>
-  <priority>${item.priority}</priority>
-  <changefreq>${item.changefreq}</changefreq>
 </url>  
   `;
     }
@@ -278,7 +276,7 @@ Allow: *
       });
     }
 
-    console.log(sitemap);
+    // console.log(sitemap);
 
     return sitemap;
   }
