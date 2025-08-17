@@ -182,17 +182,6 @@ Allow: *
    * @returns
    */
   async generateContentSitemap(): Promise<Sitemap[]> {
-    const contents = await this.db.content.findMany({
-      where: { show_in_sitemap: true, slug: { not: null } },
-    });
-    const contentCategory = await this.db.contentCategory.findMany({
-      where: { show_in_sitemap: true },
-    });
-    const properties = await this.db.property.findMany({
-      where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
-      select: { slug: true, updated_at: true },
-    });
-
     const siteUrl = this.config.get('url.websiteUrl');
 
     const sitemap: Sitemap[] = [];
@@ -201,69 +190,95 @@ Allow: *
     sitemap.push({
       loc: `${siteUrl}/about-us`,
       lastmod: moment().toISOString(),
-      priority: 0.8,
-      changefreq: 'weekly',
+      // priority: 0.8,
+      // changefreq: 'weekly',
     });
     sitemap.push({
       loc: `${siteUrl}/contact-us`,
       lastmod: moment().toISOString(),
-      priority: 0.8,
-      changefreq: 'weekly',
-    });
-    sitemap.push({
-      loc: `${siteUrl}/blog?page=1`,
-      lastmod: moment().toISOString(),
-      priority: 0.8,
-      changefreq: 'daily',
-    });
-    sitemap.push({
-      loc: `${siteUrl}/faq`,
-      lastmod: moment().toISOString(),
-      priority: 0.8,
-      changefreq: 'daily',
     });
     sitemap.push({
       loc: `${siteUrl}/terms`,
       lastmod: moment().toISOString(),
-      priority: 1.0,
-      changefreq: 'daily',
+    });
+    sitemap.push({
+      loc: `${siteUrl}/faq`,
+      lastmod: moment().toISOString(),
     });
 
-    for (const content of contents) {
-      //@ts-ignore
-      const route = content.seo?.sitemap_url || ''; //روت بین اسلاگ و دامنه اصلی
-      //@ts-ignore
-      const slug = content.seo?.is_url_without_slug?.id === '1' ? '' : content.slug; //برای بعضی ها مثل درباره ما باید بدون اسلاگ باشه
-      //@ts-ignore
-      const priority = content.seo?.priority || 0.8;
-      //@ts-ignore
-      const changefreq = content.seo?.sitemap_change_freq?.id || 'monthly';
+    /* --------------------------------- CONTENT -------------------------------- */
+    const contents = await this.db.content.findMany({
+      where: { category: { show_in_sitemap: true, NOT: { key: '' } } },
+      select: {
+        id: true,
+        slug: true,
+        category: {
+          select: {
+            id: true,
+            slug: true,
+            key: true,
+            parent: { select: { id: true, key: true, slug: true, show_in_sitemap: true } },
+          },
+        },
+      },
+      orderBy: { category: { key: 'asc' } },
+    });
+
+    for (const c of contents) {
+      if (['about-us', 'contact-us', 'faq'].includes(c.category.key)) continue;
+
+      let loc: string;
+      if (c.category?.parent?.id) loc = `${siteUrl}/${c.category.parent.key}/${c.category.key}/${c.slug}`;
+      else loc = `${siteUrl}/${c.category.key}/${c.slug}`;
 
       sitemap.push({
-        loc: `${siteUrl}${route ? `/${route}` : ''}${slug ? `/${slug}` : ''}`,
-        lastmod: moment(content.updated_at).toISOString(),
-        priority,
-        changefreq,
+        loc: loc,
+        lastmod: moment().toISOString(),
       });
     }
 
-    for (const cat of contentCategory) {
+    /* --------------------------- CONTENT CATEGORIES --------------------------- */
+    const contentCategories = await this.db.contentCategory.findMany({
+      where: { show_in_sitemap: true },
+      include: { parent: true },
+    });
+    for (const c of contentCategories) {
+      if (['about-us', 'contact-us', 'faq'].includes(c.key)) continue;
+
+      let loc: string;
+      if (c?.parent?.id) loc = `${siteUrl}/${c.parent.key}/${c.key}`;
+      else loc = `${siteUrl}/${c.key}`;
+
       sitemap.push({
-        loc: `${siteUrl}/${cat.key}`,
-        lastmod: moment(cat.updated_at).toISOString(),
-        priority: 0.8,
-        changefreq: 'weekly',
+        loc: loc,
+        lastmod: moment().toISOString(),
       });
     }
 
+    /* -------------------------------- PROPERTY -------------------------------- */
+    const properties = await this.db.property.findMany({
+      where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
+      select: { slug: true, updated_at: true },
+    });
     for (const p of properties) {
       sitemap.push({
         loc: `${siteUrl}/rooms/${p.slug}`,
         lastmod: moment(p.updated_at).toISOString(),
-        priority: 0.8,
-        changefreq: 'weekly',
       });
     }
+    /* --------------------------------- LANDING -------------------------------- */
+    const landingPages = await this.db.landingPage.findMany({
+      where: {},
+      select: { url: true, updated_at: true },
+    });
+    for (const l of landingPages) {
+      sitemap.push({
+        loc: `${siteUrl}/${l.url}`,
+        lastmod: moment(l.updated_at).toISOString(),
+      });
+    }
+
+    console.log(sitemap);
 
     return sitemap;
   }
