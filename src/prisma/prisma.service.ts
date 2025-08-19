@@ -24,35 +24,41 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
           findMany({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
               args.where = { ...args.where, deleted_at: null };
-            }
+            } else delete args.where?.['deleted_at'];
             return query(args);
           },
 
           findFirst({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
               args.where = { ...args.where, deleted_at: null };
-            }
+            } else delete args.where?.['deleted_at'];
             return query(args);
           },
 
           findUnique({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
               args.where = { ...args.where, deleted_at: null };
-            }
+            } else delete args.where?.['deleted_at'];
             return query(args);
           },
 
           delete({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
               args.where = { ...args.where, deleted_at: null };
-            }
+            } else delete args.where?.['deleted_at'];
             return query(args);
           },
 
           deleteMany({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
               args.where = { ...args.where, deleted_at: null };
-            }
+            } else delete args.where?.['deleted_at'];
+            return query(args);
+          },
+          count({ model, args, query }) {
+            if (ModelsWithSoftDelete.includes(model as any)) {
+              args.where = { ...args.where, deleted_at: null };
+            } else delete args.where?.['deleted_at'];
             return query(args);
           },
         },
