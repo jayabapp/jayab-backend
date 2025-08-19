@@ -5,19 +5,26 @@ import { camelCase } from 'lodash';
 const ModelsWithSoftDelete = [
   'City',
   'Category',
-  'OfferCode',
   'FormBuilder',
   'Property',
   'PropertyOption',
   'SubscriptionPlan',
 ] as const;
 
+const modelMap: Record<string, keyof PrismaClient> = {
+  City: 'city',
+  Category: 'category',
+  FormBuilder: 'formBuilder',
+  Property: 'property',
+  PropertyOption: 'propertyOption',
+  SubscriptionPlan: 'subscriptionPlan',
+};
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
     super();
 
-    // Extend only query behavior for soft delete
     const extended = this.$extends({
       query: {
         $allModels: {
@@ -44,15 +51,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
           delete({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
-              args.where = { ...args.where, deleted_at: null };
-            } else delete args.where?.['deleted_at'];
+              return extended[modelMap[model]].update({
+                where: args.where,
+                data: { deleted_at: new Date() },
+              });
+            }
             return query(args);
           },
 
           deleteMany({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
-              args.where = { ...args.where, deleted_at: null };
-            } else delete args.where?.['deleted_at'];
+              return extended[modelMap[model]].updateMany({
+                where: args.where,
+                data: { deleted_at: new Date() },
+              });
+            }
             return query(args);
           },
           count({ model, args, query }) {
