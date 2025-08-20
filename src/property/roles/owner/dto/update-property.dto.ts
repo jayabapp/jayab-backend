@@ -72,8 +72,8 @@ export class UpdatePropertyStepOneOwnerDto {
 
   @ApiProperty({ required: true, title: 'اسم ملک', example: 'ویلا کردان یک' })
   @_IsString()
-  @_MaxLength(100)
-  @_MinLength(2)
+  @_MaxLength(55)
+  @_MinLength(10)
   @_IsNotEmpty()
   title: string;
 
