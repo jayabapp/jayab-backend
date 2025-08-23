@@ -97,7 +97,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     model: 'user',
     modelTitle: 'کاربر',
     columns: [
-      { id: 1, title: 'شناسه', key: 'id', cellType: 'number' },
       { id: 30, title: 'شماره موبایل', key: 'mobile_number', cellType: 'string' },
       { id: 40, title: 'مشاور', key: 'advisor_id', cellType: 'boolean' },
       { id: 50, title: 'مالک', key: 'owner_id', cellType: 'boolean' },
