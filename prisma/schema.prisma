@@ -255,9 +255,9 @@ model Content {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  category       ContentCategory?  @relation(fields: [category_id], references: [id])
-  feature_image  Attachment?       @relation("featureImage", fields: [feature_image_id], references: [id])
-  video          Attachment?       @relation("ContentVideo", fields: [video_id], references: [id])
+  category       ContentCategory?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  feature_image  Attachment?       @relation("featureImage", fields: [feature_image_id], references: [id], onDelete: SetNull)
+  video          Attachment?       @relation("ContentVideo", fields: [video_id], references: [id], onDelete: SetNull)
   questions      ContentQuestion[]
   forms          FormBuilder[]
   submitted_form SubmittedForm[]
@@ -274,8 +274,8 @@ model ContentAttachment {
   updated_at    DateTime  @updatedAt
   deleted_at    DateTime? @db.Timestamp(6)
 
-  attachment Attachment @relation(fields: [attachment_id], references: [id])
-  content    Content    @relation(fields: [content_id], references: [id])
+  attachment Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+  content    Content    @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
   @@map("content_attachments")
 }
@@ -297,8 +297,8 @@ model ContentQuestion {
   updated_at DateTime @updatedAt
 
   image            Attachment?      @relation(fields: [image_id], references: [id])
-  content          Content?         @relation(fields: [content_id], references: [id])
-  content_category ContentCategory? @relation(fields: [content_category_id], references: [id])
+  content          Content?         @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  content_category ContentCategory? @relation(fields: [content_category_id], references: [id], onDelete: SetNull)
   admin            Admin?           @relation(fields: [admin_id], references: [id])
 
   @@map("content_questions")
