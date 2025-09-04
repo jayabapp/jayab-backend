@@ -145,7 +145,10 @@ export class AdvisorAdminService {
       const newCityIds = dto.cityIds.map((e) => ({ id: e }));
       delete dto.cityIds;
       data = { ...data, cities: { disconnect: oldCityIds, connect: newCityIds } };
-    }
+    } else data = { ...data, cities: { set: [] } };
+
+    //@ts-ignore
+    delete data.cityIds;
 
     await this.db.$transaction(async (tx) => {
       await tx.advisor.update({ where: { id: advisor.id }, data });
