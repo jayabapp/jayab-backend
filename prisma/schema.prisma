@@ -1122,7 +1122,7 @@ model MessengerMessages {
 }
 
 view UnreadMessageCount {
-  user_id      Int
+  user_id      Int @unique
   unread_count Int
 
   @@map("unread_message_counts")

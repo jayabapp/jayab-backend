@@ -83,6 +83,9 @@ export class TasksService {
           sent_at: today,
         },
       });
+
+      // const days =
+      //   moment(property.subscription_expired_at).diff(today, 'day') == 0 ? 'امروز' : 'تا سه روز دیگر';
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
