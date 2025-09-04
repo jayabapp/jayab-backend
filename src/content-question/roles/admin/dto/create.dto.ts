@@ -18,12 +18,12 @@ export class CreateContentQuestionAdminDto {
   @IsOptional()
   content_id: number;
 
-  @ApiProperty({ required: true, example: 1 })
-  @_IsInt()
-  @Type(() => Number)
-  @Validate(IsExist, ['product', 'id'])
-  @IsOptional()
-  product_id: number;
+  // @ApiProperty({ required: true, example: 1 })
+  // @_IsInt()
+  // @Type(() => Number)
+  // @Validate(IsExist, ['product', 'id'])
+  // @IsOptional()
+  // product_id: number;
 
   @ApiProperty({ required: true, example: 1 })
   @_IsInt()

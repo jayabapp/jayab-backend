@@ -42,6 +42,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             return query(args);
           },
 
+          //@ts-ignore
           findUnique({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any) && args?.where?.['deleted_at'] == undefined) {
               args.where = { ...args.where, deleted_at: null };

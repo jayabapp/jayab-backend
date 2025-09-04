@@ -181,14 +181,14 @@ export const createPropsBuilder = (contents: any, formattedCategories: any): Arr
       searchRoute: '/admin/content-categories',
       options: { isMandatory: false, hint: 'دسته بندی مرتبط به این پرسش', disabled: true },
     },
-    {
-      state: 'product_id',
-      type: 'select',
-      title: 'محصول',
-      searchColumn: 'title',
-      searchRoute: '/admin/products',
-      options: { isMandatory: false, hint: 'محصول مرتبط به این پرسش', disabled: true },
-    },
+    // {
+    //   state: 'product_id',
+    //   type: 'select',
+    //   title: 'محصول',
+    //   searchColumn: 'title',
+    //   searchRoute: '/admin/products',
+    //   options: { isMandatory: false, hint: 'محصول مرتبط به این پرسش', disabled: true },
+    // },
     { type: 'divider' },
     {
       state: 'question',
