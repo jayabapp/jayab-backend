@@ -84,8 +84,6 @@ export class TasksService {
         },
       });
 
-      // const days =
-      //   moment(property.subscription_expired_at).diff(today, 'day') == 0 ? 'امروز' : 'تا سه روز دیگر';
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
@@ -100,7 +98,7 @@ export class TasksService {
         mustSendNotif: true,
         notification: {
           title: 'یادآوری تمدید اشتراک ملک',
-          body: `ملک ${property.title} تا سه روز دیگر منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
+          body: `ملک ${property.title} ${days} منقضی می شود. لطفا برای تمدید اشتراک اقدام نمایید`,
         },
         notificationType: NotificationTypes.OWNER_PROPERTY,
         notificationableId: property.id.toString(),
