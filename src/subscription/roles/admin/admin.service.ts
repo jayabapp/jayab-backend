@@ -89,7 +89,9 @@ export class SubscriptionAdminService {
     });
   }
 
-  async createSubForProperty(dto: CreateSubscriptionAdminDto): Promise<void> {
+  async createSubForProperty(
+    dto: CreateSubscriptionAdminDto,
+  ): Promise<{ isPromote: boolean; user: Partial<User> }> {
     /*  */
     const subPlan = await this.subscriptionPlanAdminService.findOneByGroup(
       dto.subscription_plan_id,
@@ -97,7 +99,14 @@ export class SubscriptionAdminService {
     );
 
     /*  */
-    const property = await this.db.property.findUnique({ where: { id: dto.property_id } });
+    const property = await this.db.property.findFirst({
+      where: { id: dto.property_id },
+      select: {
+        id: true,
+        subscription_expired_at: true,
+        owner: { select: { user: { select: { mobile_number: true, full_name: true } } } },
+      },
+    });
     const lastSubExpiredAt = property?.subscription_expired_at || undefined;
 
     /*  */
@@ -138,6 +147,8 @@ export class SubscriptionAdminService {
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
     });
+
+    return { isPromote: subPlan.is_promote, user: property.owner.user };
   }
 
   /* -------------------------------------------------------------------------- */

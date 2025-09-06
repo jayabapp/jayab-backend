@@ -20,13 +20,17 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllSubscriptionAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
+import { SmsService } from 'src/sms/sms.service';
 
 @ApiTags('👨‍💻 Subscription - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
 @Controller(ADMIN_ROUTE_GROUP)
 export class SubscriptionAdminController {
-  constructor(private readonly subscriptionAdminService: SubscriptionAdminService) {}
+  constructor(
+    private readonly subscriptionAdminService: SubscriptionAdminService,
+    private readonly smsService: SmsService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                 MODEL PROPS                                */
@@ -46,8 +50,10 @@ export class SubscriptionAdminController {
   @Post()
   async create(@Body() dto: CreateSubscriptionAdminDto): Promise<SuccessResponseArgs> {
     if (dto?.advisor_id) await this.subscriptionAdminService.createSubForAdvisor(dto);
-    else if (dto?.property_id) await this.subscriptionAdminService.createSubForProperty(dto);
-    else throw new BadRequestException('COMMON6');
+    else if (dto?.property_id) {
+      const { isPromote, user } = await this.subscriptionAdminService.createSubForProperty(dto);
+      if (isPromote) await this.smsService.sendPromoteSmsToOwner(user.mobile_number, user.full_name);
+    } else throw new BadRequestException('COMMON6');
 
     return { messageCode: 'CREATE' };
   }
