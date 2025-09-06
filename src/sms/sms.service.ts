@@ -161,7 +161,7 @@ export class SmsService {
   }
 
   async sendPromoteSmsToOwner(mobile: string, fullName: string): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
