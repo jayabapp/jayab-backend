@@ -30,7 +30,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async removeDownloadedExcelTask(): Promise<void> {
-    const now = moment();
+    const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:delete-excel-files : ${now}`);
 
     try {
@@ -55,7 +55,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async propertySubscriptionReminderTask(): Promise<void> {
-    const now = moment();
+    const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:property-subscription-reminder : ${now}`);
 
     const threeDaysLater = nDaysLaterNow(3);
@@ -115,7 +115,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async advisorSubscriptionReminderTask(): Promise<void> {
-    const now = moment();
+    const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:advisor-subscription-reminder : ${now}`);
 
     const threeDaysLater = nDaysLaterNow(3);
