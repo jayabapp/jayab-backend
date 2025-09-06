@@ -1,5 +1,5 @@
 import { BadGatewayException, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { Payment, Prisma } from '@prisma/client';
+import { Payment, Prisma, Subscription, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { PaymentGatewayEnum } from 'src/payment-gateway/common/payment-gateway.enum';
@@ -98,9 +98,12 @@ export class PaymentUserService {
     }
   }
 
-  async subscriptionPaymentCallback(payment: Payment): Promise<Payment> {
+  async subscriptionPaymentCallback(payment: Payment): Promise<{
+    updatedPayment: Payment;
+    subscription: Subscription & { property: { owner: { user: Partial<User> } } };
+  }> {
     /* ----------------------------- PAYMENT PROCESS ---------------------------- */
-    const updatedPayment = await this.db.$transaction(async (tx) => {
+    const { updatedPayment, subscription } = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
 
       /* update payment */
@@ -113,7 +116,15 @@ export class PaymentUserService {
       const subscription = await tx.subscription.update({
         where: { payment_id: payment.id },
         data: { status: SubscriptionStatus.SUCCESS },
-        include: { property: { select: { id: true, subscription_expired_at: true } } },
+        include: {
+          property: {
+            select: {
+              id: true,
+              subscription_expired_at: true,
+              owner: { select: { user: { select: { mobile_number: true, full_name: true } } } },
+            },
+          },
+        },
       });
       const property = subscription.property;
 
@@ -138,26 +149,18 @@ export class PaymentUserService {
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
 
-      return item;
+      return { updatedPayment: item, subscription };
     });
 
-    /* -------------------------------------------------------------------------- */
-    /* SEND NOTIFICATION */
-    // await this.notificationSharedService.createNotification({
-    //   user: { id: null, role: UserRole.ADMIN },
-    //   mustSendNotif: true,
-    //   notification: {
-    //     title: 'سفارش جدید',
-    //     body: `یک سفارش جدید ثبت شده`,
-    //   },
-    //   notificationType: NotificationTypes.NEW_ORDER,
-    //   notificationableId: updatedPayment?.order_id?.toString(),
-    // });
-
-    return updatedPayment;
+    return { updatedPayment, subscription };
   }
 
-  async subscriptionAdvisorPaymentCallback(payment: Payment): Promise<Payment> {
+  async subscriptionAdvisorPaymentCallback(
+    payment: Payment,
+  ): Promise<{
+    updatedPayment: Payment;
+    subscription: Subscription & { property: { owner: { user: Partial<User> } } };
+  }> {
     /* ----------------------------- PAYMENT PROCESS ---------------------------- */
     const updatedPayment = await this.db.$transaction(async (tx) => {
       const refId = uuidv7();
@@ -205,20 +208,7 @@ export class PaymentUserService {
       return item;
     });
 
-    /* -------------------------------------------------------------------------- */
-    /* SEND NOTIFICATION */
-    // await this.notificationSharedService.createNotification({
-    //   user: { id: null, role: UserRole.ADMIN },
-    //   mustSendNotif: true,
-    //   notification: {
-    //     title: 'سفارش جدید',
-    //     body: `یک سفارش جدید ثبت شده`,
-    //   },
-    //   notificationType: NotificationTypes.NEW_ORDER,
-    //   notificationableId: updatedPayment?.order_id?.toString(),
-    // });
-
-    return updatedPayment;
+    return { updatedPayment, subscription: null }; //اینجا فعلا نیازی به جزییات اشتراک نداریم
   }
 
   /* -------------------------------------------------------------------------- */

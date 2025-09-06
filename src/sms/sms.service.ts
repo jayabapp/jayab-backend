@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
-  isProduction: boolean;
+  private readonly isProduction: boolean;
 
   constructor(
     private readonly httpService: HttpService,
@@ -146,6 +146,30 @@ export class SmsService {
           { name: 'Name', value: fullName },
           { name: 'Days', value: days },
         ],
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async sendPromoteSmsToOwner(mobile: string, fullName: string): Promise<void> {
+    // if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.propertyPromoteTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [{ name: 'FULLNAME', value: fullName }],
         mobile: mobile,
         templateId: templateId,
       };
