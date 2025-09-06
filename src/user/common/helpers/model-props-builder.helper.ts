@@ -45,6 +45,13 @@ export const showPropsBuilder = (
       type: 'string',
       // isEditable: false,
     },
+    {
+      state: 'full_name',
+      title: 'نام و نامم خانوادگی',
+      value: item.full_name,
+      type: 'string',
+      // isEditable: false,
+    },
     { state: 'created_at', title: 'تاریخ ثبت نام', value: item.created_at, type: 'date' },
   ];
 
@@ -83,6 +90,12 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       ],
       title: 'بلاک شده',
       options: { isMandatory: true },
+    },
+    {
+      state: 'full_name',
+      type: 'input',
+      title: 'نام و نام خانوادگی',
+      options: { maxLength: 256, isMandatory: true, keyboard: 'text' },
     },
   ];
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Validate } from 'class-validator';
+import { IsOptional, Validate } from 'class-validator';
 import {
   _Length,
   _IsNumberString,
@@ -7,6 +7,7 @@ import {
   _IsNotEmpty,
   _Min,
   _IsBoolean,
+  _IsString,
 } from 'src/common/pipes/validator-translate.pipe';
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 
@@ -20,4 +21,9 @@ export class UpdateUserAdminDto {
   @Validate(IsMobileNumber)
   @_IsNotEmpty()
   mobile_number: string;
+
+  @ApiProperty({ required: false, example: '' })
+  @_IsString()
+  @_IsNotEmpty()
+  full_name: string;
 }

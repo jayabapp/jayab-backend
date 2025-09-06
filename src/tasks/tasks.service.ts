@@ -136,7 +136,7 @@ export class TasksService {
       },
     });
 
-    console.log({ advisor, today, threeDaysLater });
+    // console.log({ advisor, today, threeDaysLater });
 
     if (advisor) {
       console.log('advisor found: ', advisor.id);
