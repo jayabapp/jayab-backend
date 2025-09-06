@@ -14,6 +14,13 @@ const settings = (): Prisma.SettingCreateInput[] => {
       sort_order: 4,
       data_type: SettingDataType.TEXT,
     },
+    {
+      title: 'تعداد روز معتبر بودن نردبان',
+      key: 'PROPERTY_PROMOTE_DURATION',
+      value: '7',
+      sort_order: 1,
+      data_type: SettingDataType.NUMBER,
+    },
   ];
 
   return data;
@@ -25,7 +32,7 @@ const settings = (): Prisma.SettingCreateInput[] => {
 export async function settingSeeder(): Promise<void> {
   console.time('✅ SETTINGS');
   for (const e of settings()) {
-    await prisma.setting.upsert({ where: { key: e.key }, update: e, create: e });
+    await prisma.setting.upsert({ where: { key: e.key }, update: {}, create: e });
   }
   console.timeEnd('✅ SETTINGS');
 }

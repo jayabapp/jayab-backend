@@ -11,6 +11,8 @@ import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 
 @Injectable()
@@ -19,6 +21,7 @@ export class TasksService {
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
     private readonly notificationSharedService: NotificationSharedService,
+    private readonly settingService: SettingAdminService,
   ) {}
 
   /* ---------------------- حذف فایل های اکسل دانلود شده ---------------------- */
@@ -28,7 +31,7 @@ export class TasksService {
   })
   async removeDownloadedExcelTask(): Promise<void> {
     const now = moment();
-    console.log(`<><><> CRON JOB RAN AT : ${now.format('HH:MM:ss')} <><><>`);
+    console.log(`🕑 cron:delete-excel-files : ${now}`);
 
     try {
       const files = await fsPromises.readdir(STORAGE_EXCEL);
@@ -52,9 +55,9 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async propertySubscriptionReminderTask(): Promise<void> {
-    console.log(
-      `<><><> CRON JOB (property subscription reminder) RAN AT : ${moment().format('HH:MM:ss')} <><><>`,
-    );
+    const now = moment();
+    console.log(`🕑 cron:property-subscription-reminder : ${now}`);
+
     const threeDaysLater = nDaysLaterNow(3);
     const today = startOfToday();
 
@@ -113,13 +116,13 @@ export class TasksService {
 
   /* -------------------- یادآوری تمدید اشتراک اکانت مشاور -------------------- */
   @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'advisor-subscription-remider',
+    name: 'advisor-subscription-reminder',
     timeZone: 'Asia/Tehran',
   })
   async advisorSubscriptionReminderTask(): Promise<void> {
-    console.log(
-      `<><><> CRON JOB (advisor subscription remider) RAN AT : ${moment().format('HH:MM:ss')} <><><>`,
-    );
+    const now = moment();
+    console.log(`🕑 cron:advisor-subscription-reminder : ${now}`);
+
     const threeDaysLater = nDaysLaterNow(3);
     const today = startOfToday();
 
@@ -169,5 +172,28 @@ export class TasksService {
     } catch (error) {
       throw new Error(`Unable to read files: ${error.message}`);
     }
+  }
+
+  /* ------------------------ حذف نردبان های منقضی شده ------------------------ */
+  @Cron(CronExpression.EVERY_MINUTE, {
+    name: 'property-promote-remover',
+    timeZone: 'Asia/Tehran',
+  })
+  async removeExpiredPromoteOnProperty(): Promise<void> {
+    const now = moment().format('YYYY-MM-DD HH:mm');
+    console.log(`🕑 cron:property-promote : ${now}`);
+
+    const duration = await this.settingService.get(SettingKey.PROPERTY_PROMOTE_DURATION);
+    if (!duration || isNaN(duration)) return;
+
+    const lastOkDate = moment().subtract(+duration, 'days').toDate();
+    if (!lastOkDate) return;
+
+    const property = await this.db.property.findFirst({
+      where: { promoted_at: { lt: lastOkDate } },
+      select: { id: true },
+    });
+
+    if (property) await this.db.property.update({ where: { id: property.id }, data: { promoted_at: null } });
   }
 }
