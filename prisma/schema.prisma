@@ -548,6 +548,7 @@ model Property {
   check_in_hour           String?
   check_out_hour          String?
   subscription_expired_at DateTime? @db.Date
+  promoted_at             DateTime? 
   sort_order              BigInt    @default(0) // timestamp - promote
   contact_type            Int       @default(1) @db.SmallInt
   status                  Int       @db.SmallInt

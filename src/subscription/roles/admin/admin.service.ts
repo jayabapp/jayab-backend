@@ -105,8 +105,8 @@ export class SubscriptionAdminService {
 
     let propertyUpdateData: Prisma.PropertyUpdateInput = {};
     if (subPlan.is_promote) {
-      description = 'تمدید انقضای نردبان توسط ادمین';
-      propertyUpdateData = { sort_order: Date.now() };
+      description = 'نردبان آگهی توسط ادمین';
+      propertyUpdateData = { sort_order: Date.now(), promoted_at: new Date() };
     } else {
       const now = moment();
       let newExpDate = null;

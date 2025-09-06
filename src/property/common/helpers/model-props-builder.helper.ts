@@ -28,6 +28,7 @@ enum RefEnum {
   city = 'city',
   remaining_days = 'remaining_days',
   status_number = 'status_number',
+  is_promoted = 'is_promoted',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -101,6 +102,7 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { state: 'has_blue_tick', title: 'دارای تیک آبی', value: item.has_blue_tick, type: 'boolean' },
     { state: 'remaining_days', title: 'باقیمانده اشتراک (روز)', value: item.remaining_days, type: 'number' },
     { state: 'is_today_reserved', title: 'امروز رزرو شده', value: item.is_today_reserved, type: 'boolean' },
+    { state: 'is_promoted', title: 'نردبان شده', value: item.is_promoted, type: 'boolean' },
     { type: 'break' },
 
     /* -------------------------------------------------------------------------- */
@@ -334,8 +336,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 20, title: 'شهر', key: 'city', cellType: 'string' },
       { id: 30, title: 'وضعیت', key: 'status_number', cellType: 'enum', enumList: PropertyStatusesList },
       { id: 35, title: 'تاریخ ثبت ملک', key: 'created_at', cellType: 'dateTime' },
-      { id: 40, title: 'وضعیت احراز', key: 'is_authorized', cellType: 'boolean' },
-      { id: 45, title: 'دارای تیک آبی', key: 'has_blue_tick', cellType: 'boolean' },
       {
         id: 50,
         title: 'باقیمانده اشتراک (روز)',
@@ -343,6 +343,9 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
         cellType: 'number',
         optionalClass: 'text-success',
       },
+      { id: 40, title: 'وضعیت احراز', key: 'is_authorized', cellType: 'boolean' },
+      { id: 45, title: 'دارای تیک آبی', key: 'has_blue_tick', cellType: 'boolean' },
+      { id: 46, title: 'نردبان شده', key: 'is_promoted', cellType: 'boolean' },
     ],
     availableActions,
   };
@@ -358,8 +361,9 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
     { title: 'کد', state: 'code', type: 'input' },
     { title: 'عنوان', state: 'title', type: 'input' },
 
-    { title: 'منقضی شده', state: 'expired', type: 'switch' },
-    { title: 'احراز شده', state: 'authorized', type: 'switch' },
+    { title: 'منقضی شده ها', state: 'expired', type: 'switch' },
+    { title: 'احراز شده ها', state: 'authorized', type: 'switch' },
+    { title: 'نردبان شده ها', state: 'is_promoted', type: 'switch' },
     /*  */
     { title: 'وضیعت', state: 'status', type: 'select', isHidden: true },
     { title: '', state: 'owner_id', type: 'input', isHidden: true },

@@ -521,28 +521,6 @@ export class PropertyOwnerService {
           status: SubscriptionStatus.WAITING,
         },
       });
-      // // if (promote)
-
-      // console.log({
-      //   property_id: property.id,
-      //   payment_id: pay.payment.id,
-      //   title: subscription.title,
-      //   duration: subscription.duration,
-      //   price: subscription.price,
-      //   status: SubscriptionStatus.WAITING,
-      // });
-
-      // if (subscription)
-      //   await tx.subscription.create({
-      //     data: {
-      //       property_id: property.id,
-      //       payment_id: pay.payment.id,
-      //       title: subscription.title,
-      //       duration: subscription.duration,
-      //       price: subscription.price,
-      //       status: SubscriptionStatus.WAITING,
-      //     },
-      //   });
 
       return pay;
     });

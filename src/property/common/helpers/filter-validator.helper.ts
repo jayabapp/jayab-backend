@@ -48,6 +48,9 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
       case 'authorized':
         if (filters.authorized) query = { ...query, is_authorized: filters.authorized };
         break;
+      case 'is_promoted':
+        if (filters.is_promoted) query = { ...query, NOT: { promoted_at: null } };
+        break;
 
       case 'expired':
         query = {

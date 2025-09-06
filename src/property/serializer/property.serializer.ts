@@ -74,6 +74,7 @@ export type PropertyArrayResType = {
   remaining_days: number;
   is_authorized: boolean;
   has_blue_tick: boolean;
+  is_promoted: boolean;
   authorize_status: EnumList;
   blue_tick_status: EnumList;
   reserve_days?: ReserveDay[];
@@ -247,11 +248,12 @@ export class PropertySerializer {
       advisor_commission:
         !isAdvisor && !isOwner
           ? null
-          : todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission,
+          : (todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission),
       today_price: this.findTodayPrice(todayInPropertyCalendar, today, data.daily_price),
       is_today_reserved: !!todayInPropertyCalendar?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
+      is_promoted: !!data.promoted_at,
       favorite_count: data?.favorite_count,
       status_number: data.status,
       //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
