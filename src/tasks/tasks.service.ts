@@ -107,11 +107,6 @@ export class TasksService {
         notificationableId: property.id.toString(),
       });
     }
-
-    try {
-    } catch (error) {
-      throw new Error(`Unable to read files: ${error.message}`);
-    }
   }
 
   /* -------------------- یادآوری تمدید اشتراک اکانت مشاور -------------------- */
@@ -166,11 +161,6 @@ export class TasksService {
         notificationType: NotificationTypes.ADVISOR_SUBSCRIPTION,
         notificationableId: '',
       });
-    }
-
-    try {
-    } catch (error) {
-      throw new Error(`Unable to read files: ${error.message}`);
     }
   }
 
