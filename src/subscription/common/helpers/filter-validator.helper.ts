@@ -32,10 +32,7 @@ export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.Su
     const checkField = items.find((e) => e.state === field);
     if (!checkField && !['page', 'per_page'].includes(field)) return;
 
-    const { from_date, to_date } = filters;
-
-    const fromDate = from_date ? convertJalaaliDtoToDate(from_date) : null;
-    const toDate = to_date ? convertJalaaliDtoToDate(to_date) : null;
+    const { from_date: fromDate, to_date: toDate } = filters;
 
     if (fromDate && toDate)
       query = { ...query, AND: [{ created_at: { gte: fromDate } }, { created_at: { lte: toDate } }] };

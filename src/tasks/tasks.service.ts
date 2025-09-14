@@ -60,6 +60,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async propertySubscriptionReminderTask(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:property-subscription-reminder : ${now}`);
 
@@ -120,6 +121,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async advisorSubscriptionReminderTask(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:advisor-subscription-reminder : ${now}`);
 
