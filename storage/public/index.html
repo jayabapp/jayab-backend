@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Node.js App</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #111111;
+        background: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 1) 0%,
+          rgba(26, 28, 26, 1) 50%,
+          rgba(237, 93, 83, 1) 100%
+        );
+        background-size: 400%;
+        animation: colorShift 15s ease-in-out infinite;
+      }
+
+      h1 {
+        font-size: 5rem;
+        font-weight: 100;
+        color: white;
+        text-align: center;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        padding: 20px;
+      }
+
+      @keyframes colorShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="title"></h1>
+  </body>
+  <script>
+    window.onload = function () {
+      document.getElementById('title').textContent = window.location.hostname?.toUpperCase();
+    };
+  </script>
+</html>
