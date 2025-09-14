@@ -61,7 +61,9 @@
   </body>
   <script>
     window.onload = function () {
-      document.getElementById('title').textContent = window.location.hostname?.toUpperCase();
+      const arr = window.location.hostname.split('.');
+      const domain = arr?.length === 3 ? arr[1] : arr[0];
+      document.getElementById('title').textContent = (domain || '').toUpperCase();
     };
   </script>
 </html>
