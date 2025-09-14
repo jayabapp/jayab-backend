@@ -30,7 +30,11 @@ export type Column = {
   formOptions?: FormOptions;
   optionalClass?: string;
   link?: string;
+  conditions?: ColCondition[];
 };
+
+export type ColCondition = { operator: OperatorType; target: number | string | number[]; className: string };
+export type OperatorType = 'equals' | 'contains' | 'lt' | 'lte' | 'gt' | 'gte' | 'not' | 'between';
 
 export type AvailableAction = 'create' | 'show' | 'edit' | 'delete' | 'submit' | 'custom';
 export type TableProps = {
@@ -52,7 +56,8 @@ export type CellType =
   | 'enum'
   | 'date'
   | 'dateTime'
-  | 'colorfulList';
+  | 'colorfulList'
+  | 'link';
 
 /* ---------------------------------- SHOW ---------------------------------- */
 export type ShowPropsUnionType =

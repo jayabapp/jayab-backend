@@ -1,0 +1,7 @@
+export enum SeoParamsLimit {
+    MIN_TITLE_LENGTH = 35,
+    MAX_TITLE_LENGTH = 55,
+    MIN_DESCRIPTION_LENGTH = 120,
+    MAX_DESCRIPTION_LENGTH = 160,
+    MAX_H1_COUNT = 1
+}

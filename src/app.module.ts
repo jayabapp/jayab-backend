@@ -74,6 +74,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { TicketModule } from './ticket/ticket.module';
 import { CallLogModule } from './call-log/call-log.module';
 import { BaseModule as BaseModule } from './__base/base.module';
+import { PageSeoAnalyzeModule } from './page-seo-analyze/page-seo-analyze.module';
 
 @Module({
   imports: [
@@ -155,6 +156,7 @@ import { BaseModule as BaseModule } from './__base/base.module';
     SubscriptionModule,
     TicketModule,
     CallLogModule,
+    PageSeoAnalyzeModule,
     BaseModule,
   ],
   providers: [

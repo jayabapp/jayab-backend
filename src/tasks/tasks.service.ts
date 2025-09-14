@@ -9,6 +9,7 @@ import { UserRole } from 'src/common/interfaces/role.enum';
 import { STORAGE_EXCEL } from 'src/common/utils/constants/storage-folders';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { PageSeoAnalyzeAdminService } from 'src/page-seo-analyze/roles/admin/admin.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
@@ -17,11 +18,14 @@ import { SmsService } from 'src/sms/sms.service';
 
 @Injectable()
 export class TasksService {
+  IS_PRODUCTION: boolean = process.env.NODE_ENV === 'production';
+
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
     private readonly notificationSharedService: NotificationSharedService,
     private readonly settingService: SettingAdminService,
+    private readonly pageSeoAnalyzeAdminService: PageSeoAnalyzeAdminService,
   ) {}
 
   /* ---------------------- حذف فایل های اکسل دانلود شده ---------------------- */
@@ -30,6 +34,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async removeDownloadedExcelTask(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:delete-excel-files : ${now}`);
 
@@ -170,6 +175,7 @@ export class TasksService {
     timeZone: 'Asia/Tehran',
   })
   async removeExpiredPromoteOnProperty(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:property-promote : ${now}`);
 
@@ -185,5 +191,32 @@ export class TasksService {
     });
 
     if (property) await this.db.property.update({ where: { id: property.id }, data: { promoted_at: null } });
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS, {
+    name: 'seo-page-analyze',
+    timeZone: 'Asia/Tehran',
+  })
+  async seoPageAnalyze(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
+
+    const now = moment();
+    console.log(`⏱️ cron:page analyze:${now.format('HH:MM:ss')}`);
+    await this.pageSeoAnalyzeAdminService.scrapAndCreateReport();
+  }
+
+  /**
+   * رکوردهای جدول رو با سایت مپ چک میکنه و موارد اضافه شده در سایت مپ رو میریزه توی جدول
+   */
+  @Cron(CronExpression.EVERY_6_HOURS, {
+    name: 'sync-seo-page-analyze-and-sitemap',
+    timeZone: 'Asia/Tehran',
+  })
+  async synSeoPageAnalyzeAndSitemap(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
+
+    const now = moment();
+    console.log(`⏱️ cron:sync page analyze and sitemap:${now.format('HH:MM:ss')}`);
+    await this.pageSeoAnalyzeAdminService.syncSitemap();
   }
 }

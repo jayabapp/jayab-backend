@@ -77,6 +77,8 @@
     "passport-local": "^1.0.0",
     "patch-package": "^8.0.0",
     "pg": "^8.11.3",
+    "playwright": "^1.55.0",
+    "playwright-extra": "^4.3.6",
     "pluralize": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "qrcode": "^1.5.3",

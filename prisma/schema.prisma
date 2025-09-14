@@ -1123,7 +1123,7 @@ model MessengerMessages {
 }
 
 view UnreadMessageCount {
-  user_id      Int @unique
+  user_id      Int 
   unread_count Int
 
   @@map("unread_message_counts")
@@ -1261,4 +1261,59 @@ model CallLog {
 
   @@index([user_id, property_id])
   @@map("call_logs")
+}
+
+
+// ------------------------------ REDIRECT URL ------------------------------ //
+model RedirectUrl {
+  id          Int     @id() @default(autoincrement())
+  source      String
+  destination String
+  permanent   Boolean @default(true)
+  source_hash String  @unique() @db.VarChar()
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  @@index([source_hash])
+  @@map("redirect_urls")
+}
+
+model PageSeoAnalyze {
+  id                      Int      @id() @default(autoincrement())
+  url                     String   @unique
+  url_sha1                String   @unique
+  h1_count                Int?
+  h2_count                Int?
+  meta_title_length       Int?
+  meta_description_length Int?
+  canonical               String?
+  schemas                 Json[]   @db.Json
+  no_alt_images           String[]
+  h1_array                String[]
+  scraper_flag            Int      @default(0)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  links PageSeoLinkAnalyze[]
+
+  @@index([url_sha1])
+  @@map("page_seo_analyzes")
+}
+
+model PageSeoLinkAnalyze {
+  id          Int     @id() @default(autoincrement())
+  page_id     Int
+  href        String
+  rel         String?
+  is_internal Boolean @default(true)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  page PageSeoAnalyze @relation(fields: [page_id], references: [id], onDelete: Cascade)
+
+  @@index([page_id])
+  @@map("page_seo_link_analyzes")
 }
