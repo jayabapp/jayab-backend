@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
+import { IsOptional, Validate } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
   _IsString,
   _IsNumber,
   _IsBoolean,
+  _MaxLength,
+  _MinLength,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
+import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class CreateSubmittedFormAdminDto {
   @ApiProperty({ required: true, example: 1 })
@@ -22,7 +25,9 @@ export class CreateSubmittedFormAdminDto {
   mobile_number: string;
 
   @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
-  @_IsString()
+  @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
+  @_MaxLength(64)
+  @_MinLength(1)
   @IsOptional()
   full_name: string;
 

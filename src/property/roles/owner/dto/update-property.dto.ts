@@ -43,6 +43,7 @@ import { normalizePropertyPrice } from 'src/property/common/normalize-price.help
 import { IsPrice } from 'src/common/validators/price-validator.decorator';
 import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
+import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class DayDto {
   @_IsNotEmpty()
@@ -523,6 +524,7 @@ export class UpdatePropertyTermsOwnerDto {
 
 export class UpdatePropertyOwnerAssistantOwnerDto {
   @ApiProperty({ required: true, example: 'نام تستی' })
+  @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
   @_Length(1, 128)
   @_IsString()
   @IsOptional()

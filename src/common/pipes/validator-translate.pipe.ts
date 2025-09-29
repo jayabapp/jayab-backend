@@ -80,7 +80,7 @@ const VM = {
 };
 
 /* -------------------------- Translated properties ------------------------- */
-const PROPS = {
+export const PROPS = {
   mobile_number: 'شماره تلفن همراه',
   mobile_numbers: 'شماره ها',
   code: 'کد',
