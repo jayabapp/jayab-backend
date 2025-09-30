@@ -50,6 +50,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
             return query(args);
           },
 
+          //@ts-ignore
           delete({ model, args, query }) {
             if (ModelsWithSoftDelete.includes(model as any)) {
               return extended[modelMap[model]].update({
