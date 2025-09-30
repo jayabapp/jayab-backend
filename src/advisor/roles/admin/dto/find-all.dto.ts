@@ -3,7 +3,13 @@ import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
-import { _IsBoolean, _IsEnum, _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import {
+  _IsBoolean,
+  _IsEnum,
+  _IsInt,
+  _IsNumberString,
+  _IsString,
+} from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllAdvisorAdminDto extends PaginationDto {
   @ApiProperty({ required: false, example: '123456' })
@@ -38,4 +44,9 @@ export class FindAllAdvisorAdminDto extends PaginationDto {
   @Transform(({ value }) => (value && value == 'true' ? true : false))
   @IsOptional()
   no_sub: boolean;
+
+  @ApiProperty({ required: false })
+  @_IsString()
+  @IsOptional()
+  national_code: string;
 }
