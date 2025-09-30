@@ -101,7 +101,7 @@ export class LandingPageUserService {
     if (landing.province_id) result['query'] = { ...result['query'], province_id: landing.province_id };
     else if (!isEmpty(cities)) result['query'] = { ...result['query'], cities: cities.map((e) => e.id) };
 
-    console.dir(result);
+    // console.dir(result);
     return result;
   }
 }
