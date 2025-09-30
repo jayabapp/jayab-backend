@@ -40,7 +40,7 @@ export class AuthAdminController {
     // send sms
     if (
       process.env.NODE_ENV == 'production' &&
-      this.configService.get('adminAuth.enableTwoStepVerification') == '1'
+      this.configService.get('sms.enableTwoStepVerification') == '1'
     )
       await this.smsService.sendVerificationCode(adminData.mobile_number, result.code);
 

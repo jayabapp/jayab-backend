@@ -35,7 +35,7 @@ export class AuthSharedService {
       rand = random(1000, 9999).toString();
     } else if (whom == 'admin')
       rand =
-        this.configService.get('adminAuth.enableTwoStepVerification') == '1'
+        this.configService.get('sms.enableTwoStepVerification') == '1'
           ? random(10000, 99999).toString()
           : '00000';
     else throw new BadRequestException();
