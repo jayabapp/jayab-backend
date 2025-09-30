@@ -45,7 +45,7 @@ export class AuthSharedService {
       /**
        * if sms sent from thirty seconds ago don't send again
        */
-      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) return { code: null };
+      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) return { code: finalCode };
 
       /**
        * check the expiration date of the verification code using the checkExpirationCode method.
