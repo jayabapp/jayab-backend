@@ -293,16 +293,32 @@ export class PropertyUserService {
     return item;
   }
 
-  async findContactInfo(propertySlug: string): Promise<Partial<PropertyOwnerAssistant>[]> {
+  async findContactInfo(
+    propertySlug: string,
+  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
     const code = this.checkSlug(propertySlug);
 
     const list = await this.db.propertyOwnerAssistant.findMany({
       where: { property: { ...this.validProperty(), code } },
-      select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true, property_id: true },
+      select: {
+        assistant_full_name: true,
+        assistant_mobile_number: true,
+        is_owner: true,
+        property_id: true,
+      },
       orderBy: { is_owner: 'desc' },
     });
 
-    return list;
+    const property = await this.db.property.findUnique({
+      where: { code },
+      select: { owner: { select: { selfie_image: true } } },
+    });
+
+    const owner = {
+      selfie_image: property.owner.selfie_image,
+    };
+
+    return { owner, list };
   }
 
   async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
