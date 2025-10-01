@@ -253,6 +253,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     columns: [
       { id: 10, title: 'تصویر', key: 'user', cellType: 'image', nestedKey: 'profile_image' },
       { id: 20, title: 'نام و نام خانوادگی', key: 'user', cellType: 'object', nestedKey: 'full_name' },
+      { id: 25, title: 'کد ملی', key: 'national_code', cellType: 'string' },
       { id: 30, title: 'موبایل', key: 'user', cellType: 'object', nestedKey: 'mobile_number' },
       { id: 31, title: 'رضایت کاربران', key: 'users_satisfaction', cellType: 'number' },
       { id: 32, title: 'رضایت مالکان', key: 'owners_satisfaction', cellType: 'number' },
@@ -276,6 +277,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
     { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
+    { title: 'کد ملی', state: 'national_code', type: 'input' },
     { type: 'break' },
     { title: 'اشتراک فعال', state: 'no_sub', type: 'switch' },
     { title: 'مشاور ویژه', state: 'is_special', type: 'switch' },

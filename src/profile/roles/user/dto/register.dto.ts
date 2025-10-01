@@ -16,9 +16,11 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { IsNationalId } from 'src/common/validators/national-code.validator';
 import { PaymentGatewayEnum } from 'src/payment-gateway/common/payment-gateway.enum';
+import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class RegisterOwnerUserDto {
   @ApiProperty({ required: true, example: 'کاربر تست' })
+  @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()
@@ -38,6 +40,7 @@ export class RegisterOwnerUserDto {
 
 export class RegisterAdvisorUserDto {
   @ApiProperty({ required: true, example: 'کاربر تست' })
+  @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
   @_Length(1, 128)
   @_IsString()
   @_IsNotEmpty()

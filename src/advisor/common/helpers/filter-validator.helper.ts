@@ -52,6 +52,10 @@ export const filterValidator = (filters: FindAllAdvisorAdminDto): Prisma.Advisor
         else query = { ...query };
         break;
 
+      case 'national_code':
+        query = { ...query, national_code: filters.national_code };
+        break;
+
       default:
         break;
     }

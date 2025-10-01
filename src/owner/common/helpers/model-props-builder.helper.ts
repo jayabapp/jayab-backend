@@ -132,6 +132,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     columns: [
       { id: 10, title: 'تصویر', key: 'user', cellType: 'image', nestedKey: 'profile_image' },
       { id: 20, title: 'نام و نام خانوادگی', key: 'user', cellType: 'object', nestedKey: 'full_name' },
+      { id: 25, title: 'کد ملی', key: 'national_code', cellType: 'string' },
       { id: 30, title: 'موبایل', key: 'user', cellType: 'object', nestedKey: 'mobile_number' },
       { id: 80, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: OwnerStatusList },
       { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
@@ -149,6 +150,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
     { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
+    { title: 'کد ملی', state: 'national_code', type: 'input' },
     { title: '', state: 'status', type: 'select', isHidden: true },
   ];
 

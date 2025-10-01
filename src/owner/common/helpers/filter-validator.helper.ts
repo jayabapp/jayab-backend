@@ -39,6 +39,10 @@ export const filterValidator = (filters: FindAllOwnerAdminDto): Prisma.OwnerWher
         query = { ...query, user: { full_name: { contains: filters.full_name } } };
         break;
 
+      case 'national_code':
+        query = { ...query, national_code: filters.national_code };
+        break;
+
       case 'status':
         query = { ...query, status: +filters.status };
         break;

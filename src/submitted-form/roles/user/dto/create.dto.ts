@@ -9,10 +9,13 @@ import {
   _ArrayNotEmpty,
   _IsEnum,
   _IsArray,
+  _MaxLength,
+  _MinLength,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
 import { FormBuilderInputType } from 'src/form-builder/common/form-builder-input-type.enum';
 import { IsExist } from 'src/common/validators/is-exists.validator';
+import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class FormItemDto {
   @ApiProperty({ required: true, example: 'عنوان' })
@@ -56,6 +59,9 @@ export class CreateSubmittedFormUserDto extends SubmitFormItemDto {
   mobile_number: string;
 
   @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
+  @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
+  @_MaxLength(64)
+  @_MinLength(1)
   @_IsString()
   @IsOptional()
   full_name: string;
