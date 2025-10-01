@@ -168,7 +168,7 @@ export class UpdatePropertyStepOneOwnerDto {
 
   @ApiProperty({ required: true, title: 'آدرس', example: 'آدرس تست تست آدرس تست' })
   @_IsString()
-  @_MaxLength(200)
+  @_MaxLength(256)
   @_MinLength(5)
   @_IsNotEmpty()
   address: string;
@@ -236,13 +236,13 @@ export class UpdatePropertyEnvOwnerDto {
 
   @ApiProperty({ title: 'توضیحات بافت' })
   @_IsString()
-  @_MaxLength(200)
+  @_MaxLength(1024)
   @IsOptional()
   pattern_dscr: string;
 
   @ApiProperty({ title: 'توضیحات فاصله' })
   @_IsString()
-  @_MaxLength(200)
+  @_MaxLength(1024)
   @_IsNotEmpty()
   distance_dscr: string;
 }
@@ -360,7 +360,7 @@ export class UpdatePropertyFacilityOwnerDto {
 
   @ApiProperty({ title: 'توضیحات امکانات' })
   @_IsString()
-  @_MaxLength(200)
+  @_MaxLength(1024)
   @IsOptional()
   facility_dscr: string;
 }
@@ -481,43 +481,43 @@ export class UpdatePropertyTermsOwnerDto {
 
   @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @IsOptional()
   guest_dscr: string;
 
   @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @IsOptional()
   pet_dscr: string;
 
   @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @IsOptional()
   party_dscr: string;
 
   @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @_IsNotEmpty()
   doc_dscr: string;
 
   @ApiProperty({ title: 'توضیحات', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @IsOptional()
   other_dscr: string;
 
   @ApiProperty({ title: 'توضیحات تبلیغاتی', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(800)
+  @_MaxLength(1024)
   @IsOptional()
   ad_dscr: string;
 
   @ApiProperty({ title: 'توضیحات ملک', example: 'توضیحات تستی' })
   @_IsString()
-  @_MaxLength(1000)
+  @_MaxLength(1024)
   @IsOptional()
   property_dscr: string;
 }
