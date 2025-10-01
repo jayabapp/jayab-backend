@@ -342,7 +342,9 @@ export class PropertyUserService {
         })
         .join('');
 
-      this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile);
+      if (user?.mobile_number !== ownerMobile) {
+        this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile);
+      }
     }
   }
 
