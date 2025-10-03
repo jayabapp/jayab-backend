@@ -311,11 +311,11 @@ export class PropertyUserService {
 
     const property = await this.db.property.findUnique({
       where: { code },
-      select: { owner: { select: { selfie_image: true } } },
+      select: { owner: { select: { user: { select: { profile_image: true } } } } },
     });
 
     const owner = {
-      selfie_image: property.owner.selfie_image,
+      selfie_image: property.owner?.user?.profile_image,
     };
 
     return { owner, list };
