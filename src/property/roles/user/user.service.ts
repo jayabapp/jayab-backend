@@ -324,7 +324,11 @@ export class PropertyUserService {
   async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
     const userId = user.id;
     const todayRec = await this.db.callLog.findFirst({
-      where: { property_id: propertyId, user_id: userId, created_at: { gte: startOfToday() } },
+      where: {
+        property_id: propertyId,
+        user_id: userId,
+        created_at: { gte: moment().utc().startOf('day').toDate() },
+      },
       select: { id: true, attempts: true, created_at: true },
     });
 
