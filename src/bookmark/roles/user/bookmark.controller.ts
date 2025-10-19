@@ -34,7 +34,7 @@ export class BookmarkUserController {
   async findAll(@Req() request: RequestType): Promise<SuccessResponseArgs> {
     const user = request.user;
     const propertyIds = await this.bookmarkUserService.findAllIds(user.id);
-    const result = await this.propertyUserService.findAll({ cursor: 0, per_page: 100 }, false, propertyIds);
+    const result = await this.propertyUserService.findAll({ page: 1, per_page: 100 }, false, propertyIds);
     return { result: result.data };
   }
 

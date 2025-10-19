@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
+import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import {
   _IsInt,
   _Max,
@@ -14,7 +15,7 @@ import {
   _IsIn,
 } from 'src/common/pipes/validator-translate.pipe';
 
-export class FindAllPropertyUserDto extends PaginationCursorDto {
+export class FindAllPropertyUserDto extends PaginationDto {
   @ApiProperty({ title: 'سرچ', required: false })
   @_IsString()
   @IsOptional()

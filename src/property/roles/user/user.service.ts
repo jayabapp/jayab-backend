@@ -25,6 +25,7 @@ import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-shar
 import { AES, enc } from 'crypto-js';
 import isJson from 'src/common/helpers/is-json.helper';
 import { SmsService } from 'src/sms/sms.service';
+import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 
 @Injectable()
 export class PropertyUserService {
@@ -46,7 +47,7 @@ export class PropertyUserService {
     dto: FindAllPropertyUserDto,
     isAdvisor: boolean = false,
     propertyIds?: number[],
-  ): Promise<CursorPaginatedResult<PropertyArrayResType>> {
+  ): Promise<PaginatedResult<PropertyArrayResType>> {
     let {
       code,
       province_id,
@@ -219,7 +220,7 @@ export class PropertyUserService {
         break;
     }
 
-    const list = await cursorPaginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
+    const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
         where: query,
@@ -238,11 +239,11 @@ export class PropertyUserService {
         },
         orderBy: orderByQuery,
       },
-      { cursor: dto.cursor, perPage: dto.per_page },
+      { page: dto.page, perPage: dto.per_page },
     );
 
     const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor, false);
-    return { data: serialized };
+    return { data: serialized, meta: list.meta };
   }
 
   /**
