@@ -36,6 +36,9 @@ export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereI
       case 'mobile_number':
         query = { ...query, mobile_number: { contains: filters.mobile_number, mode: 'insensitive' } };
         break;
+      case 'is_banned':
+        if (filters.is_banned) query = { ...query, is_banned: true };
+        break;
 
       default:
         break;

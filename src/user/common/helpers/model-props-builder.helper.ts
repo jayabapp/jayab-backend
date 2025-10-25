@@ -114,7 +114,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 40, title: 'مشاور', key: 'advisor_id', cellType: 'boolean' },
       { id: 50, title: 'مالک', key: 'owner_id', cellType: 'boolean' },
       { id: 60, title: 'بلاک شده', key: 'is_banned', cellType: 'boolean' },
-      { id: 90, title: 'تاریخ ثبت نام', key: 'created_at', cellType: 'date' },
+      { id: 90, title: 'تاریخ ثبت نام', key: 'created_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -128,6 +128,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
+    { title: 'فقط بلاک شده ها', state: 'is_banned', type: 'switch' },
   ];
 
   return filterProps;
