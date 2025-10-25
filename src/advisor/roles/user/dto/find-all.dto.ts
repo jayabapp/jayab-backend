@@ -14,4 +14,9 @@ export class FindAllAdvisorUserDto extends PaginationCursorDto {
   @_IsString()
   @IsOptional()
   cities: string;
+
+  @ApiProperty({ required: false, example: 2 })
+  @_IsInt()
+  @IsOptional()
+  province_id: number;
 }

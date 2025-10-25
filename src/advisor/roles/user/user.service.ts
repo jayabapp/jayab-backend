@@ -32,6 +32,8 @@ export class AdvisorUserService {
       query = { ...query, cities: { some: { id: { in: cities } } } };
     }
 
+    if (dto.province_id) query = { ...query, cities: { some: { parent_id: dto.province_id } } };
+
     /*  */
     const list = await cursorPaginate()<
       Advisor & { cities: { title: string }[] },

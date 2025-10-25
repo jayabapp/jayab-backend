@@ -13,7 +13,7 @@ export enum SHEET_NAME {
 
 export type ExcelCol = Partial<Column>;
 
-export const excelPaginationOptions = { perPage: 2000, page: 1 };
+export const excelPaginationOptions = { perPage: 5000, page: 1 };
 
 export async function saveToExcel(cols: ExcelCol[], data: object[], sheetName: SHEET_NAME): Promise<string> {
   try {

@@ -474,7 +474,7 @@ export class PropertyUserService {
   /* ---------------------------- SEARCH SUGGESTION --------------------------- */
   async searchSuggestions(dto: PropertySearchSuggestuibUserDto): Promise<any> {
     const exactProperty = await this.db.property.findFirst({
-      where: { title: dto.q },
+      where: { title: dto.q, ...this.validProperty() },
       select: { id: true, title: true, slug: true },
     });
 
