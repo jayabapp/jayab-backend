@@ -158,6 +158,16 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       type: 'input',
       isHidden: true,
     },
+    {
+      title: 'نام ملک',
+      state: 'property_title',
+      type: 'input',
+    },
+    {
+      title: 'کد ملک',
+      state: 'property_code',
+      type: 'input',
+    },
   ];
 
   return filterProps;

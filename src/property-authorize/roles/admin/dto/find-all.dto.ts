@@ -11,8 +11,13 @@ export class FindAllPropertyAuthorizeAdminDto extends PaginationDto {
   @_IsNotEmpty()
   status: number;
 
-  // @ApiProperty({ required: false, example: '' })
-  // @_IsString()
-  // @IsOptional()
-  // mobile_number: string;
+  @ApiProperty({ required: false, example: '' })
+  @_IsString()
+  @IsOptional()
+  property_code: string;
+
+  @ApiProperty({ required: false, example: '' })
+  @_IsString()
+  @IsOptional()
+  property_title: string;
 }
