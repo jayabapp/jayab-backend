@@ -105,7 +105,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
     columns: [
       { id: 10, title: 'موبایل', key: 'mobile_number', cellType: 'string' },
       { id: 11, title: 'نوع اشتراک', key: 'type', cellType: 'string' },
-      { id: 20, title: 'تاریخ ثبت', key: 'created_at', cellType: 'date' },
+      { id: 20, title: 'تاریخ ثبت', key: 'created_at', cellType: 'dateTime' },
       { id: 30, title: 'مدت زمان (روز)', key: 'duration', cellType: 'number' },
       { id: 40, title: 'پلن', key: 'title', cellType: 'string' },
       { id: 50, title: 'قیمت (تومان)', key: 'price', cellType: 'number' },
