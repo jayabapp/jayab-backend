@@ -50,7 +50,7 @@ export class CallLogAdminService {
       {
         where: filters,
         include: {
-          property: { select: { id: true, title: true } },
+          property: { select: { id: true, title: true, code: true } },
           user: { select: { id: true, full_name: true, mobile_number: true } },
         },
       },

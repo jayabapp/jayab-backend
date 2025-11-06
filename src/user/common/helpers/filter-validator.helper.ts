@@ -39,6 +39,10 @@ export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereI
       case 'is_banned':
         if (filters.is_banned) query = { ...query, is_banned: true };
         break;
+      case 'contact_click_limit_exceeded_at':
+        if (filters.contact_click_limit_exceeded_at)
+          query = { ...query, contact_click_limit_exceeded_at: { not: null } };
+        break;
 
       default:
         break;

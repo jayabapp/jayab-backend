@@ -15,12 +15,15 @@ export class FindAllUserAdminDto extends PaginationDto {
   @IsOptional()
   mobile_number: string;
 
-  @ApiProperty({ required: false, example: '1' })
-  @Transform(({ value }) => {
-    if (value == 'true') return true;
-    else return false;
-  })
+  @ApiProperty({ required: false, example: 'true' })
+  @Transform(({ value }) => value === 'true' || value === true)
   @_IsBoolean()
   @IsOptional()
   is_banned: boolean;
+
+  @ApiProperty({ required: false, example: 'true' })
+  @Transform(({ value }) => value === 'true' || value === true)
+  @_IsBoolean()
+  @IsOptional()
+  contact_click_limit_exceeded_at: boolean;
 }

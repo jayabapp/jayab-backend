@@ -27,10 +27,15 @@ import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-crea
 import moment from 'moment-jalaali';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 
 @Injectable()
 export class UserAdminService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly setting: SettingAdminService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                   CREATE                                   */
@@ -131,9 +136,22 @@ export class UserAdminService {
         throw new BadRequestException('DUPLICATE_MOBILE_NUMBER');
     }
 
+    let updateData: Prisma.UserUpdateInput = {
+      is_banned: dto.is_banned,
+      mobile_number: dto.mobile_number,
+      full_name: dto.full_name,
+      jwt_level: { increment: dto.is_banned ? MAX_ACTIVE_DEVICES : 0 },
+    };
+
+    if (!dto.block_click_limit) updateData['contact_click_limit_exceeded_at'] = null;
+    else if (!user.contact_click_limit_exceeded_at) {
+      const callBlockTtl = await this.setting.get(SettingKey.CALL_CLICK_BAN_TTL);
+      updateData['contact_click_limit_exceeded_at'] = moment().add(callBlockTtl, 'day').toDate();
+    }
+
     const item = await this.db.user.update({
       where: { id: user.id },
-      data: { ...dto, jwt_level: { increment: dto.is_banned ? MAX_ACTIVE_DEVICES : 0 } },
+      data: updateData,
     });
 
     return item;

@@ -125,6 +125,13 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
         link: '/properties/show',
       },
       {
+        id: 21,
+        title: 'کد آگهی',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'code',
+      },
+      {
         id: 30,
         title: 'تعداد کلیک در یک روز',
         key: 'attempts',

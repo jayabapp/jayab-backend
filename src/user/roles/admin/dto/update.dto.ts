@@ -15,10 +15,15 @@ import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator
 import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class UpdateUserAdminDto {
-  @ApiProperty({ required: true, example: 'کاربر تست' })
+  @ApiProperty({ required: true, example: false })
   @_IsBoolean()
   @_IsNotEmpty()
   is_banned: boolean;
+
+  @ApiProperty({ required: true, example: false })
+  @_IsBoolean()
+  @_IsNotEmpty()
+  block_click_limit: boolean;
 
   @ApiProperty({ required: true, example: '' })
   @Validate(IsMobileNumber)
