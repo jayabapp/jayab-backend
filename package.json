@@ -43,7 +43,7 @@
     "@nestjs/swagger": "^7.3.0",
     "@nestjs/throttler": "^5.1.2",
     "@nestjs/websockets": "^10.3.3",
-    "@prisma/client": "^6.4.1",
+    "@prisma/client": "^6.16.2",
     "@types/cache-manager": "^4.0.6",
     "@types/haversine": "^1.1.8",
     "@types/qrcode": "^1.5.5",
