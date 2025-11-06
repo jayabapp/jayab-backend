@@ -30,6 +30,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         owner_id: true,
         notification_read_at: true,
         created_at: true,
+        contact_click_limit_exceeded_at: true,
       },
     });
 

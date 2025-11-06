@@ -410,30 +410,33 @@ model Category {
 
 // اگر کاربر در هر نقش نام و عکسش رو تغییر بده برای همه نقش ها اعمال میشه
 model User {
-  id                   Int         @id() @default(autoincrement())
-  mobile_number        String      @unique @db.VarChar(11)
-  full_name            String?     @db.VarChar
-  profile_image_id     Int?        @unique
+  id                              Int       @id() @default(autoincrement())
+  mobile_number                   String    @unique @db.VarChar(11)
+  full_name                       String?   @db.VarChar
+  profile_image_id                Int?      @unique
   // -------------------------------------------------------------------------- //
-  owner_id             Int?        @unique()
-  advisor_id           Int?        @unique()
-  is_banned            Boolean     @default(false)
+  owner_id                        Int?      @unique()
+  advisor_id                      Int?      @unique()
+  is_banned                       Boolean   @default(false)
   // -------------------------------------------------------------------------- //
-  referral_code        String?     @unique @db.VarChar()
-  referrer_code        String?     @db.VarChar()
+  referral_code                   String?   @unique @db.VarChar()
+  referrer_code                   String?   @db.VarChar()
   // -------------------------------------------------------------------------- //
-  fcm_token            String?
-  jwt_level            Int         @default(1)
-  notification_read_at DateTime    @default(now())
+  fcm_token                       String?
+  jwt_level                       Int       @default(1)
+  notification_read_at            DateTime  @default(now())
   // -------------------------------------------------------------------------- //
-  created_at           DateTime    @default(now())
-  updated_at           DateTime    @updatedAt
+  contact_click_limit_exceeded_at DateTime?
+
   // -------------------------------------------------------------------------- //
-  profile_image        Attachment? @relation(fields: [profile_image_id], references: [id])
-  referrer             User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
-  referrals            User[]      @relation("UserReferrals")
-  owner                Owner?      @relation(fields: [owner_id], references: [id])
-  advisor              Advisor?    @relation(fields: [advisor_id], references: [id])
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  // -------------------------------------------------------------------------- //
+  profile_image Attachment? @relation(fields: [profile_image_id], references: [id])
+  referrer      User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
+  referrals     User[]      @relation("UserReferrals")
+  owner         Owner?      @relation(fields: [owner_id], references: [id])
+  advisor       Advisor?    @relation(fields: [advisor_id], references: [id])
 
   tickets    Ticket[]
   // payments         Payment[]
@@ -548,7 +551,7 @@ model Property {
   check_in_hour           String?
   check_out_hour          String?
   subscription_expired_at DateTime? @db.Date
-  promoted_at             DateTime? 
+  promoted_at             DateTime?
   sort_order              BigInt    @default(0) // timestamp - promote
   contact_type            Int       @default(1) @db.SmallInt
   status                  Int       @db.SmallInt
@@ -1123,7 +1126,7 @@ model MessengerMessages {
 }
 
 view UnreadMessageCount {
-  user_id      Int 
+  user_id      Int
   unread_count Int
 
   @@map("unread_message_counts")
@@ -1262,7 +1265,6 @@ model CallLog {
   @@index([user_id, property_id])
   @@map("call_logs")
 }
-
 
 // ------------------------------ REDIRECT URL ------------------------------ //
 model RedirectUrl {

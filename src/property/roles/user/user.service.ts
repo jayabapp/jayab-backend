@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Property, Prisma, PropertyOwnerAssistant, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
@@ -26,6 +26,8 @@ import { AES, enc } from 'crypto-js';
 import isJson from 'src/common/helpers/is-json.helper';
 import { SmsService } from 'src/sms/sms.service';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 
 @Injectable()
 export class PropertyUserService {
@@ -36,6 +38,7 @@ export class PropertyUserService {
     private readonly dayHelper: DayHelper,
     private readonly config: ConfigService,
     private readonly smsService: SmsService,
+    private readonly setting: SettingAdminService,
   ) {}
 
   /**
@@ -300,7 +303,8 @@ export class PropertyUserService {
     const code = this.checkSlug(propertySlug);
 
     const list = await this.db.propertyOwnerAssistant.findMany({
-      where: { property: { ...this.validProperty(), code } },
+      // where: { property: { ...this.validProperty(), code } },
+      where: { property: { code } },
       select: {
         assistant_full_name: true,
         assistant_mobile_number: true,
@@ -314,6 +318,7 @@ export class PropertyUserService {
       where: { code },
       select: { owner: { select: { user: { select: { profile_image: true } } } } },
     });
+    if (!property) throw new NotFoundException('NOT_FOUND');
 
     const owner = {
       selfie_image: property.owner?.user?.profile_image,
@@ -324,6 +329,7 @@ export class PropertyUserService {
 
   async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
     const userId = user.id;
+
     const todayRec = await this.db.callLog.findFirst({
       where: {
         property_id: propertyId,
@@ -336,6 +342,46 @@ export class PropertyUserService {
     if (todayRec)
       await this.db.callLog.update({ where: { id: todayRec.id }, data: { attempts: { increment: 1 } } });
     else {
+      /* ---------------------------- first check limit --------------------------- */
+      /**
+       * مثلا: کاربر اگر در ۱۲۰ دقیقه گذشته روی ۱۰ شماره کلیک کند ۲ روز بلاک میشود
+       * اگر بلاک شد یک ستون روی کاربر داریم که تاریخ بلاک موندن رو میندازیم
+       * هر دفعه چک میکنیم اگر تاریخ نداشت که دفعه اوله و مستقیم بلاک میشه
+       * اگر تاریخ داشت تاریخ رو مقایسه میکنم
+       */
+      const callClickLimit = +(await this.setting.get(SettingKey.CALL_CLICK_LIMIT));
+      const callClickCheckingDuration = +(await this.setting.get(SettingKey.CALL_CLICK_CHECKING_DURATION));
+      const callClickBanTtl = +(await this.setting.get(SettingKey.CALL_CLICK_BAN_TTL));
+
+      const clickCount = await this.db.callLog.count({
+        where: {
+          user_id: userId,
+          created_at: {
+            gte: moment().subtract(callClickCheckingDuration, 'minutes').utc().startOf('day').toDate(),
+          },
+        },
+      });
+
+      if (clickCount >= callClickLimit) {
+        const userBanUntil = user.contact_click_limit_exceeded_at;
+        if (userBanUntil) {
+          const diff = moment().diff(userBanUntil, 'minutes');
+          if (diff < 0) throw new ForbiddenException('CALL_LOG1');
+          else
+            await this.db.user.update({
+              where: { id: user.id },
+              data: { contact_click_limit_exceeded_at: null },
+            });
+        } else {
+          await this.db.user.update({
+            where: { id: user.id },
+            data: { contact_click_limit_exceeded_at: moment().add(callClickBanTtl, 'day').toDate() },
+          });
+          throw new ForbiddenException('CALL_LOG2');
+        }
+      }
+
+      /* ---------------------- if limit not exceed continue ---------------------- */
       await this.db.callLog.create({
         data: { property_id: propertyId, user_id: userId, attempts: 1 },
       });
@@ -353,6 +399,10 @@ export class PropertyUserService {
     }
   }
 
+  /**
+   * valid property constant query
+   * @returns
+   */
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
