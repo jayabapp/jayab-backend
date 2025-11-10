@@ -165,6 +165,11 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       state: 'property_title',
       type: 'input',
     },
+    {
+      title: 'کد آگهی',
+      state: 'property_code',
+      type: 'input',
+    },
   ];
 
   return filterProps;

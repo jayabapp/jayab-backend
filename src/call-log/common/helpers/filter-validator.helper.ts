@@ -31,18 +31,12 @@ export const filterValidator = (filters: FindAllCallLogAdminDto): Prisma.CallLog
 
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
       case 'property_title':
         query = { ...query, property: { title: { contains: filters.property_title, mode: 'insensitive' } } };
         break;
-      // case 'user_fullname':
-      //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
-      //   break;
-      // case 'user_mobile':
-      //   query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
-      //   break;
+      case 'property_code':
+        query = { ...query, property: { code: { contains: filters.property_code, mode: 'insensitive' } } };
+        break;
 
       default:
         break;
