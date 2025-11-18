@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import {
   _IsInt,
@@ -28,11 +29,12 @@ class CommonDto {
   price: number;
 
   @ApiProperty({ required: true, example: 0 })
+  @Transform(({ value }) => value || null)
   @_Max(10000000)
   @_Min(0)
   @_IsNumber()
   @IsOptional()
-  price_with_discount: number;
+  price_with_discount: number = null;
 
   @ApiProperty({ required: true, example: true })
   @_IsBoolean()
