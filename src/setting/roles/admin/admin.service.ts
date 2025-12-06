@@ -186,21 +186,21 @@ Allow: *
 
     sitemap.push({ loc: siteUrl, lastmod: moment().toISOString(), priority: 1.0, changefreq: 'never' });
     sitemap.push({
-      loc: `${siteUrl}/about-us`,
+      loc: encodeURI(`${siteUrl}/about-us`),
       lastmod: moment().toISOString(),
       // priority: 0.8,
       // changefreq: 'weekly',
     });
     sitemap.push({
-      loc: `${siteUrl}/contact-us`,
+      loc: encodeURI(`${siteUrl}/contact-us`),
       lastmod: moment().toISOString(),
     });
     sitemap.push({
-      loc: `${siteUrl}/terms`,
+      loc: encodeURI(`${siteUrl}/terms`),
       lastmod: moment().toISOString(),
     });
     sitemap.push({
-      loc: `${siteUrl}/faq`,
+      loc: encodeURI(`${siteUrl}/faq`),
       lastmod: moment().toISOString(),
     });
 
@@ -230,7 +230,7 @@ Allow: *
       else loc = `${siteUrl}/${c.category.key}/${c.slug}`;
 
       sitemap.push({
-        loc: loc,
+        loc: encodeURI(loc),
         lastmod: moment().toISOString(),
       });
     }
@@ -248,7 +248,7 @@ Allow: *
       else loc = `${siteUrl}/${c.key}`;
 
       sitemap.push({
-        loc: loc,
+        loc: encodeURI(loc),
         lastmod: moment().toISOString(),
       });
     }
@@ -260,7 +260,7 @@ Allow: *
     });
     for (const p of properties) {
       sitemap.push({
-        loc: `${siteUrl}/rooms/${p.slug}`,
+        loc: encodeURI(`${siteUrl}/rooms/${p.slug}`),
         lastmod: moment(p.updated_at).toISOString(),
       });
     }
@@ -271,7 +271,7 @@ Allow: *
     });
     for (const l of landingPages) {
       sitemap.push({
-        loc: `${siteUrl}/${l.url}`,
+        loc: encodeURI(`${siteUrl}/${l.url}`),
         lastmod: moment(l.updated_at).toISOString(),
       });
     }
