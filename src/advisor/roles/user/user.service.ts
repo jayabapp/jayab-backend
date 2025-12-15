@@ -157,22 +157,19 @@ export class AdvisorUserService {
     });
     if (!userRate) throw new BadRequestException('RATE1');
 
-    /*  */
-    const rates = await this.db.rate.aggregate({
-      where: { advisor_id: advisorId },
-      _count: { id: true },
-      _sum: { advisor_responsibility: true, response_speed_and_followup: true, advisor_behavior: true },
-    });
-
-    const count = rates._count.id;
-    const behaviorRate = Math.ceil(rates._sum.advisor_behavior / count);
-    const responsibilityRate = Math.ceil(rates._sum.advisor_responsibility / count);
-    const speedAndFollowUpRate = Math.ceil(rates._sum.response_speed_and_followup / count);
-    const usersSatisfaction = Math.ceil((behaviorRate + responsibilityRate + speedAndFollowUpRate) / 3);
-
-    /*  */
     await this.db.$transaction(async (tx) => {
       await tx.rate.update({ where: { id: userRate.id }, data: dto });
+
+      /*  */
+      const rates = await tx.rate.aggregate({
+        where: { advisor_id: advisorId },
+        _avg: { advisor_responsibility: true, response_speed_and_followup: true, advisor_behavior: true },
+      });
+
+      const behaviorRate = Math.ceil(rates._avg.advisor_behavior);
+      const responsibilityRate = Math.ceil(rates._avg.advisor_responsibility);
+      const speedAndFollowUpRate = Math.ceil(rates._avg.response_speed_and_followup);
+      const usersSatisfaction = Math.ceil((behaviorRate + responsibilityRate + speedAndFollowUpRate) / 3);
 
       await tx.advisor.update({
         where: { id: advisorId },

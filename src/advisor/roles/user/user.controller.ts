@@ -52,7 +52,7 @@ export class AdvisorUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Init rate', description: '' })
+  @ApiOperation({ summary: 'Init rate', description: 'وقتی کاربر روی دکمه تماس مشاور کلیک میکنه' })
   @UseGuards(UserJwtGuard)
   @ApiBearerAuth('user-jwt')
   @Post(':advisorId/rate/init')
