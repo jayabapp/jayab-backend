@@ -132,11 +132,10 @@ export class ChatUserController {
           notification: {
             title: '✉️ پیام جدید',
             body: m.text,
-            // clickAction: `http://localhost:33037/chat/${chatroomId}`,
           },
+          data: { chatroomId },
         },
         null,
-        { chatroomId },
       );
     }
 

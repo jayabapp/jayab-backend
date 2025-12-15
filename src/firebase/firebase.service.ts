@@ -119,7 +119,6 @@ export class FirebaseService {
     topic: string,
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
-    data?: any,
   ) {
     const { silent, imageUrl } = options || {};
 
@@ -163,10 +162,14 @@ export class FirebaseService {
           badge: './favicon-96x96.png',
           icon: './web-app-manifest-192x192.png',
         },
-        fcmOptions: data?.chatroomId ? { link: `${process.env.WEBSITE_URL}/chat/${data.chatroomId}` } : {},
+        fcmOptions: payload?.data?.chatroomId
+          ? { link: `${process.env.WEBSITE_URL}/chat/${payload?.data?.chatroomId}` }
+          : {},
       },
       topic: topic,
     };
+
+    console.log({ link: `${process.env.WEBSITE_URL}/chat/${payload?.data?.chatroomId}` });
 
     /**
      * Send to topic
