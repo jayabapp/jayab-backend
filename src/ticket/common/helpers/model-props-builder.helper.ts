@@ -1,4 +1,4 @@
-import { AccessControlList, Ticket, Prisma } from '@prisma/client';
+import { AccessControlList, Prisma, Ticket } from '@prisma/client';
 import {
   AvailableAction,
   Column,
@@ -111,8 +111,8 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
         cellType: 'enum',
         enumList: TicketStatusList,
       },
-      { id: 90, title: 'تاریخ ایجاد', key: 'updated_at', cellType: 'date' },
-      { id: 91, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'date' },
+      { id: 90, title: 'تاریخ ویرایش', key: 'updated_at', cellType: 'dateTime' },
+      { id: 91, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
