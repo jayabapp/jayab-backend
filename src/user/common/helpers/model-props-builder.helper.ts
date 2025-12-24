@@ -1,14 +1,12 @@
-import { AccessControlList, User, Prisma, Attachment } from '@prisma/client';
+import { AccessControlList, Prisma, User } from '@prisma/client';
 import {
   AvailableAction,
   Column,
   CreateProps,
-  FilterProps,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */

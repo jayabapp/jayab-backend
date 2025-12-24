@@ -12,7 +12,7 @@ export interface PaginatedResult<T> {
   meta: PaginationMetaType;
 }
 
-export type PaginateOptionsType = { page?: number | string; perPage?: number | string };
+export type PaginateOptionsType = { page?: number | string; perPage?: number | string; skip?: number };
 export type PaginateFunctionType = <T, K>(
   model: any,
   args?: K,
@@ -24,9 +24,16 @@ export const paginate = (
 ): PaginateFunctionType => {
   return async (model, args: any = {}, options) => {
     const page = Number(options?.page || defaultOptions?.page) || 1;
-    const perPage = Number(options?.perPage || defaultOptions?.perPage) || 10;
+    let perPage = Number(options?.perPage || defaultOptions?.perPage) || 10;
 
-    const skip = page > 0 ? perPage * (page - 1) : 0;
+    let skip = 0;
+    if (options?.skip) {
+      skip = Number(options?.skip);
+      perPage -= skip;
+    } else {
+      skip = page > 0 ? perPage * (page - 1) : 0;
+    }
+
     const orderBy =
       typeof args.orderBy == 'object' && Object.keys(args.orderBy).length > 0
         ? args.orderBy

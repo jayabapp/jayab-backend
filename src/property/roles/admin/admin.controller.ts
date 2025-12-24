@@ -6,27 +6,25 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { ADMIN_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import { filterValidator } from 'src/property/common/helpers/filter-validator.helper';
-import { PropertyAdminService } from './admin.service';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
-import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
-import { AdminRequestType, AdminType } from 'src/common/interfaces/user.interface';
-import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
-import { SmsService } from 'src/sms/sms.service';
+import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { AdminRequestType } from 'src/common/interfaces/user.interface';
+import { filterValidator } from 'src/property/common/helpers/filter-validator.helper';
+import { ADMIN_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyStatusesList } from 'src/property/common/types/property-status.type';
-import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { SmsService } from 'src/sms/sms.service';
 import { PropertyAdminMigrationService } from './admin-migration.service';
+import { PropertyAdminService } from './admin.service';
+import { FindAllPropertyAdminDto } from './dto/find-all.dto';
+import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
+import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -62,11 +60,7 @@ export class PropertyAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const list = await this.propertyAdminService.findAll(
-      filterQuery,
-      excelPaginationOptions.page,
-      excelPaginationOptions.perPage,
-    );
+    const list = await this.propertyAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.skip);
 
     const url = await this.propertyAdminService.createExcel(list.data);
 

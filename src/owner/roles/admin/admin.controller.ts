@@ -13,20 +13,17 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AccessControlList } from '@prisma/client';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { ADMIN_ROUTE_GROUP } from 'src/owner/common/route-group.constant';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { AdminRequestType } from 'src/common/interfaces/user.interface';
 import { filterValidator } from 'src/owner/common/helpers/filter-validator.helper';
-import qs from 'qs';
+import { ADMIN_ROUTE_GROUP } from 'src/owner/common/route-group.constant';
 import { OwnerAdminService } from './admin.service';
 import { CreateOwnerAdminDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateOwnerAdminDto } from './dto/update.dto';
 import { FindAllOwnerAdminDto } from './dto/find-all.dto';
-import { AccessControlList } from '@prisma/client';
 import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
-import { AdminRequestType } from 'src/common/interfaces/user.interface';
-import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
 
 @ApiTags('👨‍💻 Owner - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -66,11 +63,7 @@ export class OwnerAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const list = await this.ownerAdminService.findAll(
-      filterQuery,
-      excelPaginationOptions.page,
-      excelPaginationOptions.perPage,
-    );
+    const list = await this.ownerAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.skip);
 
     const url = await this.ownerAdminService.createExcel(list);
 

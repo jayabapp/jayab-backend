@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { filterPropsBuilder } from './model-props-builder.helper';
 import { FindAllUserAdminDto } from 'src/user/roles/admin/dto/find-all.dto';
+import { filterPropsBuilder } from './model-props-builder.helper';
 
 /**
  * validate filters
@@ -26,7 +26,7 @@ export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereI
      * check filter keys
      */
     const checkField = items.find((e) => e.state === field);
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page', 'skip'].includes(field)) return;
 
     //query
     switch (field) {

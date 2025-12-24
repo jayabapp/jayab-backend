@@ -1,18 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, Advisor, City, Prisma, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateAdvisorAdminDto } from './dto/create.dto';
-import { UpdateAdvisorAdminDto } from './dto/update.dto';
-import {
-  CreateProps,
-  FilterProps,
-  OperatorItems,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
-import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { isEmpty } from 'lodash';
+import moment from 'moment-jalaali';
+import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -21,14 +11,22 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/advisor/common/helpers/model-props-builder.helper';
-import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
-import { AdminDescription } from 'src/common/interfaces/admin-description.type';
-import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
-import { AdminType } from 'src/common/interfaces/user.interface';
-import moment from 'moment-jalaali';
-import { isEmpty } from 'lodash';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
+import {
+  CreateProps,
+  OperatorItems,
+  ShowAction,
+  ShowProps,
+  TableProps,
+} from 'src/common/interfaces/model-props.interface';
+import { AdminType } from 'src/common/interfaces/user.interface';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
+import { UpdateAdvisorAdminDto } from './dto/update.dto';
 
 @Injectable()
 export class AdvisorAdminService {
@@ -61,11 +59,12 @@ export class AdvisorAdminService {
     filters: Prisma.AdvisorWhereInput,
     page: number,
     perPage = 50,
+    skip?: number,
   ): Promise<PaginatedResult<any>> {
     const list = await paginate()<Advisor, Prisma.AdvisorFindManyArgs>(
       this.db.advisor,
       { where: filters, include: { user: { include: { profile_image: true } } } },
-      { page, perPage },
+      { page, perPage, skip },
     );
 
     list.data = list.data.map((e) => {

@@ -1,7 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { filterPropsBuilder } from './model-props-builder.helper';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { FindAllOwnerAdminDto } from 'src/owner/roles/admin/dto/find-all.dto';
+import { filterPropsBuilder } from './model-props-builder.helper';
 
 /**
  * validate filters
@@ -27,7 +26,7 @@ export const filterValidator = (filters: FindAllOwnerAdminDto): Prisma.OwnerWher
      * check filter keys
      */
     const checkField = items.find((e) => e.state === field);
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page', 'skip'].includes(field)) return;
 
     //query
     switch (field) {

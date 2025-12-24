@@ -1,9 +1,8 @@
 import { Prisma } from '@prisma/client';
-import { filterPropsBuilder } from './model-props-builder.helper';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
 import moment from 'moment-jalaali';
 import { startOfDate } from 'src/common/helpers/date.helper';
+import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
+import { filterPropsBuilder } from './model-props-builder.helper';
 
 /**
  * validate filters
@@ -29,7 +28,7 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
      * check filter keys
      */
     const checkField = items.find((e) => e.state === field);
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page', 'skip'].includes(field)) return;
 
     //query
     switch (field) {

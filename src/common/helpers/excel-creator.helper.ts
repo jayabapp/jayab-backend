@@ -1,4 +1,4 @@
-import { Cell, Column, Row, Workbook } from 'exceljs';
+import { Column, Row, Workbook } from 'exceljs';
 import { __baseDir } from 'src/config/settings';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -79,6 +79,7 @@ export async function saveToExcel(cols: ExcelCol[], data: object[], sheetName: S
 
     const fileName = `${sheetName}-${new Date().getTime()}-${uuidv7()}.xlsx`;
     const url = __baseDir + `/storage/public/excels/${fileName}`;
+    console.log({ url });
     await workbook.xlsx.writeFile(url);
     console.timeEnd('⓵ CREATE EXCEL');
     return `${process.env.BASE_URL}/excels/${fileName}`;

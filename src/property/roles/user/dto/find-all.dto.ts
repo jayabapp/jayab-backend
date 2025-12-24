@@ -1,18 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
-import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import {
+  _IsIn,
   _IsInt,
-  _Max,
-  _Min,
-  _IsBoolean,
-  _IsArray,
-  _IsString,
   _IsNotEmpty,
   _IsNumberString,
-  _IsIn,
+  _IsString,
+  _Max,
+  _Min,
 } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllPropertyUserDto extends PaginationDto {

@@ -6,7 +6,6 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Patch,
   // Post,
   Put,
   Query,
@@ -17,21 +16,13 @@ import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { UserAdminService } from './admin.service';
 // import { CreateUserAdminDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateUserAdminDto } from './dto/update.dto';
-import { FindAllUserAdminDto } from './dto/find-all.dto';
-import qs from 'qs';
 import { AccessControlList } from '@prisma/client';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { filterValidator } from 'src/user/common/helpers/filter-validator.helper';
-import { SearchUsersAdminDto } from './dto/search.dto';
-import {
-  ExcelCol,
-  excelPaginationOptions,
-  saveToExcel,
-  SHEET_NAME,
-} from 'src/common/helpers/excel-creator.helper';
 import { ADMIN_ROUTE_GROUP } from 'src/user/common/route-group.constant';
-import { UpdatePartialUserAdminDto } from './dto/update-partial.dto';
+import { FindAllUserAdminDto } from './dto/find-all.dto';
+import { SearchUsersAdminDto } from './dto/search.dto';
+import { UpdateUserAdminDto } from './dto/update.dto';
 
 @ApiTags('👨‍💻 User - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -71,12 +62,7 @@ export class UserAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const list = await this.userAdminService.findAll(
-      filterQuery,
-      excelPaginationOptions.page,
-      excelPaginationOptions.perPage,
-    );
-
+    const list = await this.userAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.skip);
     const url = await this.userAdminService.createExcel(list);
 
     return { result: url };

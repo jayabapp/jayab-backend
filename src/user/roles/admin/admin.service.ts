@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, User, Prisma } from '@prisma/client';
+import { AccessControlList, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { CreateUserAdminDto } from './dto/create.dto';
-import { UpdateUserAdminDto } from './dto/update.dto';
+import moment from 'moment-jalaali';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import {
   CreateProps,
   OperatorItems,
@@ -10,8 +12,11 @@ import {
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
-import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -20,15 +25,8 @@ import {
   tablePropsBuilder,
 } from 'src/user/common/helpers/model-props-builder.helper';
 import { SearchUsersAdminDto } from './dto/search.dto';
-import { DateType } from 'src/common/validators/is-date.validator';
 import { UpdatePartialUserAdminDto } from './dto/update-partial.dto';
-import { UserStatusList } from 'src/user/common/user-status.type';
-import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
-import moment from 'moment-jalaali';
-import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
-import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { UpdateUserAdminDto } from './dto/update.dto';
 
 @Injectable()
 export class UserAdminService {
@@ -60,16 +58,11 @@ export class UserAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(
-    filters: object,
-    page: number,
-    perPage = 50,
-    isExcel?: false,
-  ): Promise<PaginatedResult<User>> {
+  async findAll(filters: object, page: number, perPage = 50, skip?: number): Promise<PaginatedResult<User>> {
     const list = await paginate()<User, Prisma.UserFindManyArgs>(
       this.db.user,
       { where: filters },
-      { page, perPage },
+      { page, perPage, skip },
     );
 
     return list;

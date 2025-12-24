@@ -1,18 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, Owner, Prisma, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateOwnerAdminDto } from './dto/create.dto';
-import { UpdateOwnerAdminDto } from './dto/update.dto';
+import moment from 'moment-jalaali';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import {
   CreateProps,
-  FilterProps,
   OperatorItems,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
-import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -21,13 +22,10 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/owner/common/helpers/model-props-builder.helper';
-import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
-import { AdminType } from 'src/common/interfaces/user.interface';
-import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import { OwnerStatusList } from 'src/owner/common/owner-status.type';
-import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
-import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
-import moment from 'moment-jalaali';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateOwnerAdminDto } from './dto/create.dto';
+import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
 
 @Injectable()
 export class OwnerAdminService {
@@ -56,11 +54,16 @@ export class OwnerAdminService {
    * @param perPage
    * @returns
    */
-  async findAll(filters: Prisma.OwnerWhereInput, page: number, perPage = 50): Promise<PaginatedResult<any>> {
+  async findAll(
+    filters: Prisma.OwnerWhereInput,
+    page: number,
+    perPage = 50,
+    skip?: number,
+  ): Promise<PaginatedResult<any>> {
     const list = await paginate()<Owner, Prisma.OwnerFindManyArgs>(
       this.db.owner,
       { where: filters, include: { user: { include: { profile_image: true } } } },
-      { page, perPage },
+      { page, perPage, skip },
     );
 
     return list;

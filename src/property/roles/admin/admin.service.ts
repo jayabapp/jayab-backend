@@ -1,6 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AccessControlList, Property, Prisma, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { AccessControlList, Prisma, Property } from '@prisma/client';
+import moment from 'moment-jalaali';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { AdminDescription } from 'src/common/interfaces/admin-description.type';
 import {
   CreateProps,
   OperatorItems,
@@ -8,8 +16,11 @@ import {
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
-import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { PrismaService } from 'src/prisma/prisma.service';
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -18,26 +29,14 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/property/common/helpers/model-props-builder.helper';
-import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
-import { endOfDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import moment from 'moment-jalaali';
-import { DayHelper } from 'src/common/helpers/day.helper';
+import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import {
   PropertyArrayResType,
   PropertyJsonType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
-import { AdminDescription } from 'src/common/interfaces/admin-description.type';
-import { AdminType } from 'src/common/interfaces/user.interface';
-import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
-import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class PropertyAdminService {
@@ -63,6 +62,7 @@ export class PropertyAdminService {
     filters: Prisma.PropertyWhereInput,
     page: number,
     perPage = 50,
+    skip?: number,
   ): Promise<PaginatedResult<PropertyArrayResType>> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -85,7 +85,7 @@ export class PropertyAdminService {
           favorites: true,
         },
       },
-      { page, perPage },
+      { page, perPage, skip },
     );
 
     const today = await this.dayHelper.today();

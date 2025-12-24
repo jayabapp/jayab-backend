@@ -7,30 +7,27 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { ADMIN_ROUTE_GROUP } from 'src/advisor/common/route-group.constant';
-import { filterValidator } from 'src/advisor/common/helpers/filter-validator.helper';
-import qs from 'qs';
-import { AdvisorAdminService } from './admin.service';
-import { CreateAdvisorAdminDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateAdvisorAdminDto } from './dto/update.dto';
-import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AccessControlList } from '@prisma/client';
-import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
-import { AdminRequestType } from 'src/common/interfaces/user.interface';
-import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
-import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
-import { UserRole } from 'src/common/interfaces/role.enum';
 import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
+import { filterValidator } from 'src/advisor/common/helpers/filter-validator.helper';
+import { ADMIN_ROUTE_GROUP } from 'src/advisor/common/route-group.constant';
+import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
+import { excelPaginationOptions } from 'src/common/helpers/excel-creator.helper';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { AdminRequestType } from 'src/common/interfaces/user.interface';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { AdvisorAdminService } from './admin.service';
+import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
+import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
+import { UpdateAdvisorAdminDto } from './dto/update.dto';
 
 @ApiTags('👨‍💻 Advisor - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -73,7 +70,7 @@ export class AdvisorAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const result = await this.advisorAdminService.findAll(filterQuery, dto.page, dto.per_page);
+    const result = await this.advisorAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.skip);
 
     return { result };
   }
