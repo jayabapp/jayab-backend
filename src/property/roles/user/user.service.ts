@@ -1,33 +1,30 @@
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, PropertyOwnerAssistant, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { ConfigService } from '@nestjs/config';
+import { Prisma, Property, PropertyOwnerAssistant, User } from '@prisma/client';
+import { AES, enc } from 'crypto-js';
+import { Redis } from 'ioredis';
 import { isEmpty, omit, random } from 'lodash';
+import moment from 'moment-jalaali';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import Num2persian from 'src/common/helpers/Num2Persian';
+import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
+import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { slugify } from 'src/common/helpers/slugify';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import {
   PropertyArrayResType,
   PropertyJsonType,
   PropertyResType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
-import { DayHelper } from 'src/common/helpers/day.helper';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { Redis } from 'ioredis';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import { userPropertyViewKey } from 'src/common/helpers/redis.helper';
-import moment from 'moment-jalaali';
-import { slugify } from 'src/common/helpers/slugify';
-import Num2persian from 'src/common/helpers/Num2Persian';
-import { ConfigService } from '@nestjs/config';
-import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
-import { AES, enc } from 'crypto-js';
-import isJson from 'src/common/helpers/is-json.helper';
-import { SmsService } from 'src/sms/sms.service';
-import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SmsService } from 'src/sms/sms.service';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
 
 @Injectable()
 export class PropertyUserService {
@@ -432,10 +429,10 @@ export class PropertyUserService {
    */
   async updateViewStatistics(propertyId: number, fingerprint: string): Promise<void> {
     /*  */
-    const redisKey = userPropertyViewKey(propertyId, fingerprint);
-    const userViewedPost = await this.redis.get(redisKey);
-    if (userViewedPost) return;
-    await this.redis.set(redisKey, 1, 'EX', 86400);
+    // const redisKey = userPropertyViewKey(propertyId, fingerprint);
+    // const userViewedPost = await this.redis.get(redisKey);
+    // if (userViewedPost) return;
+    // await this.redis.set(redisKey, 1, 'EX', 86400);
 
     const now = startOfToday();
 

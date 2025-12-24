@@ -279,7 +279,7 @@ export class PropertyAdminService {
       { header: 'تعداد لایک', key: 'favorite_count', width: 15 },
     ];
 
-    const url = await saveToExcel(excelCols, newList, SHEET_NAME.USERS);
+    const url = await saveToExcel(excelCols, newList, SHEET_NAME.PRODUCTS);
     return url;
   }
 
