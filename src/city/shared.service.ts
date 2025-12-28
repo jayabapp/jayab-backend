@@ -1,10 +1,8 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { City, Prisma } from '@prisma/client';
-import { FindAllCityUserDto } from './roles/user/dto/find-all.dto';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { FindAllCityUserDto } from './roles/user/dto/find-all.dto';
 
 @Injectable()
 export class CitySharedService {
@@ -60,13 +58,13 @@ export class CitySharedService {
         id: true,
         title: true,
         image: true,
-        // child: {
-        //   select: {
-        //     id: true,
-        //     title: true,
-        //   },
-        //   orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
-        // },
+        child: {
+          select: {
+            id: true,
+            title: true,
+          },
+          orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+        },
       },
     });
     return cities;

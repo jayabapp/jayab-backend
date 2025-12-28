@@ -1,11 +1,26 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, Prisma, SubscriptionPlan, PropertyStatistics } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { Prisma, Property, PropertyStatistics, SubscriptionPlan } from '@prisma/client';
 import { isEmpty, random, xor } from 'lodash';
-import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
+import moment from 'moment-jalaali';
+import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
+import { slugify } from 'src/common/helpers/slugify';
+import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+import { TurnoverType } from 'src/payment/common/turnover-type.enum';
+import { PaymentUserService } from 'src/payment/roles/user/user.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
+import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
+import {
+  PropertyArrayResType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
+import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -17,22 +32,7 @@ import {
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
-import { PartialUser } from 'src/common/interfaces/user.interface';
-import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
-import moment from 'moment-jalaali';
-import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
-import { PaymentUserService } from 'src/payment/roles/user/user.service';
-import { slugify } from 'src/common/helpers/slugify';
-import {
-  PropertyArrayResType,
-  PropertyResType,
-  PropertySerializer,
-} from 'src/property/serializer/property.serializer';
-import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
-import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { TurnoverType } from 'src/payment/common/turnover-type.enum';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
 
 @Injectable()
 export class PropertyOwnerService {
@@ -132,6 +132,16 @@ export class PropertyOwnerService {
 
     // do not update status in edit
     if (property.status === PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
+
+    // check region
+    const city = await this.db.city.findUnique({
+      where: { id: dto.city_id },
+      select: { _count: { select: { child: true } } },
+    });
+
+    if (city._count.child > 0 && !dto.region_id) {
+      throw new BadRequestException('PROPERTY1');
+    }
 
     /* -------------------------------------------------------------------------- */
     // create options relations - delete old options

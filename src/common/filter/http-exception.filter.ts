@@ -212,6 +212,8 @@ const failedMessages = {
   PROPERTY_BADGE1: 'درخواست ممتاز شدن پیش از این تایید شده است',
   PROPERTY_BADGE2: 'درخواست ممتاز شدن پیش از این ثبت شده است',
 
+  PROPERTY1: 'انتخاب محله الزامی می‌باشد',
+
   PEAK_DAY1: 'این تاریخ قبلا ثبت شده است',
 
   LANDING_PAGE1: '',
