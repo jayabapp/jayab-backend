@@ -1,16 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { FirebaseService } from 'src/firebase/firebase.service';
 import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
-import { SendMessageDto } from './common/dto/send-message.dto';
-import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { CreateChatUserDto } from './roles/user/dto/create.dto';
-import { UserRole } from 'src/common/interfaces/role.enum';
 import moment from 'moment-jalaali';
-import { PartialParticipant } from './common/chat.interface';
+import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { FirebaseService } from 'src/firebase/firebase.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { v7 as uuid } from 'uuid';
+import { PartialParticipant } from './common/chat.interface';
+import { SendMessageDto } from './common/dto/send-message.dto';
 import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
-import { PropertyUserService } from 'src/property/roles/user/user.service';
+import { CreateChatUserDto } from './roles/user/dto/create.dto';
 
 @Injectable()
 export class SharedChatService {
@@ -93,14 +93,19 @@ export class SharedChatService {
         AND mp2.user_id = ${userId}
         AND mm.participant_id != mp2.id
         AND mm.created_at > mp2.message_read_at
-      ) AS unread_count
-    --   (
-    --     SELECT ROW_TO_JSON(last_msg.*)
-    --     FROM messenger_messages last_msg
-    --     WHERE last_msg.chatroom_id = mc.id
-    --     ORDER BY last_msg.created_at DESC
-    --     LIMIT 1
-    -- ) AS last_message
+      ) AS unread_count,
+      (
+        SELECT JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'user_id', mp3.user_id,
+                'user_mobile_number', mp3.user_mobile_number
+                -- 'role', mp3.role,
+                -- 'message_read_at', mp3.message_read_at
+            )
+        )
+        FROM messenger_participants mp3
+        WHERE mp3.chatroom_id = mc.id AND mp3.user_id != ${userId}
+      ) AS participants
     FROM 
       messenger_participants mp
     JOIN 
@@ -115,6 +120,11 @@ export class SharedChatService {
       mp.user_id = ${userId}
     ORDER BY lm.created_at DESC
     `;
+
+    for (const e of list) {
+      e.other_side_mobile = maskedUserMobile(e.participants[0]?.user_mobile_number || '');
+      delete e.participants;
+    }
 
     return list;
   }

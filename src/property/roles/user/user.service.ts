@@ -8,6 +8,7 @@ import { isEmpty, omit, random } from 'lodash';
 import moment from 'moment-jalaali';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
+import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import Num2persian from 'src/common/helpers/Num2Persian';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
@@ -412,16 +413,13 @@ export class PropertyUserService {
       await this.db.callLog.create({
         data: { property_id: propertyId, user_id: userId, attempts: 1 },
       });
-      const maskedUserMobile = user.mobile_number
-        .split('')
-        .map((char, i) => {
-          if (i > 6 && i <= 8) return 'x';
-          return char;
-        })
-        .join('');
 
       if (user?.mobile_number !== ownerMobile) {
-        this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile, isPropertyExpired);
+        this.smsService.sendCallLogToOwner(
+          ownerMobile,
+          maskedUserMobile(user.mobile_number),
+          isPropertyExpired,
+        );
       }
     }
   }
