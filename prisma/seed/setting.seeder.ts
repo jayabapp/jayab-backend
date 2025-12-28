@@ -42,6 +42,13 @@ const settings = (): Prisma.SettingCreateInput[] => {
       sort_order: 30,
       data_type: SettingDataType.NUMBER,
     },
+    {
+      title: 'شماره موبایل جایاب برای جایگزین شماره مالک',
+      key: 'JAYAB_MOBILE_NUMBER',
+      value: '',
+      sort_order: 40,
+      data_type: SettingDataType.TEXT,
+    },
   ];
 
   return data;

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
@@ -190,7 +190,11 @@ export class SmsService {
    * @param ownerMobile
    * @returns
    */
-  async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
+  async sendCallLogToOwner(
+    mobile: string,
+    targetUserMobile: string,
+    isPropertyExpired?: boolean,
+  ): Promise<void> {
     if (!this.isProduction) return;
 
     try {

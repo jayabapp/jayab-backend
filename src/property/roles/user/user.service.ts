@@ -294,10 +294,45 @@ export class PropertyUserService {
     return item;
   }
 
+  /**
+   * اطلاعات تماس ملک را برمی‌گرداند (در صورت منقضی بودن اشتراک، شماره مالک با جایاب جایگزین می‌شود)
+   */
   async findContactInfo(
     propertySlug: string,
-  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
+  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[]; isPropertyExpired: boolean }> {
     const code = this.checkSlug(propertySlug);
+
+    const property = await this.db.property.findUnique({
+      where: { code },
+      select: {
+        id: true,
+        subscription_expired_at: true,
+        owner: { select: { user: { select: { profile_image: true } } } },
+      },
+    });
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const owner = {
+      selfie_image: property.owner?.user?.profile_image,
+    };
+
+    // اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
+    if (property.subscription_expired_at >= startOfToday()) {
+      const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
+
+      return {
+        owner,
+        list: [
+          {
+            assistant_full_name: 'جایاب',
+            assistant_mobile_number: jayabMobileNumber,
+            is_owner: true,
+            property_id: property.id,
+          },
+        ],
+        isPropertyExpired: true,
+      };
+    }
 
     const list = await this.db.propertyOwnerAssistant.findMany({
       // where: { property: { ...this.validProperty(), code } },
@@ -311,20 +346,15 @@ export class PropertyUserService {
       orderBy: { is_owner: 'desc' },
     });
 
-    const property = await this.db.property.findUnique({
-      where: { code },
-      select: { owner: { select: { user: { select: { profile_image: true } } } } },
-    });
-    if (!property) throw new NotFoundException('NOT_FOUND');
-
-    const owner = {
-      selfie_image: property.owner?.user?.profile_image,
-    };
-
-    return { owner, list };
+    return { owner, list, isPropertyExpired: false };
   }
 
-  async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
+  async storeCallLog(
+    propertyId: number,
+    user: User,
+    ownerMobile: string,
+    isPropertyExpired?: boolean,
+  ): Promise<void> {
     const userId = user.id;
 
     const todayRec = await this.db.callLog.findFirst({
@@ -391,7 +421,7 @@ export class PropertyUserService {
         .join('');
 
       if (user?.mobile_number !== ownerMobile) {
-        this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile);
+        this.smsService.sendCallLogToOwner(ownerMobile, maskedUserMobile, isPropertyExpired);
       }
     }
   }
@@ -403,7 +433,7 @@ export class PropertyUserService {
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
-      subscription_expired_at: { gte: startOfToday() },
+      // subscription_expired_at: { gte: startOfToday() },
     };
   }
 
