@@ -1,3 +1,4 @@
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import {
   BadRequestException,
   Body,
@@ -9,34 +10,31 @@ import {
   Post,
   Query,
   Req,
-  UnauthorizedException,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import Redis from 'ioredis';
+import { first } from 'lodash';
+import moment from 'moment-jalaali';
+import { AttachmentService } from 'src/attachment/attachment.service';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { FindOneChatInterceptor } from 'src/chat/common/chat.interceptor';
 import { PartialChatroom } from 'src/chat/common/chat.interface';
 import { FindAllChatMessagesDto } from 'src/chat/common/dto/find-all-chat-messages.dto';
 import { SendMessageDto } from 'src/chat/common/dto/send-message.dto';
 import { ROUTE_GROUP } from 'src/chat/common/route-group.constant';
+import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { SharedChatService } from 'src/chat/shared-chat.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { RequestType } from 'src/common/interfaces/user.interface';
-import { CreateChatUserDto } from './dto/create.dto';
-import { SocketService } from 'src/socket/socket.service';
 import { UserRole } from 'src/common/interfaces/role.enum';
-import { AttachmentService } from 'src/attachment/attachment.service';
-import { CHAT_MEDIA_FOLDER } from 'src/common/utils/constants/storage-folders';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import Redis from 'ioredis';
-import { first } from 'lodash';
-import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { BlockParticipantUserDto } from './dto/blacklist.dto';
-import { PropertyUserService } from 'src/property/roles/user/user.service';
-import { FirebaseService } from 'src/firebase/firebase.service';
+import { RequestType } from 'src/common/interfaces/user.interface';
 import createTopicKey from 'src/firebase/common/topic-generator.helper';
+import { FirebaseService } from 'src/firebase/firebase.service';
+import { PropertyUserService } from 'src/property/roles/user/user.service';
+import { SocketService } from 'src/socket/socket.service';
+import { BlockParticipantUserDto } from './dto/blacklist.dto';
+import { CreateChatUserDto } from './dto/create.dto';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -109,6 +107,18 @@ export class ChatUserController {
       chatroom.participants.recipient.user_id, //طرف مثابل که من رو بلاک کرده
     );
     if (isBlocked) throw new BadRequestException('CHAT9');
+
+    const userParticipant: { role: UserRole } =
+      chatroom.participants.self.user_id == user.id
+        ? chatroom.participants.self
+        : chatroom.participants.recipient;
+
+    if (
+      userParticipant.role == UserRole.OWNER &&
+      moment().isAfter(chatroom.property?.subscription_expired_at)
+    ) {
+      throw new BadRequestException('CHAT10');
+    }
 
     /* -------------------------------------------------------------------------- */
     // create message

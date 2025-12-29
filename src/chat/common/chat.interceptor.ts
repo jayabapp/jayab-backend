@@ -5,7 +5,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { UserRole } from 'src/common/interfaces/role.enum';
+import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -28,10 +28,10 @@ export class FindOneChatInterceptor implements NestInterceptor {
         uuid: true,
         created_at: true,
         property_id: true,
-        // property: { select: { id: true, status: true } },
+        property: { select: { id: true, status: true, subscription_expired_at: true } },
         participants: {
           where: { deleted_at: null },
-          select: { id: true, user_id: true, role: true, message_read_at: true },
+          select: { id: true, user_id: true, role: true, message_read_at: true, user_mobile_number: true },
         },
       },
     });
@@ -60,7 +60,12 @@ export class FindOneChatInterceptor implements NestInterceptor {
             }
           : null,
         recipient: recipient
-          ? { participant_id: recipient.id, user_id: recipient.user_id, role: recipient.role }
+          ? {
+              participant_id: recipient.id,
+              user_id: recipient.user_id,
+              role: recipient.role,
+              user_mobile_number: maskedUserMobile(recipient.user_mobile_number),
+            }
           : null,
       },
     };

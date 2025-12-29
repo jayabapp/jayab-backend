@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "tsx prisma/seed/seeder.ts",
     "gen:module": "npx nestjs-command gen:module",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "patch": "tsx prisma/patch/patcher.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.654.0",
