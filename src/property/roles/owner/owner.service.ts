@@ -508,7 +508,7 @@ export class PropertyOwnerService {
         TurnoverType.PAY_SUBSCRIPTION,
         tx,
       );
-      console.log({ pay });
+      // console.log({ pay });
 
       // حذف تمام درخواست پرداخت های پرداخت نشده
       await tx.subscription.deleteMany({

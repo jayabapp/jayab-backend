@@ -9,6 +9,7 @@ export enum SHEET_NAME {
   ORDERS = 'orders',
   BUSINESS_PRODUCT_PRICES = 'prices',
   PRODUCTS = 'products',
+  MESSENGER_MESSAGES = 'messenger_messages',
 }
 
 export type ExcelCol = Partial<Column>;

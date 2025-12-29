@@ -1,15 +1,15 @@
-import { Controller, Get, Post, Body, UseGuards, Param, ParseIntPipe, Put, Req } from '@nestjs/common';
-import { AccessControlService } from './access-control.service';
-import { CreateAccessControlModuleDto } from './dto/create-rbac-module.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AccessControlRole, Admin } from '@prisma/client';
+import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { AdminRequestType, RequestType } from 'src/common/interfaces/user.interface';
+import { AccessControlService } from './access-control.service';
 import { ACCESS_CONTROL_ROUTE_GROUP } from './common/access-control.constant';
+import { CreateAccessControlModuleDto } from './dto/create-rbac-module.dto';
 import { CreateAccessControlRoleDto } from './dto/create-rbac-role.dto';
 import { CreateAccessControlListDto } from './dto/create-rbac.dto';
-import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { EditAdminDto, SignUpAdminDto } from './dto/signup-admin.dto';
-import { AdminRequestType, RequestType } from 'src/common/interfaces/user.interface';
-import { AccessControlRole, Admin } from '@prisma/client';
 import { UpdateRoleNotifPermissionDto } from './dto/update-role-notif-permission.dto';
 
 @ApiTags('👨‍💻 Access control - ADMIN')
@@ -107,7 +107,7 @@ export class AccessControlController {
     @Param('roleId', ParseIntPipe) roleId: number,
   ): Promise<SuccessResponseArgs> {
     const admin = req.user as unknown as Admin & { role: AccessControlRole };
-    console.log({ admin });
+    // console.log({ admin });
 
     const result = await this.accessControlService.findOneRBACList(roleId, admin.role);
     return { result };

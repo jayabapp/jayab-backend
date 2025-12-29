@@ -73,6 +73,7 @@ import { BookmarkModule } from './bookmark/bookmark.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { TicketModule } from './ticket/ticket.module';
 import { CallLogModule } from './call-log/call-log.module';
+import { MessengerMessagesModule } from './messenger-messages/messenger-messages.module';
 import { BaseModule as BaseModule } from './__base/base.module';
 import { PageSeoAnalyzeModule } from './page-seo-analyze/page-seo-analyze.module';
 import { RedirectUrlModule } from './redirect-url/redirect-url.module';
@@ -159,6 +160,7 @@ import { RedirectUrlModule } from './redirect-url/redirect-url.module';
     CallLogModule,
     PageSeoAnalyzeModule,
     RedirectUrlModule,
+    MessengerMessagesModule,
     BaseModule,
   ],
   providers: [
