@@ -18,7 +18,7 @@ export const filterValidator = (filters: FindAllBaseAdminDto): Prisma.BaseWhereI
    */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
-  
+
   // eslint-disable-next-line
   let query: Prisma.BaseWhereInput = {};
 
@@ -27,7 +27,7 @@ export const filterValidator = (filters: FindAllBaseAdminDto): Prisma.BaseWhereI
      * check filter keys
      */
     const checkField = items.find((e) => e.state === field);
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page'].includes(field)) continue;
 
     //query
     switch (field) {

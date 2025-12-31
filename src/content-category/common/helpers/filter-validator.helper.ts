@@ -30,7 +30,7 @@ export const filterValidator = (
      */
     const checkField = items.find((e) => e.state === field);
 
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page'].includes(field)) continue;
 
     //query
     switch (field) {
