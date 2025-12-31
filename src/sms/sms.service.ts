@@ -220,13 +220,6 @@ export class SmsService {
         };
       }
 
-      console.log({
-        mobile,
-        targetUserMobile,
-        propertyId,
-        isPropertyExpired,
-        body,
-      });
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
