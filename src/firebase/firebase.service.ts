@@ -31,7 +31,6 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ): Promise<void> {
-    return;
     const { silent, imageUrl } = options || {};
 
     if (deviceIds.length == 0) {
@@ -121,7 +120,6 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ) {
-    return;
     const { silent, imageUrl } = options || {};
 
     if (!topic) {

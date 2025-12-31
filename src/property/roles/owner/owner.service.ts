@@ -644,7 +644,7 @@ export class PropertyOwnerService {
         day: i,
         month,
         year,
-        price: cal?.price ?? dailyPrice[today],
+        price: cal?.price ?? dailyPrice?.[today] ?? 0,
         discounted_price: cal?.discounted_price ?? null,
         note: isOwner ? cal?.note || null : null,
         is_reserved: isOwner || isAdvisor ? cal?.is_reserved : null,

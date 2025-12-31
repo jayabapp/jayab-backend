@@ -112,10 +112,12 @@ export class PropertyUserController {
 
     const result = await this.propertyUserService.findContactInfo(propertySlug);
 
+    console.log({ result });
+
     if (result.list?.length > 0) {
       const ownerMobile = result.list[0]?.assistant_mobile_number;
       const propertyId = result.list[0]?.property_id;
-      await this.propertyUserService.storeCallLog(propertyId, user, ownerMobile);
+      await this.propertyUserService.storeCallLog(propertyId, user, ownerMobile, result.isPropertyExpired);
     }
 
     return { result };

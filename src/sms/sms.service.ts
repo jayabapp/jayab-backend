@@ -193,21 +193,40 @@ export class SmsService {
   async sendCallLogToOwner(
     mobile: string,
     targetUserMobile: string,
-    isPropertyExpired?: boolean,
+    propertyId: number,
+    isPropertyExpired: boolean,
   ): Promise<void> {
     if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.callLogTemplateId');
+      const templateIdExpired = this.configService.get('sms.callLogExpiredTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
-      const body = {
-        parameters: [{ name: 'MOBILE', value: targetUserMobile }],
-        mobile: mobile,
-        templateId: templateId,
-      };
+      let body = {};
+      if (!isPropertyExpired)
+        body = {
+          parameters: [{ name: 'MOBILE', value: targetUserMobile }],
+          mobile: mobile,
+          templateId: templateId,
+        };
+      else {
+        const link = `profile/owner/properties/${propertyId}/subscription`;
+        body = {
+          parameters: [{ name: 'LINK', value: link }],
+          mobile: mobile,
+          templateId: templateIdExpired,
+        };
+      }
 
+      console.log({
+        mobile,
+        targetUserMobile,
+        propertyId,
+        isPropertyExpired,
+        body,
+      });
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },

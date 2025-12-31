@@ -318,6 +318,7 @@ export class PropertyUserService {
     // اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
     if (property.subscription_expired_at < startOfToday()) {
       const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
+      console.log({ jayabMobileNumber });
 
       return {
         owner: null,
@@ -334,7 +335,7 @@ export class PropertyUserService {
     }
 
     const list = await this.db.propertyOwnerAssistant.findMany({
-      // where: { property: { ...this.validProperty(), code } },
+      // where: { property: { ...this.validProperty(), code } },// درتوسعه دی ماه ۴۰۴ قرار شد آگهی های منقضی هم نمایش داده بشه
       where: { property: { code } },
       select: {
         assistant_full_name: true,
@@ -416,6 +417,7 @@ export class PropertyUserService {
         this.smsService.sendCallLogToOwner(
           ownerMobile,
           maskedUserMobile(user.mobile_number),
+          propertyId,
           isPropertyExpired,
         );
       }
