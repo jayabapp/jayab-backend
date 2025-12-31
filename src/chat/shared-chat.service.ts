@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
+import { Attachment, MessengerMessages, Prisma, User } from '@prisma/client';
 import moment from 'moment-jalaali';
 import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
@@ -25,7 +25,8 @@ export class SharedChatService {
    * @param dto
    * @returns
    */
-  async findOrCreate(userId: number, dto: CreateChatUserDto): Promise<string> {
+  async findOrCreate(user: User, dto: CreateChatUserDto): Promise<string> {
+    const userId = user.id;
     const part = await this.db.messengerParticipant.findFirst({
       where: { user_id: userId, chatroom: { property_id: dto?.property_id } },
       select: { chatroom: { select: { uuid: true } } },
@@ -34,7 +35,10 @@ export class SharedChatService {
 
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id },
-      select: { is_chat_enabled: true, owner: { select: { user: { select: { id: true } } } } },
+      select: {
+        is_chat_enabled: true,
+        owner: { select: { user: { select: { id: true, mobile_number: true } } } },
+      },
     });
 
     if (!property) throw new BadRequestException('CHAT5');
@@ -55,11 +59,13 @@ export class SharedChatService {
                 user_id: userId,
                 role: UserRole.USER,
                 message_read_at: new Date(),
+                user_mobile_number: user.mobile_number,
               },
               {
                 user_id: ownerUserId,
                 role: UserRole.OWNER,
                 message_read_at: new Date(),
+                user_mobile_number: property.owner.user?.mobile_number,
               },
             ],
           },

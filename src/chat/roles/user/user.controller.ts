@@ -36,6 +36,7 @@ import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { SocketService } from 'src/socket/socket.service';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
 import { CreateChatUserDto } from './dto/create.dto';
+import { User } from '@prisma/client';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -72,7 +73,7 @@ export class ChatUserController {
     @Req() request: RequestType,
     @Body() dto: CreateChatUserDto,
   ): Promise<SuccessResponseArgs> {
-    const user = request.user;
+    const user = request.user as unknown as User;
 
     /* -------------------------------------------------------------------------- */
     // checking if user can start chat.
@@ -80,7 +81,7 @@ export class ChatUserController {
 
     /* -------------------------------------------------------------------------- */
     // create chatroom
-    const chatroomId = await this.sharedChatService.findOrCreate(user.id, dto);
+    const chatroomId = await this.sharedChatService.findOrCreate(user, dto);
 
     /* -------------------------------------------------------------------------- */
     return { result: { chatroom_id: chatroomId } };
