@@ -273,6 +273,10 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       route: `/properties/show/${item.id}/images`,
     },
     {
+      title: 'چت روم ها',
+      route: `/messenger-chatrooms?property_id=${item.id}`,
+    },
+    {
       title: 'ویرایش',
       route: `/properties/edit/${item.id}`,
       color: 'success',

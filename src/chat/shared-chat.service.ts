@@ -171,7 +171,7 @@ export class SharedChatService {
         where: { chatroom_id: chatroomId },
         include: { media: true },
       },
-      { cursor, perPage: 20 },
+      { cursor, perPage: 100 },
     );
 
     return result;
