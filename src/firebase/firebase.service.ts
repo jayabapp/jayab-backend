@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import firebaseAdmin from 'firebase-admin';
+import { MulticastMessage, TopicMessage } from 'firebase-admin/lib/messaging/messaging-api';
 import { FCM_OPTIONS } from './constants/firebase.constants';
 import { FcmOptions } from './interfaces/fcm-options.interface';
-import { MulticastMessage, TopicMessage } from 'firebase-admin/lib/messaging/messaging-api';
 
 @Injectable()
 export class FirebaseService {
@@ -31,6 +31,7 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ): Promise<void> {
+    return;
     const { silent, imageUrl } = options || {};
 
     if (deviceIds.length == 0) {
@@ -120,6 +121,7 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ) {
+    return;
     const { silent, imageUrl } = options || {};
 
     if (!topic) {

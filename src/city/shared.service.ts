@@ -29,7 +29,17 @@ export class CitySharedService {
         image: true,
         child: {
           where: { deleted_at: null },
-          select: { id: true, title: true },
+          select: {
+            id: true,
+            title: true,
+            child: {
+              where: { deleted_at: null },
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
           // take: +dto.depth || 5,
         },
         // _count: {
@@ -62,6 +72,12 @@ export class CitySharedService {
           select: {
             id: true,
             title: true,
+            child: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
           orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
         },

@@ -1,7 +1,6 @@
 import {
   Attachment,
   City,
-  Favorite,
   Owner,
   Property,
   PropertyAuthorize,
@@ -11,21 +10,19 @@ import {
   PropertyDailyPrice,
   PropertyDescription,
   PropertyOption,
-  PropertyOwnerAssistant,
   User,
 } from '@prisma/client';
-import { EnumList } from 'src/common/interfaces/model-props.interface';
-import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { DayColumn } from 'src/common/helpers/day.helper';
-import { object } from 'joi';
+import { isEmpty } from 'lodash';
 import moment from 'moment-jalaali';
-import { RentType } from '../common/types/property-rent-types.type';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { DayColumn } from 'src/common/helpers/day.helper';
+import { EnumList } from 'src/common/interfaces/model-props.interface';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
-import { isEmpty } from 'lodash';
+import { RentType } from '../common/types/property-rent-types.type';
+import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
 
 type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
 
@@ -244,7 +241,7 @@ export class PropertySerializer {
       has_pool: data.has_pool,
       province: data.province?.title,
       city: data.city?.title,
-      region: data.region?.title,
+      region: data?.region?.title,
       advisor_commission:
         !isAdvisor && !isOwner
           ? null

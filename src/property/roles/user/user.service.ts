@@ -102,7 +102,7 @@ export class PropertyUserService {
     else if (!isEmpty(cities)) query = { ...query, city_id: { in: parseQueryNumberArray(cities) } };
 
     /* --------------------------------- regions -------------------------------- */
-    if (!isEmpty(regions)) query = { ...query, region_id: { in: regions } };
+    if (!isEmpty(regions)) query = { ...query, region_id: { in: parseQueryNumberArray(regions) } };
 
     /* ----------------------------- total bedrooms ----------------------------- */
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
@@ -229,6 +229,7 @@ export class PropertyUserService {
           feature_image: true,
           province: { select: { title: true } },
           city: { select: { title: true } },
+          region: { select: { title: true } },
           property_options: {
             where: { option: { deleted_at: null } },
             select: { option: { select: { title: true, group: true } } },
@@ -265,6 +266,7 @@ export class PropertyUserService {
         attachments: true,
         province: { select: { title: true } },
         city: { select: { title: true } },
+        region: { select: { title: true } },
         property_options: {
           where: { option: { deleted_at: null } },
           select: { option: { select: { title: true, group: true } } },
@@ -313,16 +315,12 @@ export class PropertyUserService {
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
 
-    const owner = {
-      selfie_image: property.owner?.user?.profile_image,
-    };
-
     // اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
-    if (property.subscription_expired_at >= startOfToday()) {
+    if (property.subscription_expired_at < startOfToday()) {
       const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
 
       return {
-        owner,
+        owner: null,
         list: [
           {
             assistant_full_name: 'جایاب',
@@ -347,7 +345,7 @@ export class PropertyUserService {
       orderBy: { is_owner: 'desc' },
     });
 
-    return { owner, list, isPropertyExpired: false };
+    return { owner: { selfie_image: property.owner?.user?.profile_image }, list, isPropertyExpired: false };
   }
 
   async storeCallLog(
@@ -426,6 +424,7 @@ export class PropertyUserService {
 
   /**
    * valid property constant query
+   * در توسعه تاریخ ۹ دی ماه ۱۴۰۴، قرار شده که همه آگهی های منقضی شده نمایش داده بشن
    * @returns
    */
   validProperty() {

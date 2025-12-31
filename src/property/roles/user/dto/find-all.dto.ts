@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import {
   _IsIn,
@@ -38,10 +38,10 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @IsOptional()
   cities?: string;
 
-  @ApiProperty({ required: false, title: 'محله' })
+  @ApiProperty({ required: false, title: 'شهر', example: '147,2' })
+  @_IsString()
   @IsOptional()
-  @IsNumber({}, { each: true })
-  regions?: number[];
+  regions?: string;
 
   @ApiProperty({ required: false, title: 'تعداد خواب' })
   @Type(() => Number)

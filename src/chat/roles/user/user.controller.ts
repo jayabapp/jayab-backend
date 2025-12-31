@@ -26,6 +26,7 @@ import { SendMessageDto } from 'src/chat/common/dto/send-message.dto';
 import { ROUTE_GROUP } from 'src/chat/common/route-group.constant';
 import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { SharedChatService } from 'src/chat/shared-chat.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { RequestType } from 'src/common/interfaces/user.interface';
@@ -183,6 +184,7 @@ export class ChatUserController {
       slug: true,
       title: true,
       feature_image: true,
+      subscription_expired_at: true,
     });
 
     const result = {
@@ -191,7 +193,10 @@ export class ChatUserController {
       recipient: chatroom.participants.recipient,
       is_recipient_online: isRecipientOnline,
       is_blocked: isBlocked,
-      property,
+      property: {
+        ...property,
+        is_expired: property.subscription_expired_at < startOfToday(),
+      },
     };
 
     return { result };
