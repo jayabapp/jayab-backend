@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { DashboardElement } from '../common/interface/dashboard-element.type';
 import { random } from 'lodash';
-import { OwnerStatus } from 'src/owner/common/owner-status.type';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
-import { TicketCommonStatuses } from 'src/ticket/common/ticket-status.constant';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { OwnerStatus } from 'src/owner/common/owner-status.type';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyAuthorizeStatuses } from 'src/property-authorize/common/property-authorize-status.type';
 import { PropertyBadgeStatus } from 'src/property-badge/common/property-badge-status.type';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { TicketCommonStatuses } from 'src/ticket/common/ticket-status.constant';
+import { DashboardElement } from '../common/interface/dashboard-element.type';
 
 @Injectable()
 export class DashboardService {
@@ -176,11 +176,13 @@ export class DashboardService {
     const waitingProperties = await this.db.property.count({ where: { status: PropertyStatuses.WAITING } });
     const editedProperties = await this.db.property.count({ where: { status: PropertyStatuses.EDITED } });
     const pendingOwnersOwners = await this.db.owner.count({ where: { status: OwnerStatus.PENDING } });
+    const pendingReports = await this.db.propertyReport.count({ where: { seen_by_admin: false } });
 
     return {
       waitingProperties,
       editedProperties,
       pendingOwnersOwners,
+      pendingReports,
     };
   }
 }

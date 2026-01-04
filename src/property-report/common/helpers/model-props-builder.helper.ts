@@ -113,15 +113,15 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'توضیحات', key: 'description', cellType: 'string' },
-      {
-        id: 70,
-        title: 'بررسی شده',
-        key: 'seen_by_admin',
-        cellType: 'boolean',
-      },
+      // {
+      //   id: 70,
+      //   title: 'بررسی شده',
+      //   key: 'seen_by_admin',
+      //   cellType: 'boolean',
+      // },
       {
         id: 80,
-        title: 'تغییر وضعیت',
+        title: 'بررسی شده',
         key: 'seen_by_admin',
         cellType: 'boolean',
         isEditable: true,

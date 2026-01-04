@@ -46,9 +46,10 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'سابقه کلیک تماس', key: 'call-logs' },
     { name: 'ریدایرکت ', key: 'redirect-urls' },
     { name: 'گزارش سئو سایت', key: 'page-seo-analyzes' },
-   { name: 'چت ها', key: 'messenger-messages'},
-  { name: 'چت روم ها', key: 'messenger-chatrooms'},
- ];
+    { name: 'چت ها', key: 'messenger-messages' },
+    { name: 'چت روم ها', key: 'messenger-chatrooms' },
+    { name: 'گزارش آگهی', key: 'property-reports' },
+  ];
 
   return data;
 };
