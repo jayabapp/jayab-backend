@@ -438,14 +438,15 @@ model User {
   owner         Owner?      @relation(fields: [owner_id], references: [id])
   advisor       Advisor?    @relation(fields: [advisor_id], references: [id])
 
-  tickets    Ticket[]
+  tickets          Ticket[]
   // payments         Payment[]
   // offer_codes      CustomerOfferCode[]
-  turnovers  Turnover[]
-  favorites  Favorite[]
-  black_list MessengerBlackList[]
-  bookmarks  Bookmark[]
-  call_logs  CallLog[]
+  turnovers        Turnover[]
+  favorites        Favorite[]
+  black_list       MessengerBlackList[]
+  bookmarks        Bookmark[]
+  call_logs        CallLog[]
+  property_reports PropertyReport[]
 
   @@map("users")
 }
@@ -596,6 +597,7 @@ model Property {
   bookmarks              Bookmark[]
   subscription_reminders SubscriptionReminder[]
   call_logs              CallLog[]
+  reports                PropertyReport[]
 
   @@index([id, sort_order, code, advisor_commission])
   @@map("properties")
@@ -1319,4 +1321,23 @@ model PageSeoLinkAnalyze {
 
   @@index([page_id])
   @@map("page_seo_link_analyzes")
+}
+
+// ----------------------------- PROPERTY REPORT ---------------------------- //
+model PropertyReport {
+  id            Int     @id() @default(autoincrement())
+  user_id       Int
+  property_id   Int
+  title         String  @db.VarChar
+  description   String? @db.Text
+  seen_by_admin Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [property_id], references: [id])
+
+  @@unique([user_id, property_id])
+  @@map("property_reports")
 }

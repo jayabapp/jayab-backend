@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { User } from '@prisma/client';
 import Redis from 'ioredis';
 import { first } from 'lodash';
 import moment from 'moment-jalaali';
@@ -36,7 +37,6 @@ import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { SocketService } from 'src/socket/socket.service';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
 import { CreateChatUserDto } from './dto/create.dto';
-import { User } from '@prisma/client';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -186,6 +186,7 @@ export class ChatUserController {
       title: true,
       feature_image: true,
       subscription_expired_at: true,
+      owner: { select: { user: { select: { id: true } } } },
     });
 
     const result = {
