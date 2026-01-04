@@ -2,15 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import {
-  _IsInt,
-  _IsNotEmpty,
-  _IsString,
-  _IsNumber,
   _IsBoolean,
   _IsEnum,
+  _IsInt,
+  _IsNotEmpty,
+  _IsNumber,
+  _IsString,
+  _Length,
   _Max,
   _Min,
-  _Length,
 } from 'src/common/pipes/validator-translate.pipe';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 
@@ -20,6 +20,21 @@ class CommonDto {
   @_IsString()
   @_IsNotEmpty()
   title: string;
+
+  @ApiProperty({ required: true, example: 'عنوان' })
+  @_IsString()
+  @IsOptional()
+  ribbon_title: string = null;
+
+  @ApiProperty({ required: true, example: 'عنوان' })
+  @_IsString()
+  @IsOptional()
+  ribbon_title_color: string = null;
+
+  @ApiProperty({ required: true, example: 'عنوان' })
+  @_IsString()
+  @IsOptional()
+  ribbon_bg_color: string = null;
 
   @ApiProperty({ required: true, example: 20000 })
   @_Max(100_000_000)

@@ -1,15 +1,13 @@
-import { AccessControlList, SubscriptionPlan, Prisma } from '@prisma/client';
+import { AccessControlList, Prisma, SubscriptionPlan } from '@prisma/client';
 import {
   AvailableAction,
   Column,
   CreateProps,
-  FilterProps,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { SubscriptionPlanGroup, SubscriptionPlanGroupList } from '../subscription-plan-group.type';
+import { SubscriptionPlanGroupList } from '../subscription-plan-group.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -38,6 +36,12 @@ export const showPropsBuilder = (item: SubscriptionPlan): Array<ShowProps> => {
     { type: 'break' },
     { state: 'title', title: 'عنوان', value: item.title, type: 'string' },
     { state: 'sort', title: 'ترتیب', value: item.sort, type: 'number' },
+
+    { type: 'break' },
+    { state: 'ribbon_title', title: 'عنوان ربان', value: item.ribbon_title, type: 'string' },
+    { state: 'ribbon_title_color', title: 'رنگ عنوان ربان', value: item.ribbon_title_color, type: 'color' },
+    { state: 'ribbon_bg_color', title: 'رنگ پیش زمینه ربان', value: item.ribbon_bg_color, type: 'string' },
+
     { type: 'break' },
     { state: 'duration', title: 'مدت زمان', value: item.duration, type: 'number' },
     { state: 'price', title: 'قیمت (تومان)', value: item.price, type: 'number' },
@@ -147,6 +151,11 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       options: { isMandatory: true },
     },
     { type: 'break' },
+    { state: 'ribbon_title', title: 'عنوان ربان', type: 'input', options: { maxLength: 128 } },
+    { state: 'ribbon_title_color', title: 'رنگ عنوان ربان', type: 'colorInput' },
+    { state: 'ribbon_bg_color', title: 'رنگ پیش زمینه ربان', type: 'colorInput' },
+
+    { type: 'break' },
     {
       state: 'description',
       type: 'textarea',
@@ -170,6 +179,11 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 30, title: 'قیمت (تومان)	', key: 'price', cellType: 'number' },
       { id: 40, title: 'فعال بودن', key: 'is_active', cellType: 'boolean' },
       { id: 50, title: 'مدت زمان (روز)	', key: 'duration', cellType: 'number' },
+
+      { id: 51, title: 'عنوان ربان', key: 'ribbon_title', cellType: 'string' },
+      { id: 52, title: 'رنگ عنوان ربان', key: 'ribbon_title_color', cellType: 'color' },
+      { id: 53, title: 'رنگ پیش زمینه ربان', key: 'ribbon_bg_color', cellType: 'color' },
+
       { id: 60, title: 'ترتیب نمایش', key: 'sort', cellType: 'number' },
     ],
     availableActions,

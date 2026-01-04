@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriptionPlan, Prisma, Property } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
-import moment from 'moment-jalaali';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { Property, SubscriptionPlan } from '@prisma/client';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
+import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -43,6 +42,9 @@ export class SubscriptionPlanUserService {
         is_promote: true,
         description: true,
         is_special: true,
+        ribbon_bg_color: true,
+        ribbon_title: true,
+        ribbon_title_color: true,
       },
       orderBy: { sort: { sort: 'asc', nulls: 'last' } },
     });
