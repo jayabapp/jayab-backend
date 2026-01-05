@@ -310,7 +310,7 @@ export class PropertyUserService {
       select: {
         id: true,
         subscription_expired_at: true,
-        owner: { select: { user: { select: { profile_image: true } } } },
+        owner: { select: { user: { select: { full_name: true, profile_image: true } } } },
       },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
@@ -318,16 +318,15 @@ export class PropertyUserService {
     // اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
     if (property.subscription_expired_at < startOfToday()) {
       const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
-      console.log({ jayabMobileNumber });
 
       return {
-        owner: null,
+        owner: { selfie_image: property.owner?.user?.profile_image },
         list: [
           {
-            assistant_full_name: 'جایاب',
+            assistant_full_name: property.owner?.user?.full_name,
             assistant_mobile_number: jayabMobileNumber,
-            is_owner: true,
             property_id: property.id,
+            is_owner: true,
           },
         ],
         isPropertyExpired: true,
