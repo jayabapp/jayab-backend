@@ -212,7 +212,7 @@ export class SmsService {
           templateId: templateId,
         };
       else {
-        const link = `profile/owner/properties/${propertyId}/subscription`;
+        const link = `profile/owner/properties`;
         body = {
           parameters: [{ name: 'LINK', value: link }],
           mobile: mobile,

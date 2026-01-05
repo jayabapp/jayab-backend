@@ -169,8 +169,6 @@ export class FirebaseService {
       topic: topic,
     };
 
-    console.log({ link: `${process.env.WEBSITE_URL}/chat/${payload?.data?.chatroomId}` });
-
     /**
      * Send to topic
      */
