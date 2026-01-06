@@ -310,7 +310,9 @@ export class PropertyUserService {
       select: {
         id: true,
         subscription_expired_at: true,
-        owner: { select: { user: { select: { full_name: true, profile_image: true } } } },
+        owner: {
+          select: { user: { select: { full_name: true, profile_image: true, mobile_number: true } } },
+        },
       },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
@@ -319,8 +321,12 @@ export class PropertyUserService {
     if (property.subscription_expired_at < startOfToday()) {
       const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
 
+      //باید با خروجی اخر یکی باشد
       return {
-        owner: { selfie_image: property.owner?.user?.profile_image },
+        owner: {
+          selfie_image: property.owner?.user?.profile_image,
+          mobile: property.owner?.user?.mobile_number,
+        },
         list: [
           {
             assistant_full_name: property.owner?.user?.full_name,
@@ -345,7 +351,14 @@ export class PropertyUserService {
       orderBy: { is_owner: 'desc' },
     });
 
-    return { owner: { selfie_image: property.owner?.user?.profile_image }, list, isPropertyExpired: false };
+    return {
+      owner: {
+        selfie_image: property.owner?.user?.profile_image,
+        mobile: property.owner?.user?.mobile_number,
+      },
+      list,
+      isPropertyExpired: false,
+    };
   }
 
   async storeCallLog(
