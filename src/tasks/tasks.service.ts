@@ -61,6 +61,9 @@ export class TasksService {
   })
   async propertySubscriptionReminderTask(): Promise<void> {
     if (!this.IS_PRODUCTION) return;
+    const hour = moment().hour();
+    if (hour < 10 || hour > 14) return;
+
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:property-subscription-reminder : ${now}`);
 
@@ -122,6 +125,9 @@ export class TasksService {
   })
   async advisorSubscriptionReminderTask(): Promise<void> {
     if (!this.IS_PRODUCTION) return;
+    const hour = moment().hour();
+    if (hour < 10 || hour > 14) return;
+
     const now = moment().format('YYYY-MM-DD HH:mm');
     console.log(`🕑 cron:advisor-subscription-reminder : ${now}`);
 
