@@ -56,7 +56,7 @@ export class PropertyReportAdminService {
   ): Promise<PaginatedResult<PropertyReport>> {
     const list = await paginate()<PropertyReport & { user: User }, Prisma.PropertyReportFindManyArgs>(
       this.db.propertyReport,
-      { where: filters, include: { user: true } },
+      { where: filters, include: { user: true, property: true } },
       { page, perPage },
     );
 

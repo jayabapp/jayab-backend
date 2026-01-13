@@ -30,9 +30,6 @@ export const filterValidator = (filters: FindAllPropertyReportAdminDto): Prisma.
 
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
       case 'seen_by_admin':
         query = { ...query, seen_by_admin: filters?.seen_by_admin == 2 ? true : false };
         break;
@@ -40,12 +37,15 @@ export const filterValidator = (filters: FindAllPropertyReportAdminDto): Prisma.
       case 'property_id':
         query = { ...query, property_id: +filters?.property_id };
         break;
-      // case 'user_fullname':
-      //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
-      //   break;
-      // case 'user_mobile':
-      //   query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
-      //   break;
+      case 'property_title':
+        query = { ...query, property: { title: { contains: filters.property_title, mode: 'insensitive' } } };
+        break;
+      case 'property_code':
+        query = { ...query, property: { code: filters.property_code } };
+        break;
+      case 'user_mobile':
+        query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
+        break;
 
       default:
         break;

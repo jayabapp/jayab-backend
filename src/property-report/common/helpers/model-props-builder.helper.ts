@@ -13,6 +13,7 @@ import {
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
   user = 'user',
+  property = 'property',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyReportScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -111,14 +112,30 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
         nestedKey: 'full_name',
         link: '/users/show',
       },
+      {
+        id: 9,
+        title: 'موبایل گزارش دهنده',
+        key: 'user',
+        cellType: 'object',
+        nestedKey: 'mobile_number',
+      },
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'توضیحات', key: 'description', cellType: 'string' },
-      // {
-      //   id: 70,
-      //   title: 'بررسی شده',
-      //   key: 'seen_by_admin',
-      //   cellType: 'boolean',
-      // },
+      {
+        id: 70,
+        title: 'کد ملک',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'code',
+      },
+      {
+        id: 71,
+        title: 'عنوان ملک',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'title',
+        link: '/properties/show',
+      },
       {
         id: 80,
         title: 'بررسی شده',
@@ -140,7 +157,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
 
       /* ---------------------------------- date ---------------------------------- */
-      { id: 90, title: '', key: 'created_at', cellType: 'date' },
+      { id: 90, title: 'تاریخ ثبت', key: 'created_at', cellType: 'dateTime' },
       // { id: 100, title: t('UPDATED_AT'), key: 'updated_at', cellType: 'date' },
     ],
     availableActions,
@@ -162,6 +179,21 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
         { id: 1, title: 'بررسی نشده', key: 1 },
         { id: 2, title: 'بررسی شده', key: 2 },
       ],
+    },
+    {
+      state: 'property_code',
+      title: 'کد ملک',
+      type: 'input',
+    },
+    {
+      state: 'property_title',
+      title: 'عنوان ملک',
+      type: 'input',
+    },
+    {
+      state: 'user_mobile',
+      title: 'شماره گزارش دهنده',
+      type: 'input',
     },
     {
       state: 'property_id',
