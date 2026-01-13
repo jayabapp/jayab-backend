@@ -211,7 +211,7 @@ export class TasksService {
 
     const now = moment();
     console.log(`⏱️ cron:enable chat in expired property:${now.format('HH:MM:ss')}`);
-    const x = await this.db.property.updateMany({
+    await this.db.property.updateMany({
       where: { subscription_expired_at: { lt: new Date() }, is_chat_enabled: false },
       data: { is_chat_enabled: true },
     });
