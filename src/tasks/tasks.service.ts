@@ -201,6 +201,23 @@ export class TasksService {
     if (property) await this.db.property.update({ where: { id: property.id }, data: { promoted_at: null } });
   }
 
+  /* --------------------- enable chat in expired property -------------------- */
+  @Cron(CronExpression.EVERY_6_HOURS, {
+    name: 'enable-chat-in-expired-property',
+    timeZone: 'Asia/Tehran',
+  })
+  async enableChatInExpiredProperty(): Promise<void> {
+    if (!this.IS_PRODUCTION) return;
+
+    const now = moment();
+    console.log(`⏱️ cron:enable chat in expired property:${now.format('HH:MM:ss')}`);
+    const x = await this.db.property.updateMany({
+      where: { subscription_expired_at: { lt: new Date() }, is_chat_enabled: false },
+      data: { is_chat_enabled: true },
+    });
+  }
+
+  /* ----------------------------------- seo ---------------------------------- */
   @Cron(CronExpression.EVERY_10_SECONDS, {
     name: 'seo-page-analyze',
     timeZone: 'Asia/Tehran',
