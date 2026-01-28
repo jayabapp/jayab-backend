@@ -69,10 +69,12 @@ export class CitySharedService {
         title: true,
         image: true,
         child: {
+          where: { deleted_at: null },
           select: {
             id: true,
             title: true,
             child: {
+              where: { deleted_at: null },
               select: {
                 id: true,
                 title: true,
