@@ -89,7 +89,6 @@ export class SubscriptionPlanUserService {
     if (moment(property.subscription_expired_at).isBefore(moment()) && !subscriptionId)
       throw new BadRequestException('BUY_SUBSCRIPTION2');
 
-    throw new BadRequestException('OKAY');
     const promote = await this.findOne(promoteId, true);
 
     return promote;
