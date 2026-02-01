@@ -83,7 +83,7 @@ export class SubscriptionPlanUserService {
     subscriptionId: number,
     property: Property,
   ): Promise<SubscriptionPlan | null> {
-    // if (property.status !== PropertyStatuses.PUBLISHED) return;
+    if (property.status !== PropertyStatuses.PUBLISHED) return;
 
     //اگر منقضی بود باید همزمان اشتراک هم بخرد
     if (moment(property.subscription_expired_at).isBefore(moment()) && !subscriptionId)
