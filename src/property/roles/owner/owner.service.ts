@@ -677,10 +677,21 @@ export class PropertyOwnerService {
 
     const list = await this.db.propertyStatistics.findMany({
       where: { property_id: propertyId, date: { gte: aWeekAgo, lte: now } },
-      select: { id: true, date: true, view_count: true },
+      select: { date: true, view_count: true },
     });
 
-    return list;
+    const formatted = [];
+    for (let i = 0; i < 8; i++) {
+      const day = moment(aWeekAgo)
+        .add(i + 1, 'day')
+        .toDate();
+      const record = list.find((e) => moment(e.date).diff(day, 'minute') === 0);
+
+      if (record) formatted.push(record);
+      else formatted.push({ date: day, view_count: 0 });
+    }
+
+    return formatted;
   }
 
   /* -------------------------------------------------------------------------- */
