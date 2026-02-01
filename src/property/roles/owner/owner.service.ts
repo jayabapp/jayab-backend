@@ -475,7 +475,11 @@ export class PropertyOwnerService {
     /** promote */
     // اگر دفعه اولیست ک اشتراک خریداری میشود، اجازه خرید نردبان را ندارد
     if (dto.promote_id) {
-      promote = await this.subscriptionPlanUserService.checkCanBuyPromote(dto.promote_id, property);
+      promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
+        dto.promote_id,
+        dto.subscription_id,
+        property,
+      );
       if (!promote) throw new BadRequestException('PROPERTY_SUB1');
     }
 
@@ -529,6 +533,7 @@ export class PropertyOwnerService {
           duration: subscription?.duration || 0,
           price: pay.payment.amount,
           status: SubscriptionStatus.WAITING,
+          extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
         },
       });
 

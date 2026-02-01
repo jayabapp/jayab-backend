@@ -131,15 +131,17 @@ export class PaymentUserService {
       /*  */
       const lastSubExpiredAt = property?.subscription_expired_at || undefined;
       const now = moment();
-      let newExpDate = null;
+      let newExpDate = lastSubExpiredAt;
 
-      //اگر فقط نردبان باشه در زمان سیو کردن اشتراک تعداد روز رو صفر میزاریم که اینجا تاثیری نداشته باشه
-      if (lastSubExpiredAt && now.isAfter(lastSubExpiredAt))
-        newExpDate = now.add(subscription.duration + 1, 'days').toDate();
-      else
-        newExpDate = moment(lastSubExpiredAt)
-          .add(subscription.duration + 1, 'days')
-          .toDate();
+      //اگر اشتراکی که خریده روی انقضا تاثیر داره وارد این محاسبات میشیم
+      if (subscription.extends_expire) {
+        if (lastSubExpiredAt && now.isAfter(lastSubExpiredAt))
+          newExpDate = now.add(subscription.duration + 1, 'days').toDate();
+        else
+          newExpDate = moment(lastSubExpiredAt)
+            .add(subscription.duration + 1, 'days')
+            .toDate();
+      }
 
       let propertyUpdateData: Prisma.PropertyUpdateInput = { subscription_expired_at: newExpDate };
       if (subscription.is_promote) {
@@ -155,9 +157,7 @@ export class PaymentUserService {
     return { updatedPayment, subscription };
   }
 
-  async subscriptionAdvisorPaymentCallback(
-    payment: Payment,
-  ): Promise<{
+  async subscriptionAdvisorPaymentCallback(payment: Payment): Promise<{
     updatedPayment: Payment;
     subscription: Subscription & { property: { owner: { user: Partial<User> } } };
   }> {

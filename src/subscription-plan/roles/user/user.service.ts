@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -78,23 +79,18 @@ export class SubscriptionPlanUserService {
    * @param propertySortOrder
    */
   async checkCanBuyPromote(
-    subscriptionPlanId: number,
+    promoteId: number,
+    subscriptionId: number,
     property: Property,
-    mustReturnPromote = true,
   ): Promise<SubscriptionPlan | null> {
-    if (property.status !== PropertyStatuses.PUBLISHED) return;
+    // if (property.status !== PropertyStatuses.PUBLISHED) return;
 
-    // چون سناریو نبود غیرفعال کردیم
-    // const timestamp = Number(property.sort_order);
-    // const twoDaysAgo = moment().subtract(2, 'days');
-    // if (moment(timestamp).isBefore(twoDaysAgo)) return;
+    //اگر منقضی بود باید همزمان اشتراک هم بخرد
+    if (moment(property.subscription_expired_at).isBefore(moment()) && !subscriptionId)
+      throw new BadRequestException('BUY_SUBSCRIPTION2');
 
-    // //
-    // if (mustReturnPromote) {
-    //   const promote = await this.findOne(subscriptionPlanId, true);
-    //   return promote;
-    // }
-    const promote = await this.findOne(subscriptionPlanId, true);
+    throw new BadRequestException('OKAY');
+    const promote = await this.findOne(promoteId, true);
 
     return promote;
   }
