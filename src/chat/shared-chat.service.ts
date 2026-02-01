@@ -124,6 +124,7 @@ export class SharedChatService {
       attachments att ON p.feature_image_id = att.id
     WHERE 
       mp.user_id = ${userId}
+      and lm.id > 0
     ORDER BY lm.created_at DESC
     `;
 
@@ -134,6 +135,7 @@ export class SharedChatService {
 
     return list;
   }
+
   /**
    *
    * @param chatroomId
