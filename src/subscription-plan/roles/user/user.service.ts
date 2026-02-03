@@ -6,6 +6,7 @@ import { PropertyStatuses } from 'src/property/common/types/property-status.type
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 import moment from 'moment-jalaali';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -86,7 +87,7 @@ export class SubscriptionPlanUserService {
     if (property.status !== PropertyStatuses.PUBLISHED) return;
 
     //اگر منقضی بود باید همزمان اشتراک هم بخرد
-    if (moment(property.subscription_expired_at).isBefore(moment()) && !subscriptionId)
+    if (moment(property.subscription_expired_at).isBefore(startOfToday()) && !subscriptionId)
       throw new BadRequestException('BUY_SUBSCRIPTION2');
 
     const promote = await this.findOne(promoteId, true);
