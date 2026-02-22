@@ -29,11 +29,13 @@ export class CitySharedService {
         image: true,
         child: {
           where: { deleted_at: null },
+          orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
           select: {
             id: true,
             title: true,
             child: {
               where: { deleted_at: null },
+              orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
               select: {
                 id: true,
                 title: true,
@@ -70,18 +72,19 @@ export class CitySharedService {
         image: true,
         child: {
           where: { deleted_at: null },
+          orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
           select: {
             id: true,
             title: true,
             child: {
               where: { deleted_at: null },
+              orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
               select: {
                 id: true,
                 title: true,
               },
             },
           },
-          orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
         },
       },
     });

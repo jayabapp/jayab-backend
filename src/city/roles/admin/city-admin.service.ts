@@ -137,18 +137,18 @@ export class CityAdminService {
        * If the city does not have a parent ID, it means that it is the parent city
        */
       where: { parent_id: null },
-      orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
+      orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
       include: {
         parent: true,
         image: true,
         child: {
           where: { deleted_at: null },
-          orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
+          orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
           include: {
             image: true,
             child: {
               where: { deleted_at: null },
-              orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { id: 'asc' }],
+              orderBy: [{ sort_order: { sort: 'asc', nulls: 'last' } }, { title: 'asc' }],
             },
           },
         },
