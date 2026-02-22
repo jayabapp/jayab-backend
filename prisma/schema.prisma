@@ -329,6 +329,8 @@ model City {
   Property_region   Property[]  @relation("PropertyRegion")
 
   @@index([id, sort_order, slug])
+  @@index([title])
+  @@index([parent_id])
   @@map("cities")
 }
 
