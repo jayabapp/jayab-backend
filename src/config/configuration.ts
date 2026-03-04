@@ -26,6 +26,11 @@ export default () => ({
     guestSecret: process.env.GUEST_SECRET,
     guestExpire: process.env.GUEST_EXPIRE,
   },
+
+  mianAuth: {
+    secret: process.env.MIAN_SECRET,
+  },
+
   adminAuth: {
     signinSecret: process.env.ADMIN_SIGNIN_SECRET,
     secret: process.env.ADMIN_AUTH_SECRET,

@@ -22,6 +22,8 @@ const configValidations = Joi.object({
   USER_AUTH_SECRET: Joi.string().required(),
   USER_AUTH_EXPIRE: Joi.string().required(),
 
+  MIAN_SECRET: Joi.string().required(),
+
   ADMIN_SIGNIN_SECRET: Joi.string().required(),
   ADMIN_AUTH_SECRET: Joi.string().required(),
   ADMIN_AUTH_EXPIRE: Joi.string().required(),
