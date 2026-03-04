@@ -7,6 +7,7 @@ import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 import moment from 'moment-jalaali';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -21,7 +22,7 @@ export class SubscriptionPlanUserService {
     user: PartialUser,
     dto: FindAllSubscriptionPlanUserDto,
   ): Promise<{ list: Partial<SubscriptionPlan>[]; can_promote: boolean }> {
-    let canPromote = false;
+    let canPromote = true;
 
     /* -------------------------------------------------------------------------- */
     if (dto.property_id) {
@@ -30,7 +31,18 @@ export class SubscriptionPlanUserService {
       });
 
       if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
-      if (property.status === PropertyStatuses.PUBLISHED) canPromote = true;
+      // if (property.status === PropertyStatuses.PUBLISHED) canPromote = true;
+      /**
+       * ۱۴۰۴/۱۲/۱۳
+       * اگر تا حالا اشتراکی نخریده بود نمیتونه نردبان کنه
+       * شرط بالا برای قبل از این تغییر بود
+       */
+
+      const subscriptionCounts = await this.db.subscription.count({
+        where: { property_id: dto.property_id, status: SubscriptionStatus.SUCCESS },
+      });
+
+      if (subscriptionCounts === 0) canPromote = false;
     }
 
     /* -------------------------------------------------------------------------- */
