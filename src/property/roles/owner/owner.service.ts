@@ -497,48 +497,51 @@ export class PropertyOwnerService {
      * Transaction: payment, promote, subscription
      */
 
-    const result = await this.db.$transaction(async (tx) => {
-      /* -------------------------------------------------------------------------- */
-      /** payment */
-      let amount = 0;
-      if (subscription) amount += subscription?.price_with_discount || subscription?.price;
-      if (promote) amount += promote?.price_with_discount || promote?.price;
+    const result = await this.db.$transaction(
+      async (tx) => {
+        /* -------------------------------------------------------------------------- */
+        /** payment */
+        let amount = 0;
+        if (subscription) amount += subscription?.price_with_discount || subscription?.price;
+        if (promote) amount += promote?.price_with_discount || promote?.price;
 
-      const pay = await this.paymentUserService.create(
-        user,
-        amount,
-        dto.redirect_url,
-        dto.gateway,
-        TurnoverType.PAY_SUBSCRIPTION,
-        tx,
-      );
-      // console.log({ pay });
+        const pay = await this.paymentUserService.create(
+          user,
+          amount,
+          dto.redirect_url,
+          dto.gateway,
+          TurnoverType.PAY_SUBSCRIPTION,
+          tx,
+        );
+        // console.log({ pay });
 
-      // حذف تمام درخواست پرداخت های پرداخت نشده
-      await tx.subscription.deleteMany({
-        where: { property_id: property.id, status: SubscriptionStatus.WAITING },
-      });
+        // حذف تمام درخواست پرداخت های پرداخت نشده
+        await tx.subscription.deleteMany({
+          where: { property_id: property.id, status: SubscriptionStatus.WAITING },
+        });
 
-      //create title
-      let subscriptionTitle = '';
-      if (subscription?.title) subscriptionTitle += `${subscription.title}`;
-      if (promote?.title) subscriptionTitle += `${subscription?.title ? ' - ' : ''}${promote.title}`;
+        //create title
+        let subscriptionTitle = '';
+        if (subscription?.title) subscriptionTitle += `${subscription.title}`;
+        if (promote?.title) subscriptionTitle += `${subscription?.title ? ' - ' : ''}${promote.title}`;
 
-      await tx.subscription.create({
-        data: {
-          property_id: property.id,
-          is_promote: !!dto.promote_id ? true : false,
-          payment_id: pay.payment.id,
-          title: subscriptionTitle,
-          duration: subscription?.duration || 0,
-          price: pay.payment.amount,
-          status: SubscriptionStatus.WAITING,
-          extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
-        },
-      });
+        await tx.subscription.create({
+          data: {
+            property_id: property.id,
+            is_promote: !!dto.promote_id ? true : false,
+            payment_id: pay.payment.id,
+            title: subscriptionTitle,
+            duration: subscription?.duration || 0,
+            price: pay.payment.amount,
+            status: SubscriptionStatus.WAITING,
+            extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
+          },
+        });
 
-      return pay;
-    });
+        return pay;
+      },
+      { timeout: 30000, maxWait: 30000 },
+    );
 
     return result.paymentUrl;
   }
