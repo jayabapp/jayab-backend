@@ -12,5 +12,7 @@ export class MianJwtStrategy extends PassportStrategy(Strategy, 'mian-jwt') {
     });
   }
 
-  public async validate(): Promise<void> {}
+  public async validate(): Promise<boolean> {
+    return true;
+  }
 }

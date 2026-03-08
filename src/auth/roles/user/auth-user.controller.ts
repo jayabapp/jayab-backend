@@ -1,34 +1,20 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Post,
-  Put,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { SmsService } from 'src/sms/sms.service';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { USER_AUTH_ROUTE_GROUP } from 'src/auth/common/route-group.constant';
-import { AuthUserService } from './auth-user.service';
-import { CreateOTPDto, VerifyOTPDto } from 'src/auth/roles/user/dto/auth-user.dto';
-import { AuthSharedService } from 'src/auth/auth-shared.service';
-import { RequestType } from 'src/common/interfaces/user.interface';
-import { RegisterProfileDto } from './dto/register-profile.dto';
-import { UserAuthJwtGuard } from 'src/auth/guards/jwt/user-auth-jwt.guard';
-import { User } from '@prisma/client';
-import { Throttle } from '@nestjs/throttler';
-import { createGuestBrowserFingerprint } from 'src/common/helpers/guest-fingerprint.helper';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { Body, Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BookmarkUserService } from 'src/bookmark/roles/user/bookmark.service';
-import { FavoriteUserService } from 'src/favorite/roles/user/user.service';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { AuthSharedService } from 'src/auth/auth-shared.service';
+import { USER_AUTH_ROUTE_GROUP } from 'src/auth/common/route-group.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { CreateOTPDto, VerifyOTPDto } from 'src/auth/roles/user/dto/auth-user.dto';
+import { BookmarkUserService } from 'src/bookmark/roles/user/bookmark.service';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { FavoriteUserService } from 'src/favorite/roles/user/user.service';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SmsService } from 'src/sms/sms.service';
+import { AuthUserService } from './auth-user.service';
 
 @ApiTags('🔐 Auth - USER')
 @Controller(USER_AUTH_ROUTE_GROUP)

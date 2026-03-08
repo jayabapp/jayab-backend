@@ -25,5 +25,5 @@ export class CallbackMianDto {
   @_IsEnum(['unblock', 'block'])
   @_IsString()
   @_IsNotEmpty()
-  source: 'unblock' | 'block';
+  action: 'unblock' | 'block';
 }
