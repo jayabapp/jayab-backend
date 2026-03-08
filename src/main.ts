@@ -1,21 +1,19 @@
+import { RapidocModule } from '@b8n/nestjs-rapidoc';
 import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
+import * as requestIp from 'request-ip';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filter/http-exception.filter';
-import validationOptions from './common/utils/validation-options';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { StoplightElementsModule } from 'nestjs-stoplight-elements';
-import { StoplightElementsOptions } from 'nestjs-stoplight-elements/build/src/interfaces/elements-options.interface';
-import { RBACInterceptor } from './common/interceptors/rbac.interceptor';
-import { __baseDir } from './config/settings';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { LoggerService } from './logger/logger.service';
-import * as requestIp from 'request-ip';
 import { P2EInterceptor } from './common/interceptors/p2e.interceptor';
-import { RapidocModule } from '@b8n/nestjs-rapidoc';
+import { RBACInterceptor } from './common/interceptors/rbac.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import validationOptions from './common/utils/validation-options';
+import { __baseDir } from './config/settings';
+import { LoggerService } from './logger/logger.service';
 
 declare global {
   interface BigInt {
@@ -103,6 +101,17 @@ async function bootstrap(): Promise<void> {
           in: 'header',
         },
         'admin-auth-jwt',
+      )
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          name: 'Authorization',
+          description: 'Enter Mian JWT token',
+          in: 'header',
+        },
+        'mian-jwt',
       )
       .setExternalDoc('Json export', '/api-json')
       .build();

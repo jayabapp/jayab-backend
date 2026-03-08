@@ -1,7 +1,7 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
-import provinces from '../../src/city/common/constant/provinces.json';
 import cities from '../../src/city/common/constant/cities.json';
+import provinces from '../../src/city/common/constant/provinces.json';
+const prisma = new PrismaClient();
 
 /* -------------------------------------------------------------------------- */
 /*                                    SEED                                    */
@@ -11,21 +11,12 @@ const createProvinceData = (): Prisma.CityCreateInput[] => {
   const data: Prisma.CityCreateManyInput[] = [];
 
   for (const province of provinces) {
-    // const c = cities
-    //   .filter((e) => e.province_id == province.id)
-    //   .map((e) => ({ title: e.name, slug: e.slug }));
     const rec: Prisma.CityCreateInput = {
       title: province.name,
       tel_prefix: province.tel_prefix,
       slug: province.slug,
       slug_fa: province.slug_fa,
       sort_order: province.sort_order || null,
-      // child: {
-      //   createMany: {
-      //     data: c,
-      //     skipDuplicates: true,
-      //   },
-      // },
     };
     data.push(rec);
   }

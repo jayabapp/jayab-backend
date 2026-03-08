@@ -1,16 +1,14 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
-import { v4 as uuidv4 } from 'uuid';
-import { __baseDir } from 'src/config/settings';
-import { getB2cConfig } from 'src/config/b2c.config';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
-import { UserRole } from 'src/common/interfaces/role.enum';
 import { random } from 'lodash';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthUserService {
