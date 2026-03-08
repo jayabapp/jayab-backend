@@ -1,11 +1,13 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { MIAN_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import { CallbackMianDto } from './dto/callback.dto';
+import { WebhookActionDto } from './dto/webhook.dto';
 import { FindAllPropertyMianDto } from './dto/find-all.dto';
 import { PropertyMianService } from './mian.service';
 import { MianJwtGuard } from 'src/auth/guards/jwt/mian-jwt.guard';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Property - MIAN')
 @UseGuards(MianJwtGuard)
@@ -21,9 +23,9 @@ export class PropertyMianController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Callback (block, unblock)', description: '' })
-  @Post('callback')
-  async callBack(@Body() dto: CallbackMianDto): Promise<SuccessResponseArgs> {
+  @ApiOperation({ summary: 'Webhooks actions', description: '' })
+  @Post('webhooks/actions')
+  async callBack(@Body() dto: WebhookActionDto): Promise<SuccessResponseArgs> {
     const prop = await this.propertyMianService.findOnePropById(dto.property_id);
     if (!prop) return;
 

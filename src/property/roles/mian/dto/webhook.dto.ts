@@ -9,19 +9,19 @@ import {
   _Min,
 } from 'src/common/pipes/validator-translate.pipe';
 
-export class CallbackMianDto {
-  @ApiProperty({ required: true, example: 535 })
+export class WebhookActionDto {
+  @ApiProperty({ required: true, example: 535, description: 'Ex: 535' })
   @_Min(0)
   @_IsInt()
   @_IsNotEmpty()
   property_id: number;
 
-  @ApiProperty({ required: true, example: ['2026-02-23'] })
+  @ApiProperty({ required: true, example: ['2026-02-23'], description: 'Ex: [2026-02-23,2026-02-24]' })
   @_IsArray()
   @_ArrayNotEmpty()
   dates: string[];
 
-  @ApiProperty({ required: true, example: 'block' })
+  @ApiProperty({ required: true, example: 'block', description: 'block or unblock' })
   @_IsEnum(['unblock', 'block'])
   @_IsString()
   @_IsNotEmpty()

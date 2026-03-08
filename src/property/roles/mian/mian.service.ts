@@ -6,7 +6,7 @@ import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PropertyArrayResType } from 'src/property/serializer/property.serializer';
-import { CallbackMianDto } from './dto/callback.dto';
+import { WebhookActionDto } from './dto/webhook.dto';
 import { FindAllPropertyMianDto } from './dto/find-all.dto';
 
 @Injectable()
@@ -47,7 +47,7 @@ export class PropertyMianService {
    * @param dto
    * @returns
    */
-  async block(dto: CallbackMianDto): Promise<void> {
+  async block(dto: WebhookActionDto): Promise<void> {
     await this.db.$transaction(
       async (tx) => {
         for (const e of dto.dates) {
@@ -78,7 +78,7 @@ export class PropertyMianService {
    * @param dto
    * @returns
    */
-  async unBlock(dto: CallbackMianDto): Promise<void> {
+  async unBlock(dto: WebhookActionDto): Promise<void> {
     await this.db.$transaction(
       async (tx) => {
         for (const e of dto.dates) {

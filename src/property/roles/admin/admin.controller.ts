@@ -25,6 +25,8 @@ import { PropertyAdminService } from './admin.service';
 import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
@@ -35,6 +37,8 @@ export class PropertyAdminController {
     private readonly propertyAdminService: PropertyAdminService,
     private readonly propertyAdminMigrationService: PropertyAdminMigrationService,
     private readonly smsService: SmsService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -136,6 +140,19 @@ export class PropertyAdminController {
     return { result };
   }
 
+  /* ----------------------------- MIAN API TOKEN ----------------------------- */
+  @ApiOperation({ summary: 'Generate "Mian" API Token', description: '' })
+  @Get('mian/token')
+  async generateToken(): Promise<SuccessResponseArgs> {
+    const token = this.jwtService.sign(
+      {},
+      {
+        secret: this.configService.get('mianAuth.secret'),
+      },
+    );
+    return { result: { token } };
+  }
+
   /* -------------------------------------------------------------------------- */
   /*                                  MIGRATION                                 */
   /* -------------------------------------------------------------------------- */
@@ -201,3 +218,8 @@ export class PropertyAdminController {
   }
     */
 }
+
+// curl -X POST "https://api.jayab.app/api/v1/mian/properties" \
+// -H "authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI5NzcyNTF9.41QXu5soYHcSpQ-8I0eo1RP6Ixtex2qOb_fOZ9hlZdc" \
+// -H "content-type: application/json" \
+// -d '{"phone_number":"09113228155"}'
