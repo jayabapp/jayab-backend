@@ -224,7 +224,7 @@ export class TasksService {
   })
   async seoPageAnalyze(): Promise<void> {
     if (!this.IS_PRODUCTION) return;
-
+    return;
     const now = moment();
     console.log(`⏱️ cron:page analyze:${now.format('HH:MM:ss')}`);
     await this.pageSeoAnalyzeAdminService.scrapAndCreateReport();
