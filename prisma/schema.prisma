@@ -14,7 +14,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Base {
@@ -1353,13 +1353,16 @@ model PropertyReport {
 
 // ---------------------------- PROPERTY RESERVE ---------------------------- //
 model PropertyReserve {
-  id           Int      @id() @default(autoincrement())
-  property_id  Int
-  status       Int
-  user_id      Int
-  check_in     DateTime @db.Date
-  check_out    DateTime @db.Date
-  guests_count Int
+  id            Int       @id() @default(autoincrement())
+  property_id   Int
+  status        Int
+  user_id       Int
+  check_in      DateTime  @db.Date
+  check_out     DateTime  @db.Date
+  guests_count  String
+  user_action   Int       @db.SmallInt
+  owner_seen_at DateTime?
+  description   String?
 
   property Property @relation(fields: [property_id], references: [id])
   user     User     @relation(fields: [user_id], references: [id])

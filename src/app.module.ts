@@ -79,6 +79,8 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TicketModule } from './ticket/ticket.module';
 import { UserModule } from './user/user.module';
+import { PropertyReserveModule } from './property-reserve/property-reserve.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -114,6 +116,21 @@ import { UserModule } from './user/user.module';
         },
       }),
     }),
+    {
+      ...BullModule.forRootAsync({
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          redis: {
+            host: config.get('redis.host'),
+            port: config.get('redis.port'),
+            password: config.get('redis.password'),
+          },
+          prefix: 'jayab',
+          defaultJobOptions: { removeOnComplete: true, removeOnFail: true },
+        }),
+      }),
+      global: true,
+    },
     {
       ...HttpModule.register({}),
       global: true,
@@ -165,6 +182,7 @@ import { UserModule } from './user/user.module';
     MessengerMessagesModule,
     MessengerChatroomModule,
     PropertyReportModule,
+    PropertyReserveModule,
     BaseModule,
   ],
   providers: [
