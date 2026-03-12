@@ -1362,6 +1362,8 @@ model PropertyReserve {
   guests_count  String
   user_action   Int       @db.SmallInt
   owner_seen_at DateTime?
+  canceled_at   DateTime?
+  expired_at    DateTime?
   description   String?
 
   property Property @relation(fields: [property_id], references: [id])

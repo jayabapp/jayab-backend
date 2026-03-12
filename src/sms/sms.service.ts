@@ -229,4 +229,41 @@ export class SmsService {
       this.logger.error(error);
     }
   }
+
+  async sendReserveToOwner(
+    ownerMobile: string,
+    title: string,
+    guestMobile: string,
+    date: string,
+    duration: string,
+    guestsCount: string,
+  ): Promise<void> {
+    if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.reserveSmsTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [
+          { name: 'TITLE', value: title },
+          { name: 'PHONE', value: guestMobile },
+          { name: 'DATE', value: date },
+          { name: 'DURATION', value: duration },
+          { name: 'GUESTS', value: guestsCount },
+        ],
+        mobile: ownerMobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }

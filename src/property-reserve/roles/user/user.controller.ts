@@ -22,7 +22,11 @@ import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
-import { RESERVE_QUEUE, RESERVE_SMS_JOB } from 'src/property-reserve/processors/queue-name.constants';
+import {
+  RESERVE_EXPIRE_JOB,
+  RESERVE_QUEUE,
+  RESERVE_SMS_JOB,
+} from 'src/property-reserve/processors/queue-name.constants';
 import { Queue } from 'bull';
 
 @ApiTags('PropertyReserve - USER')
@@ -42,15 +46,28 @@ export class PropertyReserveUserController {
     @Body() dto: CreatePropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
+
+    //create reserve
     const reserve = await this.propertyReserveUserService.create(dto, user.id);
+
+    //send sms
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
-    return {};
+
+    //expire
+    await this.queue.add(RESERVE_EXPIRE_JOB, { reserveId: reserve.id }, { delay: 5 * 1000 });
+
+    return;
   }
 
   @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
-  async findAll(@Query() dto: FindAllPropertyReserveUserDto): Promise<SuccessResponseArgs> {
-    const result = await this.propertyReserveUserService.findAll(dto);
+  async findAll(
+    @Req() req: RequestType,
+    @Query() dto: FindAllPropertyReserveUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user;
+
+    const result = await this.propertyReserveUserService.findAll(dto, user.id);
 
     return { result };
   }

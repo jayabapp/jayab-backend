@@ -51,6 +51,7 @@ export default () => ({
     callLogTemplateId: process.env.SMS_IR_CALL_LOG_TEMPLATE_ID,
     callLogExpiredTemplateId: process.env.SMS_IR_CALL_LOG_EXPIRED_TEMPLATE_ID,
     propertyPromoteTemplateId: process.env.SMS_IR_PROPERTY_PROMOTE_TEMPLATE_ID,
+    reserveSmsTemplateId: process.env.SMS_IR_RESERVE_TEMPLATE_ID,
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },
