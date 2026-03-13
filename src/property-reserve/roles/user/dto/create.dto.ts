@@ -24,13 +24,13 @@ export class CreatePropertyReserveUserDto {
   @_IsNotEmpty()
   guests_count: string;
 
-  @ApiProperty({ required: true, example: '2026-03-11T00:00:00.000Z' })
+  @ApiProperty({ required: true, example: '2026-03-15T00:00:00.000Z' })
   @_IsDate()
   @Type(() => Date)
   @_IsNotEmpty()
   check_in: Date;
 
-  @ApiProperty({ required: true, example: '2026-03-11T00:00:00.000Z' })
+  @ApiProperty({ required: true, example: '2026-03-16T00:00:00.000Z' })
   @_IsDate()
   @Type(() => Date)
   @_IsNotEmpty()

@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   // Delete,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -28,6 +30,7 @@ import {
   RESERVE_SMS_JOB,
 } from 'src/property-reserve/processors/queue-name.constants';
 import { Queue } from 'bull';
+import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -54,7 +57,11 @@ export class PropertyReserveUserController {
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
 
     //expire
-    await this.queue.add(RESERVE_EXPIRE_JOB, { reserveId: reserve.id }, { delay: 5 * 1000 });
+    await this.queue.add(
+      RESERVE_EXPIRE_JOB,
+      { reserveId: reserve.id },
+      { delay: RESERVE_TTL_MINUTES * 60 * 1000 },
+    );
 
     return;
   }
@@ -72,34 +79,18 @@ export class PropertyReserveUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Find One', description: '' })
-  @Get(':propertyReserveId')
-  async findOne(
+  @ApiOperation({ summary: 'Cancel', description: '' })
+  @Patch(':propertyReserveId')
+  async cancel(
+    @Req() req: RequestType,
     @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
   ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyReserveUserService.findOne(propertyReserveId);
+    const user = req.user;
+    const reserve = await this.propertyReserveUserService.findOne(propertyReserveId, user.id);
+    if (reserve.expired_at) throw new BadRequestException('RESERVE5');
 
-    return { result };
+    const result = await this.propertyReserveUserService.cancel(propertyReserveId);
+
+    return { result, messageCode: 'RESERVE1' };
   }
-
-  @ApiOperation({ summary: 'Update', description: '' })
-  @Put(':propertyReserveId')
-  async update(
-    @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
-    @Body() dto: UpdatePropertyReserveUserDto,
-  ): Promise<SuccessResponseArgs> {
-    await this.propertyReserveUserService.findOne(propertyReserveId);
-    const result = await this.propertyReserveUserService.update(propertyReserveId, dto);
-
-    return { result, messageCode: 'UPDATE' };
-  }
-
-  // @ApiOperation({ summary: 'Remove', description: '' })
-  // @Delete(':propertyReserveId')
-  // async remove(@Param('propertyReserveId', ParseIntPipe) propertyReserveId: number): Promise<SuccessResponseArgs> {
-  //   await this.propertyReserveUserService.findOne(propertyReserveId);
-  //   await this.propertyReserveUserService.remove(propertyReserveId);
-
-  //   return { messageCode: 'DELETE' };
-  // }
 }

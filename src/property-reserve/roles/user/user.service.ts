@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PropertyReserve, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
@@ -11,6 +17,7 @@ import moment from 'moment-jalaali';
 import { SmsService } from 'src/sms/sms.service';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 
 @Injectable()
 export class PropertyReserveUserService {
@@ -34,6 +41,7 @@ export class PropertyReserveUserService {
     const diff = moment(dto.check_out).diff(dto.check_in, 'd');
     if (diff === 0) throw new UnprocessableEntityException('RESERVE1');
     if (diff < 0) throw new UnprocessableEntityException('RESERVE2');
+    if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
 
     const newPropertyReserve = await this.db.propertyReserve.create({
       data: { ...dto, user_id: userId, status: PropertyReserveStatus.PENDING },
@@ -54,17 +62,23 @@ export class PropertyReserveUserService {
     const list = await cursorPaginate()<PropertyReserve, Prisma.PropertyReserveFindManyArgs>(
       this.db.propertyReserve,
       {
-        where: { user_id: userId, created_at: { gt: moment().subtract(30, 'minutes').toDate() } },
-        include: { property: { select: { title: true, slug: true, feature_image: true } } },
+        where: {
+          user_id: userId,
+          created_at: { gt: moment().subtract(RESERVE_TTL_MINUTES, 'minutes').toDate() },
+          expired_at: null,
+          canceled_at: null,
+        },
+        include: { property: { select: { title: true, slug: true, code: true, feature_image: true } } },
       },
       { cursor: dto.cursor },
     );
 
     const formatted = [];
     for (const item of list.data) {
-      formatted.push({ ...item });
+      const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
+      formatted.push({ ...item, ttl_seconds: ttl > 0 ? ttl : 0 });
     }
-    return list;
+    return { data: formatted };
   }
 
   /**
@@ -72,14 +86,29 @@ export class PropertyReserveUserService {
    * @param propertyReserveId
    * @returns
    */
-  async findOne(propertyReserveId: number): Promise<PropertyReserve> {
+  async findOne(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
     });
 
     if (!item) throw new NotFoundException('NOT_FOUND');
+    if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
 
     return item;
+  }
+
+  /**
+   * کنسل کردن درخواست توسط مهمان
+   * @param propertyReserveId
+   * @returns
+   */
+  async cancel(propertyReserveId: number): Promise<void> {
+    await this.db.propertyReserve.update({
+      where: { id: propertyReserveId },
+      data: { canceled_at: new Date(), status: PropertyReserveStatus.CANCELED_BY_USER },
+    });
+
+    return;
   }
 
   /**
