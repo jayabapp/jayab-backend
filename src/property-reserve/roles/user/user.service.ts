@@ -11,7 +11,10 @@ import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import {
+  PropertyReserveStatus,
+  PropertyReserveStatusList,
+} from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import moment from 'moment-jalaali';
 import { SmsService } from 'src/sms/sms.service';
@@ -76,7 +79,11 @@ export class PropertyReserveUserService {
     const formatted = [];
     for (const item of list.data) {
       const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
-      formatted.push({ ...item, ttl_seconds: ttl > 0 ? ttl : 0 });
+      formatted.push({
+        ...item,
+        ttl_seconds: ttl > 0 ? ttl : 0,
+        status: PropertyReserveStatusList.find((e) => e.id === item.status),
+      });
     }
     return { data: formatted };
   }
