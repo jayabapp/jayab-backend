@@ -29,7 +29,11 @@ export class PropertyReserveOwnerService {
     >(
       this.db.propertyReserve,
       {
-        where: { property: { owner_id: ownerId }, created_at: { gt: moment().subtract(30, 'day').toDate() } },
+        where: {
+          property: { owner_id: ownerId },
+          expired_at: null,
+          created_at: { gt: moment().subtract(30, 'day').toDate() },
+        },
         include: {
           property: {
             select: {
