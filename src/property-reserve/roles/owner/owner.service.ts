@@ -8,10 +8,17 @@ import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reser
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import { SmsService } from 'src/sms/sms.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 
 @Injectable()
 export class PropertyReserveOwnerService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly smsService: SmsService,
+    private readonly setting: SettingAdminService,
+  ) {}
 
   /**
    * find all PropertyReserve
@@ -80,5 +87,29 @@ export class PropertyReserveOwnerService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                    EVENT                                   */
+  /* -------------------------------------------------------------------------- */
+  /**
+   * ارسال پیامک به ادمین
+   * @param reserveId
+   * @returns
+   */
+  async clickGuestMobile(reserveId: number): Promise<void> {
+    const reserve = await this.db.propertyReserve.update({
+      where: { id: reserveId },
+      select: { id: true, owner_clicked_guest_mobile: true, property: { select: { code: true } } },
+      data: { owner_clicked_guest_mobile: { increment: 1 } },
+    });
+    if (!reserve) return;
+
+    //تا دوبار پیامک میفرستیم
+    if (reserve.owner_clicked_guest_mobile < 3) {
+      const adminMobile = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_ANNOUNCEMENTS);
+      if (!adminMobile) return;
+      await this.smsService.sendClickGuestMobileToAdmin(adminMobile, reserve.property.code, reserve.id);
+    }
   }
 }

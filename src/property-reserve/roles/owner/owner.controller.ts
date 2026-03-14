@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -17,6 +18,9 @@ import { FindAllPropertyReserveOwnerDto } from './dto/find-all.dto';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { InjectQueue } from '@nestjs/bull';
+import { RESERVE_QUEUE } from 'src/property-reserve/processors/queue-name.constants';
+import { Queue } from 'bull';
 
 @ApiTags('PropertyReserve - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -35,6 +39,17 @@ export class PropertyReserveOwnerController {
     const result = await this.propertyReserveOwnerService.findAll(dto, user.owner_id);
 
     return { result };
+  }
+
+  @ApiOperation({ summary: 'Click On Guest Mobile', description: '' })
+  @Post(':propertyReserveId/events/click-guest-mobile')
+  async clickGuestMobile(
+    @Req() req: RequestType,
+    @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    await this.propertyReserveOwnerService.clickGuestMobile(propertyReserveId);
+    return;
   }
 
   // @ApiOperation({ summary: 'Find One', description: '' })

@@ -49,6 +49,13 @@ const settings = (): Prisma.SettingCreateInput[] => {
       sort_order: 40,
       data_type: SettingDataType.TEXT,
     },
+    {
+      title: 'شماره موبایل جایاب برای دریافت اعلانات',
+      key: 'JAYAB_MOBILE_FOR_ANNOUNCEMENTS',
+      value: '',
+      sort_order: 50,
+      data_type: SettingDataType.TEXT,
+    },
   ];
 
   return data;

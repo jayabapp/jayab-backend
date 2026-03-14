@@ -266,4 +266,46 @@ export class SmsService {
       this.logger.error(error);
     }
   }
+
+  /**
+   * اطلاع به ادمین بعد از کلیک مالک روی موبایل
+   * @param ownerMobile
+   * @param title
+   * @param guestMobile
+   * @param date
+   * @param duration
+   * @param guestsCount
+   * @returns
+   */
+  async sendClickGuestMobileToAdmin(
+    adminMobile: string,
+    propertyCode: string,
+    reserveNumber: number,
+  ): Promise<void> {
+    // if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.sendClickGuestMobileSmsTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [
+          { name: 'PROPERTY_CODE', value: propertyCode },
+          { name: 'RESERVE_NUMBER', value: reserveNumber },
+        ],
+        mobile: adminMobile,
+        templateId: templateId,
+      };
+
+      console.dir(body);
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }
