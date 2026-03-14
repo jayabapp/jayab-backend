@@ -18,7 +18,7 @@ import { SmsService } from 'src/sms/sms.service';
 
 @Injectable()
 export class TasksService {
-  IS_PRODUCTION: boolean = process.env.NODE_ENV === 'production';
+  IS_PRODUCTION: boolean = process.env.NODE_ENV === 'production' && process.env.IS_SANDBOX !== '1';
 
   constructor(
     private readonly db: PrismaService,
