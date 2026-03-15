@@ -25,6 +25,7 @@ import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
 import {
+  RESERVE_CALL_JOB,
   RESERVE_EXPIRE_JOB,
   RESERVE_QUEUE,
   RESERVE_SMS_JOB,
@@ -55,6 +56,9 @@ export class PropertyReserveUserController {
 
     //send sms
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
+
+    //send call
+    await this.queue.add(RESERVE_CALL_JOB, { reserveId: reserve.id }, { delay: 2 * 60 * 1000 });
 
     //expire
     await this.queue.add(

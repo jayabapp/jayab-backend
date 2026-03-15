@@ -192,6 +192,31 @@ export class PropertyReserveUserService {
     );
   }
 
+  async sendReserveCall(reserveId: number): Promise<void> {
+    const reserve = await this.db.propertyReserve.findFirst({
+      where: { id: reserveId },
+      include: {
+        property: {
+          select: {
+            title: true,
+            subscription_expired_at: true,
+            owner: { select: { user: { select: { mobile_number: true } } } },
+          },
+        },
+        user: { select: { mobile_number: true } },
+      },
+    });
+    if (!reserve) throw new NotFoundException('NOT_FOUND');
+
+    const p = reserve.property;
+    const isPropertyExpired = p.subscription_expired_at < startOfToday();
+    //طبق سناریو اگر اشتراک داشت نیاز به تماس صوتی نیست
+    if (!isPropertyExpired) return;
+    const u = reserve.user;
+    const title = `"${p.title.substring(0, 38)}"`;
+    //TODO: call
+  }
+
   /**
    * منقضی کردن درخواست رزرو
    * @param reserveId

@@ -69,6 +69,7 @@ export class PropertyReserveOwnerService {
         ttl_seconds: ttl > 0 ? ttl : 0,
         guest_mobile: guestMobile,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
+        is_subscription_expired: isPropertyExpired,
       });
     }
     return { data: formatted };
