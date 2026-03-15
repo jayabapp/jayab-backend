@@ -19,14 +19,19 @@ import { PropertyStatuses } from 'src/property/common/types/property-status.type
 import moment from 'moment-jalaali';
 import { SmsService } from 'src/sms/sms.service';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import { isEmpty } from 'lodash';
+import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyReserveUserService {
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
+    private readonly propertySerializer: PropertySerializer,
+    private readonly dayHelper: DayHelper,
   ) {}
 
   async checkActiveReserve(userId: number): Promise<void> {
@@ -67,7 +72,14 @@ export class PropertyReserveUserService {
     dto: FindAllPropertyReserveUserDto,
     userId: number,
   ): Promise<CursorPaginatedResult<PropertyReserve>> {
-    const list = await cursorPaginate()<PropertyReserve, Prisma.PropertyReserveFindManyArgs>(
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
+    const list = await cursorPaginate()<
+      PropertyReserve & { property: PropertyJsonType },
+      Prisma.PropertyReserveFindManyArgs
+    >(
       this.db.propertyReserve,
       {
         where: {
@@ -76,18 +88,40 @@ export class PropertyReserveUserService {
           expired_at: null,
           canceled_at: null,
         },
-        include: { property: { select: { title: true, slug: true, code: true, feature_image: true } } },
+        include: {
+          property: {
+            include: {
+              feature_image: true,
+              province: { select: { title: true } },
+              city: { select: { title: true } },
+              region: { select: { title: true } },
+              property_options: {
+                where: { option: { deleted_at: null } },
+                select: { option: { select: { title: true, group: true } } },
+              },
+              daily_price: true,
+              calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+              bedrooms: { select: { total_bedrooms: true } },
+              _count: { select: { attachments: true } },
+            },
+          },
+        },
       },
       { cursor: dto.cursor },
     );
 
+    const today = await this.dayHelper.today();
     const formatted = [];
     for (const item of list.data) {
       const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
+      const p = await this.propertySerializer.toArray([item.property], today, false, false);
+      delete item.property;
+
       formatted.push({
         ...item,
         ttl_seconds: ttl > 0 ? ttl : 0,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
+        property: p?.[0],
       });
     }
     return { data: formatted };
@@ -240,12 +274,32 @@ export class PropertyReserveUserService {
    * @param reserveId
    * @returns
    */
-  async reserveRecommendation(reserveId: number): Promise<void> {
+  async reserveRecommendation(reserveId: number): Promise<any> {
     const reserve = await this.db.propertyReserve.findFirst({
       where: { id: reserveId },
+      include: { user: { select: { mobile_number: true } } },
     });
     if (!reserve) return;
-    const property = await this.db.property.findFirst({ where: { id: reserve.property_id } });
-    console.log(property);
+    const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
+
+    let q: Prisma.PropertyWhereInput = {
+      subscription_expired_at: { gt: startOfToday() },
+      is_authorized: true,
+      province_id: p.province_id,
+      city_id: p.city_id,
+    };
+    if (p.has_pool) q['has_pool'] = true;
+    if (p.region_id) q['region_id'] = p.region_id;
+
+    const r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
+
+    let links: string[] = [];
+    for (const item of r1) {
+      links.push(item.slug);
+    }
+
+    console.log({ links });
+
+    if (!isEmpty(links)) await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links);
   }
 }

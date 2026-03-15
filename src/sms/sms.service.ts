@@ -308,4 +308,32 @@ export class SmsService {
       this.logger.error(error);
     }
   }
+
+  async sendRecommendationLinks(mobile: string, links: string[]): Promise<void> {
+    // if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.sendClickGuestMobileSmsTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      // const body = {
+      //   parameters: [
+      //     { name: 'PROPERTY_CODE', value: propertyCode },
+      //     { name: 'RESERVE_NUMBER', value: reserveNumber },
+      //   ],
+      //   mobile: mobile,
+      //   templateId: templateId,
+      // };
+
+      // console.dir(body);
+      // await firstValueFrom(
+      //   this.httpService.post(sendUrl, body, {
+      //     headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+      //   }),
+      // );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }

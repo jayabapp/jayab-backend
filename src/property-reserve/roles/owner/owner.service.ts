@@ -5,12 +5,14 @@ import { FindAllPropertyReserveOwnerDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import moment from 'moment-jalaali';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { SmsService } from 'src/sms/sms.service';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyReserveOwnerService {
@@ -18,6 +20,8 @@ export class PropertyReserveOwnerService {
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
     private readonly setting: SettingAdminService,
+    private readonly propertySerializer: PropertySerializer,
+    private readonly dayHelper: DayHelper,
   ) {}
 
   /**
@@ -30,8 +34,12 @@ export class PropertyReserveOwnerService {
     dto: FindAllPropertyReserveOwnerDto,
     ownerId: number,
   ): Promise<CursorPaginatedResult<PropertyReserve>> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+
     const list = await cursorPaginate()<
-      PropertyReserve & { property: Partial<Property>; user: Partial<User> },
+      PropertyReserve & { property: PropertyJsonType; user: Partial<User> },
       Prisma.PropertyReserveFindManyArgs
     >(
       this.db.propertyReserve,
@@ -43,12 +51,19 @@ export class PropertyReserveOwnerService {
         },
         include: {
           property: {
-            select: {
-              title: true,
-              slug: true,
-              code: true,
+            include: {
               feature_image: true,
-              subscription_expired_at: true,
+              province: { select: { title: true } },
+              city: { select: { title: true } },
+              region: { select: { title: true } },
+              property_options: {
+                where: { option: { deleted_at: null } },
+                select: { option: { select: { title: true, group: true } } },
+              },
+              daily_price: true,
+              calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+              bedrooms: { select: { total_bedrooms: true } },
+              _count: { select: { attachments: true } },
             },
           },
           user: { select: { mobile_number: true, full_name: true } },
@@ -57,6 +72,8 @@ export class PropertyReserveOwnerService {
       { cursor: dto.cursor },
     );
 
+    const today = await this.dayHelper.today();
+
     const formatted = [];
     for (const item of list.data) {
       const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
@@ -64,12 +81,16 @@ export class PropertyReserveOwnerService {
       let guestMobile = item.user.mobile_number;
       if (isPropertyExpired) guestMobile = maskedUserMobile(guestMobile);
 
+      const p = await this.propertySerializer.toArray([item.property], today, false, false);
+      delete item.property;
+
       formatted.push({
         ...item,
         ttl_seconds: ttl > 0 ? ttl : 0,
         guest_mobile: guestMobile,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
         is_subscription_expired: isPropertyExpired,
+        property: p?.[0],
       });
     }
     return { data: formatted };
