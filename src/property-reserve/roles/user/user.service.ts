@@ -29,6 +29,11 @@ export class PropertyReserveUserService {
     private readonly smsService: SmsService,
   ) {}
 
+  async checkActiveReserve(userId: number): Promise<void> {
+    const r = await this.db.propertyReserve.findFirst({ where: { user_id: userId, expired_at: null } });
+    if (r && !r.canceled_at) throw new BadRequestException('RESERVE6');
+  }
+
   /**
    * create
    * @param dto
@@ -228,5 +233,19 @@ export class PropertyReserveUserService {
     });
     if (!reserve) return;
     await this.db.propertyReserve.update({ where: { id: reserveId }, data: { expired_at: new Date() } });
+  }
+
+  /**
+   * آگهی های جایگزین در صورتی که مالک آگهی خودش رو تمدید نکنه
+   * @param reserveId
+   * @returns
+   */
+  async reserveRecommendation(reserveId: number): Promise<void> {
+    const reserve = await this.db.propertyReserve.findFirst({
+      where: { id: reserveId },
+    });
+    if (!reserve) return;
+    const property = await this.db.property.findFirst({ where: { id: reserve.property_id } });
+    console.log(property);
   }
 }

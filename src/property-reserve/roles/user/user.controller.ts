@@ -50,6 +50,7 @@ export class PropertyReserveUserController {
     @Body() dto: CreatePropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
+    await this.propertyReserveUserService.checkActiveReserve(user.id);
 
     //create reserve
     const reserve = await this.propertyReserveUserService.create(dto, user.id);

@@ -244,4 +244,5 @@ const failedMessages = {
   RESERVE4: 'این درخواست متعلق به شما نیست',
   RESERVE5: 'این درخواست منقضی شده است',
   RESERVE6: '',
+  RESERVE7: '',
 };

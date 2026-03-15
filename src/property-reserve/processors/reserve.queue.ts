@@ -1,6 +1,12 @@
-import { Job } from 'bull';
-import { OnQueueCompleted, OnQueueFailed, Process, Processor } from '@nestjs/bull';
-import { RESERVE_CALL_JOB, RESERVE_EXPIRE_JOB, RESERVE_QUEUE, RESERVE_SMS_JOB } from './queue-name.constants';
+import { Job, Queue } from 'bull';
+import { InjectQueue, OnQueueCompleted, OnQueueFailed, Process, Processor } from '@nestjs/bull';
+import {
+  RESERVE_CALL_JOB,
+  RESERVE_EXPIRE_JOB,
+  RESERVE_QUEUE,
+  RESERVE_RECOMMENDATION_JOB,
+  RESERVE_SMS_JOB,
+} from './queue-name.constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { property } from 'lodash';
@@ -10,7 +16,10 @@ moment.loadPersian({ dialect: 'persian-modern' });
 
 @Processor(RESERVE_QUEUE)
 export class ReserveQueueProcessor {
-  constructor(private readonly propertyReserveUserService: PropertyReserveUserService) {}
+  constructor(
+    @InjectQueue(RESERVE_QUEUE) private readonly queue: Queue,
+    private readonly propertyReserveUserService: PropertyReserveUserService,
+  ) {}
 
   /* -------------------------------------------------------------------------- */
   /*                                     SMS                                    */
@@ -66,8 +75,9 @@ export class ReserveQueueProcessor {
   /*                                   EXPIRE                                   */
   /* -------------------------------------------------------------------------- */
   @OnQueueCompleted({ name: RESERVE_EXPIRE_JOB })
-  async onCompletedExpire(): Promise<void> {
+  async onCompletedExpire(job: Job): Promise<void> {
     console.log('On Completed: ', RESERVE_EXPIRE_JOB);
+    this.queue.add(RESERVE_RECOMMENDATION_JOB, { reserveId: job.data.reserveId });
     return;
   }
 
@@ -85,5 +95,30 @@ export class ReserveQueueProcessor {
   async expireReserve(job: Job<{ reserveId: number }>): Promise<void> {
     console.log(`Job Start: ${RESERVE_EXPIRE_JOB}`);
     await this.propertyReserveUserService.expireReserve(job.data.reserveId);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                               RECOMMENDATION                               */
+  /* -------------------------------------------------------------------------- */
+  @OnQueueCompleted({ name: RESERVE_RECOMMENDATION_JOB })
+  async onCompletedRecommendation(job: Job): Promise<void> {
+    console.log('On Completed: ', RESERVE_RECOMMENDATION_JOB);
+    return;
+  }
+
+  @OnQueueFailed({ name: RESERVE_RECOMMENDATION_JOB })
+  async onFailedRecommendation(): Promise<void> {
+    console.log('On Failed: ', RESERVE_RECOMMENDATION_JOB);
+    return;
+  }
+
+  /**
+   * do expire reserve
+   * @param job
+   */
+  @Process(RESERVE_RECOMMENDATION_JOB)
+  async reserveRecommendation(job: Job<{ reserveId: number }>): Promise<void> {
+    console.log(`Job Start: ${RESERVE_RECOMMENDATION_JOB}`);
+    await this.propertyReserveUserService.reserveRecommendation(job.data.reserveId);
   }
 }
