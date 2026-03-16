@@ -23,7 +23,8 @@ import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { isEmpty } from 'lodash';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
-import { DayHelper } from 'src/common/helpers/day.helper';
+import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
+import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 @Injectable()
 export class PropertyReserveUserService {
@@ -34,9 +35,12 @@ export class PropertyReserveUserService {
     private readonly dayHelper: DayHelper,
   ) {}
 
-  async checkActiveReserve(userId: number): Promise<void> {
-    const r = await this.db.propertyReserve.findFirst({ where: { user_id: userId, expired_at: null } });
-    if (r && !r.canceled_at) throw new BadRequestException('RESERVE6');
+  async checkActiveReserve(userId: number): Promise<number> {
+    const r = await this.db.propertyReserve.findFirst({
+      where: { user_id: userId, expired_at: null, user_action: ReserveUserAction.RESERVE },
+    });
+    if (!r || r?.canceled_at) return null;
+    return r.id;
   }
 
   /**
@@ -87,6 +91,7 @@ export class PropertyReserveUserService {
           created_at: { gt: moment().subtract(RESERVE_TTL_MINUTES, 'minutes').toDate() },
           expired_at: null,
           canceled_at: null,
+          user_action: ReserveUserAction.RESERVE,
         },
         include: {
           property: {
@@ -113,16 +118,8 @@ export class PropertyReserveUserService {
     const today = await this.dayHelper.today();
     const formatted = [];
     for (const item of list.data) {
-      const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
-      const p = await this.propertySerializer.toArray([item.property], today, false, false);
-      delete item.property;
-
-      formatted.push({
-        ...item,
-        ttl_seconds: ttl > 0 ? ttl : 0,
-        status: PropertyReserveStatusList.find((e) => e.id === item.status),
-        property: p?.[0],
-      });
+      const obj = await this.serializer(item, today);
+      formatted.push(obj);
     }
     return { data: formatted };
   }
@@ -132,7 +129,7 @@ export class PropertyReserveUserService {
    * @param propertyReserveId
    * @returns
    */
-  async findOne(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
+  async findById(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
     });
@@ -141,6 +138,40 @@ export class PropertyReserveUserService {
     if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
 
     return item;
+  }
+
+  async findOne(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+    const item = await this.db.propertyReserve.findFirst({
+      where: { id: propertyReserveId },
+      include: {
+        property: {
+          include: {
+            feature_image: true,
+            province: { select: { title: true } },
+            city: { select: { title: true } },
+            region: { select: { title: true } },
+            property_options: {
+              where: { option: { deleted_at: null } },
+              select: { option: { select: { title: true, group: true } } },
+            },
+            daily_price: true,
+            calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+            bedrooms: { select: { total_bedrooms: true } },
+            _count: { select: { attachments: true } },
+          },
+        },
+      },
+    });
+
+    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
+
+    const today = await this.dayHelper.today();
+    const serialized = await this.serializer(item, today);
+    return serialized;
   }
 
   /**
@@ -171,14 +202,6 @@ export class PropertyReserveUserService {
 
     return item;
   }
-
-  // /**
-  //  * remove
-  //  * @param propertyReserveId
-  //  */
-  // async remove(propertyReserveId: number): Promise<void> {
-  //   await this.db.propertyReserve.delete({ where: { id: propertyReserveId } });
-  // }
 
   /**
    * ارسال پیامک به مالک بعد از ثبت درخواست رزرو
@@ -302,5 +325,21 @@ export class PropertyReserveUserService {
     console.log({ links });
 
     if (!isEmpty(links)) await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links);
+  }
+
+  /* --------------------------------- HELPERS -------------------------------- */
+  async serializer(item: PropertyReserve & { property: PropertyJsonType }, today: DayColumn): Promise<any> {
+    const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
+    const p = await this.propertySerializer.toArray([item.property], today, false, false);
+    const isChatEnabled = item.property.is_chat_enabled;
+    delete item.property;
+
+    return {
+      ...item,
+      ttl_seconds: ttl > 0 ? ttl : 0,
+      status: PropertyReserveStatusList.find((e) => e.id === item.status),
+      property: p?.[0],
+      is_chat_enabled: isChatEnabled,
+    };
   }
 }

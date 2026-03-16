@@ -1,1 +1,1 @@
-export const RESERVE_TTL_MINUTES = 3;
+export const RESERVE_TTL_MINUTES = 5;

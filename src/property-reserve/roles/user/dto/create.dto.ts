@@ -13,7 +13,7 @@ import { Type } from 'class-transformer';
 import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 export class CreatePropertyReserveUserDto {
-  @ApiProperty({ required: true, example: 1 })
+  @ApiProperty({ required: true, example: 535 })
   @_IsInt()
   @Type(() => Number)
   @_IsNotEmpty()
@@ -24,13 +24,13 @@ export class CreatePropertyReserveUserDto {
   @_IsNotEmpty()
   guests_count: string;
 
-  @ApiProperty({ required: true, example: '2026-03-15T00:00:00.000Z' })
+  @ApiProperty({ required: true, example: '2026-03-21T00:00:00.000Z' })
   @_IsDate()
   @Type(() => Date)
   @_IsNotEmpty()
   check_in: Date;
 
-  @ApiProperty({ required: true, example: '2026-03-16T00:00:00.000Z' })
+  @ApiProperty({ required: true, example: '2026-03-23T00:00:00.000Z' })
   @_IsDate()
   @Type(() => Date)
   @_IsNotEmpty()

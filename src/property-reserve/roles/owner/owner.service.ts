@@ -13,6 +13,7 @@ import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { DayHelper } from 'src/common/helpers/day.helper';
+import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 @Injectable()
 export class PropertyReserveOwnerService {
@@ -47,7 +48,8 @@ export class PropertyReserveOwnerService {
         where: {
           property: { owner_id: ownerId },
           expired_at: null,
-          created_at: { gt: moment().subtract(30, 'day').toDate() },
+          // created_at: { gt: moment().subtract(30, 'day').toDate() },
+          user_action: { not: ReserveUserAction.CHAT },
         },
         include: {
           property: {

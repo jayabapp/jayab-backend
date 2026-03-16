@@ -32,6 +32,7 @@ import {
 } from 'src/property-reserve/processors/queue-name.constants';
 import { Queue } from 'bull';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -50,8 +51,13 @@ export class PropertyReserveUserController {
     @Body() dto: CreatePropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    await this.propertyReserveUserService.checkActiveReserve(user.id);
-
+    if (dto.user_action === ReserveUserAction.RESERVE) {
+      const activeReserveId = await this.propertyReserveUserService.checkActiveReserve(user.id);
+      if (activeReserveId) {
+        const activeReserve = await this.propertyReserveUserService.findOne(activeReserveId, user.id);
+        return { result: activeReserve };
+      }
+    }
     //create reserve
     const reserve = await this.propertyReserveUserService.create(dto, user.id);
 
@@ -91,11 +97,22 @@ export class PropertyReserveUserController {
     @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const reserve = await this.propertyReserveUserService.findOne(propertyReserveId, user.id);
+    const reserve = await this.propertyReserveUserService.findById(propertyReserveId, user.id);
     if (reserve.expired_at) throw new BadRequestException('RESERVE5');
 
     const result = await this.propertyReserveUserService.cancel(propertyReserveId);
 
     return { result, messageCode: 'RESERVE1' };
+  }
+
+  @ApiOperation({ summary: 'Check Active Reserve', description: '' })
+  @Get('active')
+  async findActiveReserve(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const activeReserveId = await this.propertyReserveUserService.checkActiveReserve(user.id);
+    if (activeReserveId) {
+      const activeReserve = await this.propertyReserveUserService.findOne(activeReserveId, user.id);
+      return { result: activeReserve };
+    } else return { result: null };
   }
 }
