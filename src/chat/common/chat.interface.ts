@@ -1,4 +1,4 @@
-import { Attachment } from '@prisma/client';
+import { Attachment, MessengerMessages } from '@prisma/client';
 import { UserRole } from 'src/common/interfaces/role.enum';
 
 export type PartialChatroom = {
@@ -7,6 +7,7 @@ export type PartialChatroom = {
   created_at: Date;
   property_id: number;
   property: { subscription_expired_at: Date };
+  last_message?: Partial<MessengerMessages>;
   participants: {
     self: PartialParticipant;
     recipient: PartialParticipant;

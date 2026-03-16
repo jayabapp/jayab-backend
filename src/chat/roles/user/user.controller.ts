@@ -103,6 +103,8 @@ export class ChatUserController {
     /* -------------------------------------------------------------------------- */
     // check and get the chatroom and participants from interceptor
     const chatroom: PartialChatroom = request.interceptor_data;
+    console.log({ l: chatroom.last_message });
+    // throw new BadRequestException('');
 
     const isBlocked = await this.sharedChatService.checkIsBlocked(
       chatroom.participants.self.user_id, //من که بلاک شدم

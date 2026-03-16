@@ -29,6 +29,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
         created_at: true,
         property_id: true,
         property: { select: { id: true, status: true, subscription_expired_at: true } },
+        last_message: { select: { created_at: true } },
         participants: {
           where: { deleted_at: null },
           select: { id: true, user_id: true, role: true, message_read_at: true, user_mobile_number: true },
