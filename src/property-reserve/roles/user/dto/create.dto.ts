@@ -10,7 +10,6 @@ import {
   _IsEnum,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Type } from 'class-transformer';
-import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 export class CreatePropertyReserveUserDto {
   @ApiProperty({ required: true, example: 535 })
@@ -35,11 +34,6 @@ export class CreatePropertyReserveUserDto {
   @Type(() => Date)
   @_IsNotEmpty()
   check_out: Date;
-
-  @ApiProperty({ required: true, example: ReserveUserAction.CALL })
-  @_IsEnum(ReserveUserAction)
-  @_IsNotEmpty()
-  user_action: ReserveUserAction;
 
   @ApiProperty({ required: false, example: '' })
   @_IsString()

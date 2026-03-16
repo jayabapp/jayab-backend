@@ -24,7 +24,6 @@ import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reser
 import { isEmpty } from 'lodash';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
-import { ReserveUserAction } from 'src/property-reserve/common/interfaces/reserve-user-action.enum';
 
 @Injectable()
 export class PropertyReserveUserService {
@@ -37,7 +36,7 @@ export class PropertyReserveUserService {
 
   async checkActiveReserve(userId: number): Promise<number> {
     const r = await this.db.propertyReserve.findFirst({
-      where: { user_id: userId, expired_at: null, user_action: ReserveUserAction.RESERVE },
+      where: { user_id: userId, expired_at: null },
     });
     if (!r || r?.canceled_at) return null;
     return r.id;
@@ -91,7 +90,6 @@ export class PropertyReserveUserService {
           created_at: { gt: moment().subtract(RESERVE_TTL_MINUTES, 'minutes').toDate() },
           expired_at: null,
           canceled_at: null,
-          user_action: ReserveUserAction.RESERVE,
         },
         include: {
           property: {

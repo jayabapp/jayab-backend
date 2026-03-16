@@ -113,7 +113,7 @@ export class PropertyUserController {
     const result = await this.propertyUserService.findContactInfo(propertySlug);
 
     if (result.list?.length > 0) {
-      const ownerMobile = result.owner.mobile; //برای حالت منقضی شده یا نشده در هر صورت برای ارسال پیامک نیاز به شماره اصلی مالک است
+      const ownerMobile = result.owner.mobile;
       const propertyId = result.list[0]?.property_id;
       await this.propertyUserService.storeCallLog(propertyId, user, ownerMobile, result.isPropertyExpired);
     }

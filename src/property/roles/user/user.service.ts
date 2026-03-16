@@ -317,27 +317,31 @@ export class PropertyUserService {
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
 
-    // اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
-    if (property.subscription_expired_at < startOfToday()) {
-      const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
+    //
+    /**
+     * اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
+     * این مورد در توسعه اسفند ۴۰۴ بابن اضافه شدن رزرو برداشته شد
+     */
+    // if (property.subscription_expired_at < startOfToday()) {
+    //   const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
 
-      //باید با خروجی اخر یکی باشد
-      return {
-        owner: {
-          selfie_image: property.owner?.user?.profile_image,
-          mobile: property.owner?.user?.mobile_number,
-        },
-        list: [
-          {
-            assistant_full_name: property.owner?.user?.full_name,
-            assistant_mobile_number: jayabMobileNumber,
-            property_id: property.id,
-            is_owner: true,
-          },
-        ],
-        isPropertyExpired: true,
-      };
-    }
+    //   //باید با خروجی اخر یکی باشد
+    //   return {
+    //     owner: {
+    //       selfie_image: property.owner?.user?.profile_image,
+    //       mobile: property.owner?.user?.mobile_number,
+    //     },
+    //     list: [
+    //       {
+    //         assistant_full_name: property.owner?.user?.full_name,
+    //         assistant_mobile_number: jayabMobileNumber,
+    //         property_id: property.id,
+    //         is_owner: true,
+    //       },
+    //     ],
+    //     isPropertyExpired: true,
+    //   };
+    // }
 
     const list = await this.db.propertyOwnerAssistant.findMany({
       // where: { property: { ...this.validProperty(), code } },// درتوسعه دی ماه ۴۰۴ قرار شد آگهی های منقضی هم نمایش داده بشه
@@ -426,12 +430,7 @@ export class PropertyUserService {
       });
 
       if (user?.mobile_number !== ownerMobile) {
-        this.smsService.sendCallLogToOwner(
-          ownerMobile,
-          maskedUserMobile(user.mobile_number),
-          propertyId,
-          isPropertyExpired,
-        );
+        this.smsService.sendCallLogToOwner(ownerMobile, user.mobile_number, propertyId, isPropertyExpired);
       }
     }
   }

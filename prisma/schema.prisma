@@ -1360,7 +1360,6 @@ model PropertyReserve {
   check_in                   DateTime  @db.Date
   check_out                  DateTime  @db.Date
   guests_count               String
-  user_action                Int       @db.SmallInt
   owner_seen_at              DateTime?
   canceled_at                DateTime?
   expired_at                 DateTime?
