@@ -283,13 +283,14 @@ export class PropertyReserveUserService {
     const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
 
     let q: Prisma.PropertyWhereInput = {
+      id: { not: p.id },
       subscription_expired_at: { gt: startOfToday() },
       is_authorized: true,
       province_id: p.province_id,
       city_id: p.city_id,
     };
     if (p.has_pool) q['has_pool'] = true;
-    if (p.region_id) q['region_id'] = p.region_id;
+    // if (p.region_id) q['region_id'] = p.region_id;
 
     const r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
 

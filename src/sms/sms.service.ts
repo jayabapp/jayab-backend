@@ -282,7 +282,7 @@ export class SmsService {
     propertyCode: string,
     reserveNumber: number,
   ): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -310,7 +310,7 @@ export class SmsService {
   }
 
   async sendRecommendationLinks(mobile: string, links: string[]): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
