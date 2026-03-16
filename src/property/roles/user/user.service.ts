@@ -26,6 +26,7 @@ import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
+import { ONE_HOUR_TTL, ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @Injectable()
 export class PropertyUserService {
@@ -302,8 +303,13 @@ export class PropertyUserService {
    */
   async findContactInfo(
     propertySlug: string,
-  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[]; isPropertyExpired: boolean }> {
+  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
     const code = this.checkSlug(propertySlug);
+    const CACHE_KEY = `contact:${code}`;
+
+    const redisValue = await this.redis.get(CACHE_KEY);
+
+    if (redisValue) return JSON.parse(redisValue) as { owner: any; list: Partial<PropertyOwnerAssistant>[] };
 
     const property = await this.db.property.findUnique({
       where: { code },
@@ -355,22 +361,21 @@ export class PropertyUserService {
       orderBy: { is_owner: 'desc' },
     });
 
-    return {
+    const result = {
       owner: {
         selfie_image: property.owner?.user?.profile_image,
         mobile: property.owner?.user?.mobile_number,
       },
       list,
-      isPropertyExpired: false,
     };
+
+    //set cache
+    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60); //one hour
+
+    return result;
   }
 
-  async storeCallLog(
-    propertyId: number,
-    user: User,
-    ownerMobile: string,
-    isPropertyExpired?: boolean,
-  ): Promise<void> {
+  async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
     const userId = user.id;
 
     const todayRec = await this.db.callLog.findFirst({
@@ -430,7 +435,7 @@ export class PropertyUserService {
       });
 
       if (user?.mobile_number !== ownerMobile) {
-        this.smsService.sendCallLogToOwner(ownerMobile, user.mobile_number, propertyId, isPropertyExpired);
+        this.smsService.sendCallLogToOwner(ownerMobile, user.mobile_number);
       }
     }
   }

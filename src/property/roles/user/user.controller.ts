@@ -29,6 +29,9 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { User } from '@prisma/client';
+import { InjectQueue } from '@nestjs/bull';
+import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
+import { Queue } from 'bull';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -36,6 +39,7 @@ import { User } from '@prisma/client';
 @Controller(USER_ROUTE_GROUP)
 export class PropertyUserController {
   constructor(
+    @InjectQueue(CALL_LOG_QUEUE) private readonly callLogQueue: Queue,
     private readonly propertyUserService: PropertyUserService,
     private readonly profileUserService: ProfileUserService,
     private readonly propertyOwnerService: PropertyOwnerService,
@@ -115,7 +119,7 @@ export class PropertyUserController {
     if (result.list?.length > 0) {
       const ownerMobile = result.owner.mobile;
       const propertyId = result.list[0]?.property_id;
-      await this.propertyUserService.storeCallLog(propertyId, user, ownerMobile, result.isPropertyExpired);
+      await this.callLogQueue.add(CALL_LOG_JOB, { propertyId, user, ownerMobile });
     }
 
     delete result.owner.mobile;

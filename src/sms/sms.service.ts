@@ -190,35 +190,19 @@ export class SmsService {
    * @param ownerMobile
    * @returns
    */
-  async sendCallLogToOwner(
-    mobile: string,
-    targetUserMobile: string,
-    propertyId: number,
-    isPropertyExpired: boolean,
-  ): Promise<void> {
+  async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
     if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.callLogTemplateId');
-      const templateIdExpired = this.configService.get('sms.callLogExpiredTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
-      let body = {};
-      if (!isPropertyExpired)
-        body = {
-          parameters: [{ name: 'MOBILE', value: targetUserMobile }],
-          mobile: mobile,
-          templateId: templateId,
-        };
-      else {
-        const link = `profile/owner/properties`;
-        body = {
-          parameters: [{ name: 'LINK', value: link }],
-          mobile: mobile,
-          templateId: templateIdExpired,
-        };
-      }
+      const body = {
+        parameters: [{ name: 'MOBILE', value: targetUserMobile }],
+        mobile: mobile,
+        templateId: templateId,
+      };
 
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {

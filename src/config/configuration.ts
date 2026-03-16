@@ -49,7 +49,7 @@ export default () => ({
     propertySubscriptionReminderTemplateId: process.env.SMS_IR_PROPERTY_SUBSCRIPTION_TEMPLATE_ID,
     advisorSubscriptionReminderTemplateId: process.env.SMS_IR_ADVISOR_SUBSCRIPTION_TEMPLATE_ID,
     callLogTemplateId: process.env.SMS_IR_CALL_LOG_TEMPLATE_ID,
-    callLogExpiredTemplateId: process.env.SMS_IR_CALL_LOG_EXPIRED_TEMPLATE_ID,
+    // callLogExpiredTemplateId: process.env.SMS_IR_CALL_LOG_EXPIRED_TEMPLATE_ID,
     propertyPromoteTemplateId: process.env.SMS_IR_PROPERTY_PROMOTE_TEMPLATE_ID,
     reserveSmsTemplateId: process.env.SMS_IR_RESERVE_TEMPLATE_ID,
     sendClickGuestMobileSmsTemplateId: process.env.SMS_IR_CLICK_GUEST_MOBILE_TEMPLATE_ID,
