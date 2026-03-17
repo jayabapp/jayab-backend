@@ -1,1 +1,2 @@
-export const RESERVE_TTL_MINUTES = 5;
+export const RESERVE_TTL_MINUTES = 1;
+export const RESERVE_CALL_DELAY_MINUTES = 1;

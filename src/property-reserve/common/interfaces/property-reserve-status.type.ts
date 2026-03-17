@@ -27,7 +27,7 @@ export enum PropertyReserveStatus {
 export const PropertyReserveStatusList: Array<EnumList> = [
   {
     id: PropertyReserveStatus.PENDING,
-    title: 'در انتظار بررسی مالک',
+    title: 'در انتظار بررسی میزبان',
     hex: '#eab308',
   },
   {

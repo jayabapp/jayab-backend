@@ -38,6 +38,7 @@ const configValidations = Joi.object({
   SMS_IR_PROPERTY_PROMOTE_TEMPLATE_ID: Joi.string().required(),
   SMS_IR_RESERVE_TEMPLATE_ID: Joi.string().required(),
   SMS_IR_CHAT_HINT_TEMPLATE_ID: Joi.string().required(),
+  SMS_IR_RECOMMENDED_PROPERTY_TEMPLATE_ID: Joi.string().required(),
 
   MAX_OTP_ATTEMPTS: Joi.string().required(),
 

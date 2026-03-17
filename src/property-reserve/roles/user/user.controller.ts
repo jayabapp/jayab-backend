@@ -31,7 +31,10 @@ import {
   RESERVE_SMS_JOB,
 } from 'src/property-reserve/processors/queue-name.constants';
 import { Queue } from 'bull';
-import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import {
+  RESERVE_CALL_DELAY_MINUTES,
+  RESERVE_TTL_MINUTES,
+} from 'src/property-reserve/common/constants/reserve.constant';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -63,7 +66,11 @@ export class PropertyReserveUserController {
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
 
     //send call
-    await this.queue.add(RESERVE_CALL_JOB, { reserveId: reserve.id }, { delay: 2 * 60 * 1000 });
+    await this.queue.add(
+      RESERVE_CALL_JOB,
+      { reserveId: reserve.id },
+      { delay: RESERVE_CALL_DELAY_MINUTES * 60 * 1000 },
+    );
 
     //expire
     await this.queue.add(

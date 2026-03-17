@@ -317,12 +317,13 @@ export class PropertyReserveUserService {
 
     let links: string[] = [];
     for (const item of r1) {
-      links.push(item.slug);
+      links.push(item.code);
     }
 
     console.log({ links });
 
-    if (!isEmpty(links)) await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links);
+    if (!isEmpty(links))
+      await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
 
   /* --------------------------------- HELPERS -------------------------------- */

@@ -222,7 +222,7 @@ export class SmsService {
     duration: string,
     guestsCount: string,
   ): Promise<void> {
-    if (!this.isProduction) return;
+    // if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -266,7 +266,7 @@ export class SmsService {
     propertyCode: string,
     reserveNumber: number,
   ): Promise<void> {
-    if (!this.isProduction) return;
+    // if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -293,29 +293,32 @@ export class SmsService {
     }
   }
 
-  async sendRecommendationLinks(mobile: string, links: string[]): Promise<void> {
-    if (!this.isProduction) return;
+  async sendRecommendationLinks(mobile: string, links: string[], propertyTitle: string): Promise<void> {
+    // if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
-      const templateId = this.configService.get('sms.sendClickGuestMobileSmsTemplateId');
+      const templateId = this.configService.get('sms.sendRecommendedPropertyTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
 
-      // const body = {
-      //   parameters: [
-      //     { name: 'PROPERTY_CODE', value: propertyCode },
-      //     { name: 'RESERVE_NUMBER', value: reserveNumber },
-      //   ],
-      //   mobile: mobile,
-      //   templateId: templateId,
-      // };
+      if (links?.length < 1) return;
+      let parameters = [];
+      links.map((e, i) => {
+        parameters.push({ name: `PROPERTY_CODE${i + 1}`, value: e });
+      });
+      parameters.push({ name: 'TITLE', value: propertyTitle.substring(0, 39) });
 
-      // console.dir(body);
-      // await firstValueFrom(
-      //   this.httpService.post(sendUrl, body, {
-      //     headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
-      //   }),
-      // );
+      const body = {
+        parameters: parameters,
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
     } catch (error) {
       this.logger.error(error);
     }
