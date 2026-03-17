@@ -293,6 +293,13 @@ export class SmsService {
     }
   }
 
+  /**
+   * ارسال لینک های مشابه برای مهمان
+   * @param mobile
+   * @param links
+   * @param propertyTitle
+   * @returns
+   */
   async sendRecommendationLinks(mobile: string, links: string[], propertyTitle: string): Promise<void> {
     // if (!this.isProduction) return;
 
@@ -324,6 +331,12 @@ export class SmsService {
     }
   }
 
+  /**
+   * ارسال پیام به میزبان بابت پیام مهمان
+   * @param mobile
+   * @param propertyTitle
+   * @param chatroomId
+   */
   async sendChatHintToOwner(mobile: string, propertyTitle: string, chatroomId: string): Promise<void> {
     // if (!this.isProduction) return;
 
@@ -340,6 +353,38 @@ export class SmsService {
         mobile: mobile,
         templateId: templateId,
       };
+
+      await firstValueFrom(
+        this.httpService.post(sendUrl, body, {
+          headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * پیامک به مهمانی که رزرو کرده بعد از خرید اشتراک توسط میزبان
+   * @param mobile
+   * @param propertyTitle
+   * @param chatroomId
+   */
+  async sendPropertyReserveHintToGuest(mobile: string, propertyTitle: string): Promise<void> {
+    // if (!this.isProduction) return;
+
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const templateId = this.configService.get('sms.sendReserveHintToGuestTemplateId');
+      const sendUrl = this.configService.get('sms.sendUrl');
+
+      const body = {
+        parameters: [{ name: 'TITLE', value: propertyTitle.substring(0, 39) }],
+        mobile: mobile,
+        templateId: templateId,
+      };
+
+      console.log({ body });
 
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {

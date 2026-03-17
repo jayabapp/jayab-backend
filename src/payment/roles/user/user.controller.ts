@@ -10,11 +10,15 @@ import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { TurnoverType } from 'src/payment/common/turnover-type.enum';
 import { Payment, Subscription, User } from '@prisma/client';
+import { InjectQueue } from '@nestjs/bull';
+import { PAYMENT_SMS_JOB, PAYMENT_SMS_QUEUE } from 'src/payment/processors/queue-name.constants';
+import { Queue } from 'bull';
 
 @ApiTags('Payment - USER')
 @Controller(USER_ROUTE_GROUP)
 export class PaymentUserController {
   constructor(
+    @InjectQueue(PAYMENT_SMS_QUEUE) private readonly paymentSmsQueue: Queue,
     private readonly paymentUserService: PaymentUserService,
     private configService: ConfigService,
     // private readonly socketService: SocketService,
@@ -59,6 +63,8 @@ export class PaymentUserController {
           const user = result.subscription.property.owner.user;
           await this.smsService.sendPromoteSmsToOwner(user.mobile_number, user.full_name);
         }
+        if (result.subscription.extends_expire)
+          this.paymentSmsQueue.add(PAYMENT_SMS_JOB, { propertyId: result.subscription.property_id });
         break;
 
       case TurnoverType.PAY_ADVISOR_SUBSCRIPTION:

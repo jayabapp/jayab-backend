@@ -302,6 +302,8 @@ export class PropertyReserveUserService {
     });
     if (!reserve) return;
     const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
+    const isPropertyExpired = p.subscription_expired_at < startOfToday();
+    if (!isPropertyExpired) return;
 
     let q: Prisma.PropertyWhereInput = {
       id: { not: p.id },
