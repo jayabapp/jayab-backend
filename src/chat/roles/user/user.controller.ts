@@ -37,6 +37,9 @@ import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { SocketService } from 'src/socket/socket.service';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
 import { CreateChatUserDto } from './dto/create.dto';
+import { InjectQueue } from '@nestjs/bull';
+import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from 'src/chat/processors/queue-name.constants';
+import { Queue } from 'bull';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -47,7 +50,6 @@ export class ChatUserController {
     @InjectRedis() private readonly redis: Redis,
     private readonly sharedChatService: SharedChatService,
     private readonly socketService: SocketService,
-    private readonly attachmentService: AttachmentService,
     private readonly propertyService: PropertyUserService,
     private readonly fcmService: FirebaseService,
   ) {}
@@ -103,8 +105,6 @@ export class ChatUserController {
     /* -------------------------------------------------------------------------- */
     // check and get the chatroom and participants from interceptor
     const chatroom: PartialChatroom = request.interceptor_data;
-    console.log({ l: chatroom.last_message });
-    // throw new BadRequestException('');
 
     const isBlocked = await this.sharedChatService.checkIsBlocked(
       chatroom.participants.self.user_id, //من که بلاک شدم

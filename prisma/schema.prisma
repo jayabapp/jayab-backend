@@ -1076,7 +1076,7 @@ model SubmittedFormItems {
 // -------------------------------------------------------------------------- //
 model MessengerChatroom {
   id              Int    @id() @default(autoincrement())
-  uuid            String @unique @default(uuid())
+  uuid            String @unique @default(uuid(7))
   property_id     Int?
   last_message_id Int?   @unique
 
@@ -1089,6 +1089,8 @@ model MessengerChatroom {
 
   property Property? @relation(fields: [property_id], references: [id], onDelete: Cascade)
 
+  @@index([uuid])
+  @@index([created_at])
   @@index([property_id])
   @@map("messenger_chatrooms")
 }
@@ -1110,6 +1112,8 @@ model MessengerParticipant {
   messages MessengerMessages[]
 
   @@unique([chatroom_id, user_id, role])
+  @@index([chatroom_id])
+  @@index([user_id])
   @@index([chatroom_id, user_id])
   @@map("messenger_participants")
 }
@@ -1131,7 +1135,10 @@ model MessengerMessages {
   updated_at DateTime  @updatedAt
   deleted_at DateTime? @db.Timestamp(6)
 
+  @@index([created_at])
   @@index([chatroom_id, participant_id])
+  @@index([chatroom_id])
+  @@index([participant_id])
   @@map("messenger_messages")
 }
 

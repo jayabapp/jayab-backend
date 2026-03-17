@@ -1,10 +1,8 @@
 import { Job } from 'bull';
 import { OnQueueCompleted, OnQueueFailed, Process, Processor } from '@nestjs/bull';
 import { CALL_LOG_JOB, CALL_LOG_QUEUE } from './queue-name.constants';
-import moment from 'moment-jalaali';
 import { PropertyUserService } from '../roles/user/user.service';
 import { User } from '@prisma/client';
-moment.loadPersian({ dialect: 'persian-modern' });
 
 @Processor(CALL_LOG_QUEUE)
 export class CallLogQueueProcessor {

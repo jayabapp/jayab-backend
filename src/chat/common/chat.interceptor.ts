@@ -1,3 +1,4 @@
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import {
   BadRequestException,
   CallHandler,
@@ -5,12 +6,16 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
+import Redis from 'ioredis';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class FindOneChatInterceptor implements NestInterceptor {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    @InjectRedis() private readonly redis: Redis,
+    private readonly db: PrismaService,
+  ) {}
   async intercept(context: ExecutionContext, next: CallHandler): Promise<any> {
     const request = context.switchToHttp().getRequest();
 
@@ -19,6 +24,13 @@ export class FindOneChatInterceptor implements NestInterceptor {
 
     const chatroomId = request.params?.chatroomId;
     if (!chatroomId) throw new BadRequestException('CHAT1');
+    const CACHE_KEY = `chat:interceptor:${chatroomId}`;
+
+    const redisValue = await this.redis.get(CACHE_KEY);
+    if (redisValue) {
+      request.interceptor_data = JSON.parse(redisValue);
+      return next.handle();
+    }
 
     /* -------------------------------------------------------------------------- */
     const item = await this.db.messengerChatroom.findUnique({
@@ -29,7 +41,6 @@ export class FindOneChatInterceptor implements NestInterceptor {
         created_at: true,
         property_id: true,
         property: { select: { id: true, status: true, subscription_expired_at: true } },
-        last_message: { select: { created_at: true } },
         participants: {
           where: { deleted_at: null },
           select: { id: true, user_id: true, role: true, message_read_at: true, user_mobile_number: true },
@@ -48,8 +59,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
 
     if (!sender) throw new BadRequestException('CHAT3');
 
-    /* -------------------------------------------------------------------------- */
-    request.interceptor_data = {
+    const data = {
       ...item,
       participants: {
         self: sender
@@ -70,7 +80,13 @@ export class FindOneChatInterceptor implements NestInterceptor {
           : null,
       },
     };
+    /* -------------------------------------------------------------------------- */
+    request.interceptor_data = data;
 
+    //cache
+    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 10);
+
+    //next
     return next.handle();
   }
 }

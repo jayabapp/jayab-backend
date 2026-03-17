@@ -53,6 +53,7 @@ export default () => ({
     propertyPromoteTemplateId: process.env.SMS_IR_PROPERTY_PROMOTE_TEMPLATE_ID,
     reserveSmsTemplateId: process.env.SMS_IR_RESERVE_TEMPLATE_ID,
     sendClickGuestMobileSmsTemplateId: process.env.SMS_IR_CLICK_GUEST_MOBILE_TEMPLATE_ID,
+    sendChatHintTemplateId: process.env.SMS_IR_CHAT_HINT_TEMPLATE_ID,
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },

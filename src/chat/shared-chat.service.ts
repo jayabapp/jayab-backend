@@ -11,12 +11,18 @@ import { PartialParticipant } from './common/chat.interface';
 import { SendMessageDto } from './common/dto/send-message.dto';
 import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
 import { CreateChatUserDto } from './roles/user/dto/create.dto';
+import { SmsService } from 'src/sms/sms.service';
+import { Queue } from 'bull';
+import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
+import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class SharedChatService {
   constructor(
+    @InjectQueue(CHAT_MESSAGE_SMS_QUEUE) private readonly chatSmsQueue: Queue,
     private readonly db: PrismaService,
     private readonly fcmService: FirebaseService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -148,7 +154,22 @@ export class SharedChatService {
     senderId: number,
     dto: SendMessageDto,
   ): Promise<MessengerMessages & { media: Attachment }> {
-    /* -------------------------------------------------------------------------- */
+    /**
+     * قبل از اپدیت last message دیتا رو برای جاب میفرستیم که زمان رو چک و پیامک ارسال کنه
+     */
+    const room = await this.db.messengerChatroom.findFirst({
+      where: { id: chatroomId },
+      select: {
+        uuid: true,
+        property_id: true,
+        last_message: {
+          select: { participant: { select: { user_id: true } }, created_at: true },
+        },
+      },
+    });
+    this.chatSmsQueue.add(CHAT_MESSAGE_SMS_JOB, { room });
+
+    /* ------------------------------ save message ------------------------------ */
     let message;
     await this.db.$transaction(async (tx) => {
       // create new message
@@ -311,5 +332,41 @@ export class SharedChatService {
     });
 
     return !!isBlocked;
+  }
+
+  /**
+   * ارسال پیامک به میزبان بعد از هر پیامی که ارسال میشه
+   * @param chatroomId
+   * @returns
+   */
+  async sendChatHintToOwner(room: {
+    uuid: string;
+    property_id: number;
+    last_message: {
+      created_at: Date;
+      participant: {
+        user_id: number;
+      };
+    };
+  }): Promise<void> {
+    if (!room) return;
+
+    //اگر اولین پیام بود یا به تازگی پیامی ارسال نکرده بود به میزبان پیامک میدیم
+    let mustSendSms = false;
+
+    if (!room.last_message) mustSendSms = true;
+    else if (moment().diff(room.last_message.created_at, 'second') > 30) mustSendSms = true; //TODO: time
+    if (!mustSendSms) return;
+
+    const p = await this.db.property.findFirst({
+      where: { id: room.property_id },
+      select: { title: true, owner: { select: { user: { select: { id: true, mobile_number: true } } } } },
+    });
+
+    //اگر ارسال کننده پیام خود میزبان بود پیامک نمیفرستیم
+    if (room.last_message.participant.user_id === p.owner.user.id) return;
+
+    await this.smsService.sendChatHintToOwner(p.owner.user.mobile_number, p.title, room.uuid);
+    return;
   }
 }
