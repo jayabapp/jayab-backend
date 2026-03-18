@@ -44,7 +44,7 @@ export class AuthAdminController {
     )
       await this.smsService.sendVerificationCode(adminData.mobile_number, result.code);
 
-    return { result: { code: null, signin_token: signinToken }, messageCode: 'AUTH1' }; //TODO: remove code
+    return { result: { code: null, signin_token: signinToken }, messageCode: 'AUTH1' };
   }
 
   @ApiOperation({ summary: 'Check otp code' })

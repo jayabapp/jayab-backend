@@ -361,7 +361,7 @@ export class SharedChatService {
     let mustSendSms = false;
 
     if (!room.last_message) mustSendSms = true;
-    else if (moment().diff(room.last_message.created_at, 'second') > 30) mustSendSms = true; //TODO: time
+    else if (moment().diff(room.last_message.created_at, 'minute') > 30) mustSendSms = true;
     if (!mustSendSms) return;
 
     const p = await this.db.property.findFirst({
