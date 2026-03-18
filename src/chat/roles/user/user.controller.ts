@@ -5,6 +5,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -190,6 +191,8 @@ export class ChatUserController {
       subscription_expired_at: true,
       owner: { select: { user: { select: { id: true } } } },
     });
+
+    if (!property) throw new NotFoundException('آگهی مورد نظر وجود ندارد');
 
     const result = {
       id: chatroom.uuid,
