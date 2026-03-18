@@ -65,6 +65,7 @@ export class PropertyReserveOwnerService {
     const formatted = [];
     for (const item of list.data) {
       const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
+      const showCounter = item.status === PropertyReserveStatus.PENDING;
       const isPropertyExpired = item.property.subscription_expired_at < startOfToday();
       let guestMobile = item.user.mobile_number;
       if (isPropertyExpired) guestMobile = maskedUserMobile(guestMobile);
@@ -72,6 +73,7 @@ export class PropertyReserveOwnerService {
       formatted.push({
         ...item,
         ttl_seconds: ttl > 0 ? ttl : 0,
+        show_counter: showCounter,
         guest_mobile: guestMobile,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
         is_subscription_expired: isPropertyExpired,

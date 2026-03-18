@@ -304,10 +304,12 @@ export class PropertyReserveUserService {
   async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
     const isChatEnabled = item.property.is_chat_enabled;
+    const showCounter = item.status === PropertyReserveStatus.PENDING;
 
     return {
       ...item,
       ttl_seconds: ttl > 0 ? ttl : 0,
+      show_counter: showCounter,
       status: PropertyReserveStatusList.find((e) => e.id === item.status),
       property: item.property,
       is_chat_enabled: isChatEnabled,
