@@ -7,6 +7,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import Redis from 'ioredis';
+import { startOfToday } from 'src/common/helpers/date.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -59,6 +60,8 @@ export class FindOneChatInterceptor implements NestInterceptor {
 
     if (!sender) throw new BadRequestException('CHAT3');
 
+    const isPropertyExpired = item.property.subscription_expired_at < startOfToday();
+
     const data = {
       ...item,
       participants: {
@@ -75,7 +78,9 @@ export class FindOneChatInterceptor implements NestInterceptor {
               participant_id: recipient.id,
               user_id: recipient.user_id,
               role: recipient.role,
-              user_mobile_number: maskedUserMobile(recipient.user_mobile_number),
+              user_mobile_number: isPropertyExpired
+                ? maskedUserMobile(recipient.user_mobile_number)
+                : recipient.user_mobile_number,
             }
           : null,
       },
@@ -84,7 +89,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
     request.interceptor_data = data;
 
     //cache
-    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 10);
+    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 60);
 
     //next
     return next.handle();

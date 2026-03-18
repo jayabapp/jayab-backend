@@ -15,6 +15,7 @@ import { SmsService } from 'src/sms/sms.service';
 import { Queue } from 'bull';
 import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
 import { InjectQueue } from '@nestjs/bull';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class SharedChatService {
@@ -94,6 +95,7 @@ export class SharedChatService {
       mc.uuid,
       mc.property_id,
       p.title AS property_title,
+      p.subscription_expired_at AS subscription_expired_at,
       ROW_TO_JSON(att.*) as property_image,
       ROW_TO_JSON(lm.*) as last_message,
       lm.created_at as last_update,
@@ -132,10 +134,14 @@ export class SharedChatService {
       mp.user_id = ${userId}
       and lm.id > 0
     ORDER BY lm.created_at DESC
+    LIMIT 100
     `;
 
     for (const e of list) {
-      e.other_side_mobile = maskedUserMobile(e.participants[0]?.user_mobile_number || '');
+      e.other_side_mobile =
+        e.subscription_expired_at < startOfToday()
+          ? maskedUserMobile(e.participants[0]?.user_mobile_number || '')
+          : e.participants[0]?.user_mobile_number;
       delete e.participants;
     }
 

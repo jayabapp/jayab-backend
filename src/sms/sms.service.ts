@@ -191,7 +191,7 @@ export class SmsService {
    * @returns
    */
   async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
-    if (!this.isProduction) return;
+    // if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
