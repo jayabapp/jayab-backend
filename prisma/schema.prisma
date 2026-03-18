@@ -1370,8 +1370,9 @@ model PropertyReserve {
   owner_seen_at              DateTime?
   canceled_at                DateTime?
   expired_at                 DateTime?
+  owner_called_at            DateTime? //وقتی میزبان روی شماره کاربر کلیک میکنه و تماس میگیره
   description                String?
-  owner_clicked_guest_mobile Int?      @default(0)
+  owner_clicked_guest_mobile Int?      @default(0) //تعداد کلیک برای وقتی که اشتراک نداره
 
   property Property @relation(fields: [property_id], references: [id])
   user     User     @relation(fields: [user_id], references: [id])

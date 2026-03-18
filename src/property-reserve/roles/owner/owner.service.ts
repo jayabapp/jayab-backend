@@ -7,7 +7,10 @@ import moment from 'moment-jalaali';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
-import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import {
+  PropertyReserveStatus,
+  PropertyReserveStatusList,
+} from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { SmsService } from 'src/sms/sms.service';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
@@ -34,10 +37,6 @@ export class PropertyReserveOwnerService {
     dto: FindAllPropertyReserveOwnerDto,
     ownerId: number,
   ): Promise<CursorPaginatedResult<PropertyReserve>> {
-    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
-      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
-    };
-
     const list = await cursorPaginate()<
       PropertyReserve & { property: PropertyJsonType; user: Partial<User> },
       Prisma.PropertyReserveFindManyArgs
@@ -46,7 +45,6 @@ export class PropertyReserveOwnerService {
       {
         where: {
           property: { owner_id: ownerId },
-          expired_at: null,
           created_at: { gt: moment().subtract(30, 'day').toDate() },
         },
         include: {
@@ -109,16 +107,32 @@ export class PropertyReserveOwnerService {
   async clickGuestMobile(reserveId: number): Promise<void> {
     const reserve = await this.db.propertyReserve.update({
       where: { id: reserveId },
-      select: { id: true, owner_clicked_guest_mobile: true, property: { select: { code: true } } },
+      select: {
+        id: true,
+        status: true,
+        owner_clicked_guest_mobile: true,
+        property: { select: { code: true, subscription_expired_at: true } },
+      },
       data: { owner_clicked_guest_mobile: { increment: 1 } },
     });
     if (!reserve) return;
 
+    const isPropertyExpired = reserve.property.subscription_expired_at < startOfToday();
+
     //تا دوبار پیامک میفرستیم
-    if (reserve.owner_clicked_guest_mobile < 3) {
+    if (reserve.owner_clicked_guest_mobile < 3 && isPropertyExpired) {
       const adminMobile = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_ANNOUNCEMENTS);
-      if (!adminMobile) return;
-      await this.smsService.sendClickGuestMobileToAdmin(adminMobile, reserve.property.code, reserve.id);
+      if (adminMobile)
+        await this.smsService.sendClickGuestMobileToAdmin(adminMobile, reserve.property.code, reserve.id);
     }
+
+    if (!isPropertyExpired && reserve.status === PropertyReserveStatus.PENDING)
+      await this.db.propertyReserve.update({
+        where: { id: reserveId },
+        data: {
+          status: PropertyReserveStatus.OWNER_CALLED,
+          owner_called_at: new Date(),
+        },
+      });
   }
 }

@@ -23,15 +23,12 @@ import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { isEmpty } from 'lodash';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
-import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyReserveUserService {
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
-    private readonly propertySerializer: PropertySerializer,
-    private readonly dayHelper: DayHelper,
   ) {}
 
   async checkActiveReserve(userId: number): Promise<number> {
@@ -314,6 +311,7 @@ export class PropertyReserveUserService {
       status: PropertyReserveStatusList.find((e) => e.id === item.status),
       property: item.property,
       is_chat_enabled: isChatEnabled,
+      is_subscription_expired: item.property.subscription_expired_at < startOfToday(),
     };
   }
 }

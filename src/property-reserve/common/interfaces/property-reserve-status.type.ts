@@ -22,17 +22,23 @@ import { EnumList } from 'src/common/interfaces/model-props.interface';
 export enum PropertyReserveStatus {
   PENDING = 10,
   CANCELED_BY_USER = 20,
+  OWNER_CALLED = 30,
 }
 
 export const PropertyReserveStatusList: Array<EnumList> = [
   {
     id: PropertyReserveStatus.PENDING,
     title: 'در انتظار بررسی میزبان',
-    hex: '#eab308',
+    hex: '#f59e0b',
   },
   {
     id: PropertyReserveStatus.CANCELED_BY_USER,
     title: 'لغو شده توسط مهمان',
     hex: '#f43f5e',
+  },
+  {
+    id: PropertyReserveStatus.OWNER_CALLED,
+    title: 'مشاهده شده توسط میزبان',
+    hex: '#10b981',
   },
 ];
