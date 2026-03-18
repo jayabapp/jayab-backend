@@ -56,14 +56,6 @@ export class PropertyReserveOwnerService {
               province: { select: { title: true } },
               city: { select: { title: true } },
               region: { select: { title: true } },
-              property_options: {
-                where: { option: { deleted_at: null } },
-                select: { option: { select: { title: true, group: true } } },
-              },
-              daily_price: true,
-              calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-              bedrooms: { select: { total_bedrooms: true } },
-              _count: { select: { attachments: true } },
             },
           },
           user: { select: { mobile_number: true, full_name: true } },
@@ -72,8 +64,6 @@ export class PropertyReserveOwnerService {
       { cursor: dto.cursor },
     );
 
-    const today = await this.dayHelper.today();
-
     const formatted = [];
     for (const item of list.data) {
       const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
@@ -81,16 +71,13 @@ export class PropertyReserveOwnerService {
       let guestMobile = item.user.mobile_number;
       if (isPropertyExpired) guestMobile = maskedUserMobile(guestMobile);
 
-      const p = await this.propertySerializer.toArray([item.property], today, false, false);
-      delete item.property;
-
       formatted.push({
         ...item,
         ttl_seconds: ttl > 0 ? ttl : 0,
         guest_mobile: guestMobile,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
         is_subscription_expired: isPropertyExpired,
-        property: p?.[0],
+        property: item.property,
       });
     }
     return { data: formatted };

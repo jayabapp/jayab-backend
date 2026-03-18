@@ -5,7 +5,7 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { PropertyReserve, Prisma } from '@prisma/client';
+import { PropertyReserve, Prisma, Property } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
@@ -75,10 +75,6 @@ export class PropertyReserveUserService {
     dto: FindAllPropertyReserveUserDto,
     userId: number,
   ): Promise<CursorPaginatedResult<PropertyReserve>> {
-    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
-      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
-    };
-
     const list = await cursorPaginate()<
       PropertyReserve & { property: PropertyJsonType },
       Prisma.PropertyReserveFindManyArgs
@@ -98,14 +94,6 @@ export class PropertyReserveUserService {
               province: { select: { title: true } },
               city: { select: { title: true } },
               region: { select: { title: true } },
-              property_options: {
-                where: { option: { deleted_at: null } },
-                select: { option: { select: { title: true, group: true } } },
-              },
-              daily_price: true,
-              calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-              bedrooms: { select: { total_bedrooms: true } },
-              _count: { select: { attachments: true } },
             },
           },
         },
@@ -113,10 +101,9 @@ export class PropertyReserveUserService {
       { cursor: dto.cursor },
     );
 
-    const today = await this.dayHelper.today();
     const formatted = [];
     for (const item of list.data) {
-      const obj = await this.serializer(item, today);
+      const obj = await this.serializer(item);
       formatted.push(obj);
     }
     return { data: formatted };
@@ -139,9 +126,6 @@ export class PropertyReserveUserService {
   }
 
   async findOne(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
-    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
-      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
-    };
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
       include: {
@@ -151,14 +135,6 @@ export class PropertyReserveUserService {
             province: { select: { title: true } },
             city: { select: { title: true } },
             region: { select: { title: true } },
-            property_options: {
-              where: { option: { deleted_at: null } },
-              select: { option: { select: { title: true, group: true } } },
-            },
-            daily_price: true,
-            calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-            bedrooms: { select: { total_bedrooms: true } },
-            _count: { select: { attachments: true } },
           },
         },
       },
@@ -167,8 +143,7 @@ export class PropertyReserveUserService {
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
 
-    const today = await this.dayHelper.today();
-    const serialized = await this.serializer(item, today);
+    const serialized = await this.serializer(item);
     return serialized;
   }
 
@@ -329,17 +304,15 @@ export class PropertyReserveUserService {
   }
 
   /* --------------------------------- HELPERS -------------------------------- */
-  async serializer(item: PropertyReserve & { property: PropertyJsonType }, today: DayColumn): Promise<any> {
+  async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
-    const p = await this.propertySerializer.toArray([item.property], today, false, false);
     const isChatEnabled = item.property.is_chat_enabled;
-    delete item.property;
 
     return {
       ...item,
       ttl_seconds: ttl > 0 ? ttl : 0,
       status: PropertyReserveStatusList.find((e) => e.id === item.status),
-      property: p?.[0],
+      property: item.property,
       is_chat_enabled: isChatEnabled,
     };
   }
