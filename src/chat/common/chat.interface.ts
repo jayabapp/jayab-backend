@@ -7,6 +7,7 @@ export type PartialChatroom = {
   created_at: Date;
   property_id: number;
   property: { subscription_expired_at: Date };
+  isPropertyExpired: boolean;
   last_message?: Partial<MessengerMessages>;
   participants: {
     self: PartialParticipant;

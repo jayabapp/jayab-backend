@@ -64,6 +64,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
 
     const data = {
       ...item,
+      isPropertyExpired,
       participants: {
         self: sender
           ? {
@@ -89,7 +90,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
     request.interceptor_data = data;
 
     //cache
-    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 60);
+    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 30);
 
     //next
     return next.handle();

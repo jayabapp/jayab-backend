@@ -289,7 +289,12 @@ export class PropertyReserveUserService {
     if (p.has_pool) q['has_pool'] = true;
     // if (p.region_id) q['region_id'] = p.region_id;
 
-    const r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
+    let r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
+
+    if (r1?.length < 3) {
+      delete q.has_pool;
+      r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
+    }
 
     let links: string[] = [];
     for (const item of r1) {

@@ -118,10 +118,7 @@ export class ChatUserController {
         ? chatroom.participants.self
         : chatroom.participants.recipient;
 
-    if (
-      userParticipant.role == UserRole.OWNER &&
-      moment().isAfter(chatroom.property?.subscription_expired_at)
-    ) {
+    if (userParticipant.role == UserRole.OWNER && chatroom.isPropertyExpired) {
       throw new BadRequestException('CHAT10');
     }
 
@@ -202,7 +199,7 @@ export class ChatUserController {
       is_blocked: isBlocked,
       property: {
         ...property,
-        is_expired: property.subscription_expired_at < startOfToday(),
+        is_expired: chatroom.isPropertyExpired,
       },
     };
 
