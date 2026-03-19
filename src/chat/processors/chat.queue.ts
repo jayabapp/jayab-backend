@@ -39,11 +39,12 @@ export class ChatMessageSmsQueueProcessor {
           };
         };
       };
+      senderParticipantId: number;
     }>,
   ): Promise<void> {
     console.log(`Job Start: ${CHAT_MESSAGE_SMS_JOB}`);
 
-    await this.sharedChatService.sendChatHintToOwner(job.data?.room);
+    await this.sharedChatService.sendChatHintToOwner(job.data?.room, job.data?.senderParticipantId);
     return;
   }
 }

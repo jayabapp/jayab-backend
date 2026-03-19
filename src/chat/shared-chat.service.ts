@@ -173,7 +173,7 @@ export class SharedChatService {
         },
       },
     });
-    this.chatSmsQueue.add(CHAT_MESSAGE_SMS_JOB, { room });
+    this.chatSmsQueue.add(CHAT_MESSAGE_SMS_JOB, { room, senderParticipantId: senderId });
 
     /* ------------------------------ save message ------------------------------ */
     let message;
@@ -345,18 +345,21 @@ export class SharedChatService {
    * @param chatroomId
    * @returns
    */
-  async sendChatHintToOwner(room: {
-    uuid: string;
-    property_id: number;
-    last_message: {
-      created_at: Date;
-      participant: {
-        user_id: number;
+  async sendChatHintToOwner(
+    room: {
+      uuid: string;
+      property_id: number;
+      last_message: {
+        created_at: Date;
+        participant: {
+          user_id: number;
+        };
       };
-    };
-  }): Promise<void> {
+    },
+    senderParticipantId: number,
+  ): Promise<void> {
     if (!room) return;
-
+    if (!senderParticipantId) return;
     //اگر اولین پیام بود یا به تازگی پیامی ارسال نکرده بود به میزبان پیامک میدیم
     let mustSendSms = false;
 
@@ -369,8 +372,10 @@ export class SharedChatService {
       select: { title: true, owner: { select: { user: { select: { id: true, mobile_number: true } } } } },
     });
 
+    const sender = await this.db.messengerParticipant.findFirst({ where: { id: senderParticipantId } });
+
     //اگر ارسال کننده پیام خود میزبان بود پیامک نمیفرستیم
-    if (room.last_message.participant.user_id === p.owner.user.id) return;
+    if (sender.user_id === p.owner.user.id) return;
 
     await this.smsService.sendChatHintToOwner(p.owner.user.mobile_number, p.title, room.uuid);
     return;

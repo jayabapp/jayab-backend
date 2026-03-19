@@ -273,6 +273,8 @@ export class PropertyReserveUserService {
       include: { user: { select: { mobile_number: true } } },
     });
     if (!reserve) return;
+    if (reserve.canceled_at) return;
+
     const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
     if (!isPropertyExpired) return;
