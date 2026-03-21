@@ -8,7 +8,9 @@ import { FindAllPropertyReserveAdminDto } from 'src/property-reserve/roles/admin
  * @param dto
  * @returns
  */
-export const filterValidator = (filters: FindAllPropertyReserveAdminDto): Prisma.PropertyReserveWhereInput => {
+export const filterValidator = (
+  filters: FindAllPropertyReserveAdminDto,
+): Prisma.PropertyReserveWhereInput => {
   if (!filters) return {};
 
   /**
@@ -34,8 +36,8 @@ export const filterValidator = (filters: FindAllPropertyReserveAdminDto): Prisma
       // case 'status':
       //   query = { ...query, status: +filters.status };
       //   break;
-      case 'user_id':
-        // query = { ...query, user_id: +filters.user_id };
+      case 'property_code':
+        query = { ...query, property: { code: filters.property_code } };
         break;
       // case 'user_fullname':
       //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };

@@ -41,7 +41,7 @@ export class PropertyReserveAdminService {
   ): Promise<PaginatedResult<PropertyReserve>> {
     const list = await paginate()<PropertyReserve, Prisma.PropertyReserveFindManyArgs>(
       this.db.propertyReserve,
-      { where: filters },
+      { where: filters, include: { property: true, user: true } },
       { page, perPage },
     );
 

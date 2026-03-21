@@ -9,12 +9,14 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { PropertyReserveStatusList } from '../interfaces/property-reserve-status.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
 /* -------------------------------------------------------------------------- */
 enum RefEnum {
-  test = 'test',
+  property = 'property',
+  user = 'user',
 }
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.PropertyReserveScalarFieldEnum;
 type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
@@ -99,17 +101,41 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'propertyReserve',
-    modelTitle: 'بیس',
+    modelTitle: 'رزرو',
     columns: [
-      //{ id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
-      // { id: 10, title: 'تصویر', key: 'image', cellType: 'image' },
-      // { id: 30, title: 'کد تخفیف', key: 'code', cellType: 'string' },
-      // { id: 40, title: 'تاریخ شروع', key: 'start_at', cellType: 'date' },
-      /* ---------------------------------- enum ---------------------------------- */
-      // {id: 25,title: 'دسته بندی',key: items.category_key,cellType: 'enum',enumList: ParentCategoriesList,},
-      // { id: 26, title: 'نوع', key: items.type, cellType: 'enum', enumList: BusinessTypeList },
+      {
+        id: 10,
+        title: 'آگهی',
+        key: 'property',
+        cellType: 'object',
+        nestedKey: 'title',
+        link: '/properties/show/',
+      },
+      { id: 11, title: 'کد آگهی', key: 'property', cellType: 'object', nestedKey: 'code' },
+      {
+        id: 12,
+        title: 'کاربر',
+        key: 'user',
+        cellType: 'object',
+        nestedKey: 'mobile_number',
+        link: '/users/show/',
+      },
+      { id: 20, title: 'وضعیت', key: 'status', cellType: 'enum', enumList: PropertyReserveStatusList },
+      { id: 30, title: 'ورود', key: 'check_in', cellType: 'date' },
+      { id: 31, title: 'خروج', key: 'check_out', cellType: 'date' },
+      { id: 35, title: 'تعداد میهمان', key: 'guests_count', cellType: 'string' },
+      { id: 40, title: 'منقضی شده در', key: 'expired_at', cellType: 'dateTime' },
+      { id: 50, title: 'کنسل شده در', key: 'canceled_at', cellType: 'dateTime' },
+      { id: 60, title: 'ساعت تماس میزبان', key: 'owner_clicked_guest_mobile', cellType: 'dateTime' },
+      {
+        id: 70,
+        title: 'تعداد کلیک میزبان (بدون اشتراک)',
+        key: 'owner_clicked_guest_mobile',
+        cellType: 'dateTime',
+      },
+
       /* ---------------------------------- date ---------------------------------- */
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
       // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
@@ -125,7 +151,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
       title: '',
-      state: 'user_id',
+      state: 'property_code',
       type: 'input',
       isHidden: true,
     },
@@ -142,11 +168,11 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   for (const act of allActions) {
-    if (act === 'create' && rbac.c) availableActions.push('create');
-    if (act === 'show' && rbac.r) availableActions.push('show');
-    if (act === 'edit' && rbac.u) availableActions.push('edit');
-    if (act === 'delete' && rbac.d) availableActions.push('delete');
-    if (act === 'submit' && rbac.u) availableActions.push('submit');
+    // if (act === 'create' && rbac.c) availableActions.push('create');
+    // if (act === 'show' && rbac.r) availableActions.push('show');
+    // if (act === 'edit' && rbac.u) availableActions.push('edit');
+    // if (act === 'delete' && rbac.d) availableActions.push('delete');
+    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;
