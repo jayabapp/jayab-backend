@@ -45,7 +45,6 @@ export class BannerAdminController {
   @Get()
   async findAll(@Req() req, @Query() dto: FindAllBannerAdminDto): Promise<SuccessResponseArgs> {
     const filterQuery = filterValidator(dto);
-    if (!filterQuery) throw new BadRequestException('FILTER1');
 
     const result = await this.bannerAdminService.findAll(filterQuery, dto.page, dto.per_page);
 

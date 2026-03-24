@@ -210,7 +210,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
-    { title: 'عنوان', state: 'position', type: 'select', isHidden: true },
+    { title: 'موقعیت', state: 'position', type: 'select', isHidden: true },
   ];
 
   return filterProps;
