@@ -59,6 +59,9 @@ export default () => ({
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },
+  avanak: {
+    token: process.env.AVANAK_TOKEN,
+  },
   project: {
     maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,
     advisorShareLinkSecret: process.env.ADVISOR_SHARE_LINK_SECRET,

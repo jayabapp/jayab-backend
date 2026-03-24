@@ -23,12 +23,14 @@ import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { isEmpty } from 'lodash';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { AvanakService } from 'src/sms/avanak.service';
 
 @Injectable()
 export class PropertyReserveUserService {
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
+    private readonly avanakService: AvanakService,
   ) {}
 
   async checkActiveReserve(userId: number): Promise<number> {
@@ -242,11 +244,12 @@ export class PropertyReserveUserService {
 
     const p = reserve.property;
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
+    console.log({ isPropertyExpired });
+
     //طبق سناریو اگر اشتراک داشت نیاز به تماس صوتی نیست
-    if (!isPropertyExpired) return;
-    const u = reserve.user;
-    const title = `"${p.title.substring(0, 38)}"`;
-    //TODO: call
+    // if (!isPropertyExpired) return;//TODO
+
+    await this.avanakService.quickCall(reserve.user.mobile_number);
   }
 
   /**
