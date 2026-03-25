@@ -259,7 +259,7 @@ export class PropertyReserveUserService {
     if (!isPropertyExpired) return;
 
     const reserveOwnerMessageId = await this.configService.get('avanak.reserveOwnerMessageId');
-    await this.avanakService.quickCall(reserve.user.mobile_number, reserveOwnerMessageId);
+    await this.avanakService.quickCall(reserve.property.owner.user.mobile_number, reserveOwnerMessageId);
   }
 
   /**
