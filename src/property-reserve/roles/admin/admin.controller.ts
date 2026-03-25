@@ -17,7 +17,9 @@ import { PropertyReserveAdminService } from './admin.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { FindAllPropertyReserveAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 PropertyReserve - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

@@ -7,7 +7,9 @@ import { PROFILE_ADMIN_ROUTE_GROUP } from 'src/profile/common/route-group.consta
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { AccessControlService } from 'src/access-control/access-control.service';
 import { AccessControlRole, Admin } from '@prisma/client';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Profiles - ADMIN')
 @ApiBearerAuth('admin-jwt')
 @UseGuards(AdminJwtGuard)

@@ -25,7 +25,9 @@ import { ShowProps } from 'src/common/interfaces/model-props.interface';
 import { AccessControlList, Prisma } from '@prisma/client';
 import { ContentQuestionAdminService } from 'src/content-question/roles/admin/admin.service';
 import { filterValidator } from 'src/content/common/helpers/filter-validator.helper';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Content - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

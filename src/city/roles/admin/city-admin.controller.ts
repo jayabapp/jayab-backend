@@ -23,7 +23,9 @@ import { FindAllCityAdminDto } from './dto/find-all.dto';
 import qs from 'qs';
 import { filterValidator } from 'src/city/common/helpers/filter-validator.helper';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 City - ADMIN')
 @ApiBearerAuth('user-jwt')
 @UseGuards(AdminJwtGuard)

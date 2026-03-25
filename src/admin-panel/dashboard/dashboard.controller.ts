@@ -5,7 +5,9 @@ import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { THREE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Dashboard - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

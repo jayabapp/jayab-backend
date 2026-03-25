@@ -24,7 +24,9 @@ import { OwnerAdminService } from './admin.service';
 import { CreateOwnerAdminDto } from './dto/create.dto';
 import { FindAllOwnerAdminDto } from './dto/find-all.dto';
 import { UpdatePartialOwnerAdminDto } from './dto/update-partial.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Owner - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

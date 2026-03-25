@@ -25,7 +25,9 @@ import { UpdatePropertyOptionAdminDto } from './dto/update.dto';
 import { FindAllPropertyOptionAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialPropertyOptionAdminDto } from './dto/update-partial.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 PropertyOption - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

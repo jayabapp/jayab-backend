@@ -25,7 +25,9 @@ import { UpdateCallLogAdminDto } from './dto/update.dto';
 import { FindAllCallLogAdminDto } from './dto/find-all.dto';
 import { AccessControlList } from '@prisma/client';
 import { UpdatePartialCallLogAdminDto } from './dto/update-partial.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 CallLog - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

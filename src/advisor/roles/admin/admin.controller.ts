@@ -28,7 +28,9 @@ import { AdvisorAdminService } from './admin.service';
 import { FindAllAdvisorAdminDto } from './dto/find-all.dto';
 import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
 import { UpdateAdvisorAdminDto } from './dto/update.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Advisor - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')

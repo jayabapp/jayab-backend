@@ -25,7 +25,9 @@ import { filterValidator } from 'src/ticket/common/helpers/filter-validator.help
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Ticket - ADMIN')
 @ApiBearerAuth('admin-jwt')
 @UseGuards(AdminJwtGuard)

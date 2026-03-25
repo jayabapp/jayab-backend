@@ -27,7 +27,9 @@ import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @ApiTags('👨‍💻 Property - ADMIN')
 @UseGuards(AdminJwtGuard)
 @ApiBearerAuth('admin-jwt')
