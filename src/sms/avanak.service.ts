@@ -11,20 +11,24 @@ export class AvanakService {
     this.isProduction = process.env.NODE_ENV === 'production';
   }
 
-  async quickCall(mobile: string): Promise<void> {
+  async quickCall(mobile: string, messageId: string): Promise<void> {
+    if (!this.isProduction) return;
+
     const token = this.configService.get('avanak.token');
     const url = 'https://portal.avanak.ir/Rest/QuickSend';
+    // console.log({ mobile, messageId });
+
     try {
       const res = await axios({
         method: 'GET',
         url,
         headers: { Authorization: token },
         data: {
-          MessageID: '44774433',
-          Number: '09126814598',
+          MessageID: messageId,
+          Number: mobile,
         },
       });
-      console.log(res.data);
+      // console.log(res.data);
     } catch (error) {
       console.log('Avanak Error');
       console.log(error);

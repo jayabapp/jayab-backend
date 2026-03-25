@@ -61,6 +61,7 @@ export default () => ({
   },
   avanak: {
     token: process.env.AVANAK_TOKEN,
+    reserveOwnerMessageId: process.env.AVANAK_RESERVE_OWNER_MESSAGE_ID,
   },
   project: {
     maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,

@@ -42,6 +42,7 @@ const configValidations = Joi.object({
   SMS_IR_RESERVE_HINT_TO_GUEST_TEMPLATE_ID: Joi.string().required(),
 
   AVANAK_TOKEN: Joi.string().required(),
+  AVANAK_RESERVE_OWNER_MESSAGE_ID: Joi.string().required(),
 
   MAX_OTP_ATTEMPTS: Joi.string().required(),
 

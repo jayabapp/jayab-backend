@@ -24,6 +24,7 @@ import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reser
 import { isEmpty } from 'lodash';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { AvanakService } from 'src/sms/avanak.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PropertyReserveUserService {
@@ -31,6 +32,7 @@ export class PropertyReserveUserService {
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
     private readonly avanakService: AvanakService,
+    private readonly configService: ConfigService,
   ) {}
 
   async checkActiveReserve(userId: number): Promise<number> {
@@ -88,7 +90,11 @@ export class PropertyReserveUserService {
         },
         include: {
           property: {
-            include: {
+            select: {
+              title: true,
+              code: true,
+              slug: true,
+              has_pool: true,
               feature_image: true,
               province: { select: { title: true } },
               city: { select: { title: true } },
@@ -129,7 +135,11 @@ export class PropertyReserveUserService {
       where: { id: propertyReserveId },
       include: {
         property: {
-          include: {
+          select: {
+            title: true,
+            code: true,
+            slug: true,
+            has_pool: true,
             feature_image: true,
             province: { select: { title: true } },
             city: { select: { title: true } },
@@ -244,12 +254,12 @@ export class PropertyReserveUserService {
 
     const p = reserve.property;
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
-    console.log({ isPropertyExpired });
 
     //طبق سناریو اگر اشتراک داشت نیاز به تماس صوتی نیست
-    // if (!isPropertyExpired) return;//TODO
+    if (!isPropertyExpired) return;
 
-    await this.avanakService.quickCall(reserve.user.mobile_number);
+    const reserveOwnerMessageId = await this.configService.get('avanak.reserveOwnerMessageId');
+    await this.avanakService.quickCall(reserve.user.mobile_number, reserveOwnerMessageId);
   }
 
   /**
