@@ -237,6 +237,10 @@ export class PropertyReserveUserService {
   }
 
   async sendReserveCall(reserveId: number): Promise<void> {
+    //عدم تماس بین ساعت ۱۲ تا ۸ صبح
+    const hour = moment().hour();
+    if (hour >= 0 && hour < 8) return;
+
     const reserve = await this.db.propertyReserve.findFirst({
       where: { id: reserveId },
       include: {
@@ -251,6 +255,7 @@ export class PropertyReserveUserService {
       },
     });
     if (!reserve) throw new NotFoundException('NOT_FOUND');
+    if (reserve.canceled_at) return;
 
     const p = reserve.property;
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
