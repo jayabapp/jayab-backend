@@ -29,7 +29,8 @@ export class DayHelper {
    * @returns
    */
   public async today(): Promise<DayColumn> {
-    const today: number = moment(startOfToday()).weekday();
+    // const today: number = moment(startOfToday()).weekday();
+    const today: number = moment(startOfToday()).isoWeekday();
 
     if (await this.findPeak(this.todayUnix())) return DayColumn.peak;
 
