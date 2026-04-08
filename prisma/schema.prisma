@@ -603,7 +603,17 @@ model Property {
   reports                PropertyReport[]
   reserves               PropertyReserve[]
 
-  @@index([id, sort_order, code, advisor_commission])
+  @@index([id])
+  @@index([code])
+  @@index([has_pool])
+  @@index([status])
+  @@index([sort_order])
+  @@index([advisor_commission])
+  @@index([is_authorized])
+  @@index([province_id])
+  @@index([city_id])
+  @@index([region_id])
+  @@index([owner_id])
   @@map("properties")
 }
 
