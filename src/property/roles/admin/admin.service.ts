@@ -188,6 +188,17 @@ export class PropertyAdminService {
   }
 
   /**
+   * منقضی کردن دستی آگهی توسط ادمین
+   * @param propertyId
+   */
+  async expireProperty(propertyId: number): Promise<void> {
+    await this.db.property.update({
+      where: { id: propertyId },
+      data: { subscription_expired_at: startOfDate(moment('2010-10-10').startOf('day').toDate()) }, // یک تاریخی رو هارد کد میکنیم که اگر نیاز شد متوجه بشیم که دستی منقضی شده
+    });
+  }
+
+  /**
    * Update Property status
    * @param id
    * @param dto

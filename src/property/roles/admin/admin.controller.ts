@@ -142,6 +142,14 @@ export class PropertyAdminController {
     return { result };
   }
 
+  @ApiOperation({ summary: 'Expire Property', description: 'منقضی کردن دستی أگهی' })
+  @Patch(':id/expire')
+  async expireProperty(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.expireProperty(id);
+
+    return { result, messageCode: 'PROPERTY1' };
+  }
+
   /* ----------------------------- MIAN API TOKEN ----------------------------- */
   @ApiOperation({ summary: 'Generate "Mian" API Token', description: '' })
   @Get('mian/token')
