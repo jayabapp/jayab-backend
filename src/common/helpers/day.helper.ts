@@ -1,12 +1,12 @@
 import { Global, Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { countBy, groupBy } from 'lodash';
+import { countBy } from 'lodash';
 import moment from 'moment-jalaali';
+import { PrismaService } from 'src/prisma/prisma.service';
 
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { DayDto } from 'src/property/roles/owner/dto/update-property.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { nDaysLaterDate, startOfDate, startOfToday } from './date.helper';
+import { nDaysLaterDate, startOfToday } from './date.helper';
 
 export enum DayColumn {
   normal = 'normal',
@@ -29,7 +29,8 @@ export class DayHelper {
    * @returns
    */
   public async today(): Promise<DayColumn> {
-    const today: number = moment(startOfToday()).weekday();
+    // const today: number = moment(startOfToday()).weekday();
+    const today: number = moment(startOfToday()).isoWeekday();
 
     if (await this.findPeak(this.todayUnix())) return DayColumn.peak;
 
@@ -68,7 +69,9 @@ export class DayHelper {
         columns.push(DayColumn.peak);
         continue;
       }
-      const dayNumber: number = day.weekday();
+
+      const dayNumber: number = day.isoWeekday();
+      // const dayNumber: number = day.weekday();
 
       let column: DayColumn;
       switch (dayNumber) {
