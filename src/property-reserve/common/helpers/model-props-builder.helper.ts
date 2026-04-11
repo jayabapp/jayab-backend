@@ -124,18 +124,18 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 30, title: 'ورود', key: 'check_in', cellType: 'date' },
       { id: 31, title: 'خروج', key: 'check_out', cellType: 'date' },
       { id: 35, title: 'تعداد میهمان', key: 'guests_count', cellType: 'string' },
-      { id: 40, title: 'منقضی شده در', key: 'expired_at', cellType: 'dateTime' },
+      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
       { id: 50, title: 'کنسل شده در', key: 'canceled_at', cellType: 'dateTime' },
-      { id: 60, title: 'ساعت تماس میزبان', key: 'owner_clicked_guest_mobile', cellType: 'dateTime' },
+      { id: 40, title: 'منقضی شده در', key: 'expired_at', cellType: 'dateTime' },
+      { id: 60, title: 'ساعت تماس میزبان', key: 'owner_called_at', cellType: 'dateTime' },
       {
         id: 70,
         title: 'تعداد کلیک میزبان (بدون اشتراک)',
         key: 'owner_clicked_guest_mobile',
-        cellType: 'dateTime',
+        cellType: 'string',
       },
 
       /* ---------------------------------- date ---------------------------------- */
-      { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
       // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
@@ -150,10 +150,19 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
-      title: '',
+      title: 'کد ملک',
       state: 'property_code',
       type: 'input',
-      isHidden: true,
+    },
+    {
+      title: 'موبایل کاربر',
+      state: 'user_mobile_number',
+      type: 'input',
+    },
+    {
+      title: 'تاریخ ورود',
+      state: 'check_in',
+      type: 'date',
     },
   ];
 

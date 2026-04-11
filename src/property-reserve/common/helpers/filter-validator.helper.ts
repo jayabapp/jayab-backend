@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { FindAllPropertyReserveAdminDto } from 'src/property-reserve/roles/admin/dto/find-all.dto';
+import moment from 'moment-jalaali';
 
 /**
  * validate filters
@@ -33,18 +34,15 @@ export const filterValidator = (
 
     //query
     switch (field) {
-      // case 'status':
-      //   query = { ...query, status: +filters.status };
-      //   break;
       case 'property_code':
         query = { ...query, property: { code: filters.property_code } };
         break;
-      // case 'user_fullname':
-      //   query = { ...query, user: { full_name: { contains: filters.user_fullname } } };
-      //   break;
-      // case 'user_mobile':
-      //   query = { ...query, user: { mobile_number: { contains: filters.user_mobile } } };
-      //   break;
+      case 'user_mobile_number':
+        query = { ...query, user: { mobile_number: filters.user_mobile_number } };
+        break;
+      case 'check_in':
+        if (moment(filters.check_in).isValid()) query = { ...query, check_in: filters.check_in };
+        break;
 
       default:
         break;
