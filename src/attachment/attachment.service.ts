@@ -27,8 +27,8 @@ export class AttachmentService {
 
     const image = sharp(file.buffer).rotate();
     const largeImage = sharp(file.buffer).rotate();
-    const mediumImage = sharp(file.buffer).rotate();
-    const thumbImage = sharp(file.buffer).rotate();
+    // const mediumImage = sharp(file.buffer).rotate();
+    // const thumbImage = sharp(file.buffer).rotate();
 
     const metadata = await image.metadata();
     const { width, height } = metadata;
@@ -88,21 +88,21 @@ export class AttachmentService {
       .webp()
       .toBuffer();
 
-    const m = await mediumImage
-      .resize({
-        ...resizeDimensionMedium,
-        fit: fitMode,
-      })
-      .webp()
-      .toBuffer();
+    // const m = await mediumImage
+    //   .resize({
+    //     ...resizeDimensionMedium,
+    //     fit: fitMode,
+    //   })
+    //   .webp()
+    //   .toBuffer();
 
-    const t = await thumbImage
-      .resize({
-        ...resizeDimensionThumb,
-        fit: fitMode,
-      })
-      .webp()
-      .toBuffer();
+    // const t = await thumbImage
+    //   .resize({
+    //     ...resizeDimensionThumb,
+    //     fit: fitMode,
+    //   })
+    //   .webp()
+    //   .toBuffer();
 
     /**
      * save to S3
@@ -115,23 +115,23 @@ export class AttachmentService {
     });
 
     //medium
-    await this.s3ManagerService.uploadObject({
-      fullPath: `${folder}/${mediumName}`,
-      buffer: m,
-      fs: mainOnS3.fs,
-    });
+    // await this.s3ManagerService.uploadObject({
+    //   fullPath: `${folder}/${mediumName}`,
+    //   buffer: m,
+    //   fs: mainOnS3.fs,
+    // });
 
-    //thumbnail
-    await this.s3ManagerService.uploadObject({
-      fullPath: `${folder}/${thumbName}`,
-      buffer: t,
-      fs: mainOnS3.fs,
-    });
+    // //thumbnail
+    // await this.s3ManagerService.uploadObject({
+    //   fullPath: `${folder}/${thumbName}`,
+    //   buffer: t,
+    //   fs: mainOnS3.fs,
+    // });
 
     let updateData: Prisma.AttachmentUncheckedCreateInput = {
       name: largeName,
-      medium: mediumName,
-      thumbnail: thumbName,
+      medium: null,
+      thumbnail: null,
       // meta: (metadata || {}) as Prisma.JsonValue,
       bucket: mainOnS3.bucket,
       end_point: mainOnS3.end_point,
