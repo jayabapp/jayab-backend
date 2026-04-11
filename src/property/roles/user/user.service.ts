@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, Property, PropertyOwnerAssistant, User } from '@prisma/client';
 import { AES, enc } from 'crypto-js';
 import { Redis } from 'ioredis';
-import { isEmpty, omit, random } from 'lodash';
+import { isEmpty, omit, orderBy, random } from 'lodash';
 import moment from 'moment-jalaali';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
@@ -254,7 +254,7 @@ export class PropertyUserService {
    * @param propertyId
    * @returns
    */
-  async findOne(propertySlug: string, isAdvisor: boolean): Promise<PropertyResType> {
+  async findOne(propertySlug: string, isAdvisor: boolean): Promise<PropertyResType & { owner_info: any }> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -277,6 +277,8 @@ export class PropertyUserService {
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         description: true,
         favorites: true,
+        assistants: true,
+        owner: { select: { user: { select: { profile_image: true } } } },
       },
     });
 
@@ -284,7 +286,13 @@ export class PropertyUserService {
 
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
-    return serialized;
+
+    const ownerInfo = {
+      avatar: item.owner.user.profile_image,
+      full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
+    };
+
+    return { ...serialized, owner_info: ownerInfo };
   }
 
   /**

@@ -44,7 +44,7 @@ export type PropertyJsonType = Property & {
   calendar?: PropertyCalendar[];
   reserve_days?: ReserveDay[];
   status_number?: number;
-  owner?: Owner & { user: User };
+  owner?: any;
 };
 
 export type PropertyArrayResType = {
