@@ -66,6 +66,7 @@ export class PropertyUserService {
       guest_type,
       party,
       pool_type,
+      pet,
       entertainment,
       has_pool,
       has_discount,
@@ -81,6 +82,8 @@ export class PropertyUserService {
       checkin,
       checkout,
     } = dto;
+
+    console.log({ dto });
 
     const today = await this.dayHelper.today();
     let options = [];
@@ -124,6 +127,7 @@ export class PropertyUserService {
     /* --------------------------- نوع های استخر و مهمانی - OR --------------------------- */
     if (party) optionsOR.push(...parseQueryNumberArray(party));
     if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
+    if (pet) optionsOR.push(...parseQueryNumberArray(pet));
 
     // console.log({ optionsOR, dto });
 

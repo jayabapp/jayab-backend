@@ -99,6 +99,11 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @IsOptional()
   party?: string;
 
+  @ApiProperty({ required: false, title: '', example: '90' })
+  @_IsString()
+  @IsOptional()
+  pet?: string;
+
   @ApiProperty({ type: String, required: false, title: 'استخر', example: 29 })
   @_IsString()
   @IsOptional()
