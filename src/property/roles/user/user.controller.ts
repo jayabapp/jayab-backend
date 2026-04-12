@@ -87,9 +87,12 @@ export class PropertyUserController {
     @Query('year', ParseIntPipe) year: number,
     @Headers('authorization') authorization?: string,
   ) {
-    const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
+    /**
+     * در توسعه فروردین ۴۰۵ مشاهده وضعیت رزرو برای همه باز شد
+     */
+    // const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const property = await this.propertyUserService.findById(propertyId);
-    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, isAdvisor);
+    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, true);
 
     return { result };
   }

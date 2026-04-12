@@ -83,8 +83,6 @@ export class PropertyUserService {
       checkout,
     } = dto;
 
-    console.log({ dto });
-
     const today = await this.dayHelper.today();
     let options = [];
     let optionsOR = [];

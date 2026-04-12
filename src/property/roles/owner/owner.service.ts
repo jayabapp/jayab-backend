@@ -655,7 +655,7 @@ export class PropertyOwnerService {
         price: cal?.price ?? dailyPrice?.[today] ?? 0,
         discounted_price: cal?.discounted_price ?? null,
         note: isOwner ? cal?.note || null : null,
-        is_reserved: isOwner || isAdvisor ? cal?.is_reserved : null,
+        is_reserved: cal?.is_reserved,
         is_peak: isPeak,
         advisor_commission: isOwner ? cal?.advisor_commission || property.advisor_commission : null, // just for owner
       });
