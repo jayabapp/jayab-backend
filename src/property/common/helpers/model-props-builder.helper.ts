@@ -350,6 +350,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 40, title: 'وضعیت احراز', key: 'is_authorized', cellType: 'boolean' },
       { id: 45, title: 'دارای تیک آبی', key: 'has_blue_tick', cellType: 'boolean' },
       { id: 46, title: 'نردبان شده', key: 'is_promoted', cellType: 'boolean' },
+      { id: 47, title: 'تاریخ حذف', key: 'deleted_at', cellType: 'dateTime' },
     ],
     availableActions,
   };

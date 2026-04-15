@@ -108,7 +108,7 @@ export class PropertyAdminService {
     };
 
     const item = await this.db.property.findUnique({
-      where: { id },
+      where: { id, deleted_at: new Date() },
       include: {
         owner: { include: { user: true } },
         feature_image: true,

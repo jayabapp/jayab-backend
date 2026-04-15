@@ -78,6 +78,7 @@ export type PropertyArrayResType = {
   status_number?: number;
   favorite_count: number;
   created_at: Date;
+  deleted_at: Date;
   // rate:number;
 };
 
@@ -256,6 +257,7 @@ export class PropertySerializer {
       //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
       status: this.findStatus(remainingDays, data.status),
       created_at: data.created_at,
+      deleted_at: data.deleted_at,
       //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
       authorize_status: data.hasOwnProperty('property_authorize')
