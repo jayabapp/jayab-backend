@@ -613,6 +613,24 @@ export class PropertyUserService {
     };
   }
 
+  /**
+   * روزهای رزرو شده برای بستن روی دکمه رزرو
+   * @param propertyId
+   * @param months
+   * @returns
+   */
+  async findPropertyReservedDays(propertyId: number, months: number): Promise<any> {
+    const duration = months > 3 ? 3 : 1;
+    const startDate = moment().startOf('jMonth').toDate();
+    const endDate = moment().add(duration, 'jMonth').endOf('jMonth').toDate();
+
+    const reserved = await this.db.propertyCalendar.findMany({
+      where: { property_id: propertyId, date: { gt: startDate, lte: endDate } },
+    });
+
+    return reserved.map((e) => e.date);
+  }
+
   /* --------------------------------- HELPERS -------------------------------- */
   /**
    * prepare text for search

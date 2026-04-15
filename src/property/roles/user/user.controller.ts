@@ -97,6 +97,17 @@ export class PropertyUserController {
     return { result };
   }
 
+  @ApiOperation({ summary: 'Find Property Reserved Days' })
+  @Get(':propertyId/reserved')
+  async findPropertyReservedDays(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query('months', ParseIntPipe) months: number,
+  ) {
+    const result = await this.propertyUserService.findPropertyReservedDays(propertyId, months);
+
+    return { result };
+  }
+
   @ApiOperation({ summary: 'Update View', description: '' })
   @Put(':propertyId/view')
   async updateView(
