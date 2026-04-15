@@ -3,6 +3,7 @@ import moment from 'moment-jalaali';
 import { startOfDate } from 'src/common/helpers/date.helper';
 import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
 import { filterPropsBuilder } from './model-props-builder.helper';
+import { PropertyStatuses } from '../types/property-status.type';
 
 /**
  * validate filters
@@ -37,7 +38,9 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
         break;
 
       case 'status':
-        query = { ...query, status: +filters.status };
+        if (+filters.status === PropertyStatuses.DELETED)
+          query = { ...query, status: +filters.status, deleted_at: new Date() };
+        else query = { ...query, status: +filters.status };
         break;
 
       case 'title':

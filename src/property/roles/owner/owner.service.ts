@@ -668,6 +668,7 @@ export class PropertyOwnerService {
   /*                                   DELETE                                   */
   /* -------------------------------------------------------------------------- */
   async remove(propertyId: number): Promise<void> {
+    await this.db.property.update({ where: { id: propertyId }, data: { status: PropertyStatuses.DELETED } });
     await this.db.property.delete({ where: { id: propertyId } });
   }
 
