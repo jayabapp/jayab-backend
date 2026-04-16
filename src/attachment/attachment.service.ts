@@ -70,7 +70,7 @@ export class AttachmentService {
      * Create file name
      */
     const hashOriginalName = md5(file.originalname).toString().substring(3, 9);
-    const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.webp`;
+    const fileName = `${uuidv4()}-${new Date().getTime()}-${width}x${height}.webp`;
     const largeName = `${fileName}`;
     const mediumName = `medium-${fileName}`;
     const thumbName = `thumb-${fileName}`;
