@@ -15,12 +15,13 @@ import {
   UnauthorizedException,
   UseGuards,
   UseInterceptors,
+  Version,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyUserService } from './user.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { PropertyOwnerService } from '../owner/owner.service';
@@ -180,8 +181,16 @@ export class PropertyUserController {
   /* ---------------------------- SEARCH SUGGESTION --------------------------- */
   @ApiOperation({ summary: 'Search Suggestion', description: '' })
   @Get('search/suggestions')
-  async searchSuggestions(@Query() dto: PropertySearchSuggestuibUserDto): Promise<SuccessResponseArgs> {
+  async searchSuggestions(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestions(dto);
+    return { result };
+  }
+
+  @Version('2')
+  @ApiOperation({ summary: 'Search Suggestion V2', description: '' })
+  @Get('search/suggestions')
+  async searchSuggestionsV2(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.searchSuggestionsV2(dto);
     return { result };
   }
 }

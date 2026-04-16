@@ -12,7 +12,7 @@ import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import Num2persian from 'src/common/helpers/Num2Persian';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { slugify } from 'src/common/helpers/slugify';
+import { sanitizeText, slugify } from 'src/common/helpers/slugify';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import {
@@ -25,7 +25,7 @@ import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
-import { FindAllPropertyUserDto, PropertySearchSuggestuibUserDto } from './dto/find-all.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { ONE_HOUR_TTL, ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 
 @Injectable()
@@ -574,7 +574,7 @@ export class PropertyUserService {
   }
 
   /* ---------------------------- SEARCH SUGGESTION --------------------------- */
-  async searchSuggestions(dto: PropertySearchSuggestuibUserDto): Promise<any> {
+  async searchSuggestions(dto: PropertySearchSuggestionUserDto): Promise<any> {
     const exactProperty = await this.db.property.findFirst({
       where: { title: dto.q, ...this.validProperty() },
       select: { id: true, title: true, slug: true },
@@ -608,6 +608,53 @@ export class PropertyUserService {
 
     return {
       properties: !!exactProperty ? [exactProperty].concat(properties) : properties,
+      cities,
+      landings,
+    };
+  }
+
+  async searchSuggestionsV2(dto: PropertySearchSuggestionUserDto): Promise<any> {
+    const q = dto.q;
+    const words = sanitizeText(q);
+    if (isEmpty(words)) return;
+
+    /* ---------------------------------- city ---------------------------------- */
+    const conditions = words.map((term) => `c.title ILIKE '%${term}%'`).join(' AND ');
+    const exactMatch = words.join(' ');
+    const query = `
+        SELECT 
+            c.id,
+            c.title,
+            c.parent_id,
+            CASE 
+                WHEN c.parent_id IS NULL THEN 'province'
+                WHEN p.parent_id IS NULL THEN 'city'
+                ELSE 'region'
+            END as level,
+            COALESCE(p.title, '') as parent_title,
+            COALESCE(g.title, '') as grandparent_title
+        FROM cities c
+        LEFT JOIN cities p ON p.id = c.parent_id
+        LEFT JOIN cities g ON g.id = p.parent_id
+        WHERE ${conditions} And c.deleted_at is null
+        ORDER BY 
+            CASE WHEN c.title = '${exactMatch}' THEN 1 ELSE 2 END,
+            LENGTH(c.title),
+            c.title
+        LIMIT 10
+    `;
+
+    const cities = await this.db.$queryRawUnsafe(query);
+
+    const landings = await this.db.landingPage.findMany({
+      where: {
+        OR: this.preprocessSearchTerms(dto.q, 'title') as Prisma.LandingPageWhereInput[],
+      },
+      select: { id: true, title: true, url: true },
+      take: 5,
+    });
+
+    return {
       cities,
       landings,
     };

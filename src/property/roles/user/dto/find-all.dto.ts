@@ -189,7 +189,7 @@ export class FindAllPropertyUserDto extends PaginationDto {
   checkout?: Date;
 }
 
-export class PropertySearchSuggestuibUserDto {
+export class PropertySearchSuggestionUserDto {
   @ApiProperty({ required: true, title: '' })
   @_IsString()
   @_IsNotEmpty()
