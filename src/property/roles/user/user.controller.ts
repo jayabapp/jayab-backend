@@ -193,4 +193,11 @@ export class PropertyUserController {
     const result = await this.propertyUserService.searchSuggestionsV2(dto);
     return { result };
   }
+
+  @ApiOperation({ summary: 'Search', description: '' })
+  @Get('search')
+  async search(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.search(dto);
+    return { result };
+  }
 }

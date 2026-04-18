@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, Property, PropertyOwnerAssistant, User } from '@prisma/client';
 import { AES, enc } from 'crypto-js';
 import { Redis } from 'ioredis';
-import { isEmpty, omit, orderBy, random } from 'lodash';
+import { groupBy, isEmpty, omit, orderBy, random } from 'lodash';
 import moment from 'moment-jalaali';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
@@ -27,6 +27,7 @@ import { SmsService } from 'src/sms/sms.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { ONE_HOUR_TTL, ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 
 @Injectable()
 export class PropertyUserService {
@@ -62,6 +63,7 @@ export class PropertyUserService {
       welfare,
       kitchen,
       cool_heat,
+      ownership,
       neighborhood,
       guest_type,
       party,
@@ -120,6 +122,7 @@ export class PropertyUserService {
     if (cool_heat) options.push(...parseQueryNumberArray(cool_heat));
     if (neighborhood) options.push(...parseQueryNumberArray(neighborhood));
     if (guest_type) options.push(...parseQueryNumberArray(guest_type));
+    if (ownership) options.push(...parseQueryNumberArray(ownership));
     if (!isEmpty(entertainment)) options.push(...parseQueryNumberArray(entertainment));
 
     /* --------------------------- نوع های استخر و مهمانی - OR --------------------------- */
@@ -573,7 +576,9 @@ export class PropertyUserService {
     return decrypted;
   }
 
-  /* ---------------------------- SEARCH SUGGESTION --------------------------- */
+  /* -------------------------------------------------------------------------- */
+  /*                                   SEARCH                                   */
+  /* -------------------------------------------------------------------------- */
   async searchSuggestions(dto: PropertySearchSuggestionUserDto): Promise<any> {
     const exactProperty = await this.db.property.findFirst({
       where: { title: dto.q, ...this.validProperty() },
@@ -613,38 +618,16 @@ export class PropertyUserService {
     };
   }
 
-  async searchSuggestionsV2(dto: PropertySearchSuggestionUserDto): Promise<any> {
+  async searchSuggestionsV2(
+    dto: PropertySearchSuggestionUserDto,
+  ): Promise<{ cities: any[]; landings: any[] }> {
     const q = dto.q;
     const words = sanitizeText(q);
-    if (isEmpty(words)) return;
+    if (isEmpty(words)) return { cities: [], landings: [] };
 
     /* ---------------------------------- city ---------------------------------- */
-    const conditions = words.map((term) => `c.title ILIKE '%${term}%'`).join(' AND ');
-    const exactMatch = words.join(' ');
-    const query = `
-        SELECT 
-            c.id,
-            c.title,
-            c.parent_id,
-            CASE 
-                WHEN c.parent_id IS NULL THEN 'province'
-                WHEN p.parent_id IS NULL THEN 'city'
-                ELSE 'region'
-            END as level,
-            COALESCE(p.title, '') as parent_title,
-            COALESCE(g.title, '') as grandparent_title
-        FROM cities c
-        LEFT JOIN cities p ON p.id = c.parent_id
-        LEFT JOIN cities g ON g.id = p.parent_id
-        WHERE ${conditions} And c.deleted_at is null
-        ORDER BY 
-            CASE WHEN c.title = '${exactMatch}' THEN 1 ELSE 2 END,
-            LENGTH(c.title),
-            c.title
-        LIMIT 10
-    `;
 
-    const cities = await this.db.$queryRawUnsafe(query);
+    const cities = await this.db.$queryRawUnsafe<any[]>(this.cityQueryBuilder(words, 8));
 
     const landings = await this.db.landingPage.findMany({
       where: {
@@ -658,6 +641,61 @@ export class PropertyUserService {
       cities,
       landings,
     };
+  }
+
+  async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
+    let words = sanitizeText(dto.q);
+    console.log({ words });
+
+    let clientQuery = {};
+    //pool
+    if (dto.q.includes('استخر')) {
+      clientQuery['has_pool'] = true;
+    }
+
+    const exactCity = await this.db.city.findFirst({ where: { title: dto.q } });
+    if (exactCity) {
+      clientQuery['cities'] = `${exactCity.id}`;
+      words = [];
+    } else {
+      const cities = await this.db.city.findMany({
+        where: { title: { in: words } },
+        select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
+      });
+      for (const city of cities) {
+        if (city.parent?.parent_id) clientQuery['regions'] = (clientQuery['regions'] || '') + `${city.id},`;
+        else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
+        else clientQuery = { ...clientQuery, province_id: city.id };
+      }
+      console.log(cities);
+    }
+
+    //property type
+    const propertyTypes = await this.db.propertyOption.findMany({
+      where: { OR: words.map((e) => ({ title: { contains: e } })), group: PropertyOptionGroup.PROPERTY_TYPE },
+    });
+
+    const options = await this.db.propertyOption.findMany({
+      where: {
+        OR: words.map((e) => ({ title: { equals: e } })),
+        group: {
+          in: [
+            PropertyOptionGroup.ENTERTAINMENT,
+            PropertyOptionGroup.PATTERN,
+            PropertyOptionGroup.OWNERSHIP,
+            PropertyOptionGroup.POOL_TYPE,
+          ],
+        },
+      },
+    });
+
+    const groupedOptions = groupBy([...options, ...propertyTypes], 'group');
+    for (const key in groupedOptions) {
+      clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
+    }
+    console.log(groupedOptions);
+    if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
+    console.log(clientQuery);
   }
 
   /**
@@ -679,6 +717,48 @@ export class PropertyUserService {
   }
 
   /* --------------------------------- HELPERS -------------------------------- */
+
+  /**
+   * create city raw query for search suggestion
+   * @param words
+   * @param limit
+   * @returns
+   */
+  cityQueryBuilder(words: string[], limit: number): string {
+    const conditions = words.map((term) => `c.title ILIKE '%${term}%'`).join(' OR ');
+    const exactMatch = words.join(' ');
+    const query = `
+        SELECT 
+            c.id,
+            c.title,
+            c.parent_id,
+            CASE 
+                WHEN c.parent_id IS NULL THEN 'province'
+                WHEN p.parent_id IS NULL THEN 'city'
+                ELSE 'region'
+            END as level,
+            COALESCE(p.title, '') as parent_title,
+            COALESCE(p.id, null) as parent_id,
+            COALESCE(g.title, '') as grandparent_title,
+            COALESCE(g.id, null) as grandparent_id
+        FROM cities c
+        LEFT JOIN cities p ON p.id = c.parent_id
+        LEFT JOIN cities g ON g.id = p.parent_id
+        WHERE ${conditions} AND c.deleted_at is null AND c.title != 'استخر'
+        ORDER BY 
+            CASE WHEN c.title = '${exactMatch}' THEN 1 ELSE 2 END,
+            CASE 
+               WHEN c.parent_id IS NULL THEN 1
+               WHEN p.parent_id IS NULL THEN 2
+               ELSE 3
+            END,
+            LENGTH(c.title),
+            c.title
+        LIMIT ${limit}
+    `;
+    return query;
+  }
+
   /**
    * prepare text for search
    * @param searchTerm

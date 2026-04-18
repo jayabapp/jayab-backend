@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import {
@@ -68,6 +68,11 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @_IsString()
   @IsOptional()
   pattern?: string;
+
+  @ApiProperty({ required: false, title: 'مالکیت' })
+  @_IsString()
+  @IsOptional()
+  ownership?: string;
 
   @ApiProperty({ required: false, title: 'تهویه' })
   @_IsString()
@@ -191,6 +196,7 @@ export class FindAllPropertyUserDto extends PaginationDto {
 
 export class PropertySearchSuggestionUserDto {
   @ApiProperty({ required: true, title: '' })
+  @Transform(({ value }) => value?.trim())
   @_IsString()
   @_IsNotEmpty()
   q: string;
