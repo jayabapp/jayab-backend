@@ -195,7 +195,7 @@ export class PropertyUserController {
   }
 
   @ApiOperation({ summary: 'Search', description: '' })
-  @Get('search')
+  @Get('search/extract')
   async search(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.search(dto);
     return { result };

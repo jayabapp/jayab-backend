@@ -650,12 +650,19 @@ export class PropertyUserService {
     let clientQuery = {};
     //pool
     if (dto.q.includes('استخر')) {
-      clientQuery['has_pool'] = true;
+      clientQuery['has_pool'] = 1;
     }
 
-    const exactCity = await this.db.city.findFirst({ where: { title: dto.q } });
+    const exactCity = await this.db.city.findFirst({
+      where: { title: dto.q },
+      select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
+    });
     if (exactCity) {
-      clientQuery['cities'] = `${exactCity.id}`;
+      let level;
+      if (exactCity.parent?.parent_id) level = 'regions';
+      else if (exactCity?.parent_id) level = 'cities';
+      else level = 'province_id';
+      clientQuery[level] = `${exactCity.id}`;
       words = [];
     } else {
       const cities = await this.db.city.findMany({
@@ -695,7 +702,48 @@ export class PropertyUserService {
     }
     console.log(groupedOptions);
     if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
+
     console.log(clientQuery);
+    if (clientQuery['province_id'] && clientQuery['cities']) delete clientQuery['regions'];
+
+    console.log(clientQuery);
+
+    /**
+     * ایجاد لیست شهرها برای نمایش در پاپ آپ سرچ
+     */
+    const cityRecords = await this.db.city.findMany({
+      where: {
+        id: {
+          in: [
+            clientQuery['province_id'] || 0,
+            ...parseQueryNumberArray(clientQuery['cities'] || ''),
+            ...parseQueryNumberArray(clientQuery['regions'] || ''),
+          ],
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        parent_id: true,
+        parent: { select: { id: true, title: true, parent: { select: { id: true, title: true } } } },
+      },
+    });
+
+    let citiesList = [];
+    for (const c of cityRecords) {
+      citiesList.push({
+        id: c.id,
+        title: c.title,
+        parent_id: c.parent_id,
+        level: c.parent?.parent ? 'region' : c.parent_id ? 'city' : 'province',
+        parent_title: c.parent?.title,
+        grandparent_title: c.parent?.parent?.title,
+        grandparent_id: c.parent?.parent?.id,
+      });
+    }
+    // console.log({ cityRecords });
+
+    return { client_query: clientQuery, cities_list: citiesList };
   }
 
   /**
