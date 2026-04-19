@@ -654,7 +654,7 @@ export class PropertyUserService {
     }
 
     const exactCity = await this.db.city.findFirst({
-      where: { title: dto.q },
+      where: { AND: [{ title: dto.q }, { title: { notIn: ['استخر'] } }] },
       select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
     });
     if (exactCity) {
@@ -666,7 +666,7 @@ export class PropertyUserService {
       words = [];
     } else {
       const cities = await this.db.city.findMany({
-        where: { title: { in: words } },
+        where: { AND: [{ title: { in: words } }, { title: { notIn: ['استخر'] } }] },
         select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
       });
       for (const city of cities) {
