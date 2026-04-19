@@ -110,7 +110,7 @@ export const sanitizeText = (text: string): string[] => {
   const words = sanitized
     .trim()
     .split(/\s+/)
-    .filter((word) => word.length > 0);
+    .filter((word) => word.length > 2);
 
   return words;
 };

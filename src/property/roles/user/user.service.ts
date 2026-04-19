@@ -613,8 +613,23 @@ export class PropertyUserService {
 
   async searchSuggestionsV2(
     dto: PropertySearchSuggestionUserDto,
-  ): Promise<{ cities: any[]; landings: any[] }> {
+  ): Promise<{ cities: any[]; landings: any[]; properties?: any[] }> {
     const q = dto.q;
+
+    /**
+     * اگر کلن عدد بود دنبال کد ملک میگردیم
+     */
+    if (/^\d+$/.test(q)) {
+      const exactProperty = await this.db.property.findFirst({
+        where: { code: q },
+        select: { id: true, title: true, slug: true },
+      });
+      return {
+        cities: [],
+        landings: [],
+        properties: [exactProperty],
+      };
+    }
     const words = sanitizeText(q);
     if (isEmpty(words)) return { cities: [], landings: [] };
 
