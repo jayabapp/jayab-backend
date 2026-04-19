@@ -115,17 +115,17 @@ export class PropertyUserService {
     if (total_guests > 0) query = { ...query, max_capacity: { gte: total_guests } };
 
     /* ------------------------------ options query ----------------------------- */
-    if (property_type) optionsOR.push(...parseQueryNumberArray(property_type));
+    if (property_type) options.push(...parseQueryNumberArray(property_type));
+    if (ownership) options.push(...parseQueryNumberArray(ownership));
+    if (guest_type) options.push(...parseQueryNumberArray(guest_type));
+
+    /* ---------------------------- options OR query ---------------------------- */
     if (pattern) optionsOR.push(...parseQueryNumberArray(pattern));
     if (welfare) optionsOR.push(...parseQueryNumberArray(welfare));
     if (kitchen) optionsOR.push(...parseQueryNumberArray(kitchen));
     if (cool_heat) optionsOR.push(...parseQueryNumberArray(cool_heat));
     if (neighborhood) optionsOR.push(...parseQueryNumberArray(neighborhood));
-    if (guest_type) optionsOR.push(...parseQueryNumberArray(guest_type));
-    if (ownership) optionsOR.push(...parseQueryNumberArray(ownership));
     if (!isEmpty(entertainment)) optionsOR.push(...parseQueryNumberArray(entertainment));
-
-    /* --------------------------- نوع های استخر و مهمانی - OR --------------------------- */
     if (party) optionsOR.push(...parseQueryNumberArray(party));
     if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
     if (pet) optionsOR.push(...parseQueryNumberArray(pet));
