@@ -191,7 +191,7 @@ export class SmsService {
    * @returns
    */
   async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -222,7 +222,7 @@ export class SmsService {
     duration: string,
     guestsCount: string,
   ): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -266,7 +266,7 @@ export class SmsService {
     propertyCode: string,
     reserveNumber: number,
   ): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -301,7 +301,7 @@ export class SmsService {
    * @returns
    */
   async sendRecommendationLinks(mobile: string, links: string[], propertyTitle: string): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -338,7 +338,7 @@ export class SmsService {
    * @param chatroomId
    */
   async sendChatHintToOwner(mobile: string, propertyTitle: string, chatroomId: string): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
@@ -371,7 +371,7 @@ export class SmsService {
    * @param chatroomId
    */
   async sendPropertyReserveHintToGuest(mobile: string, propertyTitle: string): Promise<void> {
-    // if (!this.isProduction) return;
+    if (!this.isProduction) return;
 
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
