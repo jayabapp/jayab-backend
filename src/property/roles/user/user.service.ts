@@ -86,8 +86,6 @@ export class PropertyUserService {
     } = dto;
 
     const today = await this.dayHelper.today();
-    let options = [];
-    let optionsOR = [];
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -114,30 +112,25 @@ export class PropertyUserService {
     /* ----------------------------- total guests ----------------------------- */
     if (total_guests > 0) query = { ...query, max_capacity: { gte: total_guests } };
 
-    /* ------------------------------ options query ----------------------------- */
-    if (property_type) options.push(...parseQueryNumberArray(property_type));
-    if (ownership) options.push(...parseQueryNumberArray(ownership));
-    if (guest_type) options.push(...parseQueryNumberArray(guest_type));
+    let options = [];
+    /* ------------------------------ options query (new) ----------------------------- */
+    if (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
+    if (ownership) options.push({ options_array: { hasSome: parseQueryNumberArray(ownership) } });
+    if (guest_type) options.push({ options_array: { hasSome: parseQueryNumberArray(guest_type) } });
+    if (pattern) options.push({ options_array: { hasSome: parseQueryNumberArray(pattern) } });
+    if (welfare) options.push({ options_array: { hasSome: parseQueryNumberArray(welfare) } });
+    if (kitchen) options.push({ options_array: { hasSome: parseQueryNumberArray(kitchen) } });
+    if (cool_heat) options.push({ options_array: { hasSome: parseQueryNumberArray(cool_heat) } });
+    if (neighborhood) options.push({ options_array: { hasSome: parseQueryNumberArray(neighborhood) } });
+    if (entertainment) options.push({ options_array: { hasSome: parseQueryNumberArray(entertainment) } });
+    if (party) options.push({ options_array: { hasSome: parseQueryNumberArray(party) } });
+    if (pool_type) options.push({ options_array: { hasSome: parseQueryNumberArray(pool_type) } });
+    if (pet) options.push({ options_array: { hasSome: parseQueryNumberArray(pet) } });
 
-    /* ---------------------------- options OR query ---------------------------- */
-    if (pattern) optionsOR.push(...parseQueryNumberArray(pattern));
-    if (welfare) optionsOR.push(...parseQueryNumberArray(welfare));
-    if (kitchen) optionsOR.push(...parseQueryNumberArray(kitchen));
-    if (cool_heat) optionsOR.push(...parseQueryNumberArray(cool_heat));
-    if (neighborhood) optionsOR.push(...parseQueryNumberArray(neighborhood));
-    if (!isEmpty(entertainment)) optionsOR.push(...parseQueryNumberArray(entertainment));
-    if (party) optionsOR.push(...parseQueryNumberArray(party));
-    if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
-    if (pet) optionsOR.push(...parseQueryNumberArray(pet));
-
-    // console.log({ optionsOR, dto });
-
-    if (!isEmpty(optionsOR)) {
-      query = {
-        ...query,
-        AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: optionsOR } }],
-      };
-    } else query = { ...query, options_array: { hasEvery: options } };
+    query = {
+      ...query,
+      AND: options,
+    };
 
     /* ------------------------------ فقط استخردار ------------------------------ */
     if (has_pool === 1) query = { ...query, has_pool: true };
@@ -884,3 +877,25 @@ export class PropertyUserService {
     }
   }
 }
+
+/**
+* old options query
+ if (property_type) options.push(...parseQueryNumberArray(property_type));
+if (ownership) options.push(...parseQueryNumberArray(ownership));
+if (guest_type) options.push(...parseQueryNumberArray(guest_type));
+if (pattern) optionsOR.push(...parseQueryNumberArray(pattern));
+if (welfare) optionsOR.push(...parseQueryNumberArray(welfare));
+if (kitchen) optionsOR.push(...parseQueryNumberArray(kitchen));
+if (cool_heat) optionsOR.push(...parseQueryNumberArray(cool_heat));
+if (neighborhood) optionsOR.push(...parseQueryNumberArray(neighborhood));
+if (!isEmpty(entertainment)) optionsOR.push(...parseQueryNumberArray(entertainment));
+if (party) optionsOR.push(...parseQueryNumberArray(party));
+if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
+if (pet) optionsOR.push(...parseQueryNumberArray(pet));
+if (!isEmpty(optionsOR)) {
+       query = {
+         ...query,
+         AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: optionsOR } }],
+       };
+     } else query = { ...query, options_array: { hasEvery: options } };
+ */
