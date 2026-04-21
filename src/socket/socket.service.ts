@@ -55,18 +55,18 @@ export class SocketService {
         socket.join(this.createRoomKey(id, UserRole.ADMIN));
 
         // set the user status (online, offline)
-        key = adminCacheStatusKey(id, socket.id);
-        await this.redis.set(key, id);
-        console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
+        // key = adminCacheStatusKey(id, socket.id);
+        // await this.redis.set(key, id);
+        // console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
         break;
 
       case UserRole.USER:
         socket.join(this.createRoomKey(id, UserRole.USER));
 
         // set the user status (online, offline)
-        key = userCacheStatusKey(id, socket.id);
-        await this.redis.set(key, id);
-        console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
+        // key = userCacheStatusKey(id, socket.id);
+        // await this.redis.set(key, id);
+        // console.log(`🔑 Redis key: ${key}, value(user id): ${id}`);
         break;
 
       default:
