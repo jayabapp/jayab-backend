@@ -125,7 +125,7 @@ import { BullModule } from '@nestjs/bull';
             port: config.get('redis.port'),
             password: config.get('redis.password'),
           },
-          keyPrefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab' : 'jayab',
+          prefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab' : 'jayab',
           defaultJobOptions: { removeOnComplete: true, removeOnFail: true },
         }),
       }),
