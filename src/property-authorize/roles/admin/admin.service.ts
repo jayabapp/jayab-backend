@@ -89,7 +89,11 @@ export class PropertyAuthorizeAdminService {
       where: { id },
       include: {
         property: {
-          select: { id: true, title: true, owner: { select: { user: { select: { id: true } } } } },
+          select: {
+            id: true,
+            title: true,
+            owner: { select: { user: { select: { id: true, mobile_number: true } } } },
+          },
         },
       },
     });
