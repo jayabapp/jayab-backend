@@ -99,12 +99,12 @@ export class TasksService {
       const days =
         property.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
 
-      // await this.smsService.sendPropertySubscriptionReminder(
-      //   property.owner.user.mobile_number,
-      //   property.owner.user.full_name,
-      //   property.title,
-      //   days,
-      // );
+      await this.smsService.sendPropertySubscriptionReminder(
+        property.owner.user.mobile_number,
+        property.owner.user.full_name,
+        property.title,
+        days,
+      );
       await this.notificationSharedService.createNotification({
         user: { id: property.owner.user.id, role: UserRole.USER },
         mustSendNotif: true,
@@ -159,11 +159,11 @@ export class TasksService {
         },
       });
       const days = advisor.subscription_expired_at.getTime() === today.getTime() ? 'امروز' : 'تا سه روز دیگر';
-      // await this.smsService.sendAdvisorSubscriptionReminder(
-      //   advisor.user.mobile_number,
-      //   advisor.user.full_name,
-      //   days,
-      // );
+      await this.smsService.sendAdvisorSubscriptionReminder(
+        advisor.user.mobile_number,
+        advisor.user.full_name,
+        days,
+      );
       await this.notificationSharedService.createNotification({
         user: { id: advisor.user.id, role: UserRole.USER },
         mustSendNotif: true,
