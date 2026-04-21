@@ -42,7 +42,7 @@ error_message: ${message}
 query: ${JSON.stringify(request.query)}
 params: ${JSON.stringify(request.params)}
 body: ${JSON.stringify(request.body)}
-stacktrace: ${![422, 404].includes(statusCode) ? exception.stack : null}
+stacktrace: ${![422, 404, 401].includes(statusCode) ? exception.stack : null}
         `;
     }
 
