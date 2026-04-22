@@ -83,6 +83,8 @@ export class PropertyUserService {
       q,
       checkin,
       checkout,
+      has_blue_tick,
+      is_authorized,
     } = dto;
 
     const today = await this.dayHelper.today();
@@ -90,6 +92,8 @@ export class PropertyUserService {
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
     if (code) query = { ...query, code };
+    if (is_authorized) query = { ...query, is_authorized: true };
+    if (has_blue_tick) query = { ...query, has_blue_tick: true };
 
     /* ------------------------------------ q ----------------------------------- */
     if (q) query = { ...query, OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[] };

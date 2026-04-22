@@ -3,6 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
 import {
+  _IsBoolean,
   _IsIn,
   _IsInt,
   _IsNotEmpty,
@@ -192,6 +193,20 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @Type(() => Date)
   @IsOptional()
   checkout?: Date;
+
+  @ApiProperty({ required: false, title: 'ممتاز' })
+  @Type(() => Boolean)
+  @Transform(({ value }) => value == '1')
+  @_IsBoolean()
+  @IsOptional()
+  has_blue_tick?: number;
+
+  @ApiProperty({ required: false, title: 'احراز شده' })
+  @Transform(({ value }) => value == '1')
+  @Type(() => Boolean)
+  @_IsBoolean()
+  @IsOptional()
+  is_authorized?: boolean;
 }
 
 export class PropertySearchSuggestionUserDto {
