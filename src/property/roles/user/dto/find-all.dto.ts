@@ -24,15 +24,15 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @IsOptional()
   code?: string;
 
-  @ApiProperty({ required: false, title: 'استان' })
-  @IsOptional()
-  @Type(() => Number)
-  province_id?: number;
-
   @ApiProperty({ required: false, example: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
   @_IsString()
   @IsOptional()
   keys?: string;
+
+  @ApiProperty({ required: false, title: 'استان' })
+  @_IsString()
+  @IsOptional()
+  provinces?: string;
 
   @ApiProperty({ required: false, title: 'شهر', example: '147,2' })
   @_IsString()

@@ -28,6 +28,7 @@ import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-shar
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { ONE_HOUR_TTL, ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { IsEmpty } from 'class-validator';
 
 @Injectable()
 export class PropertyUserService {
@@ -53,7 +54,7 @@ export class PropertyUserService {
   ): Promise<PaginatedResult<PropertyArrayResType>> {
     let {
       code,
-      province_id,
+      provinces,
       cities = '',
       regions,
       total_bedrooms,
@@ -98,14 +99,16 @@ export class PropertyUserService {
     /* ------------------------------------ q ----------------------------------- */
     if (q) query = { ...query, OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[] };
 
+    const citiesArray = parseQueryNumberArray(cities);
+    const provincesArray = parseQueryNumberArray(provinces);
     /* -------------------------------- province and city -------------------------------- */
-    if (province_id && !isEmpty(cities))
+    if (!isEmpty(provincesArray) && !isEmpty(citiesArray))
       query = {
         ...query,
-        OR: [{ city_id: { in: parseQueryNumberArray(cities) } }, { province_id: province_id }],
+        OR: [{ city_id: { in: citiesArray } }, { province_id: { in: provincesArray } }],
       };
-    else if (province_id) query = { ...query, province_id };
-    else if (!isEmpty(cities)) query = { ...query, city_id: { in: parseQueryNumberArray(cities) } };
+    else if (!isEmpty(provincesArray)) query = { ...query, province_id: { in: provincesArray } };
+    else if (!isEmpty(cities)) query = { ...query, city_id: { in: citiesArray } };
 
     /* --------------------------------- regions -------------------------------- */
     if (!isEmpty(regions)) query = { ...query, region_id: { in: parseQueryNumberArray(regions) } };
