@@ -642,11 +642,11 @@ export class PropertyUserService {
 
     /* ---------------------------------- city ---------------------------------- */
 
-    const cities = await this.db.$queryRawUnsafe<any[]>(this.cityQueryBuilder(words, 8));
+    const cities = await this.db.$queryRawUnsafe<any[]>(this.cityQueryBuilder(words, 3));
 
     const landings = await this.db.landingPage.findMany({
       where: {
-        OR: this.preprocessSearchTerms(dto.q, 'title') as Prisma.LandingPageWhereInput[],
+        AND: words.map((e) => ({ title: { contains: e } })),
       },
       select: { id: true, title: true, url: true },
       take: 5,
@@ -788,6 +788,8 @@ export class PropertyUserService {
    * @returns
    */
   cityQueryBuilder(words: string[], limit: number): string {
+    console.log(words);
+
     const conditions = words.map((term) => `c.title ILIKE '%${term}%'`).join(' OR ');
     const exactMatch = words.join(' ');
     const query = `
