@@ -28,19 +28,51 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PropertyReserveUserService {
+  ACTIVE_RESERVE_QUERY: Prisma.PropertyReserveWhereInput = {};
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
     private readonly avanakService: AvanakService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    this.ACTIVE_RESERVE_QUERY = {
+      OR: [{ expired_at: null }, { expired_at: null, status: PropertyReserveStatus.CANCELED_BY_USER }],
+    };
+  }
 
-  async checkActiveReserve(userId: number): Promise<number> {
-    const r = await this.db.propertyReserve.findFirst({
-      where: { user_id: userId, expired_at: null },
+  /**
+   * بررسی رزرو اکتیو روی یک ملک
+   * @param userId
+   * @param propertyId
+   * @returns
+   */
+  async checkActiveReserveOnProperty(userId: number, propertyId: number): Promise<number> {
+    const activeReserve = await this.db.propertyReserve.findFirst({
+      where: {
+        user_id: userId,
+        property_id: propertyId,
+        ...this.ACTIVE_RESERVE_QUERY,
+      },
+      select: { id: true },
     });
-    if (!r || r?.canceled_at) return null;
-    return r.id;
+
+    return activeReserve?.id;
+  }
+
+  /**
+   * بررسی شرایط ثبت رزرو جدید
+   * @param userId
+   * @returns
+   */
+  async canCreateReserves(userId: number): Promise<void> {
+    const count = await this.db.propertyReserve.count({
+      where: {
+        user_id: userId,
+        ...this.ACTIVE_RESERVE_QUERY,
+      },
+    });
+
+    if (count >= 3) throw new BadRequestException('RESERVE6');
   }
 
   /**
@@ -68,51 +100,39 @@ export class PropertyReserveUserService {
 
   /**
    * find all PropertyReserve
-   * درخواست های ۳۰ دقیقه گذشته کاربر
+   * درخواست های فعال کاربر
    * @param dto
    * @returns
    */
-  async findAll(
-    dto: FindAllPropertyReserveUserDto,
-    userId: number,
-  ): Promise<CursorPaginatedResult<PropertyReserve>> {
-    const list = await cursorPaginate()<
-      PropertyReserve & { property: PropertyJsonType },
-      Prisma.PropertyReserveFindManyArgs
-    >(
-      this.db.propertyReserve,
-      {
-        where: {
-          user_id: userId,
-          created_at: { gt: moment().subtract(RESERVE_TTL_MINUTES, 'minutes').toDate() },
-          expired_at: null,
-          canceled_at: null,
-        },
-        include: {
-          property: {
-            select: {
-              title: true,
-              code: true,
-              slug: true,
-              has_pool: true,
-              feature_image: true,
-              subscription_expired_at: true,
-              province: { select: { title: true } },
-              city: { select: { title: true } },
-              region: { select: { title: true } },
-            },
+  async findAll(dto: FindAllPropertyReserveUserDto, userId: number): Promise<PropertyReserve[]> {
+    let q: Prisma.PropertyReserveWhereInput = { user_id: userId };
+    if (dto.type === 'active') q = { ...q, ...this.ACTIVE_RESERVE_QUERY };
+
+    const list = await this.db.propertyReserve.findMany({
+      where: q,
+      include: {
+        property: {
+          select: {
+            title: true,
+            code: true,
+            slug: true,
+            has_pool: true,
+            feature_image: true,
+            subscription_expired_at: true,
+            province: { select: { title: true } },
+            city: { select: { title: true } },
+            region: { select: { title: true } },
           },
         },
       },
-      { cursor: dto.cursor },
-    );
+    });
 
     const formatted = [];
-    for (const item of list.data) {
+    for (const item of list) {
       const obj = await this.serializer(item);
       formatted.push(obj);
     }
-    return { data: formatted };
+    return formatted;
   }
 
   /**

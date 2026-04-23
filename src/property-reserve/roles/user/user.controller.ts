@@ -53,11 +53,18 @@ export class PropertyReserveUserController {
     @Body() dto: CreatePropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const activeReserveId = await this.propertyReserveUserService.checkActiveReserve(user.id);
+    //بررسی داشتن درخواست فعال روی این ملک
+    const activeReserveId = await this.propertyReserveUserService.checkActiveReserveOnProperty(
+      user.id,
+      dto.property_id,
+    );
     if (activeReserveId) {
       const activeReserve = await this.propertyReserveUserService.findOne(activeReserveId, user.id);
       return { result: activeReserve };
     }
+
+    //بررسی سقف درخواست فعال
+    await this.propertyReserveUserService.canCreateReserves(user.id);
 
     //create reserve
     const reserve = await this.propertyReserveUserService.create(dto, user.id);
@@ -89,7 +96,6 @@ export class PropertyReserveUserController {
     @Query() dto: FindAllPropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-
     const result = await this.propertyReserveUserService.findAll(dto, user.id);
 
     return { result };
@@ -108,16 +114,5 @@ export class PropertyReserveUserController {
     const result = await this.propertyReserveUserService.cancel(propertyReserveId);
 
     return { result, messageCode: 'RESERVE1' };
-  }
-
-  @ApiOperation({ summary: 'Check Active Reserve', description: '' })
-  @Get('active')
-  async findActiveReserve(@Req() req: RequestType): Promise<SuccessResponseArgs> {
-    const user = req.user;
-    const activeReserveId = await this.propertyReserveUserService.checkActiveReserve(user.id);
-    if (activeReserveId) {
-      const activeReserve = await this.propertyReserveUserService.findOne(activeReserveId, user.id);
-      return { result: activeReserve };
-    } else return { result: null };
   }
 }
