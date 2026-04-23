@@ -660,7 +660,7 @@ export class PropertyUserService {
 
   async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
     let words = sanitizeText(dto.q);
-    console.log({ words });
+    // console.log({ words });
 
     let clientQuery = {};
     //pool
@@ -689,7 +689,7 @@ export class PropertyUserService {
         else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
         else clientQuery = { ...clientQuery, province_id: city.id };
       }
-      console.log(cities);
+      // console.log(cities);
     }
 
     //property type
@@ -715,10 +715,10 @@ export class PropertyUserService {
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
-    console.log(groupedOptions);
+    // console.log(groupedOptions);
     if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
 
-    console.log(clientQuery);
+    // console.log(clientQuery);
     if (clientQuery['province_id'] && clientQuery['cities']) delete clientQuery['regions'];
 
     console.log(clientQuery);

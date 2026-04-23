@@ -126,12 +126,13 @@ export class PropertyUserController {
   async findContactInfo(
     @Req() req: RequestType,
     @Param('propertySlug') propertySlug: string,
+    @Query('action') action: 'view' | 'sms' | 'call',
   ): Promise<SuccessResponseArgs> {
     const user = req.user as unknown as User;
 
     const result = await this.propertyUserService.findContactInfo(propertySlug);
 
-    if (result.list?.length > 0) {
+    if (result.list?.length > 0 && (action === 'call' || action === 'sms')) {
       const ownerMobile = result.owner.mobile;
       const propertyId = result.list[0]?.property_id;
       await this.callLogQueue.add(CALL_LOG_JOB, { propertyId, user, ownerMobile });
