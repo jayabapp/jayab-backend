@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Banner, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FindAllBannerUserDto } from './dto/find-all.dto';
+import { FindAllBannerUserDto, FindAllBannerUserV2Dto } from './dto/find-all.dto';
+import { groupBy } from 'lodash';
 
 @Injectable()
 export class BannerUserService {
@@ -31,5 +32,24 @@ export class BannerUserService {
     });
 
     return result;
+  }
+
+  async findAllV2(dto: FindAllBannerUserV2Dto): Promise<any> {
+    const query: Prisma.BannerWhereInput = { is_active: true, position: { in: dto.positions } };
+
+    const result = await this.db.banner.findMany({
+      where: query,
+      orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
+      select: {
+        image: true,
+        image_sm: true,
+        link: true,
+        position: true,
+        property: { select: { id: true, slug: true } },
+      },
+    });
+
+    const grouped = groupBy(result, 'position');
+    return grouped;
   }
 }
