@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, Property, PropertyOwnerAssistant, User } from '@prisma/client';
 import { AES, enc } from 'crypto-js';
 import { Redis } from 'ioredis';
-import { groupBy, isEmpty, omit, orderBy, random } from 'lodash';
+import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
 import moment from 'moment-jalaali';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
@@ -687,9 +687,9 @@ export class PropertyUserService {
       for (const city of cities) {
         if (city.parent?.parent_id) clientQuery['regions'] = (clientQuery['regions'] || '') + `${city.id},`;
         else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
-        else clientQuery = { ...clientQuery, province_id: city.id };
+        else clientQuery['provinces'] = (clientQuery['provinces'] || '') + `${city.id},`;
       }
-      // console.log(cities);
+      console.log(cities);
     }
 
     //property type
@@ -715,13 +715,9 @@ export class PropertyUserService {
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
-    // console.log(groupedOptions);
     if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
 
-    // console.log(clientQuery);
-    if (clientQuery['province_id'] && clientQuery['cities']) delete clientQuery['regions'];
-
-    console.log(clientQuery);
+    if (clientQuery['provinces'] && clientQuery['cities']) delete clientQuery['regions'];
 
     /**
      * ایجاد لیست شهرها برای نمایش در پاپ آپ سرچ
@@ -730,7 +726,7 @@ export class PropertyUserService {
       where: {
         id: {
           in: [
-            clientQuery['province_id'] || 0,
+            ...parseQueryNumberArray(clientQuery['provinces'] || ''),
             ...parseQueryNumberArray(clientQuery['cities'] || ''),
             ...parseQueryNumberArray(clientQuery['regions'] || ''),
           ],
@@ -756,6 +752,12 @@ export class PropertyUserService {
         grandparent_id: c.parent?.parent?.id,
       });
     }
+
+    const hasUniqueParent = uniq(citiesList.map((e) => e.parent_id))?.length === 1;
+    if (citiesList.every((e) => e.level === 'region') && hasUniqueParent)
+      clientQuery['cities'] = `${citiesList[0]?.parent_id}`;
+
+    console.log({ cityRecords, citiesList, clientQuery });
     // console.log({ cityRecords });
 
     return { client_query: clientQuery, cities_list: citiesList };
