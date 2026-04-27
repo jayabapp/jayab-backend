@@ -36,7 +36,8 @@ export class PropertyReserveUserService {
     private readonly configService: ConfigService,
   ) {
     this.ACTIVE_RESERVE_QUERY = {
-      OR: [{ expired_at: null }, { expired_at: null, status: PropertyReserveStatus.CANCELED_BY_USER }],
+      expired_at: null,
+      canceled_at: null,
     };
   }
 

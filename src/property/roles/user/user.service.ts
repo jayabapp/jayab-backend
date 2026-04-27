@@ -689,7 +689,7 @@ export class PropertyUserService {
         else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
         else clientQuery['provinces'] = (clientQuery['provinces'] || '') + `${city.id},`;
       }
-      console.log(cities);
+      // console.log(cities);
     }
 
     //property type
@@ -757,7 +757,7 @@ export class PropertyUserService {
     if (citiesList.every((e) => e.level === 'region') && hasUniqueParent)
       clientQuery['cities'] = `${citiesList[0]?.parent_id}`;
 
-    console.log({ cityRecords, citiesList, clientQuery });
+    // console.log({ cityRecords, citiesList, clientQuery });
     // console.log({ cityRecords });
 
     return { client_query: clientQuery, cities_list: citiesList };
