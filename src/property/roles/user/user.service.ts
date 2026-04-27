@@ -775,7 +775,7 @@ export class PropertyUserService {
     const endDate = moment().add(duration, 'jMonth').endOf('jMonth').toDate();
 
     const reserved = await this.db.propertyCalendar.findMany({
-      where: { property_id: propertyId, date: { gt: startDate, lte: endDate } },
+      where: { property_id: propertyId, is_reserved: true, date: { gt: startDate, lte: endDate } },
     });
 
     return reserved.map((e) => e.date);
