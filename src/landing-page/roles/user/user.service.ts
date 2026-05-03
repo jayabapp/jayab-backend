@@ -98,7 +98,7 @@ export class LandingPageUserService {
     if (landing.has_pool) result['query'] = { ...result['query'], has_pool: 1 };
     if (landing.min_discount_percentage > 0) result['query'] = { ...result['query'], has_discount: 1 };
     if (landing.is_premium) result['query'] = { ...result['query'], is_premium: 1 };
-    if (landing.province_id) result['query'] = { ...result['query'], province_id: landing.province_id };
+    if (landing.province_id) result['query'] = { ...result['query'], provinces: `${landing.province_id}` };
     else if (!isEmpty(cities)) result['query'] = { ...result['query'], cities: cities.map((e) => e.id) };
 
     // console.dir(result);
