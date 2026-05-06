@@ -63,6 +63,7 @@ stacktrace: ${![422, 404, 401].includes(statusCode) ? exception.stack : null}
 const failedMessages = {
   FORBIDDEN: 'شما مجاز به انجام این عملیات نیستید',
   NOT_FOUND: 'ایتم مورد نظر یافت نشد',
+  GONE: 'GONE',
   NOT_FOUND_CONTENT: 'محتوای مورد نظر یافت نشد',
   COMMON1: 'ایتم مورد نظر یافت نشد',
   COMMON2: 'ایتم مورد نظر قابل مشاهده نیست',
