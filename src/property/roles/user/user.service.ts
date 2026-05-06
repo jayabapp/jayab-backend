@@ -272,7 +272,7 @@ export class PropertyUserService {
     };
 
     const item = await this.db.property.findFirst({
-      where: { ...this.validProperty(), code, deleted_at: new Date() },
+      where: { code, deleted_at: new Date() },
       include: {
         feature_image: true,
         attachments: true,
@@ -293,8 +293,8 @@ export class PropertyUserService {
       },
     });
 
+    if (item?.deleted_at || item?.status !== PropertyStatuses.PUBLISHED) throw new GoneException('GONE');
     if (!item) throw new NotFoundException('NOT_FOUND');
-    if (item.deleted_at) throw new GoneException('GONE');
 
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
