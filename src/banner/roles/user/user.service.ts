@@ -35,7 +35,9 @@ export class BannerUserService {
   }
 
   async findAllV2(dto: FindAllBannerUserV2Dto): Promise<any> {
-    const query: Prisma.BannerWhereInput = { is_active: true, position: { in: dto.positions } };
+    let query: Prisma.BannerWhereInput = { is_active: true, position: { in: dto.positions } };
+    //حداقل یک عکس داشته باشه
+    query = { ...query, OR: [{ image_id: { not: null }, image_sm_id: { not: null } }] };
 
     const result = await this.db.banner.findMany({
       where: query,

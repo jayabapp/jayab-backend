@@ -48,7 +48,7 @@ export class CreateBannerAdminDto {
   @Validate(IsExist, ['attachment', 'id'])
   @_IsInt()
   @Type(() => Number)
-  @_IsNotEmpty()
+  @IsOptional()
   image_id: number;
 
   @ApiProperty({ required: false, example: 1 })

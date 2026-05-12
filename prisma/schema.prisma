@@ -364,10 +364,10 @@ model Banner {
   brand_id    Int?
   position    String
   sort_order  Int?
-  image_id    Int
+  image_id    Int?
   image_sm_id Int?
 
-  image    Attachment  @relation("Image", fields: [image_id], references: [id])
+  image    Attachment? @relation("Image", fields: [image_id], references: [id])
   image_sm Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
   category Category?   @relation(fields: [category_id], references: [id])
   property Property?   @relation(fields: [property_id], references: [id])
