@@ -87,7 +87,7 @@ export class AuthUserController {
 
     return {
       result: { access_token: tokens.token, socket_token: tokens.socket_token },
-      messageCode: 'AUTH3',
+      // messageCode: 'AUTH3',
     };
   }
 
