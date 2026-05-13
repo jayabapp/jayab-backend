@@ -21,6 +21,8 @@ export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereI
   // eslint-disable-next-line
   let query: Prisma.UserWhereInput = {};
 
+  console.log({ filters });
+
   for (const field of fields) {
     /**
      * check filter keys
@@ -42,6 +44,11 @@ export const filterValidator = (filters: FindAllUserAdminDto): Prisma.UserWhereI
       case 'contact_click_limit_exceeded_at':
         if (filters.contact_click_limit_exceeded_at)
           query = { ...query, contact_click_limit_exceeded_at: { not: null } };
+        break;
+      case 'role':
+        if (filters.role === 'guest') query = { ...query, advisor_id: null, owner_id: null };
+        else if (filters.role === 'advisor') query = { ...query, advisor_id: { not: null }, owner_id: null };
+        else if (filters.role === 'owner') query = { ...query, owner_id: { not: null } };
         break;
 
       default:

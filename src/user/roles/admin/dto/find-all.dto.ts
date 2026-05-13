@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
+import { UserRole } from 'src/common/interfaces/role.enum';
 import { _IsBoolean, _IsEnum, _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
 
 export class FindAllUserAdminDto extends PaginationDto {
@@ -26,4 +27,9 @@ export class FindAllUserAdminDto extends PaginationDto {
   @_IsBoolean()
   @IsOptional()
   contact_click_limit_exceeded_at: boolean;
+
+  @ApiProperty({ required: false, example: 'owner' })
+  @_IsString()
+  @IsOptional()
+  role: 'guest' | 'owner' | 'advisor';
 }

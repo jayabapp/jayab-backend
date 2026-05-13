@@ -150,6 +150,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
+    { title: 'نقش', state: 'role', type: 'input', isHidden: true },
     { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
     { title: 'بلاک شده ها', state: 'is_banned', type: 'switch' },
     { title: 'بلاک با کلیک زیاد', state: 'contact_click_limit_exceeded_at', type: 'switch' },

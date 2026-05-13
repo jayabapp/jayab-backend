@@ -81,7 +81,7 @@ export class PropertyOwnerController {
   ): Promise<SuccessResponseArgs> {
     const property = req.interceptor_data as PropertyInterceptorData;
     await this.propertyOwnerService.updateInit(property, dto);
-    return { messageCode: 'CREATE' };
+    return {};
   }
 
   @ApiOperation({ summary: 'Update property: location' })

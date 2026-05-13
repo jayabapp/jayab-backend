@@ -104,12 +104,6 @@ export class PropertyOwnerService {
    */
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     const slug = `${property.code}-${slugify(dto.title)}`;
-    // const { options: o, numericIds: m } = await this.deleteAndCreateNewOption(property.id, dto, [
-    //   PropertyOptionGroup.PROPERTY_TYPE,
-    //   PropertyOptionGroup.OWNERSHIP,
-    //   PropertyOptionGroup.BUILDING_DIRECTION,
-    // ]);
-    // throw new BadRequestException();
 
     /* -------------------------------------------------------------------------- */
     // data without options
@@ -132,6 +126,12 @@ export class PropertyOwnerService {
 
     // do not update status in edit
     if (property.status === PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
+
+    //بعد از انتشار عنوان قابل تغییر نیست
+    if ([PropertyStatuses.PUBLISHED, PropertyStatuses.EDITED].includes(property.status)) {
+      delete data.title;
+      delete data.slug;
+    }
 
     // check region
     const city = await this.db.city.findUnique({
