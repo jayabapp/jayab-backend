@@ -14,7 +14,9 @@ export class BannerUserService {
    * @returns
    */
   async findAll(dto: FindAllBannerUserDto): Promise<Partial<Banner>[]> {
-    const query: Prisma.BannerWhereInput = { is_active: true, position: dto.position };
+    let query: Prisma.BannerWhereInput = { is_active: true, position: dto.position };
+    //حداقل یک عکس داشته باشه
+    query = { ...query, NOT: { AND: [{ image_sm_id: null, image_id: null }] } };
 
     const take = 10;
 
@@ -37,7 +39,7 @@ export class BannerUserService {
   async findAllV2(dto: FindAllBannerUserV2Dto): Promise<any> {
     let query: Prisma.BannerWhereInput = { is_active: true, position: { in: dto.positions } };
     //حداقل یک عکس داشته باشه
-    query = { ...query, OR: [{ image_id: { not: null }, image_sm_id: { not: null } }] };
+    query = { ...query, NOT: { AND: [{ image_sm_id: null, image_id: null }] } };
 
     const result = await this.db.banner.findMany({
       where: query,
@@ -50,6 +52,8 @@ export class BannerUserService {
         property: { select: { id: true, slug: true } },
       },
     });
+
+    console.log(result?.map((e) => e.position));
 
     const grouped = groupBy(result, 'position');
     return grouped;
