@@ -128,10 +128,10 @@ export class PropertyOwnerService {
     if (property.status === PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
 
     //بعد از انتشار عنوان قابل تغییر نیست
-    if ([PropertyStatuses.PUBLISHED, PropertyStatuses.EDITED].includes(property.status)) {
-      delete data.title;
-      delete data.slug;
-    }
+    // if ([PropertyStatuses.PUBLISHED, PropertyStatuses.EDITED].includes(property.status)) {
+    //   delete data.title;
+    //   delete data.slug;
+    // }
 
     // check region
     const city = await this.db.city.findUnique({
