@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { OwnerStatus } from 'src/owner/common/owner-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';

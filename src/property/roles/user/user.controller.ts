@@ -1,38 +1,31 @@
+import { InjectQueue } from '@nestjs/bull';
 import {
   Body,
   Controller,
   ForbiddenException,
   // Delete,
   Get,
-  Header,
   Headers,
   Param,
   ParseIntPipe,
-  Post,
   Put,
   Query,
   Req,
-  UnauthorizedException,
   UseGuards,
-  UseInterceptors,
   Version,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import { PropertyUserService } from './user.service';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
-import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
-import { PropertyOwnerService } from '../owner/owner.service';
-import { RequestType } from 'src/common/interfaces/user.interface';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { User } from '@prisma/client';
-import { InjectQueue } from '@nestjs/bull';
-import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
 import { Queue } from 'bull';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
+import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
+import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
+import { PropertyOwnerService } from '../owner/owner.service';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
+import { PropertyUserService } from './user.service';
 
 @ApiTags('Property - USER')
 // @UseGuards(UserJwtGuard)
@@ -128,7 +121,7 @@ export class PropertyUserController {
     @Param('propertySlug') propertySlug: string,
     @Query('action') action: 'view' | 'sms' | 'call',
   ): Promise<SuccessResponseArgs> {
-    const user = req.user as unknown as User;
+    const user = req.user;
 
     const result = await this.propertyUserService.findContactInfo(propertySlug);
 

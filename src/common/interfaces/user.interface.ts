@@ -1,14 +1,15 @@
-import { User, AccessControlRole, Admin } from '@prisma/client';
+import { AccessControlRole, Admin } from '@prisma/client';
 import { Request } from 'express';
-import { OwnerStatus } from 'src/owner/common/owner-status.type';
 
 export type PartialUser = {
   id: number;
   mobile_number: string;
-  owner_id: number;
   advisor_id: number;
+  owner_id: number;
   notification_read_at: Date;
   created_at: Date;
+  jwt_level: number;
+  contact_click_limit_exceeded_at: Date;
 };
 export type UserType = PartialUser & { accessToken: string };
 export type RequestType = Request & { user: UserType; interceptor_data?: any };

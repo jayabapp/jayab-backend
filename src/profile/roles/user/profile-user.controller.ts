@@ -1,36 +1,36 @@
 import {
-  Controller,
-  Get,
-  Body,
-  UseGuards,
-  Req,
-  Patch,
-  Put,
   BadRequestException,
+  Body,
   ConflictException,
-  Post,
-  UnprocessableEntityException,
+  Controller,
   Delete,
+  Get,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UnprocessableEntityException,
+  UseGuards,
 } from '@nestjs/common';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { AttachmentService } from 'src/attachment/attachment.service';
-import { UpdateFcmDto } from 'src/profile/dto/update-profile.dto';
-import { ProfileUserService } from './profile-user.service';
-import { PROFILE_USER_ROUTE_GROUP } from 'src/profile/common/route-group.constant';
-import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
-import { OwnerUserService } from 'src/owner/roles/user/user.service';
 import { AdvisorUserService } from 'src/advisor/roles/user/user.service';
+import { AttachmentService } from 'src/attachment/attachment.service';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { CitySharedService } from 'src/city/shared.service';
-import { FirebaseService } from 'src/firebase/firebase.service';
-import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
-import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UserRole } from 'src/common/interfaces/role.enum';
-import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { RequestType } from 'src/common/interfaces/user.interface';
 import createTopicKey from 'src/firebase/common/topic-generator.helper';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { FirebaseTopicType } from 'src/firebase/constants/topic-types';
+import { FirebaseService } from 'src/firebase/firebase.service';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { OwnerUserService } from 'src/owner/roles/user/user.service';
+import { PROFILE_USER_ROUTE_GROUP } from 'src/profile/common/route-group.constant';
+import { UpdateFcmDto } from 'src/profile/dto/update-profile.dto';
+import { BuySubscriptionAdvisorDto, RegisterAdvisorUserDto, RegisterOwnerUserDto } from './dto/register.dto';
 import { UpdateProfileImageUserDto } from './dto/update.dto';
+import { ProfileUserService } from './profile-user.service';
 
 @ApiTags('Profiles - USER')
 @ApiBearerAuth('user-jwt')
@@ -196,7 +196,7 @@ export class ProfileUserController {
     @Body() dto: BuySubscriptionAdvisorDto,
   ): Promise<SuccessResponseArgs> {
     /*  */
-    const user = request.user as PartialUser;
+    const user = request.user;
     if (!user.advisor_id) throw new UnprocessableEntityException('COMMON4');
 
     /*  */
@@ -208,7 +208,7 @@ export class ProfileUserController {
   @ApiOperation({ summary: 'pay Advisor Subscription' })
   @Delete('pay-plan')
   async revokeAdvisorSubscription(@Req() request: RequestType): Promise<SuccessResponseArgs> {
-    const user = request.user as PartialUser;
+    const user = request.user;
     if (!user.advisor_id) throw new UnprocessableEntityException('COMMON4');
 
     const payUrl = await this.profileUserService.revokeAdvisorSubscription(user.advisor_id);

@@ -15,26 +15,26 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 // import { OwnerJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { OWNER_ROUTE_GROUP } from 'src/property-authorize/common/route-group.constant';
-import { PropertyAuthorizeOwnerService } from './owner.service';
-import { CreatePropertyAuthorizeOwnerDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdatePropertyAuthorizeOwnerDto } from './dto/update.dto';
-import { FindAllPropertyAuthorizeOwnerDto } from './dto/find-all.dto';
-import { OwnerGuard } from 'src/auth/guards/owner.guard';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
-import {
-  OwnerUpdatePropertyInterceptor,
-  PropertyInterceptorData,
-} from 'src/property/common/interceptors/owner-property.interceptor';
+import { OwnerGuard } from 'src/auth/guards/owner.guard';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import {
   PropertyAuthorizeStatuses,
   PropertyAuthorizeStatusesList,
 } from 'src/property-authorize/common/property-authorize-status.type';
-import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { OWNER_ROUTE_GROUP } from 'src/property-authorize/common/route-group.constant';
+import {
+  OwnerUpdatePropertyInterceptor,
+  PropertyInterceptorData,
+} from 'src/property/common/interceptors/owner-property.interceptor';
+import { CreatePropertyAuthorizeOwnerDto } from './dto/create.dto';
+import { FindAllPropertyAuthorizeOwnerDto } from './dto/find-all.dto';
+import { UpdatePropertyAuthorizeOwnerDto } from './dto/update.dto';
+import { PropertyAuthorizeOwnerService } from './owner.service';
 
 @ApiTags('PropertyAuthorize - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -87,7 +87,7 @@ export class PropertyAuthorizeOwnerController {
     @Req() req: RequestType,
     @Param('propertyId', ParseIntPipe) propertyId: number,
   ): Promise<SuccessResponseArgs> {
-    const user = req.user as PartialUser;
+    const user = req.user;
 
     const result = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
     const formatted = {
@@ -105,7 +105,7 @@ export class PropertyAuthorizeOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: UpdatePropertyAuthorizeOwnerDto,
   ): Promise<SuccessResponseArgs> {
-    const user = req.user as PartialUser;
+    const user = req.user;
 
     const authoriezed = await this.propertyAuthorizeOwnerService.findOne(propertyId, user.owner_id);
     if (authoriezed.status === PropertyAuthorizeStatuses.APPROVED)

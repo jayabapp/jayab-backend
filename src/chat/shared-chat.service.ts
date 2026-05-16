@@ -1,21 +1,22 @@
+import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Attachment, MessengerMessages, Prisma, User } from '@prisma/client';
+import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
+import { Queue } from 'bull';
 import moment from 'moment-jalaali';
 import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { startOfToday } from 'src/common/helpers/date.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { UserRole } from 'src/common/interfaces/role.enum';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SmsService } from 'src/sms/sms.service';
 import { v7 as uuid } from 'uuid';
 import { PartialParticipant } from './common/chat.interface';
 import { SendMessageDto } from './common/dto/send-message.dto';
+import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
 import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
 import { CreateChatUserDto } from './roles/user/dto/create.dto';
-import { SmsService } from 'src/sms/sms.service';
-import { Queue } from 'bull';
-import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
-import { InjectQueue } from '@nestjs/bull';
-import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class SharedChatService {
@@ -32,7 +33,7 @@ export class SharedChatService {
    * @param dto
    * @returns
    */
-  async findOrCreate(user: User, dto: CreateChatUserDto): Promise<string> {
+  async findOrCreate(user: PartialUser, dto: CreateChatUserDto): Promise<string> {
     const userId = user.id;
     const part = await this.db.messengerParticipant.findFirst({
       where: { user_id: userId, chatroom: { property_id: dto?.property_id } },

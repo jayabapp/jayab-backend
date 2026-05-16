@@ -1,8 +1,8 @@
-import { Job } from 'bull';
 import { OnQueueCompleted, OnQueueFailed, Process, Processor } from '@nestjs/bull';
-import { CALL_LOG_JOB, CALL_LOG_QUEUE } from './queue-name.constants';
+import { Job } from 'bull';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 import { PropertyUserService } from '../roles/user/user.service';
-import { User } from '@prisma/client';
+import { CALL_LOG_JOB, CALL_LOG_QUEUE } from './queue-name.constants';
 
 @Processor(CALL_LOG_QUEUE)
 export class CallLogQueueProcessor {
@@ -28,7 +28,9 @@ export class CallLogQueueProcessor {
    * @returns
    */
   @Process(CALL_LOG_JOB)
-  async sendReserveSms(job: Job<{ propertyId: number; user: User; ownerMobile: string }>): Promise<void> {
+  async sendReserveSms(
+    job: Job<{ propertyId: number; user: PartialUser; ownerMobile: string }>,
+  ): Promise<void> {
     console.log(`Job Start: ${CALL_LOG_JOB}`);
     const { propertyId, user, ownerMobile } = job.data;
     await this.propertyUserService.storeCallLog(propertyId, user, ownerMobile);

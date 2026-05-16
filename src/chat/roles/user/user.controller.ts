@@ -15,11 +15,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { User } from '@prisma/client';
 import Redis from 'ioredis';
 import { first } from 'lodash';
-import moment from 'moment-jalaali';
-import { AttachmentService } from 'src/attachment/attachment.service';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { FindOneChatInterceptor } from 'src/chat/common/chat.interceptor';
 import { PartialChatroom } from 'src/chat/common/chat.interface';
@@ -28,7 +25,6 @@ import { SendMessageDto } from 'src/chat/common/dto/send-message.dto';
 import { ROUTE_GROUP } from 'src/chat/common/route-group.constant';
 import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { SharedChatService } from 'src/chat/shared-chat.service';
-import { startOfToday } from 'src/common/helpers/date.helper';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { RequestType } from 'src/common/interfaces/user.interface';
@@ -38,9 +34,6 @@ import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { SocketService } from 'src/socket/socket.service';
 import { BlockParticipantUserDto } from './dto/blacklist.dto';
 import { CreateChatUserDto } from './dto/create.dto';
-import { InjectQueue } from '@nestjs/bull';
-import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from 'src/chat/processors/queue-name.constants';
-import { Queue } from 'bull';
 
 @ApiTags('Chat')
 @UseGuards(UserJwtGuard)
@@ -76,7 +69,7 @@ export class ChatUserController {
     @Req() request: RequestType,
     @Body() dto: CreateChatUserDto,
   ): Promise<SuccessResponseArgs> {
-    const user = request.user as unknown as User;
+    const user = request.user;
 
     /* -------------------------------------------------------------------------- */
     // checking if user can start chat.

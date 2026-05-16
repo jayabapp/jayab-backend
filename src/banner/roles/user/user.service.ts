@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Banner, Prisma } from '@prisma/client';
+import { groupBy } from 'lodash';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllBannerUserDto, FindAllBannerUserV2Dto } from './dto/find-all.dto';
-import { groupBy } from 'lodash';
 
 @Injectable()
 export class BannerUserService {
@@ -27,6 +27,7 @@ export class BannerUserService {
         id: true,
         image: true,
         link: true,
+        view_count: true,
         image_sm: true,
         property: { select: { id: true, slug: true } },
       },
@@ -49,13 +50,29 @@ export class BannerUserService {
         image_sm: true,
         link: true,
         position: true,
+        view_count: true,
         property: { select: { id: true, slug: true } },
       },
     });
 
-    console.log(result?.map((e) => e.position));
+    // console.log(result?.map((e) => e.position));
 
     const grouped = groupBy(result, 'position');
     return grouped;
+  }
+
+  /**
+   *
+   * @param bannerId
+   */
+  async updateViewCount(bannerId: number): Promise<void> {
+    const banner = await this.db.banner.findFirst({ where: { id: bannerId, is_active: true } });
+
+    if (banner) {
+      await this.db.banner.update({
+        where: { id: bannerId, is_active: true },
+        data: { view_count: { increment: 1 } },
+      });
+    }
   }
 }

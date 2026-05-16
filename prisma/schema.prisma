@@ -366,6 +366,7 @@ model Banner {
   sort_order  Int?
   image_id    Int?
   image_sm_id Int?
+  view_count  Int     @default(0)
 
   image    Attachment? @relation("Image", fields: [image_id], references: [id])
   image_sm Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])

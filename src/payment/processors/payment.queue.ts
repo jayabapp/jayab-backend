@@ -1,8 +1,9 @@
-import { Job } from 'bull';
 import { OnQueueCompleted, OnQueueFailed, Process, Processor } from '@nestjs/bull';
-import { PAYMENT_SMS_JOB, PAYMENT_SMS_QUEUE } from './queue-name.constants';
+import { Job } from 'bull';
+import moment from 'moment-jalaali';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SmsService } from 'src/sms/sms.service';
+import { PAYMENT_SMS_JOB, PAYMENT_SMS_QUEUE } from './queue-name.constants';
 
 @Processor(PAYMENT_SMS_QUEUE)
 export class PaymentSmsQueueProcessor {
@@ -35,11 +36,18 @@ export class PaymentSmsQueueProcessor {
     console.log(`Job Start: ${PAYMENT_SMS_JOB}`);
 
     const { propertyId } = job.data;
+
+    //اول برای درخواست های منقضی نشده میفرستادیم. در ۲۶ اردیبهشت ۴۰۵ درخواست شد که برای درخواست های یک ساعت پیش ارسال بشه
     const reserves = await this.db.propertyReserve.findMany({
-      where: { property_id: propertyId, expired_at: null, canceled_at: null },
+      where: {
+        property_id: propertyId,
+        canceled_at: null,
+        created_at: { gte: moment().subtract(1, 'hours').toDate() },
+      },
       select: { user: { select: { mobile_number: true } } },
     });
-    console.log({ reserves });
+
+    // console.log({ reserves });
 
     const p = await this.db.property.findFirst({ where: { id: propertyId }, select: { title: true } });
 

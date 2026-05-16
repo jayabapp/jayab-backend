@@ -7,19 +7,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, Property, PropertyOwnerAssistant, User } from '@prisma/client';
+import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
 import { AES, enc } from 'crypto-js';
 import { Redis } from 'ioredis';
 import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
 import moment from 'moment-jalaali';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
-import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import Num2persian from 'src/common/helpers/Num2Persian';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { sanitizeText, slugify } from 'src/common/helpers/slugify';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import {
   PropertyArrayResType,
@@ -32,9 +33,6 @@ import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { ONE_HOUR_TTL, ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { IsEmpty } from 'class-validator';
 
 @Injectable()
 export class PropertyUserService {
@@ -395,7 +393,7 @@ export class PropertyUserService {
     return result;
   }
 
-  async storeCallLog(propertyId: number, user: User, ownerMobile: string): Promise<void> {
+  async storeCallLog(propertyId: number, user: PartialUser, ownerMobile: string): Promise<void> {
     const userId = user.id;
 
     const todayRec = await this.db.callLog.findFirst({

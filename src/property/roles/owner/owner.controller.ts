@@ -7,8 +7,6 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  Patch,
-  Post,
   Put,
   Query,
   Req,
@@ -16,12 +14,22 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { AttachmentService } from 'src/attachment/attachment.service';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
-import { PropertyOwnerService } from './owner.service';
-import { PartialUser, RequestType } from 'src/common/interfaces/user.interface';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import {
+  OwnerUpdatePropertyInterceptor,
+  PropertyInterceptorData,
+} from 'src/property/common/interceptors/owner-property.interceptor';
+import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyCommissionOwnerDto,
@@ -34,20 +42,7 @@ import {
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { AttachmentService } from 'src/attachment/attachment.service';
-import {
-  OwnerUpdatePropertyInterceptor,
-  PropertyInterceptorData,
-} from 'src/property/common/interceptors/owner-property.interceptor';
-import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
-import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
-import { User } from '@prisma/client';
-import { PropertyAuthorizeto } from './dto/property-authorize.dto';
-import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
-import { NotificationTypes } from 'src/firebase/constants/notif-types';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { PropertyOwnerService } from './owner.service';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -223,7 +218,7 @@ export class PropertyOwnerController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Body() dto: PaySubscriptionPropertyOwnerDto,
   ) {
-    const user = req.user as PartialUser;
+    const user = req.user;
     const property = req.interceptor_data as PropertyInterceptorData;
 
     //
@@ -237,7 +232,7 @@ export class PropertyOwnerController {
   @ApiOperation({ summary: 'Find All' })
   @Get()
   async findAll(@Req() req: RequestType) {
-    const user = req.user as PartialUser;
+    const user = req.user;
     //
     const result = await this.propertyOwnerService.findAll(user.owner_id);
     return { result };

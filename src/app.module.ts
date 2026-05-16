@@ -1,5 +1,6 @@
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { HttpModule } from '@nestjs/axios';
+import { BullModule } from '@nestjs/bull';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -68,6 +69,7 @@ import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyReportModule } from './property-report/property-report.module';
+import { PropertyReserveModule } from './property-reserve/property-reserve.module';
 import { PropertyModule } from './property/property.module';
 import { RedirectUrlModule } from './redirect-url/redirect-url.module';
 import { S3ManagerModule } from './s3-manager/s3-manager.module';
@@ -79,8 +81,6 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TicketModule } from './ticket/ticket.module';
 import { UserModule } from './user/user.module';
-import { PropertyReserveModule } from './property-reserve/property-reserve.module';
-import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -112,7 +112,7 @@ import { BullModule } from '@nestjs/bull';
           host: config.get('redis.host'),
           port: config.get('redis.port'),
           password: config.get('redis.password'),
-          keyPrefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab' : 'jayab',
+          keyPrefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab:' : 'jayab:',
         },
       }),
     }),

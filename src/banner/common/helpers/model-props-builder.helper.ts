@@ -1,4 +1,4 @@
-import { AccessControlList, Attachment, Prisma, Banner, Category, Property } from '@prisma/client';
+import { AccessControlList, Attachment, Banner, Category, Prisma, Property } from '@prisma/client';
 import { AttachmentAdminFolder } from 'src/attachment/interfaces/attachment-folder.enum';
 import {
   AvailableAction,
@@ -54,6 +54,7 @@ export const showPropsBuilder = (
       isHidden: true,
     },
     { state: 'sort_order', title: 'ترتیب الویت نمایش', value: item.sort_order, type: 'number' },
+    { state: 'view_count', title: 'تعداد کلیک', value: item.view_count, type: 'number' },
     { state: 'link', title: 'لینک', value: item.link, type: 'longString' },
     { state: 'description', title: 'توضیحات', value: item.description, type: 'longString' },
     {
@@ -187,6 +188,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 2, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 12, title: 'ملک', key: 'property', cellType: 'string', nestedKey: 'title' },
       { id: 3, title: 'فعال', key: 'is_active', cellType: 'boolean' },
+      { id: 55, title: 'تعداد کلیک', key: 'view_count', cellType: 'number' },
       { id: 4, title: 'ترتیب', key: 'sort_order', cellType: 'string' },
       {
         id: 25,
