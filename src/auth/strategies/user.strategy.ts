@@ -28,7 +28,6 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     /* -------------------------------------------------------------------------- */
     // check the token key in cache
     const cacheData: string = await this.redis.get(CACHE_KEY);
-    console.log('cacheData: ', cacheData);
 
     if (cacheData) {
       const decodedCacheData = Buffer.from(cacheData, 'base64').toString('utf-8');
