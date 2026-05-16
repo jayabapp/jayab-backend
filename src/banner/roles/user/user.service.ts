@@ -46,6 +46,7 @@ export class BannerUserService {
       where: query,
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
       select: {
+        id: true,
         image: true,
         image_sm: true,
         link: true,
