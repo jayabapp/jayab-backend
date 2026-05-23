@@ -344,7 +344,7 @@ export class PropertyUserService {
     //
     /**
      * اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
-     * این مورد در توسعه اسفند ۴۰۴ بابن اضافه شدن رزرو برداشته شد
+     * این مورد در توسعه اسفند ۴۰۴ بابت اضافه شدن رزرو برداشته شد
      */
     // if (property.subscription_expired_at < startOfToday()) {
     //   const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
@@ -722,7 +722,10 @@ export class PropertyUserService {
     }
     if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
 
-    if (clientQuery['provinces'] && clientQuery['cities']) delete clientQuery['regions'];
+    if (clientQuery['provinces']) {
+      delete clientQuery['regions'];
+      delete clientQuery['cities'];
+    }
 
     /**
      * ایجاد لیست شهرها برای نمایش در پاپ آپ سرچ
