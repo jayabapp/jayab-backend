@@ -66,7 +66,7 @@ export class AuthUserService {
     return !!user.full_name;
   }
 
-  async createAuthLog(userId: number, req: Request): Promise<void> {
+  async createAuthLog(userId: number, req: Request, queryParams: any): Promise<void> {
     const ua = req.get('User-Agent');
     //@ts-ignore
     const uaParsed = UAParser(ua);
@@ -78,6 +78,12 @@ export class AuthUserService {
         ua: ua,
         ua_parsed: uaParsed,
         ip_address: req.ip,
+        utm_source: queryParams?.utm_source || null,
+        utm_medium: queryParams?.utm_medium || null,
+        utm_campaign: queryParams?.utm_campaign || null,
+        utm_content: queryParams?.utm_content || null,
+        utm_term: queryParams?.utm_term || null,
+        redirect_url: queryParams?.redirect_url || null,
       },
     });
   }

@@ -60,7 +60,7 @@ export class AuthUserController {
   // @ApiHeader({ name: 'authorization', required: false })
   @Post('/otp/verify')
   async verifyOtpCode(@Req() req: Request, @Body() dto: VerifyOTPDto): Promise<SuccessResponseArgs> {
-    await this.authUserService.createAuthLog(1, req);
+    await this.authUserService.createAuthLog(1, req, dto.query_params);
 
     return;
     /* -------------------------------------------------------------------------- */
