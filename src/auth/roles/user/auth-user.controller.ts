@@ -15,6 +15,7 @@ import { ProfileUserService } from 'src/profile/roles/user/profile-user.service'
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { AuthUserService } from './auth-user.service';
+import { Request } from 'express';
 
 @ApiTags('🔐 Auth - USER')
 @Controller(USER_AUTH_ROUTE_GROUP)
@@ -59,6 +60,9 @@ export class AuthUserController {
   // @ApiHeader({ name: 'authorization', required: false })
   @Post('/otp/verify')
   async verifyOtpCode(@Req() req: Request, @Body() dto: VerifyOTPDto): Promise<SuccessResponseArgs> {
+    await this.authUserService.createAuthLog(1, req);
+
+    return;
     /* -------------------------------------------------------------------------- */
     /**
      * validate OTP

@@ -9,6 +9,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { v4 as uuidv4 } from 'uuid';
+import { Request } from 'express';
+import { UAParser } from 'ua-parser-js';
 
 @Injectable()
 export class AuthUserService {
@@ -62,6 +64,22 @@ export class AuthUserService {
    */
   isRegistered(user: User): boolean {
     return !!user.full_name;
+  }
+
+  async createAuthLog(userId: number, req: Request): Promise<void> {
+    const ua = req.get('User-Agent');
+    //@ts-ignore
+    const uaParsed = UAParser(ua);
+    console.dir(ua, { depth: null });
+
+    await this.db.authLog.create({
+      data: {
+        user_id: userId,
+        ua: ua,
+        ua_parsed: uaParsed,
+        ip_address: req.ip,
+      },
+    });
   }
 
   /* -------------------------------------------------------------------------- */
