@@ -49,6 +49,9 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(new RBACInterceptor());
   app.useGlobalInterceptors(new P2EInterceptor());
 
+  app.set('trust proxy', true);
+  app.use(requestIp.mw());
+
   app.setBaseViewsDir(__baseDir + '/views');
   app.setViewEngine('ejs');
 
@@ -150,8 +153,6 @@ async function bootstrap(): Promise<void> {
   }
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
-
-  app.use(requestIp.mw());
 
   await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
