@@ -14,7 +14,7 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM property_owner_assistants poa
     WHERE poa.property_id = p.id
-) and p.status =20
+) and p.status =30
 
 
 
@@ -33,4 +33,4 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM property_owner_assistants poa
     WHERE poa.property_id = p.id
-) and p.status =20
+) and p.status =30
