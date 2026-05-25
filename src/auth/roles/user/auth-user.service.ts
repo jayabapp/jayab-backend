@@ -70,7 +70,6 @@ export class AuthUserService {
     const ua = req.get('User-Agent');
     //@ts-ignore
     const uaParsed = UAParser(ua);
-    console.dir(ua, { depth: null });
 
     await this.db.authLog.create({
       data: {

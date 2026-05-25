@@ -60,9 +60,6 @@ export class AuthUserController {
   // @ApiHeader({ name: 'authorization', required: false })
   @Post('/otp/verify')
   async verifyOtpCode(@Req() req: Request, @Body() dto: VerifyOTPDto): Promise<SuccessResponseArgs> {
-    await this.authUserService.createAuthLog(1, req, dto.query_params);
-
-    return;
     /* -------------------------------------------------------------------------- */
     /**
      * validate OTP
@@ -88,6 +85,9 @@ export class AuthUserController {
      * برای کاربر رجیستر شده توکن اصلی میسازیم
      */
     const tokens = await this.authUserService.generateJwtToken(user.id, user.jwt_level);
+
+    //add auth log
+    await this.authUserService.createAuthLog(user.id, req, dto.query_params);
 
     return {
       result: { access_token: tokens.token, socket_token: tokens.socket_token },
