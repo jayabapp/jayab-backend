@@ -20,7 +20,7 @@ export class LandingPageUserService {
    */
   async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
     const list = await this.db.landingPage.findMany({
-      where: { is_active: true },
+      where: { is_active: true, show_in_home: true },
       select: { url: true, title: true, image: true, position: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });
