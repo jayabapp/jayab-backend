@@ -99,12 +99,15 @@ import { UserModule } from './user/user.module';
       max: 1000, // maximum number of items in cache
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 10000,
-        limit: 50,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 10000,
+          limit: 50,
+        },
+      ],
+      errorMessage: 'تعداد درخواست ها بیش از حد مجاز شده است',
+    }),
     RedisModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
