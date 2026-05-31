@@ -1265,6 +1265,7 @@ model LandingPage {
   url                     String  @unique
   is_active               Boolean @default(false)
   show_in_home            Boolean @default(false)
+  show_in_footer          Boolean @default(false)
   options                 Int[]
   province_id             Int?
   cities                  Int[]

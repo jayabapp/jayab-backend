@@ -47,10 +47,15 @@ export class CreateLandingPageAdminDto {
   @IsOptional()
   is_active: boolean;
 
-  @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
+  @ApiProperty({ required: false })
   @_IsBoolean()
   @IsOptional()
   show_in_home: boolean;
+
+  @ApiProperty({ required: false })
+  @_IsBoolean()
+  @IsOptional()
+  show_in_footer: boolean;
 
   @ApiProperty({ required: false, example: 'لورم ایپسوم متن ساختگی' })
   @IsOptional()

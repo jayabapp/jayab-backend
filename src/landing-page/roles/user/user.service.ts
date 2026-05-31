@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContentCategory, LandingPage, Prisma } from '@prisma/client';
+import { LandingPage, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllLandingPageUserDto } from './dto/find-all.dto';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { ContentSharedService } from 'src/content/shared.service';
 import { groupBy, isEmpty } from 'lodash';
 
@@ -19,8 +18,12 @@ export class LandingPageUserService {
    * @returns
    */
   async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
+    let q: Prisma.LandingPageWhereInput = { is_active: true };
+    if (dto.placement === 'home') q['show_in_home'] = true;
+    else if (dto.placement === 'footer') q['show_in_footer'] = true;
+
     const list = await this.db.landingPage.findMany({
-      where: { is_active: true, show_in_home: true },
+      where: q,
       select: { url: true, title: true, image: true, position: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });

@@ -100,13 +100,15 @@ export const createPropsBuilder = (): Array<CreateProps> => {
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'landingPage',
-    modelTitle: 'صفحهات فرود',
+    modelTitle: 'صفحه های فرود',
     columns: [
       { id: 10, title: 'عنوان', key: 'title', cellType: 'string' },
       { id: 20, title: 'url', key: 'url', cellType: 'string' },
       { id: 30, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 40, title: 'ترتیب نمایش', key: 'sort_order', cellType: 'string' },
       { id: 50, title: 'موقعیت', key: 'position', cellType: 'enum', enumList: LandingPagePositionList },
+      { id: 60, title: 'نمایش در صفحه اصلی', key: 'show_in_home', cellType: 'boolean' },
+      { id: 62, title: 'نمایش در فوتر', key: 'show_in_footer', cellType: 'boolean' },
 
       /* ---------------------------------- date ---------------------------------- */
       { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
