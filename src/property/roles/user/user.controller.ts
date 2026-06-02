@@ -21,7 +21,12 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
+import {
+  CALL_LOG_JOB,
+  CALL_LOG_QUEUE,
+  VIEW_COUNT_JOB,
+  VIEW_COUNT_QUEUE,
+} from 'src/property/processors/queue-name.constants';
 import { PropertyOwnerService } from '../owner/owner.service';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
@@ -34,6 +39,7 @@ import { PropertyUserService } from './user.service';
 export class PropertyUserController {
   constructor(
     @InjectQueue(CALL_LOG_QUEUE) private readonly callLogQueue: Queue,
+    @InjectQueue(VIEW_COUNT_QUEUE) private readonly viewCountQueue: Queue,
     private readonly propertyUserService: PropertyUserService,
     private readonly profileUserService: ProfileUserService,
     private readonly propertyOwnerService: PropertyOwnerService,
@@ -52,6 +58,12 @@ export class PropertyUserController {
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
 
     const result = await this.propertyUserService.findAll(dto, isAdvisor);
+
+    /**
+     * اپدیت تعداد بازدید آگهی ها
+     */
+    const ids = result.data?.map((e) => e.id);
+    await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
 
     return { result };
   }
