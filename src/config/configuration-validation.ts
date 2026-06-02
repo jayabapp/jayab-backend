@@ -40,6 +40,7 @@ const configValidations = Joi.object({
   SMS_IR_CHAT_HINT_TEMPLATE_ID: Joi.string().required(),
   SMS_IR_RECOMMENDED_PROPERTY_TEMPLATE_ID: Joi.string().required(),
   SMS_IR_RESERVE_HINT_TO_GUEST_TEMPLATE_ID: Joi.string().required(),
+  NEW_TICKET_TO_ADMIN_TEMPLATE_ID: Joi.string().required(),
 
   AVANAK_TOKEN: Joi.string().required(),
   AVANAK_RESERVE_OWNER_MESSAGE_ID: Joi.string().required(),

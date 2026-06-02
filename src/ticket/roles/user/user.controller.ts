@@ -13,6 +13,7 @@ import { User } from '@prisma/client';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { SmsService } from 'src/sms/sms.service';
 
 @ApiTags('Ticket - USER')
 @ApiBearerAuth('user-jwt')
@@ -22,6 +23,7 @@ export class TicketUserController {
   constructor(
     private readonly ticketSharedService: TicketSharedService,
     private readonly notificationService: NotificationSharedService,
+    private readonly smsService: SmsService,
   ) {}
 
   @ApiOperation({ summary: 'Create' })
@@ -29,6 +31,8 @@ export class TicketUserController {
   async create(@Req() request: RequestType, @Body() dto: CreateTicketDto): Promise<SuccessResponseArgs> {
     const userId = request.user.id;
     const { ticket, user } = await this.ticketSharedService.create(userId, dto);
+
+    await this.smsService.sendNewTicketHintToAdmin(ticket.id);
 
     await this.notificationService.createNotification({
       user: { id: null, role: UserRole.ADMIN },

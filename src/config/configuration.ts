@@ -56,6 +56,7 @@ export default () => ({
     sendChatHintTemplateId: process.env.SMS_IR_CHAT_HINT_TEMPLATE_ID,
     sendRecommendedPropertyTemplateId: process.env.SMS_IR_RECOMMENDED_PROPERTY_TEMPLATE_ID,
     sendReserveHintToGuestTemplateId: process.env.SMS_IR_RESERVE_HINT_TO_GUEST_TEMPLATE_ID,
+    newTicketToAdminTemplateId: process.env.NEW_TICKET_TO_ADMIN_TEMPLATE_ID,
     sendUrl: 'https://api.sms.ir/v1/send/verify',
     enableTwoStepVerification: process.env.ENABLE_ADMIN_TWO_STEP_VERIFICATION,
   },

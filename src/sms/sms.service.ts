@@ -1,7 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { isEmpty } from 'lodash';
 import { firstValueFrom } from 'rxjs';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 
 @Injectable()
 export class SmsService {
@@ -11,6 +14,7 @@ export class SmsService {
   constructor(
     private readonly httpService: HttpService,
     private configService: ConfigService,
+    private readonly setting: SettingAdminService,
   ) {
     this.isProduction = process.env.NODE_ENV === 'production';
   }
@@ -391,6 +395,49 @@ export class SmsService {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
         }),
       );
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * ارسال پیامک برای ادمین وقتی تیکت جدید ثبت میشه
+   * @param ticketId
+   * @returns
+   */
+  async sendNewTicketHintToAdmin(ticketId: number): Promise<void> {
+    // if (!this.isProduction) return;
+    try {
+      const apiToken = this.configService.get('sms.smsApiToken');
+      const sendUrl = this.configService.get('sms.sendUrl');
+      const templateId = this.configService.get('sms.newTicketToAdminTemplateId');
+
+      const adminMobiles = [];
+      const mobile1 = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_TICKET_1);
+      const mobile2 = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_TICKET_2);
+
+      console.log({ mobile1, mobile2 });
+
+      for (const e of [mobile1, mobile2]) {
+        if (e && e != 0) adminMobiles.push(e);
+      }
+
+      if (isEmpty(adminMobiles)) return;
+
+      for (const mobile of adminMobiles) {
+        const body = {
+          parameters: [{ name: 'TICKET_ID', value: ticketId }],
+          mobile: mobile,
+          templateId: templateId,
+        };
+        console.log({ body });
+
+        await firstValueFrom(
+          this.httpService.post(sendUrl, body, {
+            headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
+          }),
+        );
+      }
     } catch (error) {
       this.logger.error(error);
     }

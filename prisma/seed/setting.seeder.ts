@@ -56,6 +56,20 @@ const settings = (): Prisma.SettingCreateInput[] => {
       sort_order: 50,
       data_type: SettingDataType.TEXT,
     },
+    {
+      title: 'موبایل ادمین برای پیامک تیکت جدید - یک',
+      key: 'JAYAB_MOBILE_FOR_TICKET_1',
+      value: '09127140824',
+      sort_order: 60,
+      data_type: SettingDataType.TEXT,
+    },
+    {
+      title: 'موبایل ادمین برای پیامک تیکت جدید - دو',
+      key: 'JAYAB_MOBILE_FOR_TICKET_2',
+      value: '09126048740',
+      sort_order: 61,
+      data_type: SettingDataType.TEXT,
+    },
   ];
 
   return data;
