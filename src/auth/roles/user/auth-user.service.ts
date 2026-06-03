@@ -26,12 +26,13 @@ export class AuthUserService {
    * @param mobileNumber
    * @returns
    */
-  async findOrCreateUser(mobileNumber: string): Promise<User> {
+  async findOrCreateUser(mobileNumber: string): Promise<{ user: User; isNewUser: boolean }> {
     /* -------------------------------------------------------------------------- */
     let user = await this.db.user.findFirst({
       where: { mobile_number: mobileNumber },
     });
 
+    const isNewUser = Boolean(user);
     /* -------------------------------------------------------------------------- */
     /**
      * create a new user if not found
@@ -47,7 +48,7 @@ export class AuthUserService {
       });
     }
 
-    return user;
+    return { user, isNewUser };
   }
 
   async findUserByMobileNumber(mobileNumber: string): Promise<User> {
@@ -66,7 +67,7 @@ export class AuthUserService {
     return !!user.full_name;
   }
 
-  async createAuthLog(userId: number, req: Request, queryParams: any): Promise<void> {
+  async createAuthLog(userId: number, isNewUser: boolean, req: Request, queryParams: any): Promise<void> {
     const ua = req.get('User-Agent');
     //@ts-ignore
     const uaParsed = UAParser(ua);
@@ -83,6 +84,7 @@ export class AuthUserService {
         utm_content: queryParams?.utm_content || null,
         utm_term: queryParams?.utm_term || null,
         redirect_url: queryParams?.redirect_url || null,
+        is_new_user: isNewUser,
       },
     });
   }

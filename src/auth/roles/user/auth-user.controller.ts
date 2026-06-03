@@ -67,7 +67,7 @@ export class AuthUserController {
     await this.authSharedService.validateOTP(dto.mobile_number, dto.code);
 
     /* -------------------------------------------------------------------------- */
-    const user = await this.authUserService.findOrCreateUser(dto.mobile_number);
+    const { user, isNewUser } = await this.authUserService.findOrCreateUser(dto.mobile_number);
 
     /* -------------------------------------------------------------------------- */
     // let token: string;
@@ -87,7 +87,7 @@ export class AuthUserController {
     const tokens = await this.authUserService.generateJwtToken(user.id, user.jwt_level);
 
     //add auth log
-    await this.authUserService.createAuthLog(user.id, req, dto.query_params);
+    await this.authUserService.createAuthLog(user.id, isNewUser, req, dto.query_params);
 
     return {
       result: { access_token: tokens.token, socket_token: tokens.socket_token },

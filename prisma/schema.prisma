@@ -1411,6 +1411,7 @@ model PropertyReserve {
 model AuthLog {
   id           String  @id() @default(uuid(7))
   user_id      Int
+  is_new_user  Boolean @default(false)
   ua           String? //user-agent
   ua_parsed    Json?
   ip_address   String?
