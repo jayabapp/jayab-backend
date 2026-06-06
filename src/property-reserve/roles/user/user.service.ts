@@ -81,7 +81,10 @@ export class PropertyReserveUserService {
    * @param dto
    * @returns
    */
-  async create(dto: CreatePropertyReserveUserDto, userId: number): Promise<PropertyReserve> {
+  async create(
+    dto: CreatePropertyReserveUserDto,
+    userId: number,
+  ): Promise<{ reserve: PropertyReserve; ownerId: number }> {
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id, status: PropertyStatuses.PUBLISHED },
     });
@@ -96,7 +99,7 @@ export class PropertyReserveUserService {
     const newPropertyReserve = await this.db.propertyReserve.create({
       data: { ...dto, user_id: userId, status: PropertyReserveStatus.PENDING },
     });
-    return newPropertyReserve;
+    return { reserve: newPropertyReserve, ownerId: property.owner_id };
   }
 
   /**

@@ -65,9 +65,6 @@ export class SocketService {
         break;
     }
 
-    /* ------------------------------ LOG FOR TEST ------------------------------ */
-    await this.fetchRedisDataForTest(key);
-
     /* -------------------------------------------------------------------------- */
     socket.emit(SocketEvents.CLIENT_CONNECTED, { socket_id: socket.id });
     socket.broadcast.emit(SocketEvents.USER_STATUS, { user_id: id, role, is_online: true });
@@ -191,11 +188,6 @@ export class SocketService {
   createRoomKey(id: number, role: UserRole): string {
     const roomKey = Crypto.SHA1(`${id}::${role}::jd&kUDu7sff@7OOk`).toString();
     return roomKey;
-  }
-
-  async fetchRedisDataForTest(key: string): Promise<void> {
-    // const data = await this.redis.get(key);
-    // console.log(`${data ? '✅' : '❌'} The socket id fetched from the redis`);
   }
 
   /**

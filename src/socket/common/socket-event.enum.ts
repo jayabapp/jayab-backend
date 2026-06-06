@@ -13,4 +13,6 @@ export enum SocketEvents {
   NEW_NOTIFICATION = 'event:new-notification',
 
   ORDER_STATUS_UPDATED = 'order:status-updated',
+
+  NEW_RESERVE = 'event:new-reserve',
 }

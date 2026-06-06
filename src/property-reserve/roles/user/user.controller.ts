@@ -35,6 +35,9 @@ import {
   RESERVE_CALL_DELAY_MINUTES,
   RESERVE_TTL_MINUTES,
 } from 'src/property-reserve/common/constants/reserve.constant';
+import { SocketService } from 'src/socket/socket.service';
+import { SocketEvents } from 'src/socket/common/socket-event.enum';
+import { UserRole } from 'src/common/interfaces/role.enum';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -44,6 +47,7 @@ export class PropertyReserveUserController {
   constructor(
     @InjectQueue(RESERVE_QUEUE) private readonly queue: Queue,
     private readonly propertyReserveUserService: PropertyReserveUserService,
+    private readonly socketService: SocketService,
   ) {}
 
   @ApiOperation({ summary: 'Create', description: '' })
@@ -67,7 +71,7 @@ export class PropertyReserveUserController {
     await this.propertyReserveUserService.canCreateReserves(user.id);
 
     //create reserve
-    const reserve = await this.propertyReserveUserService.create(dto, user.id);
+    const { reserve, ownerId } = await this.propertyReserveUserService.create(dto, user.id);
 
     //send sms
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
@@ -86,6 +90,18 @@ export class PropertyReserveUserController {
       { delay: RESERVE_TTL_MINUTES * 60 * 1000 },
     );
 
+    //send reserve event to owner
+    this.socketService.emit(
+      [ownerId],
+      {
+        name: SocketEvents.NEW_RESERVE,
+        eventData: null,
+        type: 'info',
+        title: 'رزرو جدید',
+        body: 'یک درخواست رزرو جدی برای شما ثبت شد',
+      },
+      UserRole.USER,
+    );
     return;
   }
 

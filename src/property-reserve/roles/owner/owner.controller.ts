@@ -52,13 +52,12 @@ export class PropertyReserveOwnerController {
     return;
   }
 
-  // @ApiOperation({ summary: 'Find One', description: '' })
-  // @Get(':propertyReserveId')
-  // async findOne(
-  //   @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
-  // ): Promise<SuccessResponseArgs> {
-  //   const result = await this.propertyReserveOwnerService.findOne(propertyReserveId);
+  @ApiOperation({ summary: 'Badge Count', description: '' })
+  @Get('badge-count')
+  async findBadgeCount(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const result = await this.propertyReserveOwnerService.countAllActive(user.owner_id);
 
-  //   return { result };
-  // }
+    return { result };
+  }
 }

@@ -98,6 +98,17 @@ export class PropertyReserveOwnerService {
     return item;
   }
 
+  /**
+   * تعداد درخواست فعال برای بج سمت کلاینت
+   * @param ownerId
+   * @returns
+   */
+  async countAllActive(ownerId: number): Promise<number> {
+    return await this.db.propertyReserve.count({
+      where: { property: { owner_id: ownerId }, expired_at: null, canceled_at: null },
+    });
+  }
+
   /* -------------------------------------------------------------------------- */
   /*                                    EVENT                                   */
   /* -------------------------------------------------------------------------- */
