@@ -5,6 +5,7 @@ import { Request } from 'express';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CheckMobileIsExistClientDto } from './dto/check-mobile.dto';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('🔐 Client')
 @Controller('client')
@@ -16,6 +17,7 @@ export class ClientController {
 
   @ApiOperation({ summary: 'Check Mobile Is Exist', description: '' })
   @ApiHeader({ name: 'x-api-key', required: true })
+  @Throttle({ default: { ttl: 2000, limit: 4 } })
   @Get('mobile-exists')
   async checkMobileIsExist(
     @Req() req: Request,

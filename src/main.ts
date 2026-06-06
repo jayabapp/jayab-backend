@@ -59,7 +59,8 @@ async function bootstrap(): Promise<void> {
     const config = new DocumentBuilder()
       .setTitle('Jayab V2')
       .setDescription('The API and DTO - RESTfull')
-      // .addServer('https://api.jayab.app', 'Remote Base Url')
+      .addServer('http://localhost:3001', 'Local')
+      .addServer('https://api.jayab.app', 'Remote Production')
       .setVersion('1.2')
       .addBearerAuth(
         {
