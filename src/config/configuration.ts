@@ -82,4 +82,10 @@ export default () => ({
       secretKey: process.env.S3_FS1_SECRET_KEY,
     },
   },
+  client: {
+    client1: {
+      xApiKey: process.env.CLIENT1_X_API_KEY,
+      ip: process.env.CLIENT1_IP,
+    },
+  },
 });

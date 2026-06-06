@@ -81,6 +81,7 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TicketModule } from './ticket/ticket.module';
 import { UserModule } from './user/user.module';
+import { ClientModule } from './client/client.module';
 
 @Module({
   imports: [
@@ -186,6 +187,7 @@ import { UserModule } from './user/user.module';
     MessengerChatroomModule,
     PropertyReportModule,
     PropertyReserveModule,
+    ClientModule,
     BaseModule,
   ],
   providers: [

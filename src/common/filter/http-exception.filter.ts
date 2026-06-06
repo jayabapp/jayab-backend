@@ -246,4 +246,8 @@ const failedMessages = {
   RESERVE5: 'این درخواست منقضی شده است',
   RESERVE6: 'سقف مجاز ثبت درخواست رزرو',
   RESERVE7: '',
+
+  CLIENT1: 'The x-api-key is invalid',
+  CLIENT2: 'The ip is invalid',
+  CLIENT3: '',
 };
