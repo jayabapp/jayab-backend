@@ -96,26 +96,21 @@ export class PropertyUserService {
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
+    let queryOR = [];
+
     if (code) query = { ...query, code };
     if (is_authorized) query = { ...query, is_authorized: true };
     if (has_blue_tick) query = { ...query, has_blue_tick: true };
 
-    /* ------------------------------------ q ----------------------------------- */
-    if (q) query = { ...query, OR: this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[] };
-
     const citiesArray = parseQueryNumberArray(cities);
     const provincesArray = parseQueryNumberArray(provinces);
     /* -------------------------------- province and city -------------------------------- */
-    if (!isEmpty(provincesArray) && !isEmpty(citiesArray))
-      query = {
-        ...query,
-        OR: [{ city_id: { in: citiesArray } }, { province_id: { in: provincesArray } }],
-      };
-    else if (!isEmpty(provincesArray)) query = { ...query, province_id: { in: provincesArray } };
-    else if (!isEmpty(cities)) query = { ...query, city_id: { in: citiesArray } };
+    if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: citiesArray } });
+    if (!isEmpty(citiesArray)) queryOR.push({ city_id: { in: citiesArray } });
+    if (!isEmpty(regions)) queryOR.push({ region_id: { in: parseQueryNumberArray(regions) } });
 
-    /* --------------------------------- regions -------------------------------- */
-    if (!isEmpty(regions)) query = { ...query, region_id: { in: parseQueryNumberArray(regions) } };
+    /* ------------------------------------ q ----------------------------------- */
+    if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
 
     /* ----------------------------- total bedrooms ----------------------------- */
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
@@ -140,6 +135,7 @@ export class PropertyUserService {
 
     query = {
       ...query,
+      OR: queryOR,
       AND: options,
     };
 
@@ -720,7 +716,8 @@ export class PropertyUserService {
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
-    if (isEmpty(Object.values(clientQuery).filter((e) => e))) clientQuery = { q: dto.q };
+    // if (isEmpty(Object.values(clientQuery).filter((e) => e)))
+    clientQuery = { ...clientQuery, q: dto.q };
 
     if (clientQuery['provinces']) {
       delete clientQuery['regions'];
