@@ -255,7 +255,7 @@ Allow: *
 
     /* -------------------------------- PROPERTY -------------------------------- */
     const properties = await this.db.property.findMany({
-      where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
+      where: { status: PropertyStatuses.PUBLISHED },
       select: { slug: true, updated_at: true },
     });
     for (const p of properties) {
