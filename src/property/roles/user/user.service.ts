@@ -133,17 +133,18 @@ export class PropertyUserService {
     if (pool_type) options.push({ options_array: { hasSome: parseQueryNumberArray(pool_type) } });
     if (pet) options.push({ options_array: { hasSome: parseQueryNumberArray(pet) } });
 
-    query = {
-      ...query,
-      OR: queryOR,
-      AND: options,
-    };
+    if (options?.length > 0)
+      query = {
+        ...query,
+        AND: options,
+      };
 
     if (queryOR.length > 0)
       query = {
         ...query,
         OR: queryOR,
       };
+
     /* ------------------------------ فقط استخردار ------------------------------ */
     if (has_pool === 1) query = { ...query, has_pool: true };
     else if (has_pool === 0) query = { ...query, has_pool: false };
