@@ -91,7 +91,6 @@ export class PropertyUserService {
       has_blue_tick,
       is_authorized,
     } = dto;
-    console.log({ dto });
 
     const today = await this.dayHelper.today();
 
