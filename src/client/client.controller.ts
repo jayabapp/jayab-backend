@@ -18,7 +18,7 @@ export class ClientController {
   @ApiOperation({ summary: 'Check Mobile Is Exist', description: '' })
   @ApiHeader({ name: 'x-api-key', required: true })
   @Throttle({ default: { ttl: 2000, limit: 4 } })
-  @Get('mobile-exists')
+  @Get('mobile-exist')
   async checkMobileIsExist(
     @Req() req: Request,
     @Headers() headers: Headers,
