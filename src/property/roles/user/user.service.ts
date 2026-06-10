@@ -104,10 +104,12 @@ export class PropertyUserService {
 
     const citiesArray = parseQueryNumberArray(cities);
     const provincesArray = parseQueryNumberArray(provinces);
+    const regionsArray = parseQueryNumberArray(regions);
+
     /* -------------------------------- province and city -------------------------------- */
-    if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: citiesArray } });
+    if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: provincesArray } });
     if (!isEmpty(citiesArray)) queryOR.push({ city_id: { in: citiesArray } });
-    if (!isEmpty(regions)) queryOR.push({ region_id: { in: parseQueryNumberArray(regions) } });
+    if (!isEmpty(regionsArray)) queryOR.push({ region_id: { in: regionsArray } });
 
     /* ------------------------------------ q ----------------------------------- */
     if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
