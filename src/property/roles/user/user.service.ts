@@ -91,6 +91,7 @@ export class PropertyUserService {
       has_blue_tick,
       is_authorized,
     } = dto;
+    console.log({ dto });
 
     const today = await this.dayHelper.today();
 
@@ -112,7 +113,8 @@ export class PropertyUserService {
     if (!isEmpty(regionsArray)) queryOR.push({ region_id: { in: regionsArray } });
 
     /* ------------------------------------ q ----------------------------------- */
-    if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
+    // if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
+    if (q) queryOR.push({ title: { contains: dto.q, mode: 'insensitive' } });
 
     /* ----------------------------- total bedrooms ----------------------------- */
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
