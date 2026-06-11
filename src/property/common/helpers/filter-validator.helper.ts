@@ -57,10 +57,11 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
       case 'expired':
         query = {
           ...query,
-          OR: [
-            { subscription_expired_at: { lt: startOfDate(moment().toDate()) } },
-            { subscription_expired_at: null },
-          ],
+          subscription_expired_at: { lt: startOfDate(moment().toDate()) },
+          // OR: [
+          //   { subscription_expired_at: { lt: startOfDate(moment().toDate()) } },
+          //   { subscription_expired_at: null },
+          // ],
         };
         break;
 
