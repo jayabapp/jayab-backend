@@ -1,7 +1,10 @@
 export const parseQueryNumberArray = (query: string): number[] => {
   if (!query) return [];
   const text = query.replace(/[^0-9,]/g, ''); // remove all non-number and non-comma characters
-  const q = text.split(',').map(Number);
+  const q = text
+    .split(',')
+    .map(Number)
+    .filter((e) => e);
   return q;
 };
 

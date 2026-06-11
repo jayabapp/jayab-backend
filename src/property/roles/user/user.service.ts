@@ -107,9 +107,9 @@ export class PropertyUserService {
     const regionsArray = parseQueryNumberArray(regions);
 
     /* -------------------------------- province and city -------------------------------- */
-    if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: provincesArray } });
-    if (!isEmpty(citiesArray)) queryOR.push({ city_id: { in: citiesArray } });
     if (!isEmpty(regionsArray)) queryOR.push({ region_id: { in: regionsArray } });
+    else if (!isEmpty(citiesArray)) queryOR.push({ city_id: { in: citiesArray } });
+    else if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: provincesArray } });
 
     /* ------------------------------------ q ----------------------------------- */
     // if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
@@ -728,11 +728,13 @@ export class PropertyUserService {
     // if (isEmpty(Object.values(clientQuery).filter((e) => e)))
     clientQuery = { ...clientQuery, q: dto.q };
 
-    if (clientQuery['provinces']) {
-      delete clientQuery['regions'];
-      delete clientQuery['cities'];
-    }
+    // if (clientQuery['provinces']) {
+    //   delete clientQuery['regions'];
+    //   delete clientQuery['cities'];
+    // }
 
+    //شهر به استان ارجحیت دارد
+    if (clientQuery['cities']) delete clientQuery['provinces'];
     /**
      * ایجاد لیست شهرها برای نمایش در پاپ آپ سرچ
      */
@@ -770,7 +772,11 @@ export class PropertyUserService {
     const hasUniqueParent = uniq(citiesList.map((e) => e.parent_id))?.length === 1;
     if (citiesList.every((e) => e.level === 'region') && hasUniqueParent)
       clientQuery['cities'] = `${citiesList[0]?.parent_id}`;
-
+    else if (citiesList.filter((e) => e.level === 'region')?.length === 1) {
+      //اگر یک محله پیدا کردیم شهر های دیگه رو پاک میکنیم شهر همون محله رو برمیگردونیم
+      const region = citiesList.find((e) => e.level === 'region');
+      clientQuery['cities'] = `${region.parent_id}`;
+    }
     // console.log({ cityRecords, citiesList, clientQuery });
     // console.log({ cityRecords });
 
