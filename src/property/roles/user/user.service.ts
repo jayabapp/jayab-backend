@@ -296,7 +296,9 @@ export class PropertyUserService {
       },
     });
 
-    if (item?.deleted_at || item?.status !== PropertyStatuses.PUBLISHED) throw new GoneException('GONE');
+    if (!!item?.deleted_at) throw new GoneException('GONE');
+    //در تاریخ ۲۷ خرداد ۴۰۵ قرار شد فقط پاک شده ها ۴۱۰ بشن. به دلیل کش مرورگر روی ارور ۴۱۰
+    if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const today = await this.dayHelper.today();
