@@ -182,7 +182,7 @@ export class UserAdminService {
       is_advisor: e.advisor_id ? 'بله' : 'خیر',
       is_owner: e.owner_id ? 'بله' : 'خیر',
       is_banned: e.is_banned ? 'بله' : 'خیر',
-      created_at: moment(e.created_at).format(JALAALI_FORMAT),
+      created_at: moment(e.created_at).format('jYYYY/jMM/jDD HH:mm'),
     }));
 
     const excelCols: ExcelCol[] = [

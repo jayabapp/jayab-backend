@@ -2,7 +2,7 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { Body, Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthSharedService } from 'src/auth/auth-shared.service';
 import { USER_AUTH_ROUTE_GROUP } from 'src/auth/common/route-group.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
@@ -31,11 +31,10 @@ export class AuthUserController {
     private readonly profileUserService: ProfileUserService,
   ) {}
 
-  @Throttle({ default: { limit: 3, ttl: 30000 } })
   @ApiOperation({ summary: 'Create OTP code' })
+  @Throttle({ default: { limit: 5, ttl: 60 * 60 * 1000 } }) //هر یک ساعت ۵ درخواست
   @Post('/otp')
   async createOtpCode(@Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
-    /* -------------------------------------------------------------------------- */
     /**
      * create otp
      */
