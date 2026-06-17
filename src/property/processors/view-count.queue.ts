@@ -37,7 +37,7 @@ export class ViewCountQueueProcessor {
     console.log(`Job Start: ${VIEW_COUNT_JOB}`);
     const { propertyIds } = job.data;
     for (const id of propertyIds) {
-      await this.propertyUserService.updateViewStatistics(id, null, random(1, 5));
+      await this.propertyUserService.updateViewStatistics(id, 1, 'impression');
     }
   }
 }

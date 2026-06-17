@@ -495,7 +495,7 @@ export class PropertyUserService {
    * @param fingerprint
    * @returns
    */
-  async updateViewStatistics(propertyId: number, fingerprint?: string, count?: number): Promise<void> {
+  async updateViewStatistics(propertyId: number, count: number, type: 'impression' | 'view'): Promise<void> {
     /*  */
     // const redisKey = userPropertyViewKey(propertyId, fingerprint);
     // const userViewedPost = await this.redis.get(redisKey);
@@ -507,8 +507,16 @@ export class PropertyUserService {
     // create statistics
     await this.db.propertyStatistics.upsert({
       where: { property_id_date: { property_id: propertyId, date: now } },
-      update: { view_count: { increment: count || 1 } },
-      create: { date: now, property_id: propertyId, view_count: 1 },
+      update: {
+        view_count: { increment: type === 'view' ? count || 1 : 0 },
+        impression_count: { increment: type === 'impression' ? count || 1 : 0 },
+      },
+      create: {
+        date: now,
+        property_id: propertyId,
+        view_count: type === 'view' ? 1 : 0,
+        impression_count: type === 'impression' ? 1 : 0,
+      },
     });
   }
 

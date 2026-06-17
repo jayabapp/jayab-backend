@@ -120,7 +120,7 @@ export class PropertyUserController {
     @Param('propertyId') propertyId: number,
     @Body() dto: { fingerprint: string },
   ): Promise<SuccessResponseArgs> {
-    await this.propertyUserService.updateViewStatistics(propertyId, dto.fingerprint);
+    await this.propertyUserService.updateViewStatistics(propertyId, 1, 'view');
     return {};
   }
 

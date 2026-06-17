@@ -686,7 +686,7 @@ export class PropertyOwnerService {
 
     const list = await this.db.propertyStatistics.findMany({
       where: { property_id: propertyId, date: { gte: aWeekAgo, lte: now } },
-      select: { date: true, view_count: true },
+      select: { date: true, view_count: true, impression_count: true },
     });
 
     const formatted = [];
@@ -696,7 +696,11 @@ export class PropertyOwnerService {
         .toDate();
       const record = list.find((e) => moment(e.date).diff(day, 'minute') === 0);
 
-      if (record) formatted.push(record);
+      if (record)
+        formatted.push({
+          date: record.date,
+          view_count: (record.view_count ?? 0) + (record.impression_count ?? 0),
+        });
       else formatted.push({ date: day, view_count: 0 });
     }
 

@@ -717,10 +717,11 @@ model PropertyOwnerAssistant {
 }
 
 model PropertyStatistics {
-  id          Int      @id() @default(autoincrement())
-  property_id Int
-  view_count  Int      @default(0)
-  date        DateTime
+  id               Int      @id() @default(autoincrement())
+  property_id      Int
+  view_count       Int      @default(0) // تعداد بازدید
+  impression_count Int      @default(0) // تعداد نمایش
+  date             DateTime
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
