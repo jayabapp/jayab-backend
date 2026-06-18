@@ -648,7 +648,7 @@ export class PropertyUserService {
      */
     if (/^\d+$/.test(q)) {
       const exactProperty = await this.db.property.findFirst({
-        where: { code: q },
+        where: { code: q, status: PropertyStatuses.PUBLISHED },
         select: { id: true, title: true, slug: true },
       });
       return {
