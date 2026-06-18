@@ -654,7 +654,7 @@ export class PropertyUserService {
       return {
         cities: [],
         landings: [],
-        properties: [exactProperty],
+        properties: !!exactProperty ? [exactProperty] : [],
       };
     }
     const words = sanitizeText(q);
