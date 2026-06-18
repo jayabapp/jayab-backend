@@ -262,7 +262,7 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
 };
 
 /* --------------------------------- ACTIONS -------------------------------- */
-export const showActionBuilder = (item: Property): Array<ShowAction> => {
+export const showActionBuilder = (item: Property, rbac: AccessControlList): Array<ShowAction> => {
   const actions: Array<ShowAction> = [
     {
       title: 'خرید اشتراک و سابقه',
@@ -276,13 +276,15 @@ export const showActionBuilder = (item: Property): Array<ShowAction> => {
       title: 'چت روم ها',
       route: `/messenger-chatrooms?property_id=${item.id}`,
     },
-    {
+  ];
+
+  if (rbac.u)
+    actions.push({
       title: 'ویرایش',
       route: `/properties/edit/${item.id}`,
       color: 'success',
       targetBlank: true,
-    },
-  ];
+    });
 
   if (item.status === PropertyStatuses.PUBLISHED)
     actions.push({

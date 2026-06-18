@@ -86,8 +86,9 @@ export class PropertyAdminController {
 
   @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-    const result = await this.propertyAdminService.findOne(id);
+  async findOne(@Req() req, @Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const rbac = req.adminRbac as AccessControlList;
+    const result = await this.propertyAdminService.findOne(id, rbac);
 
     return { result };
   }

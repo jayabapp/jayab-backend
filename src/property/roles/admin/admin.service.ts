@@ -102,6 +102,7 @@ export class PropertyAdminService {
    */
   async findOne(
     id: number,
+    rbac: AccessControlList,
   ): Promise<{ showProps: ShowProps[]; actions?: ShowAction[]; item: PropertyJsonType }> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -131,7 +132,7 @@ export class PropertyAdminService {
     const serialized = await this.propertySerializer.toJSON(item, today, false, true); //اطلاعاتی که ادمین میبینه با مالک یکسانه
 
     const showProps = showPropsBuilder(serialized);
-    const actions = showActionBuilder(item);
+    const actions = showActionBuilder(item, rbac);
 
     return { showProps, actions, item };
   }
