@@ -32,7 +32,7 @@ export class AuthUserController {
   ) {}
 
   @ApiOperation({ summary: 'Create OTP code' })
-  @Throttle({ default: { limit: 5, ttl: 60 * 60 * 1000 } }) //هر یک ساعت ۵ درخواست
+  @Throttle({ default: { limit: 5, ttl: 15 * 60 * 1000 } }) //هر ۱۵ دقیقه ۵ درخواست
   @Post('/otp')
   async createOtpCode(@Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
     /**
