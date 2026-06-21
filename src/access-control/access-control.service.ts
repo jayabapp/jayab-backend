@@ -88,13 +88,11 @@ export class AccessControlService {
    */
   async findAllRoles(selfRole: AccessControlRole): Promise<AccessControlRole[]> {
     const list = await this.db.accessControlRole.findMany({
-      where: { tree: { contains: `-${selfRole.id}-` } },
+      where: { id: { not: selfRole.id }, tree: { contains: `-${selfRole.id}-` } },
       orderBy: { id: 'asc' },
     });
 
-    const allowedList =
-      selfRole.key !== AdminRole.SUPERADMIN ? list.filter((e) => e.tree !== selfRole.tree) : list;
-    return allowedList;
+    return list;
   }
 
   /**
