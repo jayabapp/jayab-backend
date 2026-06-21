@@ -9,6 +9,7 @@ import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import moment from 'moment-jalaali';
 import { AddRateUserDto } from '../admin/dto/create.dto';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class AdvisorUserService {
@@ -21,7 +22,11 @@ export class AdvisorUserService {
    */
   async findAll(dto: FindAllAdvisorUserDto): Promise<any> {
     /*  */
-    let query: Prisma.AdvisorWhereInput = { status: AdvisorStatus.APPROVED, is_special: true };
+    let query: Prisma.AdvisorWhereInput = {
+      status: AdvisorStatus.APPROVED,
+      is_special: true,
+      subscription_expired_at: { gt: startOfToday() },
+    };
     if (dto.q)
       query = {
         ...query,
