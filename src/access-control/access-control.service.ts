@@ -88,7 +88,7 @@ export class AccessControlService {
    */
   async findAllRoles(selfRole: AccessControlRole): Promise<AccessControlRole[]> {
     const list = await this.db.accessControlRole.findMany({
-      where: { id: { not: selfRole.id }, tree: { contains: `-${selfRole.id}-` } },
+      where: { tree: { contains: `-${selfRole.id}-` } },
       orderBy: { id: 'asc' },
     });
 
