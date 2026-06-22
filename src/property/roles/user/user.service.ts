@@ -203,7 +203,8 @@ export class PropertyUserService {
             },
           },
           { calendar: query.calendar || {} }, //to prevent overwrite discount calendar query
-        ],
+          //@ts-ignore
+        ].concat(query.AND || []),
       };
 
     /* ---------------------------------- CALENDAR INCLUDE ---------------------------------- */
