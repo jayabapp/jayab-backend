@@ -82,6 +82,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { TicketModule } from './ticket/ticket.module';
 import { UserModule } from './user/user.module';
 import { ClientModule } from './client/client.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -206,6 +207,7 @@ import { ClientModule } from './client/client.module';
       useClass: ThrottlerGuard,
     },
   ],
+  controllers: [HealthController],
 })
 export class AppModule {
   constructor() {
