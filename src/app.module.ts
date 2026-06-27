@@ -67,6 +67,7 @@ import { ProfileModule } from './profile/profile.module';
 import { PropertyAuthorizeModule } from './property-authorize/property-authorize.module';
 import { PropertyBadgeModule } from './property-badge/property-badge.module';
 import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
+import { PropertyPhotoUpgradeRequestModule } from './property-photo-upgrade-request/property-photo-upgrade-request.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyReportModule } from './property-report/property-report.module';
 import { PropertyReserveModule } from './property-reserve/property-reserve.module';
@@ -169,6 +170,7 @@ import { HealthController } from './health.controller';
     OwnerModule,
     PropertyOptionModule,
     PropertyModule,
+    PropertyPhotoUpgradeRequestModule,
     SubscriptionPlanModule,
     ChatModule,
     PropertyAuthorizeModule,

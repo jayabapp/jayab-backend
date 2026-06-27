@@ -25,6 +25,10 @@ import { PropertyAdminService } from './admin.service';
 import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import {
+  FindAllPropertyPhotoUpgradeRequestAdminDto,
+  UpdatePropertyPhotoUpgradeRequestItemAdminDto,
+} from './dto/photo-upgrade-request.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -82,6 +86,44 @@ export class PropertyAdminController {
     const result = await this.propertyAdminService.findAll(filterQuery, dto.page, dto.per_page);
 
     return { result };
+  }
+
+  @ApiOperation({ summary: 'Find All Photo Upgrade Requests', description: '' })
+  @Get('photo-upgrade-requests')
+  async findAllPhotoUpgradeRequests(
+    @Query() dto: FindAllPropertyPhotoUpgradeRequestAdminDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.findAllPhotoUpgradeRequests(dto);
+
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Find One Photo Upgrade Request', description: '' })
+  @Get('photo-upgrade-requests/:requestId')
+  async findOnePhotoUpgradeRequest(
+    @Param('requestId', ParseIntPipe) requestId: number,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.findOnePhotoUpgradeRequest(requestId);
+
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Update Photo Upgrade Request Image Status', description: '' })
+  @Patch('photo-upgrade-requests/:requestId/images/:itemId')
+  async updatePhotoUpgradeRequestItem(
+    @Req() req: AdminRequestType,
+    @Param('requestId', ParseIntPipe) requestId: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() dto: UpdatePropertyPhotoUpgradeRequestItemAdminDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.updatePhotoUpgradeRequestItem(
+      req.user.id,
+      requestId,
+      itemId,
+      dto,
+    );
+
+    return { result, messageCode: 'UPDATE' };
   }
 
   @ApiOperation({ summary: 'Find One', description: '' })

@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Post,
   Put,
   Query,
   Req,
@@ -29,7 +30,11 @@ import {
 import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
-import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import {
+  PaySubscriptionPropertyOwnerDto,
+  PhotoUpgradeCheckoutSummaryDto,
+  PhotoUpgradeQuotePropertyOwnerDto,
+} from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyCommissionOwnerDto,
@@ -223,6 +228,51 @@ export class PropertyOwnerController {
 
     //
     const result = await this.propertyOwnerService.paySubscription(user, property, dto);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Photo upgrade service content' })
+  @Get('photo-upgrade-service')
+  async findPhotoUpgradeService(): Promise<SuccessResponseArgs> {
+    const result = await this.propertyOwnerService.findPhotoUpgradeService();
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Owner properties for photo upgrade service' })
+  @Get('photo-upgrade-service/properties')
+  async findPhotoUpgradeProperties(@Req() req: RequestType): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const result = await this.propertyOwnerService.findPhotoUpgradeProperties(user.owner_id);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Photo upgrade service quote' })
+  @Post(':propertyId/photo-upgrade-service/quote')
+  async quotePhotoUpgrade(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: PhotoUpgradeQuotePropertyOwnerDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const result = await this.propertyOwnerService.quotePhotoUpgrade(user.owner_id, propertyId, dto);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Checkout summary for subscription and photo upgrade service' })
+  @UseInterceptors(OwnerUpdatePropertyInterceptor)
+  @Post(':propertyId/photo-upgrade-service/checkout-summary')
+  async photoUpgradeCheckoutSummary(
+    @Req() req: RequestType,
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Body() dto: PhotoUpgradeCheckoutSummaryDto,
+  ): Promise<SuccessResponseArgs> {
+    const user = req.user;
+    const property = req.interceptor_data as PropertyInterceptorData;
+    const result = await this.propertyOwnerService.buildPhotoUpgradeCheckoutSummary(
+      user.owner_id,
+      property,
+      dto,
+    );
     return { result };
   }
 

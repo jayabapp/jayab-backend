@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AccessControlList, Prisma, Property } from '@prisma/client';
@@ -31,12 +31,22 @@ import {
 } from 'src/property/common/helpers/model-props-builder.helper';
 import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import {
+  PropertyPhotoUpgradeRequestItemStatus,
+  PropertyPhotoUpgradeRequestStatus,
+  PropertyPhotoUpgradeRequestItemStatusesList,
+  PropertyPhotoUpgradeRequestStatusesList,
+} from 'src/property/common/types/property-photo-upgrade-status.type';
+import {
   PropertyArrayResType,
   PropertyJsonType,
   PropertySerializer,
 } from 'src/property/serializer/property.serializer';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import {
+  FindAllPropertyPhotoUpgradeRequestAdminDto,
+  UpdatePropertyPhotoUpgradeRequestItemAdminDto,
+} from './dto/photo-upgrade-request.dto';
 
 @Injectable()
 export class PropertyAdminService {
@@ -155,6 +165,142 @@ export class PropertyAdminService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
+  }
+
+  async findAllPhotoUpgradeRequests(
+    dto: FindAllPropertyPhotoUpgradeRequestAdminDto,
+  ): Promise<PaginatedResult<any>> {
+    const where: Prisma.PropertyPhotoUpgradeRequestWhereInput = {
+      ...(dto.status ? { status: dto.status } : {}),
+      ...(dto.property_id ? { property_id: dto.property_id } : {}),
+      ...(dto.owner_id ? { owner_id: dto.owner_id } : {}),
+    };
+
+    const list = await paginate()<any, Prisma.PropertyPhotoUpgradeRequestFindManyArgs>(
+      this.db.propertyPhotoUpgradeRequest,
+      {
+        where,
+        include: {
+          property: { select: { id: true, title: true, code: true } },
+          owner: { select: { id: true, user: { select: { full_name: true, mobile_number: true } } } },
+          payment: { select: { id: true, amount: true, status: true, ref_id: true } },
+          _count: { select: { items: true } },
+        },
+        orderBy: { created_at: 'desc' },
+      },
+      { page: dto.page, perPage: dto.per_page },
+    );
+
+    list.data = list.data.map((item) => ({
+      ...item,
+      status_title: PropertyPhotoUpgradeRequestStatusesList.find((e) => e.id === item.status)?.title,
+    }));
+
+    return list;
+  }
+
+  async findOnePhotoUpgradeRequest(id: number): Promise<any> {
+    const item = await this.db.propertyPhotoUpgradeRequest.findUnique({
+      where: { id },
+      include: {
+        property: { select: { id: true, title: true, code: true } },
+        owner: { select: { id: true, user: { select: { full_name: true, mobile_number: true } } } },
+        payment: { select: { id: true, amount: true, status: true, ref_id: true } },
+        subscription: { select: { id: true, title: true, status: true } },
+        items: {
+          include: {
+            attachment: {
+              select: {
+                id: true,
+                name: true,
+                thumbnail: true,
+                path: true,
+                medium: true,
+                bucket: true,
+                end_point: true,
+              },
+            },
+            edited_by_admin: { select: { id: true, full_name: true } },
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+    if (!item) throw new NotFoundException('NOT_FOUND');
+
+    return {
+      ...item,
+      status_title: PropertyPhotoUpgradeRequestStatusesList.find((e) => e.id === item.status)?.title,
+      items: item.items.map((requestItem) => ({
+        ...requestItem,
+        status_title: PropertyPhotoUpgradeRequestItemStatusesList.find((e) => e.id === requestItem.status)
+          ?.title,
+        is_edited: requestItem.status === PropertyPhotoUpgradeRequestItemStatus.EDITED,
+      })),
+    };
+  }
+
+  async updatePhotoUpgradeRequestItem(
+    adminId: number,
+    requestId: number,
+    itemId: number,
+    dto: UpdatePropertyPhotoUpgradeRequestItemAdminDto,
+  ): Promise<any> {
+    const request = await this.db.propertyPhotoUpgradeRequest.findUnique({
+      where: { id: requestId },
+      select: { id: true, status: true },
+    });
+    if (!request) throw new NotFoundException('NOT_FOUND');
+    if (request.status === PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT)
+      throw new BadRequestException('PROPERTY_PHOTO_UPGRADE_PAYMENT_PENDING');
+
+    const requestItem = await this.db.propertyPhotoUpgradeRequestItem.findFirst({
+      where: { id: itemId, request_id: requestId },
+      select: { id: true },
+    });
+    if (!requestItem) throw new NotFoundException('NOT_FOUND');
+
+    await this.db.$transaction(async (tx) => {
+      await tx.propertyPhotoUpgradeRequestItem.update({
+        where: { id: itemId },
+        data: dto.is_edited
+          ? {
+              status: PropertyPhotoUpgradeRequestItemStatus.EDITED,
+              edited_at: new Date(),
+              edited_by_admin_id: adminId,
+            }
+          : {
+              status: PropertyPhotoUpgradeRequestItemStatus.PENDING,
+              edited_at: null,
+              edited_by_admin_id: null,
+            },
+      });
+
+      const items = await tx.propertyPhotoUpgradeRequestItem.findMany({
+        where: { request_id: requestId },
+        select: { status: true },
+      });
+      const editedCount = items.filter(
+        (item) => item.status === PropertyPhotoUpgradeRequestItemStatus.EDITED,
+      ).length;
+
+      const status =
+        editedCount === 0
+          ? PropertyPhotoUpgradeRequestStatus.PENDING
+          : editedCount === items.length
+            ? PropertyPhotoUpgradeRequestStatus.COMPLETED
+            : PropertyPhotoUpgradeRequestStatus.IN_PROGRESS;
+
+      await tx.propertyPhotoUpgradeRequest.update({
+        where: { id: requestId },
+        data: {
+          status,
+          completed_at: status === PropertyPhotoUpgradeRequestStatus.COMPLETED ? new Date() : null,
+        },
+      });
+    });
+
+    return this.findOnePhotoUpgradeRequest(requestId);
   }
 
   /* -------------------------------------------------------------------------- */

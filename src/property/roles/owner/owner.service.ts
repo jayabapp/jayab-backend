@@ -13,6 +13,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import {
   PropertyArrayResType,
   PropertyResType,
@@ -20,7 +23,11 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
-import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import {
+  PaySubscriptionPropertyOwnerDto,
+  PhotoUpgradeCheckoutSummaryDto,
+  PhotoUpgradeQuotePropertyOwnerDto,
+} from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -34,6 +41,41 @@ import {
 } from './dto/update-property.dto';
 import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
 
+type PhotoUpgradeQuote = {
+  property_id: number;
+  image_ids: number[];
+  image_count: number;
+  price_per_image: number;
+  total_amount: number;
+};
+
+type PhotoUpgradeServiceContent = {
+  title: string;
+  description: string;
+  steps: string[];
+  before_after: {
+    before: string;
+    after: string;
+  };
+  price_per_image: number;
+};
+
+type PhotoUpgradeCheckoutSummary = {
+  subscription_amount: number;
+  promote_amount: number;
+  photo_upgrade: PhotoUpgradeQuote | null;
+  total_amount: number;
+};
+
+type PhotoUpgradeProperty = {
+  id: number;
+  title: string;
+  code: string;
+  feature_image: unknown;
+  images_count: number;
+  images: unknown[];
+};
+
 @Injectable()
 export class PropertyOwnerService {
   constructor(
@@ -42,6 +84,7 @@ export class PropertyOwnerService {
     private readonly paymentUserService: PaymentUserService,
     private readonly propertySerializer: PropertySerializer,
     private readonly dayHelper: DayHelper,
+    private readonly setting: SettingAdminService,
   ) {}
 
   /**
@@ -466,6 +509,7 @@ export class PropertyOwnerService {
   ): Promise<string> {
     let subscription: SubscriptionPlan;
     let promote: SubscriptionPlan;
+    let photoUpgradeQuote: PhotoUpgradeQuote = null;
 
     /* -------------------------------------------------------------------------- */
     /** */
@@ -492,6 +536,15 @@ export class PropertyOwnerService {
     if (dto.subscription_id)
       subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
 
+    if (dto.photo_upgrade_enabled) {
+      photoUpgradeQuote = await this.buildPhotoUpgradeQuote(
+        user.owner_id,
+        property.id,
+        dto.photo_upgrade_image_ids,
+      );
+      if (photoUpgradeQuote.image_count < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
+    }
+
     /* -------------------------------------------------------------------------- */
     /**
      * Transaction: payment, promote, subscription
@@ -504,6 +557,7 @@ export class PropertyOwnerService {
         let amount = 0;
         if (subscription) amount += subscription?.price_with_discount || subscription?.price;
         if (promote) amount += promote?.price_with_discount || promote?.price;
+        if (photoUpgradeQuote) amount += photoUpgradeQuote.total_amount;
 
         const pay = await this.paymentUserService.create(
           user,
@@ -515,6 +569,10 @@ export class PropertyOwnerService {
         );
         // console.log({ pay });
 
+        await tx.propertyPhotoUpgradeRequest.deleteMany({
+          where: { property_id: property.id, status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT },
+        });
+
         // حذف تمام درخواست پرداخت های پرداخت نشده
         await tx.subscription.deleteMany({
           where: { property_id: property.id, status: SubscriptionStatus.WAITING },
@@ -524,8 +582,9 @@ export class PropertyOwnerService {
         let subscriptionTitle = '';
         if (subscription?.title) subscriptionTitle += `${subscription.title}`;
         if (promote?.title) subscriptionTitle += `${subscription?.title ? ' - ' : ''}${promote.title}`;
+        if (photoUpgradeQuote) subscriptionTitle += `${subscriptionTitle ? ' - ' : ''}ارتقا تصاویر آگهی`;
 
-        await tx.subscription.create({
+        const createdSubscription = await tx.subscription.create({
           data: {
             property_id: property.id,
             is_promote: !!dto.promote_id ? true : false,
@@ -535,8 +594,38 @@ export class PropertyOwnerService {
             price: pay.payment.amount,
             status: SubscriptionStatus.WAITING,
             extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
+            description: photoUpgradeQuote
+              ? JSON.stringify({
+                  photo_upgrade: photoUpgradeQuote,
+                  subscription_amount: subscription
+                    ? subscription?.price_with_discount || subscription?.price
+                    : 0,
+                  promote_amount: promote ? promote?.price_with_discount || promote?.price : 0,
+                  total_amount: pay.payment.amount,
+                })
+              : null,
           },
         });
+
+        if (photoUpgradeQuote) {
+          await tx.propertyPhotoUpgradeRequest.create({
+            data: {
+              property_id: photoUpgradeQuote.property_id,
+              owner_id: user.owner_id,
+              subscription_id: createdSubscription.id,
+              payment_id: pay.payment.id,
+              status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT,
+              image_count: photoUpgradeQuote.image_count,
+              price_per_image: photoUpgradeQuote.price_per_image,
+              total_amount: photoUpgradeQuote.total_amount,
+              items: {
+                create: photoUpgradeQuote.image_ids.map((attachmentId) => ({
+                  attachment_id: attachmentId,
+                })),
+              },
+            },
+          });
+        }
 
         return pay;
       },
@@ -544,6 +633,103 @@ export class PropertyOwnerService {
     );
 
     return result.paymentUrl;
+  }
+
+  async findPhotoUpgradeService(): Promise<PhotoUpgradeServiceContent> {
+    const pricePerImage = await this.getPhotoUpgradePrice();
+    const beforeImage = await this.getOptionalSetting(SettingKey.PROPERTY_PHOTO_UPGRADE_BEFORE_IMAGE);
+    const afterImage = await this.getOptionalSetting(SettingKey.PROPERTY_PHOTO_UPGRADE_AFTER_IMAGE);
+
+    return {
+      title: 'ارتقا سرویس تصاویر آگهی',
+      description:
+        'با فعال سازی این سرویس، تصاویر اقامتگاه شما برای نمایش حرفه ای تر در آگهی ویرایش و آماده سازی می شود.',
+      steps: [
+        'انتخاب اقامتگاه',
+        'انتخاب یا تایید تصاویر',
+        'محاسبه تعداد عکس و هزینه سرویس',
+        'پرداخت همراه با پلن اشتراک',
+      ],
+      before_after: {
+        before: beforeImage || null,
+        after: afterImage || null,
+      },
+      price_per_image: pricePerImage,
+    };
+  }
+
+  async findPhotoUpgradeProperties(ownerId: number): Promise<PhotoUpgradeProperty[]> {
+    const list = await this.db.property.findMany({
+      where: { owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
+      select: {
+        id: true,
+        title: true,
+        code: true,
+        feature_image: true,
+        attachments: { where: { type: 1 }, select: { id: true, name: true, thumbnail: true, path: true } },
+        _count: { select: { attachments: true } },
+      },
+      orderBy: { updated_at: 'desc' },
+    });
+
+    return list.map((item) => ({
+      id: item.id,
+      title: item.title,
+      code: item.code,
+      feature_image: item.feature_image,
+      images_count: item.attachments.length,
+      images: item.attachments,
+    }));
+  }
+
+  async quotePhotoUpgrade(
+    ownerId: number,
+    propertyId: number,
+    dto: PhotoUpgradeQuotePropertyOwnerDto,
+  ): Promise<PhotoUpgradeQuote> {
+    return this.buildPhotoUpgradeQuote(ownerId, propertyId, dto.image_ids);
+  }
+
+  async buildPhotoUpgradeCheckoutSummary(
+    ownerId: number,
+    property: PropertyInterceptorData,
+    dto: PhotoUpgradeCheckoutSummaryDto,
+  ): Promise<PhotoUpgradeCheckoutSummary> {
+    let subscription: SubscriptionPlan = null;
+    let promote: SubscriptionPlan = null;
+    let photoUpgradeQuote: PhotoUpgradeQuote = null;
+
+    if (dto.subscription_id)
+      subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
+
+    if (dto.promote_id) {
+      promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
+        dto.promote_id,
+        dto.subscription_id,
+        property,
+      );
+      if (!promote) throw new BadRequestException('PROPERTY_SUB1');
+    }
+
+    if (dto.photo_upgrade_enabled) {
+      photoUpgradeQuote = await this.buildPhotoUpgradeQuote(
+        ownerId,
+        property.id,
+        dto.photo_upgrade_image_ids,
+      );
+      if (photoUpgradeQuote.image_count < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
+    }
+
+    const subscriptionAmount = subscription ? subscription.price_with_discount || subscription.price : 0;
+    const promoteAmount = promote ? promote.price_with_discount || promote.price : 0;
+    const photoUpgradeAmount = photoUpgradeQuote?.total_amount || 0;
+
+    return {
+      subscription_amount: subscriptionAmount,
+      promote_amount: promoteAmount,
+      photo_upgrade: photoUpgradeQuote,
+      total_amount: subscriptionAmount + promoteAmount + photoUpgradeAmount,
+    };
   }
 
   /* -------------------------------------------------------------------------- */
@@ -762,6 +948,60 @@ export class PropertyOwnerService {
     }
 
     return { options: optionsQuery, numericIds };
+  }
+
+  async getPhotoUpgradePrice(): Promise<number> {
+    try {
+      const value = await this.setting.get(SettingKey.PROPERTY_PHOTO_UPGRADE_PRICE);
+      const price = Number(value);
+      return Number.isFinite(price) && price > 0 ? price : 50000;
+    } catch (error) {
+      return 50000;
+    }
+  }
+
+  async getOptionalSetting(key: SettingKey): Promise<string | null> {
+    try {
+      const value = await this.setting.get(key);
+      return value ? String(value) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async buildPhotoUpgradeQuote(
+    ownerId: number,
+    propertyId: number,
+    imageIds?: number[],
+  ): Promise<PhotoUpgradeQuote> {
+    const property = await this.db.property.findFirst({
+      where: { id: propertyId, owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
+      select: {
+        id: true,
+        attachments: {
+          where: {
+            type: 1,
+            ...(imageIds?.length ? { id: { in: imageIds } } : {}),
+          },
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
+    if (imageIds?.length && property.attachments.length !== imageIds.length)
+      throw new BadRequestException('PROPERTY_PHOTO_UPGRADE_IMAGES');
+
+    const pricePerImage = await this.getPhotoUpgradePrice();
+    const selectedImageIds = property.attachments.map((item) => item.id);
+
+    return {
+      property_id: property.id,
+      image_ids: selectedImageIds,
+      image_count: selectedImageIds.length,
+      price_per_image: pricePerImage,
+      total_amount: selectedImageIds.length * pricePerImage,
+    };
   }
 
   /**

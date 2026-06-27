@@ -42,6 +42,7 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'روزهای پیک', key: 'peak-days' },
     { name: 'صفحات لندینگ', key: 'landing-pages' },
     { name: 'املاک', key: 'properties' },
+    { name: 'درخواست ارتقا تصاویر', key: 'property-photo-upgrade-requests' },
     { name: 'اشتراک کاربران', key: 'subscriptions' },
     { name: 'سابقه کلیک تماس', key: 'call-logs' },
     { name: 'ریدایرکت ', key: 'redirect-urls' },
@@ -49,8 +50,8 @@ const modules = (): Prisma.AccessControlModuleCreateInput[] => {
     { name: 'چت ها', key: 'messenger-messages' },
     { name: 'چت روم ها', key: 'messenger-chatrooms' },
     { name: 'گزارش آگهی', key: 'property-reports' },
-   { name: 'رزرو', key: 'property-reserves'},
- ];
+    { name: 'رزرو', key: 'property-reserves' },
+  ];
 
   return data;
 };

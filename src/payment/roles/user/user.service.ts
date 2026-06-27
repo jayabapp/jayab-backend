@@ -13,6 +13,7 @@ import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
 
 @Injectable()
 export class PaymentUserService {
@@ -150,6 +151,14 @@ export class PaymentUserService {
       }
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
+
+      await tx.propertyPhotoUpgradeRequest.updateMany({
+        where: {
+          payment_id: payment.id,
+          status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT,
+        },
+        data: { status: PropertyPhotoUpgradeRequestStatus.PENDING },
+      });
 
       return { updatedPayment: item, subscription };
     });

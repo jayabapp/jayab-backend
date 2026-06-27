@@ -51,9 +51,10 @@ model Admin {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  role              AccessControlRole @relation(fields: [role_id], references: [id])
-  activities        AdminActivity[]
-  content_questions ContentQuestion[]
+  role                AccessControlRole                 @relation(fields: [role_id], references: [id])
+  activities          AdminActivity[]
+  content_questions   ContentQuestion[]
+  photo_upgrade_items PropertyPhotoUpgradeRequestItem[]
 
   @@map("admins")
 }
@@ -178,27 +179,28 @@ model Attachment {
 
   content_attachment          ContentAttachment[]
   content_categories          ContentCategory[]
-  content_feature_image       Content[]            @relation(name: "featureImage")
-  content_video               Content[]            @relation(name: "ContentVideo")
+  content_feature_image       Content[]                         @relation(name: "featureImage")
+  content_video               Content[]                         @relation(name: "ContentVideo")
   content_question_image      ContentQuestion[]
-  property                    Property[]           @relation("Property")
-  property_temp               Property[]           @relation("Property_Temp")
-  feature_image               Property[]           @relation("FeatureImage")
-  property_video              Property[]           @relation("Video")
-  banners                     Banner[]             @relation("Image")
-  banner_image_sm             Banner[]             @relation("ImageSm")
-  advisor_national_card_image Advisor?             @relation("NationalCard")
-  advisor_document_image      Advisor?             @relation("DocumentImage")
+  property                    Property[]                        @relation("Property")
+  property_temp               Property[]                        @relation("Property_Temp")
+  feature_image               Property[]                        @relation("FeatureImage")
+  property_video              Property[]                        @relation("Video")
+  banners                     Banner[]                          @relation("Image")
+  banner_image_sm             Banner[]                          @relation("ImageSm")
+  advisor_national_card_image Advisor?                          @relation("NationalCard")
+  advisor_document_image      Advisor?                          @relation("DocumentImage")
   user_profile_image          User?
   owner_selfie_image          Owner?
   category_image              Category?
   submitted_form_items        SubmittedFormItems[]
   city                        City[]
   messenger_media             MessengerMessages[]
-  property_auth_nc            PropertyAuthorize[]  @relation("PropertyAuthNcImage")
-  property_auth_docs          PropertyAuthorize[]  @relation("PropertyAuthDocsImage")
+  property_auth_nc            PropertyAuthorize[]               @relation("PropertyAuthNcImage")
+  property_auth_docs          PropertyAuthorize[]               @relation("PropertyAuthDocsImage")
   landing_page_image          LandingPage[]
   property_options            PropertyOption[]
+  photo_upgrade_items         PropertyPhotoUpgradeRequestItem[]
 
   @@map("attachments")
 }
@@ -466,9 +468,10 @@ model Owner {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  selfie_image Attachment? @relation(fields: [selfie_image_id], references: [id])
-  user         User?
-  properties   Property[]
+  selfie_image           Attachment?                   @relation(fields: [selfie_image_id], references: [id])
+  user                   User?
+  properties             Property[]
+  photo_upgrade_requests PropertyPhotoUpgradeRequest[]
 
   @@map("owners")
 }
@@ -575,15 +578,15 @@ model Property {
   deleted_at DateTime?
 
   // -------------------------------------------------------------------------- //
-  owner                  Owner                    @relation(fields: [owner_id], references: [id])
+  owner                  Owner                         @relation(fields: [owner_id], references: [id])
   property_options       OptionsOnProperty[]
-  region                 City?                    @relation("PropertyRegion", fields: [region_id], references: [id])
-  province               City?                    @relation("PropertyProvince", fields: [province_id], references: [id])
-  city                   City?                    @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image          Attachment?              @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video                  Attachment?              @relation("Video", fields: [video_id], references: [id])
-  attachments            Attachment[]             @relation("Property")
-  temp_attachments       Attachment[]             @relation("Property_Temp")
+  region                 City?                         @relation("PropertyRegion", fields: [region_id], references: [id])
+  province               City?                         @relation("PropertyProvince", fields: [province_id], references: [id])
+  city                   City?                         @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image          Attachment?                   @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  video                  Attachment?                   @relation("Video", fields: [video_id], references: [id])
+  attachments            Attachment[]                  @relation("Property")
+  temp_attachments       Attachment[]                  @relation("Property_Temp")
   bedrooms               PropertyBedroom?
   daily_price            PropertyDailyPrice?
   assistants             PropertyOwnerAssistant[]
@@ -604,6 +607,7 @@ model Property {
   call_logs              CallLog[]
   reports                PropertyReport[]
   reserves               PropertyReserve[]
+  photo_upgrade_requests PropertyPhotoUpgradeRequest[]
 
   @@index([id])
   @@index([code])
@@ -864,9 +868,10 @@ model Payment {
   created_at     DateTime @default(now()) @db.Timestamp(6)
   updated_at     DateTime @updatedAt()
 
-  gateway       PaymentGateway? @relation(fields: [gateway_key], references: [key])
-  property      Property?       @relation(fields: [property_id], references: [id])
-  subscriptions Subscription[]
+  gateway                PaymentGateway?               @relation(fields: [gateway_key], references: [key])
+  property               Property?                     @relation(fields: [property_id], references: [id])
+  subscriptions          Subscription[]
+  photo_upgrade_requests PropertyPhotoUpgradeRequest[]
 
   @@map("payments")
 }
@@ -1215,11 +1220,62 @@ model Subscription {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
-  advisor  Advisor?  @relation(fields: [advisor_id], references: [id])
-  property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
-  payment  Payment?  @relation(fields: [payment_id], references: [id], onDelete: SetNull)
+  advisor               Advisor?                     @relation(fields: [advisor_id], references: [id])
+  property              Property?                    @relation(fields: [property_id], references: [id], onDelete: SetNull)
+  payment               Payment?                     @relation(fields: [payment_id], references: [id], onDelete: SetNull)
+  photo_upgrade_request PropertyPhotoUpgradeRequest?
 
   @@map("subscriptions")
+}
+
+model PropertyPhotoUpgradeRequest {
+  id              Int       @id() @default(autoincrement())
+  property_id     Int
+  owner_id        Int
+  subscription_id Int?      @unique
+  payment_id      Int?
+  status          Int       @default(1) @db.SmallInt
+  image_count     Int       @default(0) @db.SmallInt
+  price_per_image Int
+  total_amount    Int
+  completed_at    DateTime?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property     Property                          @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  owner        Owner                             @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  subscription Subscription?                     @relation(fields: [subscription_id], references: [id], onDelete: SetNull)
+  payment      Payment?                          @relation(fields: [payment_id], references: [id], onDelete: SetNull)
+  items        PropertyPhotoUpgradeRequestItem[]
+
+  @@index([property_id])
+  @@index([owner_id])
+  @@index([payment_id])
+  @@index([status])
+  @@map("property_photo_upgrade_requests")
+}
+
+model PropertyPhotoUpgradeRequestItem {
+  id                 Int       @id() @default(autoincrement())
+  request_id         Int
+  attachment_id      Int
+  status             Int       @default(1) @db.SmallInt
+  edited_at          DateTime?
+  edited_by_admin_id Int?
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  request         PropertyPhotoUpgradeRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  attachment      Attachment                  @relation(fields: [attachment_id], references: [id], onDelete: Restrict)
+  edited_by_admin Admin?                      @relation(fields: [edited_by_admin_id], references: [id], onDelete: SetNull)
+
+  @@unique([request_id, attachment_id])
+  @@index([request_id])
+  @@index([attachment_id])
+  @@index([status])
+  @@map("property_photo_upgrade_request_items")
 }
 
 model SubscriptionReminder {
