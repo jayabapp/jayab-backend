@@ -19,7 +19,11 @@ export class AuthThrottlerGuard implements CanActivate {
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
   // محدودیت پایه auth: هر کاربر/موبایل/ادمین در هر ۱۵ دقیقه فقط ۵ بار مجاز است.
-  private readonly limit = 5;
+  private readonly limit = 3;
+
+  // محدودیت کلی IP: اگر شماره‌های مختلف هم تست شوند، یک IP بیشتر از ۲۰ درخواست در ۱۵ دقیقه نمی‌تواند بزند.
+  private readonly ipLimit = 20;
+
   private readonly windowMs = 15 * 60 * 1000;
 
   // اگر ۲۴ ساعت تخلف جدید نداشته باشد، شدت بلاک دوباره از مرحله اول شروع می‌شود.
@@ -34,9 +38,32 @@ export class AuthThrottlerGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const { req, res } = this.getRequestResponse(context);
     const now = Date.now();
-    const key = this.generateKey(context, req);
-    const record = await this.getRecord(key, now, req.ip);
+    const ipKey = this.generateIpKey(context, req);
+    const identityKey = this.generateIdentityKey(context, req);
+    const ipRecord = await this.getRecord(ipKey, now, req.ip);
+    const identityRecord = await this.getRecord(identityKey, now, req.ip);
 
+    // اول محدودیت کلی IP چک می‌شود تا تغییر شماره موبایل باعث دور زدن محدودیت نشود.
+    await this.applyLimit(ipKey, ipRecord, this.ipLimit, now, res);
+
+    // بعد محدودیت دقیق‌تر IP + شماره/اکانت چک می‌شود.
+    await this.applyLimit(identityKey, identityRecord, this.limit, now, res);
+
+    // headerها برای اینکه کلاینت بداند چند درخواست باقی مانده و چه زمانی reset می‌شود.
+    // res.header('X-Auth-RateLimit-Limit', this.limit.toString());
+    // res.header('X-Auth-RateLimit-Remaining', Math.max(0, this.limit - record.hits).toString());
+    // res.header('X-Auth-RateLimit-Reset', Math.ceil((record.windowExpiresAt - now) / 1000).toString());
+
+    return true;
+  }
+
+  private async applyLimit(
+    key: string,
+    record: AuthThrottleRecord,
+    limit: number,
+    now: number,
+    res: Response,
+  ): Promise<void> {
     // اگر قبلاً بلاک شده باشد، تا پایان زمان بلاک هیچ درخواست auth جدیدی قبول نمی‌شود.
     if (record.blockedUntil > now) {
       this.throwBlocked(res, record.blockedUntil - now);
@@ -50,8 +77,8 @@ export class AuthThrottlerGuard implements CanActivate {
 
     record.hits += 1;
 
-    // از درخواست ششم به بعد، کاربر وارد بلاک تصاعدی می‌شود.
-    if (record.hits > this.limit) {
+    // بعد از عبور از سقف هر bucket، بلاک تصاعدی همان bucket فعال می‌شود.
+    if (record.hits > limit) {
       const blockMs = this.getBlockMs(record, now);
       record.hits = 0;
       record.windowExpiresAt = now + this.windowMs + blockMs;
@@ -62,14 +89,7 @@ export class AuthThrottlerGuard implements CanActivate {
       this.throwBlocked(res, blockMs);
     }
 
-    // headerها برای اینکه کلاینت بداند چند درخواست باقی مانده و چه زمانی reset می‌شود.
-    // res.header('X-Auth-RateLimit-Limit', this.limit.toString());
-    // res.header('X-Auth-RateLimit-Remaining', Math.max(0, this.limit - record.hits).toString());
-    // res.header('X-Auth-RateLimit-Reset', Math.ceil((record.windowExpiresAt - now) / 1000).toString());
-
     await this.saveRecord(key, record, now);
-
-    return true;
   }
 
   private async getRecord(key: string, now: number, ip: string): Promise<AuthThrottleRecord> {
@@ -130,7 +150,7 @@ export class AuthThrottlerGuard implements CanActivate {
     throw new ThrottlerException('تعداد درخواست های احراز هویت بیش از حد مجاز شده است');
   }
 
-  private generateKey(context: ExecutionContext, req: Request): string {
+  private generateIdentityKey(context: ExecutionContext, req: Request): string {
     // کلید throttle ترکیبی از route، IP و شناسه auth است تا هر endpoint و هر شماره/اکانت جدا محدود شود.
     const rawIdentifier =
       req.body?.mobile_number || req.body?.username || req.user?.['id'] || req.ip || 'anonymous';
@@ -138,7 +158,14 @@ export class AuthThrottlerGuard implements CanActivate {
     const route = `${context.getClass().name}:${context.getHandler().name}`;
 
     const hash = createHash('sha256').update(`${route}:${identifier}`).digest('hex');
-    return `${this.redisKeyPrefix}:${hash}`;
+    return `${this.redisKeyPrefix}:identity:${hash}`;
+  }
+
+  private generateIpKey(context: ExecutionContext, req: Request): string {
+    // این کلید فقط بر اساس IP ساخته می‌شود تا اسپم با شماره‌های مختلف هم محدود شود.
+    const route = `${context.getClass().name}:${context.getHandler().name}`;
+    const hash = createHash('sha256').update(`${route}:${req.ip}`).digest('hex');
+    return `${this.redisKeyPrefix}:ip:${hash}`;
   }
 
   private getRequestResponse(context: ExecutionContext): { req: Request; res: Response } {
