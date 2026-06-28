@@ -7,10 +7,11 @@ import { AuthSharedService } from 'src/auth/auth-shared.service';
 import { FavoriteUserModule } from 'src/favorite/roles/user/user.module';
 import { BookmarkUserModule } from 'src/bookmark/roles/user/bookmark.module';
 import { ProfileUserModule } from 'src/profile/roles/user/profile-user.module';
+import { AuthThrottlerGuard } from 'src/auth/guards/auth-throttler.guard';
 
 @Module({
   imports: [SmsModule, AttachmentModule, FavoriteUserModule, BookmarkUserModule, ProfileUserModule],
   controllers: [AuthUserController],
-  providers: [AuthUserService, AuthSharedService],
+  providers: [AuthUserService, AuthSharedService, AuthThrottlerGuard],
 })
 export class UserModule {}

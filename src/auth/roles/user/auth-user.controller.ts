@@ -2,9 +2,10 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { Body, Controller, Get, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AuthSharedService } from 'src/auth/auth-shared.service';
 import { USER_AUTH_ROUTE_GROUP } from 'src/auth/common/route-group.constant';
+import { AuthThrottlerGuard } from 'src/auth/guards/auth-throttler.guard';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { CreateOTPDto, VerifyOTPDto } from 'src/auth/roles/user/dto/auth-user.dto';
 import { BookmarkUserService } from 'src/bookmark/roles/user/bookmark.service';
@@ -32,7 +33,7 @@ export class AuthUserController {
   ) {}
 
   @ApiOperation({ summary: 'Create OTP code' })
-  @Throttle({ default: { limit: 5, ttl: 15 * 60 * 1000 } }) //هر ۱۵ دقیقه ۵ درخواست
+  @UseGuards(AuthThrottlerGuard)
   @Post('/otp')
   async createOtpCode(@Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
     /**
@@ -57,6 +58,7 @@ export class AuthUserController {
 
   @ApiOperation({ summary: 'Verify OTP code' })
   // @ApiHeader({ name: 'authorization', required: false })
+  @UseGuards(AuthThrottlerGuard)
   @Post('/otp/verify')
   async verifyOtpCode(@Req() req: Request, @Body() dto: VerifyOTPDto): Promise<SuccessResponseArgs> {
     /* -------------------------------------------------------------------------- */

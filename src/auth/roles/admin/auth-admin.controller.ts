@@ -10,6 +10,7 @@ import { AdminAuthJwtGuard } from 'src/auth/guards/jwt/admin-auth.guard';
 import { Admin } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
+import { AuthThrottlerGuard } from 'src/auth/guards/auth-throttler.guard';
 
 @ApiTags('🔐 Auth - ADMIN')
 @Controller(ADMIN_AUTH_ROUTE_GROUP)
@@ -22,6 +23,7 @@ export class AuthAdminController {
   ) {}
 
   @ApiOperation({ summary: 'Signin admin' })
+  @UseGuards(AuthThrottlerGuard)
   @Post('signin')
   async createOtpCode(@Body() dto: SignInAdminDto): Promise<SuccessResponseArgs> {
     const adminData = await this.authAdminService.verifyAdminCredential(dto);
@@ -49,7 +51,7 @@ export class AuthAdminController {
 
   @ApiOperation({ summary: 'Check otp code' })
   @ApiBearerAuth('admin-auth-jwt')
-  @UseGuards(AdminAuthJwtGuard)
+  @UseGuards(AdminAuthJwtGuard, AuthThrottlerGuard)
   @Post('two-step-verification')
   async verifyOtpCode(@Req() request, @Body() dto: VerifyAdminOTPDto): Promise<SuccessResponseArgs> {
     const admin = request.user as Admin;
