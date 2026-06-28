@@ -14,6 +14,8 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import validationOptions from './common/utils/validation-options';
 import { __baseDir } from './config/settings';
 import { LoggerService } from './logger/logger.service';
+import { CorsMiddleware } from './common/middlewares/cors.middleware';
+import { SocketIoCustomAdapter } from './socket/common/socketio-custom-adapter';
 
 declare global {
   interface BigInt {
@@ -40,10 +42,15 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(new ValidationPipe(validationOptions));
   app.useGlobalFilters(new HttpExceptionFilter(configService));
-  app.enableCors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  });
+  // app.enableCors({
+  //   origin: '*',
+  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  // });
+
+  app.enableCors({});
+  app.use(CorsMiddleware);
+
+  app.useWebSocketAdapter(new SocketIoCustomAdapter(app));
 
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalInterceptors(new RBACInterceptor());
