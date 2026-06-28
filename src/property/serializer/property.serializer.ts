@@ -228,8 +228,8 @@ export class PropertySerializer {
       owner: data?.owner
         ? {
             id: data.owner_id,
-            mobile_number: data.owner.user.mobile_number,
-            full_name: data.owner.user.full_name,
+            mobile_number: data.owner.user?.mobile_number,
+            full_name: data.owner.user?.full_name,
           }
         : null,
       feature_image: data.feature_image,
