@@ -37,6 +37,13 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
         query = { ...query, owner_id: +filters.owner_id };
         break;
 
+      case 'owner_mobile_number':
+        query = {
+          ...query,
+          owner: { user: { mobile_number: { contains: filters.owner_mobile_number } } },
+        };
+        break;
+
       case 'status':
         if (+filters.status === PropertyStatuses.DELETED)
           query = { ...query, status: +filters.status, deleted_at: new Date() };

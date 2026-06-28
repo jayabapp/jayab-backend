@@ -367,6 +367,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'کد', state: 'code', type: 'input' },
     { title: 'عنوان', state: 'title', type: 'input' },
+    { title: 'شماره تماس میزبان', state: 'owner_mobile_number', type: 'input' },
 
     { title: 'منقضی شده ها', state: 'expired', type: 'switch' },
     { title: 'احراز شده ها', state: 'authorized', type: 'switch' },

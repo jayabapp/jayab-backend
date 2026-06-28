@@ -17,6 +17,11 @@ export class FindAllPropertyAdminDto extends PaginationDto {
   @IsOptional()
   owner_id: number;
 
+  @ApiProperty({ required: false, example: '0912' })
+  @_IsString()
+  @IsOptional()
+  owner_mobile_number: string;
+
   @ApiProperty({ required: false, example: 1 })
   @IsOptional()
   code: string;
