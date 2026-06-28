@@ -28,14 +28,19 @@ export const showPropsBuilder = (
   item: PropertyPhotoUpgradeRequest & { items?: unknown[] },
 ): Array<ShowProps> => {
   const props: Array<ShowProps> = [
-    { state: 'status', title: 'وضعیت درخواست', value: item.status, type: 'chip' },
+    {
+      state: 'status',
+      title: 'وضعیت درخواست',
+      value: PropertyPhotoUpgradeRequestStatusesList.find((e) => e.id === item.status),
+      type: 'chip',
+    },
     { state: 'image_count', title: 'تعداد تصاویر', value: item.image_count, type: 'number' },
     { state: 'price_per_image', title: 'قیمت هر تصویر', value: item.price_per_image, type: 'number' },
     { state: 'total_amount', title: 'مبلغ کل', value: item.total_amount, type: 'number' },
     { state: 'created_at', title: 'تاریخ ثبت', value: item.created_at, type: 'date' },
     { state: 'completed_at', title: 'تاریخ تکمیل', value: item.completed_at, type: 'date' },
     { type: 'break' },
-    { state: 'items', title: 'تصاویر درخواست', value: item.items || [], type: 'list' },
+    { state: 'items', title: 'تصاویر درخواست', value: item.items || [], type: 'image' },
   ];
 
   return props;
@@ -153,7 +158,6 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
   const availableActions: Array<AvailableAction> = [];
 
   if (rbac.r) availableActions.push('show');
-  if (rbac.u) availableActions.push('submit');
 
   return availableActions;
 };

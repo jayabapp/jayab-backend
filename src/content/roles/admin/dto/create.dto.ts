@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsAlpha, IsObject, IsOptional } from 'class-validator';
+import { IsDate, IsObject, IsOptional } from 'class-validator';
 import {
   _IsInt,
   _IsNotEmpty,
@@ -70,6 +70,15 @@ export class CreateContentAdminDto {
   @_IsBoolean()
   @_IsNotEmpty()
   show_in_sitemap: boolean;
+
+  @ApiProperty({ required: false, example: '2026-06-27T12:00:00.000Z' })
+  @Transform(({ value }) => {
+    if (!value) return null;
+    return new Date(value);
+  })
+  @IsDate()
+  @IsOptional()
+  published_at?: Date;
 
   @ApiProperty({ required: true, example: 1 })
   @_IsInt()

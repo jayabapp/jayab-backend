@@ -106,6 +106,12 @@ export const showPropsBuilder = (
       type: 'boolean',
     },
     {
+      state: 'published_at',
+      title: 'تاریخ انتشار',
+      value: item.published_at,
+      type: 'date',
+    },
+    {
       state: 'created_at',
       title: 'تاریخ ایجاد',
       value: item.created_at,
@@ -264,6 +270,7 @@ export const createPropsBuilder = (formattedCategories: any): Array<CreateProps>
     },
     { state: 'is_active', type: 'switch', title: 'فعال', options: { initValue: true } },
     { state: 'show_in_sitemap', type: 'switch', title: 'نمایش در سایت مپ', options: { initValue: true } },
+    { state: 'published_at', type: 'date', title: 'تاریخ انتشار', options: {} },
     { state: '', type: 'break', title: '', options: {} },
     { state: 'small_text', type: 'textarea', title: 'توضیحات کوتاه', options: {} },
     { state: 'full_text', type: 'textarea', title: 'توضیحات بلند', options: {} },
@@ -307,6 +314,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 11, title: 'کلید', key: 'key', cellType: 'string' },
       { id: 30, title: 'فعال', key: 'is_active', cellType: 'boolean' },
       { id: 31, title: 'نمایش در سایت مپ', key: 'show_in_sitemap', cellType: 'boolean' },
+      { id: 32, title: 'تاریخ  انتشار', key: 'published_at', cellType: 'date' },
       { id: 20, title: 'ترتیب', key: 'order', cellType: 'string' },
       { id: 21, title: 'بازدید', key: 'view_count', cellType: 'string' },
       {

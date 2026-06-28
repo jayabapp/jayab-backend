@@ -9,6 +9,13 @@ import { ContentSort, FindAllContentSharedDto } from './dto/find-all.dto';
 export class ContentSharedService {
   constructor(private readonly db: PrismaService) {}
 
+  private publishedContentWhere(): Prisma.ContentWhereInput {
+    return {
+      is_active: true,
+      OR: [{ published_at: null }, { published_at: { lte: new Date() } }],
+    };
+  }
+
   /**
    * find all Content
    * @param page
@@ -33,22 +40,22 @@ export class ContentSharedService {
     /**
      * query
      */
-    let where: Prisma.ContentWhereInput = {
-      is_active: true,
-      category: { OR: [{ id: category.id }, { parent_id: category.id }] },
-    };
+    const andWhere: Prisma.ContentWhereInput[] = [
+      this.publishedContentWhere(),
+      { category: { OR: [{ id: category.id }, { parent_id: category.id }] } },
+    ];
     if (dto.q && typeof dto.q === 'string') {
-      const titles = dto.q.split(' ');
-      const titleQuery = [];
+      const titles = dto.q.split(' ').filter(Boolean);
+      const titleQuery: Prisma.ContentWhereInput[] = [];
       titles.map((e) => {
         titleQuery.push({ title: { contains: e, mode: 'insensitive' } });
       });
 
-      where = { ...where, OR: titleQuery };
+      if (titleQuery.length) andWhere.push({ OR: titleQuery });
     }
 
     const query: Prisma.ContentFindManyArgs = {
-      where: where,
+      where: { AND: andWhere },
       include: {
         category: { include: { parent: true, image: true } },
         feature_image: true,
@@ -73,7 +80,7 @@ export class ContentSharedService {
    */
   async findOne(contentId: number): Promise<Content> {
     const item = await this.db.content.findFirst({
-      where: { id: contentId },
+      where: { id: contentId, AND: [this.publishedContentWhere()] },
       include: {
         category: {
           include: {
@@ -100,7 +107,7 @@ export class ContentSharedService {
    */
   async findOneByKey(key: string): Promise<Content> {
     const item = await this.db.content.findFirst({
-      where: { key: `${key}` },
+      where: { key: `${key}`, AND: [this.publishedContentWhere()] },
       include: {
         category: true,
         feature_image: true,
@@ -121,7 +128,7 @@ export class ContentSharedService {
    */
   async findOneBySlug(slug: string): Promise<Content> {
     const item = await this.db.content.update({
-      where: { slug },
+      where: { slug, AND: [this.publishedContentWhere()] },
       include: {
         category: {
           include: {

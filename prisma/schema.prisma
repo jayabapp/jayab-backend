@@ -248,6 +248,7 @@ model Content {
   link             String?
   video_id         Int?
   show_in_sitemap  Boolean @default(true)
+  published_at     DateTime?
 
   fields      Json?               @db.JsonB
   seo         Json?               @db.JsonB
