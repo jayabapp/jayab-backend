@@ -14,3 +14,10 @@ export class UpdateRobotTxtDto {
   @_IsNotEmpty()
   robot_text: string;
 }
+
+export class UpdateLlmsTxtDto {
+  @ApiProperty({ title: 'محتوا', required: true })
+  @_IsString()
+  @_IsNotEmpty()
+  llms_text: string;
+}

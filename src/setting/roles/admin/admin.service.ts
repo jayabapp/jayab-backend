@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Setting } from '@prisma/client';
-import { UpdateRobotTxtDto, UpdateSettingDto } from 'src/setting/dto/update-setting.dto';
+import { UpdateLlmsTxtDto, UpdateRobotTxtDto, UpdateSettingDto } from 'src/setting/dto/update-setting.dto';
 
 import { SettingDataType, SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -130,6 +130,39 @@ Allow: *
     const file = await fs.writeFile(path, dto.robot_text);
 
     return file;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                  LLMS.TXT                                  */
+  /* -------------------------------------------------------------------------- */
+  async findLlms(): Promise<string> {
+    try {
+      const path = __baseDir + '/storage/public/seo/llms.txt';
+      const publicPath = __baseDir + '/storage/public/llms.txt';
+      const defaultContent = `# Jayab
+
+`;
+
+      const isExist = await this.fileExists(path);
+      if (!isExist) {
+        await fs.writeFile(path, defaultContent);
+      }
+
+      const file = (await fs.readFile(path)).toString();
+      await fs.writeFile(publicPath, file);
+
+      return file;
+    } catch (error) {
+      throw new NotFoundException('');
+    }
+  }
+
+  async updateLlms(dto: UpdateLlmsTxtDto): Promise<void> {
+    const path = __baseDir + '/storage/public/seo/llms.txt';
+    const publicPath = __baseDir + '/storage/public/llms.txt';
+
+    await fs.writeFile(path, dto.llms_text);
+    await fs.writeFile(publicPath, dto.llms_text);
   }
 
   /* -------------------------------------------------------------------------- */

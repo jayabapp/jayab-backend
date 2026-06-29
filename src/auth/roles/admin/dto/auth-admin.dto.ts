@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { Validate } from 'class-validator';
 import {
   _IsInt,
@@ -14,6 +15,7 @@ import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator
 
 export class AdminUserPassDto {
   @ApiProperty({ required: true, example: 'superadmin' })
+  @Transform(({ value }: { value: string }) => value?.toLowerCase())
   @_IsString()
   @_IsNotEmpty()
   username: string;

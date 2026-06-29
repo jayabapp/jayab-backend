@@ -20,6 +20,13 @@ export class SettingSharedController {
     return { result: result };
   }
 
+  @ApiOperation({ summary: 'Find llms.txt' })
+  @Get('llms')
+  async findLlms(): Promise<SuccessResponseArgs> {
+    const result = await this.settingAdminService.findLlms();
+    return { result: result };
+  }
+
   @Throttle({ default: { limit: 3, ttl: 15000 } })
   @ApiOperation({ summary: 'Find sitemap.xml' })
   @Get('sitemap')

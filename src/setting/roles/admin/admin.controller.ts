@@ -2,7 +2,7 @@ import { Controller, Get, Body, Patch, Param, UseGuards, Post } from '@nestjs/co
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { UpdateRobotTxtDto, UpdateSettingDto } from 'src/setting/dto/update-setting.dto';
+import { UpdateLlmsTxtDto, UpdateRobotTxtDto, UpdateSettingDto } from 'src/setting/dto/update-setting.dto';
 import { SettingAdminService } from './admin.service';
 
 @ApiTags('👨‍💻 Settings - ADMIN')
@@ -28,6 +28,13 @@ export class SettingAdminController {
   @Post('robot')
   async updateRobot(@Body() dto: UpdateRobotTxtDto): Promise<SuccessResponseArgs> {
     await this.settingAdminService.updateRobot(dto);
+    return { messageCode: 'COMMON4' };
+  }
+
+  @ApiOperation({ summary: 'Update llms.txt' })
+  @Post('llms')
+  async updateLlms(@Body() dto: UpdateLlmsTxtDto): Promise<SuccessResponseArgs> {
+    await this.settingAdminService.updateLlms(dto);
     return { messageCode: 'COMMON4' };
   }
 

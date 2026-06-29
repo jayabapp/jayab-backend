@@ -32,7 +32,10 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
 
   app.setGlobalPrefix(configService.get('app.apiPrefix'), {
-    exclude: [{ path: 'robots.txt', method: RequestMethod.GET }],
+    exclude: [
+      { path: 'robots.txt', method: RequestMethod.GET },
+      { path: 'llms.txt', method: RequestMethod.GET },
+    ],
   });
 
   app.enableVersioning({
