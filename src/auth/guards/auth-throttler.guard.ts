@@ -29,8 +29,8 @@ export class AuthThrottlerGuard implements CanActivate {
   // اگر ۲۴ ساعت تخلف جدید نداشته باشد، شدت بلاک دوباره از مرحله اول شروع می‌شود.
   private readonly strikeResetMs = 24 * 60 * 60 * 1000;
 
-  // بلاک‌ها تصاعدی زیاد می‌شوند، اما بیشتر از ۴ ساعت نمی‌شوند.
-  private readonly maxBlockMs = 4 * 60 * 60 * 1000;
+  // بلاک‌ها تصاعدی زیاد می‌شوند، اما بیشتر از ۱۲ ساعت نمی‌شوند.
+  private readonly maxBlockMs = 12 * 60 * 60 * 1000;
 
   // این state در Redis نگهداری می‌شود؛ با restart اپ پاک نمی‌شود و بین instanceها مشترک است.
   private readonly redisKeyPrefix = 'auth-throttle';

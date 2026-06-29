@@ -29,4 +29,12 @@ export class ContentQuestionUserController {
 
     return { result };
   }
+
+  @ApiOperation({ summary: 'Rate', description: '' })
+  @Get('rate')
+  async calculateRate(@Query() dto: FindAllContentQuestionUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.contentQuestionUserService.calculateRate(dto);
+
+    return { result };
+  }
 }

@@ -5,6 +5,11 @@ import { CreateContentQuestionUserDto } from './dto/create.dto';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { FindAllContentQuestionUserDto } from './dto/find-all.dto';
 
+type ContentQuestionRateStats = {
+  total_rate: number;
+  rate_count: number;
+};
+
 @Injectable()
 export class ContentQuestionUserService {
   constructor(private readonly db: PrismaService) {}
@@ -29,6 +34,37 @@ export class ContentQuestionUserService {
    * @returns
    */
   async findAll(dto: FindAllContentQuestionUserDto): Promise<PaginatedResult<ContentQuestion>> {
+    const q = this.createFindAllQuery(dto);
+
+    const list = paginate()<ContentQuestion, Prisma.ContentQuestionFindManyArgs>(
+      this.db.contentQuestion,
+      {
+        where: q,
+        include: { image: true },
+        omit: { mobile_number: true, admin_id: true, content_id: true, content_category_id: true },
+      },
+      { page: dto.page, perPage: dto.per_page },
+    );
+
+    return list;
+  }
+
+  async calculateRate(dto: FindAllContentQuestionUserDto): Promise<ContentQuestionRateStats> {
+    const q = this.createFindAllQuery(dto);
+
+    const rateStats = await this.db.contentQuestion.aggregate({
+      where: { AND: [q, { rate: { not: null } }] },
+      _sum: { rate: true },
+      _count: { rate: true },
+    });
+
+    return {
+      total_rate: rateStats._sum.rate || 0,
+      rate_count: rateStats._count.rate || 0,
+    };
+  }
+
+  private createFindAllQuery(dto: FindAllContentQuestionUserDto): Prisma.ContentQuestionWhereInput {
     let q: Prisma.ContentQuestionWhereInput = { is_publish: true };
     if (dto.content_id) q = { ...q, content_id: dto.content_id };
     else if (dto.content_key) q = { ...q, content: { key: dto.content_key } };
@@ -44,16 +80,6 @@ export class ContentQuestionUserService {
         },
       };
 
-    const list = paginate()<ContentQuestion, Prisma.ContentQuestionFindManyArgs>(
-      this.db.contentQuestion,
-      {
-        where: q,
-        include: { image: true },
-        omit: { mobile_number: true, admin_id: true, content_id: true, content_category_id: true },
-      },
-      { page: dto.page, perPage: dto.per_page },
-    );
-
-    return list;
+    return q;
   }
 }

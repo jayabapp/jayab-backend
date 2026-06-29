@@ -7,8 +7,8 @@ export class PaginationDto {
   @ApiProperty({ title: 'صفحه', example: 1 })
   @_IsInt()
   @Type(() => Number)
-  @_IsNotEmpty()
-  page: number;
+  @IsOptional()
+  page: number = 1;
 
   @ApiPropertyOptional({ title: 'تعداد در  صفحه', example: 10 })
   @_IsInt()
