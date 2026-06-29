@@ -28,11 +28,11 @@ export class AuthUserService {
    */
   async findOrCreateUser(mobileNumber: string): Promise<{ user: User; isNewUser: boolean }> {
     /* -------------------------------------------------------------------------- */
-    let user = await this.db.user.findFirst({
+    let user = await this.db.user.findUnique({
       where: { mobile_number: mobileNumber },
     });
 
-    const isNewUser = Boolean(user);
+    let isNewUser = false;
     /* -------------------------------------------------------------------------- */
     /**
      * create a new user if not found
@@ -46,6 +46,7 @@ export class AuthUserService {
       user = await this.db.user.create({
         data: { mobile_number: mobileNumber, referral_code: referralCode },
       });
+      isNewUser = true;
     }
 
     return { user, isNewUser };
