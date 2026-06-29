@@ -6,7 +6,7 @@ import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { FindAllContentQuestionUserDto } from './dto/find-all.dto';
 
 type ContentQuestionRateStats = {
-  total_rate: number;
+  rate: number;
   rate_count: number;
 };
 
@@ -54,12 +54,12 @@ export class ContentQuestionUserService {
 
     const rateStats = await this.db.contentQuestion.aggregate({
       where: { AND: [q, { rate: { not: null } }] },
-      _sum: { rate: true },
+      _avg: { rate: true },
       _count: { rate: true },
     });
 
     return {
-      total_rate: rateStats._sum.rate || 0,
+      rate: rateStats._avg.rate || 0,
       rate_count: rateStats._count.rate || 0,
     };
   }

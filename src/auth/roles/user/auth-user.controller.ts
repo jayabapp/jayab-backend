@@ -35,11 +35,11 @@ export class AuthUserController {
   @ApiOperation({ summary: 'Create OTP code' })
   @UseGuards(AuthThrottlerGuard)
   @Post('/otp')
-  async createOtpCode(@Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
+  async createOtpCode(@Req() req: Request, @Body() dto: CreateOTPDto): Promise<SuccessResponseArgs> {
     /**
      * create otp
      */
-    const otpRecord = await this.authSharedService.createOtpCode(dto, 'user');
+    const otpRecord = await this.authSharedService.createOtpCode(dto, 'user', req.ip);
     let code = otpRecord?.code;
 
     /* -------------------------------------------------------------------------- */

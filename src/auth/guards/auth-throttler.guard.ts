@@ -43,6 +43,8 @@ export class AuthThrottlerGuard implements CanActivate {
     const ipRecord = await this.getRecord(ipKey, now, req.ip);
     const identityRecord = await this.getRecord(identityKey, now, req.ip);
 
+    console.log({ ip: req.ip });
+
     // اول محدودیت کلی IP چک می‌شود تا تغییر شماره موبایل باعث دور زدن محدودیت نشود.
     await this.applyLimit(ipKey, ipRecord, this.ipLimit, now, res);
 

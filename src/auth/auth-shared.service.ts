@@ -16,7 +16,11 @@ export class AuthSharedService {
    * @param dto
    * @returns
    */
-  async createOtpCode(dto: CreateOTPDto, whom: 'admin' | 'user'): Promise<{ code: string }> {
+  async createOtpCode(
+    dto: CreateOTPDto,
+    whom: 'admin' | 'user',
+    ipAddress?: string,
+  ): Promise<{ code: string }> {
     const { mobile_number } = dto;
 
     /* -------------------------------------------------------------------------- */
@@ -45,7 +49,13 @@ export class AuthSharedService {
       /**
        * if sms sent from thirty seconds ago don't send again
        */
-      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) return { code: finalCode };
+      if (!this.checkTimeDifference(otpRecord.sms_send_at, 0.5)) {
+        await this.db.otp.update({
+          where: { id: otpRecord.id },
+          data: { ip_address: ipAddress, updated_at: otpRecord.updated_at },
+        });
+        return { code: finalCode };
+      }
 
       /**
        * check the expiration date of the verification code using the checkExpirationCode method.
@@ -56,10 +66,10 @@ export class AuthSharedService {
 
       await this.db.otp.update({
         where: { id: otpRecord.id },
-        data: { code: finalCode, sms_send_at: new Date() },
+        data: { code: finalCode, ip_address: ipAddress, sms_send_at: new Date() },
       });
     } else {
-      await this.db.otp.create({ data: { mobile_number, code: rand } });
+      await this.db.otp.create({ data: { mobile_number, code: rand, ip_address: ipAddress } });
       finalCode = rand;
     }
 
