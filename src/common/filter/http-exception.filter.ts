@@ -251,6 +251,7 @@ const failedMessages = {
   CLIENT2: 'The ip is invalid',
   CLIENT3: '',
 
+  PROPERTY_PHOTO_UPGRADE1: 'حداقل یک تصویر را باید انتخاب کنید',
   PHOTO_UPGRADE1: 'تصاویر انتخاب شده متعلق به اقامتگاه مورد نظر نیست',
   PHOTO_UPGRADE2: '',
 };

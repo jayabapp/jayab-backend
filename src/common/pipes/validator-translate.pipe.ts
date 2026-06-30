@@ -307,6 +307,7 @@ export const PROPS = {
   guests_count: 'تعداد مهمان',
   check_in: 'تاریخ ورود',
   check_out: 'تاریخ خروج',
+  photo_upgrade_image_ids: 'تصویر',
 };
 
 /* ------------------------------- Decorators ------------------------------- */
