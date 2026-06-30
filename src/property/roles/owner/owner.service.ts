@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Property, PropertyStatistics, SubscriptionPlan } from '@prisma/client';
-import { isEmpty, random, xor } from 'lodash';
+import { difference, isEmpty, random, xor } from 'lodash';
 import moment from 'moment-jalaali';
 import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
@@ -635,61 +635,6 @@ export class PropertyOwnerService {
     return result.paymentUrl;
   }
 
-  async findPhotoUpgradeService(): Promise<PhotoUpgradeServiceContent> {
-    const pricePerImage = await this.getPhotoUpgradePrice();
-    const beforeImage = await this.getOptionalSetting(SettingKey.PROPERTY_PHOTO_UPGRADE_BEFORE_IMAGE);
-    const afterImage = await this.getOptionalSetting(SettingKey.PROPERTY_PHOTO_UPGRADE_AFTER_IMAGE);
-
-    return {
-      title: 'ارتقا سرویس تصاویر آگهی',
-      description:
-        'با فعال سازی این سرویس، تصاویر اقامتگاه شما برای نمایش حرفه ای تر در آگهی ویرایش و آماده سازی می شود.',
-      steps: [
-        'انتخاب اقامتگاه',
-        'انتخاب یا تایید تصاویر',
-        'محاسبه تعداد عکس و هزینه سرویس',
-        'پرداخت همراه با پلن اشتراک',
-      ],
-      before_after: {
-        before: beforeImage || null,
-        after: afterImage || null,
-      },
-      price_per_image: pricePerImage,
-    };
-  }
-
-  async findPhotoUpgradeProperties(ownerId: number): Promise<PhotoUpgradeProperty[]> {
-    const list = await this.db.property.findMany({
-      where: { owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
-      select: {
-        id: true,
-        title: true,
-        code: true,
-        feature_image: true,
-        attachments: { where: { type: 1 }, select: { id: true, name: true, thumbnail: true, path: true } },
-        _count: { select: { attachments: true } },
-      },
-      orderBy: { updated_at: 'desc' },
-    });
-
-    return list.map((item) => ({
-      id: item.id,
-      title: item.title,
-      code: item.code,
-      feature_image: item.feature_image,
-      images_count: item.attachments.length,
-      images: item.attachments,
-    }));
-  }
-
-  async quotePhotoUpgrade(
-    ownerId: number,
-    propertyId: number,
-    dto: PhotoUpgradeQuotePropertyOwnerDto,
-  ): Promise<PhotoUpgradeQuote> {
-    return this.buildPhotoUpgradeQuote(ownerId, propertyId, dto.image_ids);
-  }
-
   async buildPhotoUpgradeCheckoutSummary(
     ownerId: number,
     property: PropertyInterceptorData,
@@ -989,18 +934,18 @@ export class PropertyOwnerService {
     });
 
     if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
-    if (imageIds?.length && property.attachments.length !== imageIds.length)
-      throw new BadRequestException('PROPERTY_PHOTO_UPGRADE_IMAGES');
+
+    const propertyImagesIds = property.attachments?.map((e) => e.id);
+    if (!isEmpty(difference(imageIds, propertyImagesIds))) throw new BadRequestException('PHOTO_UPGRADE1');
 
     const pricePerImage = await this.getPhotoUpgradePrice();
-    const selectedImageIds = property.attachments.map((item) => item.id);
 
     return {
       property_id: property.id,
-      image_ids: selectedImageIds,
-      image_count: selectedImageIds.length,
+      image_ids: imageIds,
+      image_count: imageIds.length,
       price_per_image: pricePerImage,
-      total_amount: selectedImageIds.length * pricePerImage,
+      total_amount: imageIds.length * pricePerImage,
     };
   }
 

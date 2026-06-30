@@ -231,33 +231,9 @@ export class PropertyOwnerController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Photo upgrade service content' })
-  @Get('photo-upgrade-service')
-  async findPhotoUpgradeService(): Promise<SuccessResponseArgs> {
-    const result = await this.propertyOwnerService.findPhotoUpgradeService();
-    return { result };
-  }
-
-  @ApiOperation({ summary: 'Owner properties for photo upgrade service' })
-  @Get('photo-upgrade-service/properties')
-  async findPhotoUpgradeProperties(@Req() req: RequestType): Promise<SuccessResponseArgs> {
-    const user = req.user;
-    const result = await this.propertyOwnerService.findPhotoUpgradeProperties(user.owner_id);
-    return { result };
-  }
-
-  @ApiOperation({ summary: 'Photo upgrade service quote' })
-  @Post(':propertyId/photo-upgrade-service/quote')
-  async quotePhotoUpgrade(
-    @Req() req: RequestType,
-    @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: PhotoUpgradeQuotePropertyOwnerDto,
-  ): Promise<SuccessResponseArgs> {
-    const user = req.user;
-    const result = await this.propertyOwnerService.quotePhotoUpgrade(user.owner_id, propertyId, dto);
-    return { result };
-  }
-
+  /* -------------------------------------------------------------------------- */
+  /*                                PHOTO UPGRADE                               */
+  /* -------------------------------------------------------------------------- */
   @ApiOperation({ summary: 'Checkout summary for subscription and photo upgrade service' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Post(':propertyId/photo-upgrade-service/checkout-summary')

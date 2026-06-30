@@ -250,4 +250,7 @@ const failedMessages = {
   CLIENT1: 'The x-api-key is invalid',
   CLIENT2: 'The ip is invalid',
   CLIENT3: '',
+
+  PHOTO_UPGRADE1: 'تصاویر انتخاب شده متعلق به اقامتگاه مورد نظر نیست',
+  PHOTO_UPGRADE2: '',
 };
