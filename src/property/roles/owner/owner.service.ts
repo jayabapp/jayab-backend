@@ -536,13 +536,14 @@ export class PropertyOwnerService {
     if (dto.subscription_id)
       subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
 
+    //بهینه سازی تصاویر
     if (dto.photo_upgrade_enabled) {
+      if (dto.photo_upgrade_image_ids?.length < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
       photoUpgradeQuote = await this.buildPhotoUpgradeQuote(
         user.owner_id,
         property.id,
         dto.photo_upgrade_image_ids,
       );
-      if (photoUpgradeQuote.image_count < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
     }
 
     /* -------------------------------------------------------------------------- */
