@@ -67,7 +67,25 @@ export class PropertyPhotoUpgradeRequestAdminService {
     const item = await this.db.propertyPhotoUpgradeRequest.findUnique({
       where: { id },
       include: {
-        property: { select: { id: true, title: true, code: true } },
+        property: {
+          select: {
+            id: true,
+            title: true,
+            code: true,
+            temp_attachments: {
+              select: {
+                id: true,
+                name: true,
+                thumbnail: true,
+                path: true,
+                medium: true,
+                bucket: true,
+                end_point: true,
+                alt: true,
+              },
+            },
+          },
+        },
         owner: { select: { id: true, user: { select: { full_name: true, mobile_number: true } } } },
         payment: { select: { id: true, amount: true, status: true, ref_id: true } },
         subscription: { select: { id: true, title: true, status: true } },
@@ -82,6 +100,19 @@ export class PropertyPhotoUpgradeRequestAdminService {
                 medium: true,
                 bucket: true,
                 end_point: true,
+                alt: true,
+              },
+            },
+            original_attachment: {
+              select: {
+                id: true,
+                name: true,
+                thumbnail: true,
+                path: true,
+                medium: true,
+                bucket: true,
+                end_point: true,
+                alt: true,
               },
             },
             edited_by_admin: { select: { id: true, full_name: true } },
@@ -105,6 +136,8 @@ export class PropertyPhotoUpgradeRequestAdminService {
         status_title: PropertyPhotoUpgradeRequestItemStatusesList.find((e) => e.id === requestItem.status)
           ?.title,
         is_edited: requestItem.status === PropertyPhotoUpgradeRequestItemStatus.EDITED,
+        current_attachment: requestItem.attachment,
+        previous_attachment: requestItem.original_attachment,
       })),
     };
 
@@ -129,7 +162,7 @@ export class PropertyPhotoUpgradeRequestAdminService {
   ): Promise<{ showProps: ShowProps[]; actions?: ShowAction[]; item: any }> {
     const request = await this.db.propertyPhotoUpgradeRequest.findUnique({
       where: { id: requestId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, property_id: true },
     });
     if (!request) throw new NotFoundException('NOT_FOUND');
     if (request.status === PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT)
@@ -137,14 +170,30 @@ export class PropertyPhotoUpgradeRequestAdminService {
 
     const requestItem = await this.db.propertyPhotoUpgradeRequestItem.findFirst({
       where: { id: itemId, request_id: requestId },
-      select: { id: true },
+      select: { id: true, attachment_id: true, original_attachment_id: true },
     });
     if (!requestItem) throw new NotFoundException('NOT_FOUND');
+
+    if (dto.attachment_id) {
+      const attachment = await this.db.attachment.findUnique({
+        where: { id: dto.attachment_id },
+        select: { id: true },
+      });
+      if (!attachment) throw new NotFoundException('ATTACHMENT_NOT_FOUND');
+    }
 
     await this.db.$transaction(async (tx) => {
       await tx.propertyPhotoUpgradeRequestItem.update({
         where: { id: itemId },
-        data: dto.is_edited
+        data: dto.attachment_id
+          ? {
+              attachment_id: dto.attachment_id,
+              original_attachment_id: requestItem.original_attachment_id || requestItem.attachment_id,
+              status: PropertyPhotoUpgradeRequestItemStatus.EDITED,
+              edited_at: new Date(),
+              edited_by_admin_id: adminId,
+            }
+          : dto.is_edited
           ? {
               status: PropertyPhotoUpgradeRequestItemStatus.EDITED,
               edited_at: new Date(),
@@ -156,6 +205,22 @@ export class PropertyPhotoUpgradeRequestAdminService {
               edited_by_admin_id: null,
             },
       });
+
+      if (dto.attachment_id && requestItem.attachment_id !== dto.attachment_id) {
+        await tx.property.update({
+          where: { id: request.property_id },
+          data: {
+            attachments: {
+              disconnect: { id: requestItem.attachment_id },
+              connect: { id: dto.attachment_id },
+            },
+            temp_attachments: {
+              connect: { id: requestItem.attachment_id },
+              disconnect: { id: dto.attachment_id },
+            },
+          },
+        });
+      }
 
       const items = await tx.propertyPhotoUpgradeRequestItem.findMany({
         where: { request_id: requestId },

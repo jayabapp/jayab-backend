@@ -1,15 +1,15 @@
 import { EnumList } from 'src/common/interfaces/model-props.interface';
 
 export enum PropertyPhotoUpgradeRequestStatus {
-  WAITING_PAYMENT = 1,
-  PENDING = 2,
-  IN_PROGRESS = 3,
-  COMPLETED = 4,
+  WAITING_PAYMENT = 10,
+  PENDING = 20,
+  IN_PROGRESS = 30,
+  COMPLETED = 100,
 }
 
 export enum PropertyPhotoUpgradeRequestItemStatus {
-  PENDING = 1,
-  EDITED = 2,
+  PENDING = 10,
+  EDITED = 20,
 }
 
 export const PropertyPhotoUpgradeRequestStatusesList: Array<EnumList> = [

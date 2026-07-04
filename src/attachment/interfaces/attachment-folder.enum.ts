@@ -6,6 +6,7 @@ export enum AttachmentAdminFolder {
   PRODUCT = 'PRODUCT',
   BUSINESS = 'BUSINESS',
   BUSINESS_PRODUCT = 'BUSINESS_PRODUCT',
+  OWNER_PROPERTY_IMAGE = 'OWNER_PROPERTY_IMAGE',
 }
 
 export enum AttachmentUserFolder {

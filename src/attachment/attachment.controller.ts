@@ -204,6 +204,15 @@ export class AttachmentController {
         };
         break;
 
+      case AttachmentAdminFolder.OWNER_PROPERTY_IMAGE:
+        args = {
+          file,
+          folder: IMAGES_OWNER_PROPERTY_FOLDER,
+          resizeWidth: 1024,
+          resizeMode: 'normal',
+          adminId: admin.id,
+        };
+        break;
       default:
         break;
     }

@@ -152,13 +152,16 @@ export class PaymentUserService {
 
       await tx.property.update({ where: { id: property.id }, data: propertyUpdateData });
 
-      await tx.propertyPhotoUpgradeRequest.updateMany({
-        where: {
-          payment_id: payment.id,
-          status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT,
-        },
-        data: { status: PropertyPhotoUpgradeRequestStatus.PENDING },
-      });
+      if (subscription.has_photo_upgrade_request) {
+        await tx.propertyPhotoUpgradeRequest.updateMany({
+          where: {
+            subscription_id: subscription.id,
+            payment_id: payment.id,
+            status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT,
+          },
+          data: { status: PropertyPhotoUpgradeRequestStatus.PENDING },
+        });
+      }
 
       return { updatedPayment: item, subscription };
     });

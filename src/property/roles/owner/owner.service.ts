@@ -595,6 +595,7 @@ export class PropertyOwnerService {
             price: pay.payment.amount,
             status: SubscriptionStatus.WAITING,
             extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
+            has_photo_upgrade_request: !!photoUpgradeQuote,
             description: photoUpgradeQuote
               ? JSON.stringify({
                   photo_upgrade: photoUpgradeQuote,

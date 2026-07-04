@@ -1,3 +1,4 @@
+import 'multer';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bull';
