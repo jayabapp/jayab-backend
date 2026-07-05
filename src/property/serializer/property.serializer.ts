@@ -235,10 +235,7 @@ export class PropertySerializer {
         : null,
       feature_image: data.feature_image,
       attachments_count: data._count?.property_images || data._count?.property_images || 0,
-      images: this.findImages(
-        data.feature_image,
-        data.property_images.map((e) => e.attachment),
-      ),
+      images: this.findImages(data.feature_image, data.property_images?.map((e) => e.attachment) || []),
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
