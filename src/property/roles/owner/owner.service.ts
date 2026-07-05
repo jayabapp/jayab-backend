@@ -896,6 +896,7 @@ export class PropertyOwnerService {
       where: { id: propertyId, owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
       select: {
         id: true,
+        feature_image_id: true,
         property_images: {
           where: {
             attachment: {
@@ -910,7 +911,9 @@ export class PropertyOwnerService {
 
     if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
-    const propertyImagesIds = property.property_images?.map((e) => e.attachment_id);
+    const propertyImagesIds = property.property_images
+      ?.map((e) => e.attachment_id)
+      .concat(property.feature_image_id);
     if (!isEmpty(difference(imageIds, propertyImagesIds))) throw new BadRequestException('PHOTO_UPGRADE1');
 
     const pricePerImage = await this.getPhotoUpgradePrice();

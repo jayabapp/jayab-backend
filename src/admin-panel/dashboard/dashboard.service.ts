@@ -9,6 +9,7 @@ import { PropertyStatuses } from 'src/property/common/types/property-status.type
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { TicketCommonStatuses } from 'src/ticket/common/ticket-status.constant';
 import { DashboardElement } from '../common/interface/dashboard-element.type';
+import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
 
 @Injectable()
 export class DashboardService {
@@ -173,16 +174,33 @@ export class DashboardService {
   }
 
   async findAllSidebarBadge(): Promise<any> {
-    const waitingProperties = await this.db.property.count({ where: { status: PropertyStatuses.WAITING } });
-    const editedProperties = await this.db.property.count({ where: { status: PropertyStatuses.EDITED } });
-    const pendingOwnersOwners = await this.db.owner.count({ where: { status: OwnerStatus.PENDING } });
-    const pendingReports = await this.db.propertyReport.count({ where: { seen_by_admin: false } });
+    const [
+      waitingProperties,
+      editedProperties,
+      pendingOwnersOwners,
+      pendingReports,
+      pendingPhotoUpgradeRequest,
+      inProgressPhotoUpgradeRequest,
+    ] = await Promise.all([
+      this.db.property.count({ where: { status: PropertyStatuses.WAITING } }),
+      this.db.property.count({ where: { status: PropertyStatuses.EDITED } }),
+      this.db.owner.count({ where: { status: OwnerStatus.PENDING } }),
+      this.db.propertyReport.count({ where: { seen_by_admin: false } }),
+      this.db.propertyPhotoUpgradeRequest.count({
+        where: { status: PropertyPhotoUpgradeRequestStatus.PENDING },
+      }),
+      this.db.propertyPhotoUpgradeRequest.count({
+        where: { status: PropertyPhotoUpgradeRequestStatus.IN_PROGRESS },
+      }),
+    ]);
 
     return {
       waitingProperties,
       editedProperties,
       pendingOwnersOwners,
       pendingReports,
+      pendingPhotoUpgradeRequest,
+      inProgressPhotoUpgradeRequest,
     };
   }
 }

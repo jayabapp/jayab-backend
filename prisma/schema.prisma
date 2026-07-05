@@ -476,6 +476,8 @@ model Owner {
   properties             Property[]
   photo_upgrade_requests PropertyPhotoUpgradeRequest[]
 
+  @@index([status])
+  @@index([national_code])
   @@map("owners")
 }
 
@@ -1459,6 +1461,9 @@ model PropertyReport {
   property Property @relation(fields: [property_id], references: [id])
 
   @@unique([user_id, property_id])
+  @@index([seen_by_admin])
+  @@index([property_id])
+  @@index([user_id])
   @@map("property_reports")
 }
 
