@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional } from 'class-validator';
+import { IsInt, IsOptional, Validate, ValidateIf } from 'class-validator';
 import {
   _ArrayMinSize,
   _IsArray,
@@ -57,30 +57,4 @@ export class PhotoUpgradeQuotePropertyOwnerDto {
   @IsInt({ each: true })
   @IsOptional()
   image_ids?: number[];
-}
-
-export class PhotoUpgradeCheckoutSummaryDto {
-  @ApiProperty({ required: false, example: 1 })
-  @_Min(1)
-  @_IsInt()
-  @IsOptional()
-  subscription_id?: number;
-
-  @ApiProperty({ required: false, example: 1 })
-  @_Min(1)
-  @_IsInt()
-  @IsOptional()
-  promote_id?: number;
-
-  @ApiProperty({ required: false, example: true })
-  @_IsBoolean()
-  @IsOptional()
-  photo_upgrade_enabled?: boolean;
-
-  @ApiProperty({ required: false, type: [Number], example: [1, 2, 3] })
-  @_IsArray()
-  @_ArrayMinSize(1)
-  @IsInt({ each: true })
-  @IsOptional()
-  photo_upgrade_image_ids?: number[];
 }

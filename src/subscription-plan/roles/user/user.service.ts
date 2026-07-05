@@ -8,10 +8,15 @@ import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
 import moment from 'moment-jalaali';
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 
 @Injectable()
 export class SubscriptionPlanUserService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly setting: SettingAdminService,
+  ) {}
 
   /**
    * find all SubscriptionPlan

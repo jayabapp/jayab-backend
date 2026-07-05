@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma, Property, PropertyStatistics, SubscriptionPlan } from '@prisma/client';
 import { difference, isEmpty, random, xor } from 'lodash';
 import moment from 'moment-jalaali';
@@ -23,11 +28,7 @@ import {
 } from 'src/property/serializer/property.serializer';
 import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
-import {
-  PaySubscriptionPropertyOwnerDto,
-  PhotoUpgradeCheckoutSummaryDto,
-  PhotoUpgradeQuotePropertyOwnerDto,
-} from './dto/pay-subscription.dto';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -521,6 +522,8 @@ export class PropertyOwnerService {
     let promote: SubscriptionPlan;
     let photoUpgradeQuote: PhotoUpgradeQuote = null;
 
+    if (!dto.subscription_id && !dto.photo_upgrade_enabled && !dto.promote_id)
+      throw new UnprocessableEntityException('BUY_SUBSCRIPTION3');
     /* -------------------------------------------------------------------------- */
     /** */
     await this.checkCanBuySubscriptionForFirstTime(property);
@@ -645,48 +648,6 @@ export class PropertyOwnerService {
     );
 
     return result.paymentUrl;
-  }
-
-  async buildPhotoUpgradeCheckoutSummary(
-    ownerId: number,
-    property: PropertyInterceptorData,
-    dto: PhotoUpgradeCheckoutSummaryDto,
-  ): Promise<PhotoUpgradeCheckoutSummary> {
-    let subscription: SubscriptionPlan = null;
-    let promote: SubscriptionPlan = null;
-    let photoUpgradeQuote: PhotoUpgradeQuote = null;
-
-    if (dto.subscription_id)
-      subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
-
-    if (dto.promote_id) {
-      promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
-        dto.promote_id,
-        dto.subscription_id,
-        property,
-      );
-      if (!promote) throw new BadRequestException('PROPERTY_SUB1');
-    }
-
-    if (dto.photo_upgrade_enabled) {
-      photoUpgradeQuote = await this.buildPhotoUpgradeQuote(
-        ownerId,
-        property.id,
-        dto.photo_upgrade_image_ids,
-      );
-      if (photoUpgradeQuote.image_count < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
-    }
-
-    const subscriptionAmount = subscription ? subscription.price_with_discount || subscription.price : 0;
-    const promoteAmount = promote ? promote.price_with_discount || promote.price : 0;
-    const photoUpgradeAmount = photoUpgradeQuote?.total_amount || 0;
-
-    return {
-      subscription_amount: subscriptionAmount,
-      promote_amount: promoteAmount,
-      photo_upgrade: photoUpgradeQuote,
-      total_amount: subscriptionAmount + promoteAmount + photoUpgradeAmount,
-    };
   }
 
   /* -------------------------------------------------------------------------- */

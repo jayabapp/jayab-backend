@@ -7,11 +7,20 @@ import { SettingAdminService } from '../admin/admin.service';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { Throttle } from '@nestjs/throttler';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 
 @ApiTags('👨‍💻 Settings - SHARED')
 @Controller('settings')
 export class SettingSharedController {
   constructor(private readonly settingAdminService: SettingAdminService) {}
+
+  @ApiOperation({ summary: 'Find All Client Settings' })
+  @Get()
+  async findAll(): Promise<SuccessResponseArgs> {
+    const photoUpgradePrice = await this.settingAdminService.get(SettingKey.PROPERTY_PHOTO_UPGRADE_PRICE);
+
+    return { result: { photo_upgrade_price: photoUpgradePrice } };
+  }
 
   @ApiOperation({ summary: 'Find robots.txt' })
   @Get('robots')

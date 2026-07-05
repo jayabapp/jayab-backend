@@ -77,20 +77,6 @@ const settings = (): Prisma.SettingCreateInput[] => {
       sort_order: 70,
       data_type: SettingDataType.NUMBER,
     },
-    {
-      title: 'تصویر نمونه قبل از ویرایش (سرویس ارتقا تصاویر)',
-      key: 'PROPERTY_PHOTO_UPGRADE_BEFORE_IMAGE',
-      value: '',
-      sort_order: 71,
-      data_type: SettingDataType.TEXT,
-    },
-    {
-      title: 'تصویر نمونه بعد از ویرایش (سرویس ارتقا تصاویر)',
-      key: 'PROPERTY_PHOTO_UPGRADE_AFTER_IMAGE',
-      value: '',
-      sort_order: 72,
-      data_type: SettingDataType.TEXT,
-    },
   ];
 
   return data;

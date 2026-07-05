@@ -30,11 +30,7 @@ import {
 import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
-import {
-  PaySubscriptionPropertyOwnerDto,
-  PhotoUpgradeCheckoutSummaryDto,
-  PhotoUpgradeQuotePropertyOwnerDto,
-} from './dto/pay-subscription.dto';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyCommissionOwnerDto,
@@ -228,27 +224,6 @@ export class PropertyOwnerController {
 
     //
     const result = await this.propertyOwnerService.paySubscription(user, property, dto);
-    return { result };
-  }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                PHOTO UPGRADE                               */
-  /* -------------------------------------------------------------------------- */
-  @ApiOperation({ summary: 'Checkout summary for subscription and photo upgrade service' })
-  @UseInterceptors(OwnerUpdatePropertyInterceptor)
-  @Post(':propertyId/photo-upgrade-service/checkout-summary')
-  async photoUpgradeCheckoutSummary(
-    @Req() req: RequestType,
-    @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: PhotoUpgradeCheckoutSummaryDto,
-  ): Promise<SuccessResponseArgs> {
-    const user = req.user;
-    const property = req.interceptor_data as PropertyInterceptorData;
-    const result = await this.propertyOwnerService.buildPhotoUpgradeCheckoutSummary(
-      user.owner_id,
-      property,
-      dto,
-    );
     return { result };
   }
 
