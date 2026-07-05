@@ -253,7 +253,7 @@ export class PropertyUserService {
           daily_price: true,
           calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
           bedrooms: { select: { total_bedrooms: true } },
-          _count: { select: { attachments: true } },
+          _count: { select: { property_images: true } },
         },
         orderBy: orderByQuery,
       },
@@ -279,7 +279,7 @@ export class PropertyUserService {
       where: { code, deleted_at: new Date() },
       include: {
         feature_image: true,
-        attachments: true,
+        property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' } },
         province: { select: { title: true } },
         city: { select: { title: true } },
         region: { select: { title: true } },
@@ -297,10 +297,10 @@ export class PropertyUserService {
       },
     });
 
-    if (!!item?.deleted_at) throw new GoneException('GONE');
+    if (!item) throw new NotFoundException('NOT_FOUND');
+    if (!!item.deleted_at) throw new GoneException('GONE');
     //در تاریخ ۲۷ خرداد ۴۰۵ قرار شد فقط پاک شده ها ۴۱۰ بشن. به دلیل کش مرورگر روی ارور ۴۱۰
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
-    if (!item) throw new NotFoundException('NOT_FOUND');
 
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
@@ -558,7 +558,7 @@ export class PropertyUserService {
     const data = JSON.parse(decrypted);
     const prop = await this.db.property.findUnique({
       where: { id: data.propertyId },
-      select: { slug: true, attachments: true, feature_image: true },
+      select: { slug: true, feature_image: true },
     });
     const property = await this.findOne(prop.slug, false);
 
@@ -921,7 +921,13 @@ export class PropertyUserService {
             daily_price: { create: { ...omit(prop?.daily_price, ['id', 'property_id']) } },
             bedrooms: { create: { ...omit(prop?.bedrooms, ['id', 'property_id']) } },
             description: { create: { ...omit(prop?.description, ['id', 'property_id']) } },
-            attachments: { connect: [{ id: random(5, 20) }, { id: random(5, 20) }, { id: random(5, 20) }] },
+            property_images: {
+              create: [
+                { attachment_id: random(5, 20), sort_order: 0 },
+                { attachment_id: random(5, 20), sort_order: 1 },
+                { attachment_id: random(5, 20), sort_order: 2 },
+              ],
+            },
           },
         });
         await tx.optionsOnProperty.createMany({

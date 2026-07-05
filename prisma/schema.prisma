@@ -183,7 +183,7 @@ model Attachment {
   content_feature_image        Content[]                         @relation(name: "featureImage")
   content_video                Content[]                         @relation(name: "ContentVideo")
   content_question_image       ContentQuestion[]
-  property                     Property[]                        @relation("Property")
+  property_images              PropertyImage[]
   property_temp                Property[]                        @relation("Property_Temp")
   feature_image                Property[]                        @relation("FeatureImage")
   property_video               Property[]                        @relation("Video")
@@ -588,7 +588,7 @@ model Property {
   city                   City?                         @relation("PropertyCity", fields: [city_id], references: [id])
   feature_image          Attachment?                   @relation("FeatureImage", fields: [feature_image_id], references: [id])
   video                  Attachment?                   @relation("Video", fields: [video_id], references: [id])
-  attachments            Attachment[]                  @relation("Property")
+  property_images        PropertyImage[]
   temp_attachments       Attachment[]                  @relation("Property_Temp")
   bedrooms               PropertyBedroom?
   daily_price            PropertyDailyPrice?
@@ -624,6 +624,24 @@ model Property {
   @@index([region_id])
   @@index([owner_id])
   @@map("properties")
+}
+
+model PropertyImage {
+  id            Int @id() @default(autoincrement())
+  property_id   Int
+  attachment_id Int
+  sort_order    Int @default(0)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+
+  property   Property   @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  attachment Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+
+  @@unique([property_id, attachment_id])
+  @@index([property_id, sort_order])
+  @@index([attachment_id])
+  @@map("property_images")
 }
 
 model OptionsOnProperty {

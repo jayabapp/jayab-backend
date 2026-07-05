@@ -207,13 +207,17 @@ export class PropertyPhotoUpgradeRequestAdminService {
       });
 
       if (dto.attachment_id && requestItem.attachment_id !== dto.attachment_id) {
+        await tx.propertyImage.updateMany({
+          where: {
+            property_id: request.property_id,
+            attachment_id: requestItem.attachment_id,
+          },
+          data: { attachment_id: dto.attachment_id },
+        });
+
         await tx.property.update({
           where: { id: request.property_id },
           data: {
-            attachments: {
-              disconnect: { id: requestItem.attachment_id },
-              connect: { id: dto.attachment_id },
-            },
             temp_attachments: {
               connect: { id: requestItem.attachment_id },
               disconnect: { id: dto.attachment_id },

@@ -169,6 +169,7 @@ export class PropertyAdminController {
   ): Promise<SuccessResponseArgs> {
     const admin = req.user;
     const property = await this.propertyAdminService.findById(id);
+
     const result = await this.propertyAdminService.updateImages(id, dto);
 
     return { result, messageCode: 'UPDATE' };

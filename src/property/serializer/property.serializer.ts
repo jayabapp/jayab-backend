@@ -9,6 +9,7 @@ import {
   PropertyCalendar,
   PropertyDailyPrice,
   PropertyDescription,
+  PropertyImage,
   PropertyOption,
   User,
 } from '@prisma/client';
@@ -30,11 +31,11 @@ type ReserveDay = { day_number: number; is_reserved: boolean };
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
-  attachments?: Attachment[];
+  property_images?: Array<PropertyImage & { attachment: Attachment }>;
   province: Partial<City>;
   city: Partial<City>;
   region?: Partial<City>;
-  _count?: { attachments: number };
+  _count?: { property_images?: number };
   property_options?: any[]; //مالک نیازی به این دیتا ندارد
   bedrooms?: Partial<PropertyBedroom>; //مالک نیازی به این دیتا ندارد
   daily_price?: PropertyDailyPrice; //مالک نیازی به این دیتا ندارد
@@ -233,8 +234,11 @@ export class PropertySerializer {
           }
         : null,
       feature_image: data.feature_image,
-      attachments_count: data._count?.attachments || 0,
-      images: this.findImages(data.feature_image, data.attachments),
+      attachments_count: data._count?.property_images || data._count?.property_images || 0,
+      images: this.findImages(
+        data.feature_image,
+        data.property_images.map((e) => e.attachment),
+      ),
       std_capacity: data.std_capacity,
       max_capacity: data.max_capacity,
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,

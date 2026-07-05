@@ -91,7 +91,7 @@ export class PropertyAdminService {
           daily_price: true,
           calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
           bedrooms: { select: { total_bedrooms: true } },
-          _count: { select: { attachments: true } },
+          _count: { select: { property_images: true } },
           favorites: true,
         },
       },
@@ -123,7 +123,7 @@ export class PropertyAdminService {
       include: {
         owner: { include: { user: true } },
         feature_image: true,
-        attachments: true,
+        property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' } },
         temp_attachments: true,
         province: { select: { title: true } },
         city: { select: { title: true } },
@@ -138,13 +138,18 @@ export class PropertyAdminService {
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
+    const serializedItem = {
+      ...item,
+      attachments: item.property_images.map((propertyImage) => propertyImage.attachment),
+    };
+
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, false, true); //اطلاعاتی که ادمین میبینه با مالک یکسانه
+    const serialized = await this.propertySerializer.toJSON(serializedItem, today, false, true); //اطلاعاتی که ادمین میبینه با مالک یکسانه
 
     const showProps = showPropsBuilder(serialized);
-    const actions = showActionBuilder(item, rbac);
+    const actions = showActionBuilder(serializedItem, rbac);
 
-    return { showProps, actions, item };
+    return { showProps, actions, item: serializedItem };
   }
 
   /**
@@ -390,8 +395,17 @@ export class PropertyAdminService {
    * @param dto
    */
   async updateImages(id: number, dto: UpdatePropertyImagesAdminDto): Promise<void> {
+    const imageIds = Array.from(new Set((dto.images || []).map((imageId) => +imageId)));
+    console.dir(dto, { depth: null });
+
     let updateData: Prisma.PropertyUpdateInput = {
-      attachments: { set: [], connect: dto.images?.map((e) => ({ id: +e })) },
+      property_images: {
+        deleteMany: {},
+        create: imageIds.map((imageId, index) => ({
+          attachment_id: imageId,
+          sort_order: index,
+        })),
+      },
       temp_attachments: { set: [], connect: dto.temp_images?.map((e) => ({ id: +e })) },
       feature_image: { connect: { id: +dto.feature_image_id } },
     };

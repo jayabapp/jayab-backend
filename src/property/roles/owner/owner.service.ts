@@ -109,7 +109,11 @@ export class PropertyOwnerService {
       daily_price: true,
       description: true,
       property_options: { include: { option: true } },
-      attachments: { where: { type: 1 } },
+      property_images: {
+        where: { attachment: { type: 1 } },
+        include: { attachment: true },
+        orderBy: { sort_order: 'asc' },
+      },
       assistants: {
         select: { assistant_full_name: true, assistant_mobile_number: true, is_owner: true },
       },
@@ -120,7 +124,11 @@ export class PropertyOwnerService {
     // check the init property, if exist return this
     const initProp = await this.db.property.findFirst({ where: query, include });
     if (propertyId && !initProp) throw new NotFoundException('PROPERTY_NOT_FOUND');
-    if (initProp) return initProp;
+    if (initProp)
+      return {
+        ...initProp,
+        attachments: initProp.property_images.map((propertyImage: any) => propertyImage.attachment),
+      } as any;
 
     /* -------------------------------------------------------------------------- */
     // generate a random unique code
@@ -227,11 +235,13 @@ export class PropertyOwnerService {
    */
   async updateMedia(property: Property, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
     // اگر عکس ها تغییری نکرده باشن دیگه نیازی به ادامه فرایند نیست
-    const propertyAttachments = await this.db.property
-      .findUnique({ where: { id: property.id } })
-      .attachments();
+    const propertyAttachments = await this.db.propertyImage.findMany({
+      where: { property_id: property.id },
+      select: { attachment_id: true },
+      orderBy: { sort_order: 'asc' },
+    });
 
-    const currentAttachmentIds = propertyAttachments.map((e) => e.id);
+    const currentAttachmentIds = propertyAttachments.map((e) => e.attachment_id);
     if (isEmpty(xor(dto.images, currentAttachmentIds))) {
       // اگر عکس شاخص تغییر کرده باشد فقط اونو آپدیت میکنیم
       // برای تغییر عکس شاخص نیازی به تغییر وضعیت ملک نیست
@@ -244,26 +254,26 @@ export class PropertyOwnerService {
       return;
     }
 
-    let attachments = [];
-    dto.images.map((e) => attachments.push({ id: e }));
+    const images = Array.from(new Set(dto.images || []));
 
     // اگر عکس های ملک تغییر کنن وضعیت ملک باید به وضعیت در حال بررسی ادمین تغییر کند
     let status = property.status;
     if (property.status === PropertyStatuses.PUBLISHED) status = PropertyStatuses.EDITED;
 
-    await this.db.$transaction(async (tx) => {
-      // delete all attachments
-      await this.db.property.update({ where: { id: property.id }, data: { attachments: { set: [] } } });
-
-      await this.db.property.update({
-        where: { id: property.id },
-        data: {
-          status,
-          attachments: { connect: attachments },
-          feature_image_id: dto.feature_image_id,
-          // video_id: dto.video_id || null,
+    await this.db.property.update({
+      where: { id: property.id },
+      data: {
+        status,
+        property_images: {
+          deleteMany: {},
+          create: images.map((attachmentId, index) => ({
+            attachment_id: attachmentId,
+            sort_order: index,
+          })),
         },
-      });
+        feature_image_id: dto.feature_image_id,
+        // video_id: dto.video_id || null,
+      },
     });
   }
 
@@ -703,7 +713,7 @@ export class PropertyOwnerService {
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         bedrooms: { select: { total_bedrooms: true } },
-        _count: { select: { attachments: true } },
+        _count: { select: { property_images: true } },
         property_authorize: true,
         blue_tick: true,
         favorites: true,
@@ -729,7 +739,7 @@ export class PropertyOwnerService {
       where: { id: propertyId },
       include: {
         feature_image: true,
-        attachments: true,
+        property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' } },
         province: { select: { title: true } },
         city: { select: { title: true } },
         region: { select: { title: true } },
@@ -925,19 +935,21 @@ export class PropertyOwnerService {
       where: { id: propertyId, owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
       select: {
         id: true,
-        attachments: {
+        property_images: {
           where: {
-            type: 1,
-            ...(imageIds?.length ? { id: { in: imageIds } } : {}),
+            attachment: {
+              type: 1,
+              ...(imageIds?.length ? { id: { in: imageIds } } : {}),
+            },
           },
-          select: { id: true },
+          select: { attachment_id: true },
         },
       },
     });
 
     if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
-    const propertyImagesIds = property.attachments?.map((e) => e.id);
+    const propertyImagesIds = property.property_images?.map((e) => e.attachment_id);
     if (!isEmpty(difference(imageIds, propertyImagesIds))) throw new BadRequestException('PHOTO_UPGRADE1');
 
     const pricePerImage = await this.getPhotoUpgradePrice();
