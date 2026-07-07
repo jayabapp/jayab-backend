@@ -28,6 +28,9 @@ export const filterValidator = (
       case 'property_code':
         query = { ...query, property: { code: filters.property_code } };
         break;
+      case 'owner_mobile_number':
+        query = { ...query, owner: { user: { mobile_number: { contains: filters.owner_mobile_number } } } };
+        break;
       default:
         break;
     }

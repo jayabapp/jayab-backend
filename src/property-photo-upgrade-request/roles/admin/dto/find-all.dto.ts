@@ -30,4 +30,9 @@ export class FindAllPropertyPhotoUpgradeRequestAdminDto extends PaginationDto {
   @_IsString()
   @IsOptional()
   property_code?: string;
+
+  @ApiProperty({ required: false, example: '09121234567' })
+  @_IsString()
+  @IsOptional()
+  owner_mobile_number?: string;
 }

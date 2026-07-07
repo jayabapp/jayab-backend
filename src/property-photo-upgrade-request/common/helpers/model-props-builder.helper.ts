@@ -130,6 +130,11 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       type: 'input',
     },
     {
+      state: 'owner_mobile_number',
+      title: 'شماره موبایل مالک',
+      type: 'input',
+    },
+    {
       state: 'property_id',
       title: '',
       type: 'input',
