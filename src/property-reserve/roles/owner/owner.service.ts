@@ -45,7 +45,7 @@ export class PropertyReserveOwnerService {
       {
         where: {
           property: { owner_id: ownerId },
-          created_at: { gt: moment().subtract(30, 'day').toDate() },
+          created_at: { gt: moment().subtract(6, 'jMonth').toDate() },
         },
         include: {
           property: {
