@@ -395,8 +395,21 @@ export class PropertyAdminService {
    * @param dto
    */
   async updateImages(id: number, dto: UpdatePropertyImagesAdminDto): Promise<void> {
-    const imageIds = Array.from(new Set((dto.images || []).map((imageId) => +imageId)));
-    console.dir(dto, { depth: null });
+    const property = await this.db.property.findUnique({
+      where: { id },
+      select: { feature_image_id: true },
+    });
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const imageIds = Array.from(
+      new Set(
+        [
+          ...(dto.images || []).map((imageId) => +imageId),
+          property.feature_image_id,
+          +dto.feature_image_id,
+        ].filter(Boolean),
+      ),
+    );
 
     let updateData: Prisma.PropertyUpdateInput = {
       property_images: {

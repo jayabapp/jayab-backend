@@ -207,17 +207,43 @@ export class PropertyPhotoUpgradeRequestAdminService {
       });
 
       if (dto.attachment_id && requestItem.attachment_id !== dto.attachment_id) {
-        await tx.propertyImage.updateMany({
+        const property = await tx.property.findUnique({
+          where: { id: request.property_id },
+          select: { feature_image_id: true },
+        });
+        if (!property) throw new NotFoundException('NOT_FOUND');
+
+        await tx.propertyImage.deleteMany({
+          where: { property_id: request.property_id, attachment_id: requestItem.attachment_id },
+        });
+
+        const lastPropertyImage = await tx.propertyImage.findFirst({
+          where: { property_id: request.property_id },
+          select: { sort_order: true },
+          orderBy: { sort_order: 'desc' },
+        });
+
+        await tx.propertyImage.upsert({
           where: {
-            property_id: request.property_id,
-            attachment_id: requestItem.attachment_id,
+            property_id_attachment_id: {
+              property_id: request.property_id,
+              attachment_id: dto.attachment_id,
+            },
           },
-          data: { attachment_id: dto.attachment_id },
+          update: {},
+          create: {
+            property_id: request.property_id,
+            attachment_id: dto.attachment_id,
+            sort_order: (lastPropertyImage?.sort_order ?? -1) + 1,
+          },
         });
 
         await tx.property.update({
           where: { id: request.property_id },
           data: {
+            ...(property.feature_image_id === requestItem.attachment_id
+              ? { feature_image_id: dto.attachment_id }
+              : {}),
             temp_attachments: {
               connect: { id: requestItem.attachment_id },
               disconnect: { id: dto.attachment_id },
