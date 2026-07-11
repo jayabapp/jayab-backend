@@ -48,4 +48,10 @@ export class FindAllPropertyAdminDto extends PaginationDto {
   @Transform(({ value }) => (value && value == 'true' ? true : false))
   @IsOptional()
   is_promoted: boolean;
+
+  @ApiProperty({ required: false, example: true })
+  @_IsBoolean()
+  @Transform(({ value }) => (value && value == 'true' ? true : false))
+  @IsOptional()
+  paid_waiting_admin_approval: boolean;
 }

@@ -4,6 +4,7 @@ import { startOfDate } from 'src/common/helpers/date.helper';
 import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { PropertyStatuses } from '../types/property-status.type';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 
 /**
  * validate filters
@@ -59,6 +60,15 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
         break;
       case 'is_promoted':
         if (filters.is_promoted) query = { ...query, NOT: { promoted_at: null } };
+        break;
+
+      case 'paid_waiting_admin_approval':
+        if (filters.paid_waiting_admin_approval)
+          query = {
+            ...query,
+            status: PropertyStatuses.WAITING,
+            subscriptions: { some: { status: SubscriptionStatus.SUCCESS } },
+          };
         break;
 
       case 'expired':

@@ -372,6 +372,11 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
     { title: 'منقضی شده ها', state: 'expired', type: 'switch' },
     { title: 'احراز شده ها', state: 'authorized', type: 'switch' },
     { title: 'نردبان شده ها', state: 'is_promoted', type: 'switch' },
+    {
+      title: 'پرداخت شده و در انتظار تایید کارشناس',
+      state: 'paid_waiting_admin_approval',
+      type: 'switch',
+    },
     /*  */
     { title: 'وضیعت', state: 'status', type: 'select', isHidden: true },
     { title: '', state: 'owner_id', type: 'input', isHidden: true },
