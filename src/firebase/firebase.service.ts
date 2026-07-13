@@ -10,7 +10,7 @@ export class FirebaseService {
     @Inject(FCM_OPTIONS) private readonly fcmOptions: FcmOptions,
     private readonly logger: Logger,
   ) {
-    // this.__init();
+    this.__init();
   }
 
   /**
@@ -20,7 +20,6 @@ export class FirebaseService {
    * {@link  https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments}
    */
   __init(): void {
-    return;
     if (firebaseAdmin.apps.length === 0) {
       firebaseAdmin.initializeApp({
         credential: firebaseAdmin.credential.cert(this.fcmOptions.configPath),
@@ -32,7 +31,6 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ): Promise<void> {
-    return;
     const { silent, imageUrl } = options || {};
 
     if (deviceIds.length == 0) {
@@ -98,7 +96,6 @@ export class FirebaseService {
    * @param topic
    */
   async subscribeToTopic(token: string, topic: string): Promise<void> {
-    return;
     await firebaseAdmin.messaging().subscribeToTopic(token, topic);
   }
 
@@ -108,7 +105,6 @@ export class FirebaseService {
    * @param topic
    */
   async unsubscribeFromTopic(token: string, topic: string): Promise<void> {
-    return;
     await firebaseAdmin.messaging().unsubscribeFromTopic(token, topic);
   }
 
@@ -124,7 +120,6 @@ export class FirebaseService {
     payload: firebaseAdmin.messaging.MessagingPayload,
     options?: { silent: boolean; imageUrl?: string },
   ) {
-    return;
     const { silent, imageUrl } = options || {};
 
     if (!topic) {
@@ -179,7 +174,7 @@ export class FirebaseService {
      */
     try {
       await firebaseAdmin.messaging().send(body);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error.message, error.stackTrace, 'FcmService');
       throw error;
     }
