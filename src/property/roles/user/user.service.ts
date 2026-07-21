@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
-import { AES, enc } from 'crypto-js';
 import { Redis } from 'ioredis';
 import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
 import moment from 'moment-jalaali';
+import randomstring from 'randomstring';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import Num2persian from 'src/common/helpers/Num2Persian';
@@ -527,10 +527,7 @@ export class PropertyUserService {
   /*                                    SHARE                                   */
   /* -------------------------------------------------------------------------- */
   /**
-   * ابتدا یک لینک با ای دی ملک و مشاور و المان هایی که باید نمایش داده بشه میسازیم
-   * رته به دست امده رو رمزنگاری میکنیم و به کلاینت برمیگردونیم
-   * کلاینت با زدن لینک به سایت مشاوران میره. در اونجا دیتا  رو به ای پی ای خود نکست میدیم و از اونجا به جایاب میفرستیم
-   * داده رو باز میکنیم و دیتای مورد نظر رو به سایت برمیگردونیم
+   * اطلاعات اشتراک گذاری را ذخیره و لینک کوتاه آن را برمی گرداند
    * @param propertyId
    * @param advisorId
    * @param dto
@@ -543,58 +540,31 @@ export class PropertyUserService {
   ): Promise<string> {
     const advisorShareUrl = this.config.get('url.advisorShareUrl');
 
-    // const expireAt = moment().add(1, 'day').format('YYYY-MM-DD');
+    const key = randomstring.generate({ length: 10, charset: 'alphanumeric' });
 
-    const encryptedParams = await this.encryptShareLink(propertyId, advisorId, dto.elements);
+    await this.db.advisorShare.create({
+      data: { key, property_id: propertyId, advisor_id: advisorId, elements: dto.elements },
+    });
 
-    const url = `${advisorShareUrl}/s?content=${encryptedParams}`;
+    const url = `${advisorShareUrl}/s?content=${key}`;
 
     return url;
   }
   async findAdvisorShareData(dto: FindAdvisorShareDto): Promise<any> {
-    const decrypted = await this.decryptShareLink(dto.content);
-    if (!decrypted) throw new BadRequestException();
+    const data = await this.db.advisorShare.findUnique({ where: { key: dto.content } });
+    if (!data) throw new BadRequestException();
 
-    const data = JSON.parse(decrypted);
     const prop = await this.db.property.findUnique({
-      where: { id: data.propertyId },
+      where: { id: data.property_id },
       select: { slug: true, feature_image: true },
     });
     const property = await this.findOne(prop.slug, false);
 
     const advisor = await this.db.advisor.findUnique({
-      where: { id: data.advisorId },
+      where: { id: data.advisor_id },
       select: { user: { select: { full_name: true, mobile_number: true, profile_image: true } } },
     });
     return { property, advisor, elements: data.elements?.split(',') };
-  }
-
-  async encryptShareLink(
-    propertyId: number,
-    advisorId: number,
-    elements: string,
-    expireAt?: string,
-  ): Promise<string> {
-    const secretKey = this.config.get('project.advisorShareLinkSecret');
-    const obj = {
-      propertyId,
-      advisorId,
-      elements,
-    };
-    const sentence = JSON.stringify(obj);
-
-    const cipher = AES.encrypt(sentence, secretKey).toString();
-
-    return cipher;
-  }
-
-  async decryptShareLink(sentence: string): Promise<string> {
-    const secretKey = this.config.get('project.advisorShareLinkSecret');
-
-    const bytes = AES.decrypt(sentence, secretKey);
-    const decrypted = bytes.toString(enc.Utf8);
-
-    return decrypted;
   }
 
   /* -------------------------------------------------------------------------- */

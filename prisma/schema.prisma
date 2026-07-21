@@ -1467,6 +1467,18 @@ model PropertyReport {
   @@map("property_reports")
 }
 
+model AdvisorShare {
+  id          Int    @id() @default(autoincrement())
+  key         String @unique @db.VarChar(10)
+  property_id Int
+  advisor_id  Int
+  elements    String @db.Text
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  @@map("advisor_shares")
+}
+
 // ---------------------------- PROPERTY RESERVE ---------------------------- //
 model PropertyReserve {
   id                         Int       @id() @default(autoincrement())
