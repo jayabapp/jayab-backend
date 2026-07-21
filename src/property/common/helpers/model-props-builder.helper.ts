@@ -157,7 +157,7 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
     { type: 'break' },
     { state: 'master_room', title: 'تعداد اتاق مستر', value: bedrooms?.master_room, type: 'number' },
     { state: 'additional_bed', title: 'رخت خواب اضافه', value: bedrooms?.additional_bed, type: 'number' },
-    { state: 'additional_bed', title: 'مبل تخت خواب شو', value: bedrooms?.additional_bed, type: 'number' },
+    { state: 'sofa_bed', title: 'مبل تخت خواب شو', value: bedrooms?.sofa_bed, type: 'number' },
 
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },
