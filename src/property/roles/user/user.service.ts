@@ -671,8 +671,17 @@ export class PropertyUserService {
       clientQuery[level] = `${exactCity.id}`;
       words = [];
     } else {
+      const citySearchTerms = [...words];
+      for (let start = 0; start < words.length; start++) {
+        let cityTitle = words[start];
+        for (let end = start + 1; end < words.length; end++) {
+          cityTitle += ` ${words[end]}`;
+          citySearchTerms.push(cityTitle);
+        }
+      }
+
       const cities = await this.db.city.findMany({
-        where: { AND: [{ title: { in: words } }, { title: { notIn: ['استخر'] } }] },
+        where: { AND: [{ title: { in: citySearchTerms } }, { title: { notIn: ['استخر'] } }] },
         select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
       });
       for (const city of cities) {
