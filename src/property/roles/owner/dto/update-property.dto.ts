@@ -524,19 +524,21 @@ export class UpdatePropertyTermsOwnerDto {
 
 export class UpdatePropertyOwnerAssistantOwnerDto {
   @ApiProperty({ required: true, example: 'نام تستی' })
+  @ValidateIf((dto) => [2, 3].includes(dto.show_mobile_type))
   @Validate(TextInputValidator, [{ noNumbers: true, onlyFa: true } as TextInputValidatorType])
   @_Length(1, 128)
   @_IsString()
-  @IsOptional()
+  @_IsNotEmpty()
   assistant_full_name: string;
 
   @ApiProperty({ required: true, example: '09120000000' })
+  @ValidateIf((dto) => [2, 3].includes(dto.show_mobile_type))
   @_IsNumberString()
   @Validate(IsMobileNumber)
-  @IsOptional()
+  @_IsNotEmpty()
   assistant_mobile: string;
 
-  @ApiProperty({ required: true, enum: [1, 2, 4], example: 1 })
+  @ApiProperty({ required: true, enum: [1, 2, 3], example: 1 })
   @_IsEnum([1, 2, 3])
   @_IsInt()
   @_IsNotEmpty()

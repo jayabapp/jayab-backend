@@ -1,3 +1,4 @@
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import {
   BadRequestException,
   Injectable,
@@ -5,6 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma, Property, PropertyStatistics, SubscriptionPlan } from '@prisma/client';
+import { Redis } from 'ioredis';
 import { difference, isEmpty, random, xor } from 'lodash';
 import moment from 'moment-jalaali';
 import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
@@ -80,6 +82,7 @@ type PhotoUpgradeProperty = {
 @Injectable()
 export class PropertyOwnerService {
   constructor(
+    @InjectRedis() private readonly redis: Redis,
     private readonly db: PrismaService,
     private readonly subscriptionPlanUserService: SubscriptionPlanUserService,
     private readonly paymentUserService: PaymentUserService,
@@ -408,7 +411,7 @@ export class PropertyOwnerService {
     /**
      * Transaction: Delete, Create Assistants
      */
-    this.db.$transaction(async (tx) => {
+    const property = await this.db.$transaction(async (tx) => {
       await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
 
       if ([1, 3].includes(dto.show_mobile_type)) {
@@ -432,8 +435,16 @@ export class PropertyOwnerService {
         });
       }
 
-      await tx.property.update({ where: { id: propertyId }, data: { contact_type: dto.show_mobile_type } });
+      const property = await tx.property.update({
+        where: { id: propertyId },
+        data: { contact_type: dto.show_mobile_type },
+        select: { code: true },
+      });
+
+      return property;
     });
+
+    await this.redis.del(`contact:${property.code}`);
   }
 
   /**
@@ -459,13 +470,26 @@ export class PropertyOwnerService {
     /**
      * Transaction: Property, Description, Subscription
      */
-    this.db.$transaction(async (tx) => {
+    await this.db.$transaction(async (tx) => {
       const property = await tx.property.findUnique({ where: { id: propertyId } });
+
+      let status = property.status;
+      if (property.status == PropertyStatuses.IN_PROCESS) {
+        const contacts = await tx.propertyOwnerAssistant.findMany({
+          where: { property_id: propertyId },
+          select: { assistant_mobile_number: true },
+        });
+        const hasContact = contacts.some((contact) => contact.assistant_mobile_number?.trim());
+        if (!hasContact) throw new BadRequestException('PROPERTY2');
+
+        status = PropertyStatuses.WAITING;
+      }
+
       await tx.property.update({
         where: { id: propertyId },
         data: {
           canceling_type: dto.canceling_type,
-          status: property.status == PropertyStatuses.IN_PROCESS ? PropertyStatuses.WAITING : property.status, //skip update in edit
+          status,
           property_options: { create: options },
           options_array: { set: numericIds },
           check_in_hour: dto.check_in_hour,
