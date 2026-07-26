@@ -126,6 +126,11 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     {
+      title: 'شماره تماس کاربر',
+      state: 'user_mobile_number',
+      type: 'input',
+    },
+    {
       title: 'شناسه',
       state: 'id',
       type: 'input',

@@ -30,6 +30,13 @@ export const filterValidator = (filters: FindAllTicketAdminDto): Prisma.TicketWh
 
     //query
     switch (field) {
+      case 'user_mobile_number':
+        query = {
+          ...query,
+          user: { mobile_number: { contains: filters.user_mobile_number } },
+        };
+        break;
+
       case 'status':
         query = { ...query, status: +filters.status };
         break;
