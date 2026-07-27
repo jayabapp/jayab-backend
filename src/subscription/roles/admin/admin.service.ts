@@ -34,6 +34,13 @@ import { SubscriptionPlanAdminService } from 'src/subscription-plan/roles/admin/
 import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { endOfDate } from 'src/common/helpers/date.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
+
+type SubscriptionExcelItem = Subscription & {
+  mobile_number?: string;
+  type?: string;
+};
 
 @Injectable()
 export class SubscriptionAdminService {
@@ -165,6 +172,7 @@ export class SubscriptionAdminService {
     filters: Prisma.SubscriptionWhereInput,
     page: number,
     perPage = 50,
+    skip?: number,
   ): Promise<PaginatedResult<Subscription>> {
     const list = await paginate()<
       Subscription & { advisor: Advisor & { user: User } } & {
@@ -188,7 +196,7 @@ export class SubscriptionAdminService {
           property: { select: { owner: { select: { user: { select: { mobile_number: true } } } } } },
         },
       },
-      { page, perPage },
+      { page, perPage, skip },
     );
 
     list.data = list.data.map((e) => {
@@ -201,6 +209,31 @@ export class SubscriptionAdminService {
     });
 
     return list;
+  }
+
+  async createExcel(list: SubscriptionExcelItem[]): Promise<string> {
+    const excelData = list.map((item) => ({
+      mobile_number: item.mobile_number,
+      type: item.type,
+      created_at: moment(item.created_at).format(JALAALI_FORMAT),
+      duration: item.duration,
+      title: item.title,
+      price: item.price,
+      description: item.description,
+    }));
+
+    const excelCols: ExcelCol[] = [
+      { header: 'شماره موبایل', key: 'mobile_number', width: 20 },
+      { header: 'نوع اشتراک', key: 'type', width: 15 },
+      { header: 'تاریخ ثبت', key: 'created_at', width: 20 },
+      { header: 'مدت زمان (روز)', key: 'duration', width: 20 },
+      { header: 'پلن', key: 'title', width: 25 },
+      { header: 'قیمت (تومان)', key: 'price', width: 20 },
+      { header: 'توضیحات', key: 'description', width: 40 },
+    ];
+
+    const url = await saveToExcel(excelCols, excelData, SHEET_NAME.SUBSCRIPTIONS);
+    return url;
   }
 
   /**

@@ -30,7 +30,7 @@ export const filterValidator = (filters: FindAllSubscriptionAdminDto): Prisma.Su
      * check filter keys
      */
     const checkField = items.find((e) => e.state === field);
-    if (!checkField && !['page', 'per_page'].includes(field)) return;
+    if (!checkField && !['page', 'per_page', 'skip'].includes(field)) return;
 
     const { from_date: fromDate, to_date: toDate } = filters;
 

@@ -61,6 +61,18 @@ export class SubscriptionAdminController {
   /* -------------------------------------------------------------------------- */
   /*                                    FETCH                                   */
   /* -------------------------------------------------------------------------- */
+  @ApiOperation({ summary: 'Get Excel', description: '' })
+  @Get('excel')
+  async getExcel(@Query() dto: FindAllSubscriptionAdminDto): Promise<SuccessResponseArgs> {
+    const filterQuery = filterValidator(dto);
+    if (!filterQuery) throw new BadRequestException('FILTER1');
+
+    const list = await this.subscriptionAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.skip);
+    const url = await this.subscriptionAdminService.createExcel(list.data);
+
+    return { result: url };
+  }
+
   @ApiOperation({ summary: 'Find All', description: '' })
   @Get()
   async findAll(@Query() dto: FindAllSubscriptionAdminDto): Promise<SuccessResponseArgs> {
