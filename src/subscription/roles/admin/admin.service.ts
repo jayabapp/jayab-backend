@@ -204,11 +204,32 @@ export class SubscriptionAdminService {
       const property = e?.property;
       const mobileNumber = advisor?.user.mobile_number || property?.owner.user.mobile_number;
       const type = advisor ? 'مشاور' : 'ملک';
+      const description = this.formatSubscriptionDescription(e.description);
 
-      return { ...e, mobile_number: mobileNumber, type };
+      return { ...e, mobile_number: mobileNumber, type, description };
     });
 
     return list;
+  }
+
+  private formatSubscriptionDescription(description?: string): string {
+    if (!description) return description;
+
+    try {
+      const data = JSON.parse(description);
+      const imageCount = data?.photo_upgrade?.image_count;
+      if (!imageCount) return description;
+
+      const items: string[] = [];
+      if (data.subscription_amount > 0) items.push('خرید اشتراک');
+      if (data.promote_amount > 0) items.push('نردبان');
+      items.push(`بهینه‌سازی ${imageCount} تصویر`);
+
+      const formattedDescription = items.join(' + ');
+      return formattedDescription;
+    } catch {
+      return description;
+    }
   }
 
   async createExcel(list: SubscriptionExcelItem[]): Promise<string> {
