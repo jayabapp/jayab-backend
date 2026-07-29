@@ -141,7 +141,7 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       state: 'status',
       type: 'select',
       selectItems: TicketStatusList,
-      // isHidden: true,
+      isHidden: true,
     },
   ];
 

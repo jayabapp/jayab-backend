@@ -178,6 +178,7 @@ export class DashboardService {
       waitingProperties,
       editedProperties,
       pendingOwnersOwners,
+      pendingTickets,
       pendingReports,
       pendingPhotoUpgradeRequest,
       inProgressPhotoUpgradeRequest,
@@ -185,6 +186,7 @@ export class DashboardService {
       this.db.property.count({ where: { status: PropertyStatuses.WAITING } }),
       this.db.property.count({ where: { status: PropertyStatuses.EDITED } }),
       this.db.owner.count({ where: { status: OwnerStatus.PENDING } }),
+      this.db.ticket.count({ where: { status: TicketCommonStatuses.WAITING } }),
       this.db.propertyReport.count({ where: { seen_by_admin: false } }),
       this.db.propertyPhotoUpgradeRequest.count({
         where: { status: PropertyPhotoUpgradeRequestStatus.PENDING },
@@ -198,6 +200,7 @@ export class DashboardService {
       waitingProperties,
       editedProperties,
       pendingOwnersOwners,
+      pendingTickets,
       pendingReports,
       pendingPhotoUpgradeRequest,
       inProgressPhotoUpgradeRequest,
