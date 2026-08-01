@@ -160,7 +160,7 @@ export class NotificationSharedService {
     notification: NotificationMessagePayload,
     data: object,
   ): Promise<void> {
-    let createData: Prisma.NotificationCreateInput = {
+    let createData: Prisma.NotificationUncheckedCreateInput = {
       title: notification.title,
       body: notification.body,
       data,

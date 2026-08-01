@@ -1,14 +1,14 @@
 import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { FindAllNotificationAdminDto } from 'src/notification/roles/admin/dto/find-all.dto';
+import { FindAllSentNotificationAdminDto } from 'src/notification/roles/admin/dto/find-all.dto';
 
 /**
  * validate filters
  * @param dto
  * @returns
  */
-export const filterValidator = (filters: FindAllNotificationAdminDto): Prisma.NotificationWhereInput => {
+export const filterValidator = (filters: FindAllSentNotificationAdminDto): Prisma.NotificationWhereInput => {
   if (!filters) return {};
 
   /**
@@ -31,10 +31,10 @@ export const filterValidator = (filters: FindAllNotificationAdminDto): Prisma.No
 
     //query
     switch (field) {
-      // case 'mobile_number':
-      //   query = { ...query, user: { mobile_number: { contains: filters.mobile_number } } };
-      // break;
-      //
+      case 'mobile_number':
+        query.user = { mobile_number: { contains: filters.mobile_number } };
+        break;
+
       default:
         break;
     }

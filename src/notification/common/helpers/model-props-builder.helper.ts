@@ -123,7 +123,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
-    // { title: 'شماره موبایل', state: 'mobile_number', type: 'input' },
+    { title: 'شماره تماس', state: 'mobile_number', type: 'input' },
     // { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
     // { title: '', state: 'status', type: 'select', isHidden: true },
   ];

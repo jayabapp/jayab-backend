@@ -50,7 +50,7 @@ export class SendNotificationAdminService {
     if (users.length != mobileNumbers.length) throw new BadRequestException('NOTIFICATION1');
 
     let fcmTokens: string[] = [];
-    const notificationData: Prisma.NotificationCreateInput[] = [];
+    const notificationData: Prisma.NotificationCreateManyInput[] = [];
     users.map((e) => {
       if (e?.fcm_token) fcmTokens.push(e?.fcm_token);
 
