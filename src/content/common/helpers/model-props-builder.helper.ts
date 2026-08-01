@@ -344,6 +344,17 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 /* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (keys: any): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
+    {
+      title: 'مرتب سازی',
+      state: 'sort_by',
+      type: 'select',
+      selectItems: [
+        { id: 'date_desc', title: 'جدیدترین' },
+        { id: 'date_asc', title: 'قدیمی ترین' },
+        { id: 'view_desc', title: 'پربازدیدترین' },
+        { id: 'view_asc', title: 'کم بازدیدترین' },
+      ],
+    },
     { title: 'عنوان', state: 'title', type: 'input' },
     {
       title: 'دسته بندی',

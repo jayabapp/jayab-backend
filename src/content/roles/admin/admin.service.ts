@@ -32,6 +32,7 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/content/common/helpers/model-props-builder.helper';
+import type { ContentSort } from './dto/find-all.dto';
 
 @Injectable()
 export class ContentAdminService {
@@ -82,7 +83,17 @@ export class ContentAdminService {
     filters: Prisma.ContentWhereInput,
     page: number,
     perPage = 50,
+    sortBy: ContentSort = 'date_desc',
   ): Promise<PaginatedResult<Content>> {
+    let orderBy: Prisma.ContentOrderByWithRelationInput[] = [
+      { created_at: 'desc' },
+      { id: 'desc' },
+    ];
+
+    if (sortBy === 'date_asc') orderBy = [{ created_at: 'asc' }, { id: 'asc' }];
+    if (sortBy === 'view_desc') orderBy = [{ view_count: 'desc' }, { id: 'desc' }];
+    if (sortBy === 'view_asc') orderBy = [{ view_count: 'asc' }, { id: 'asc' }];
+
     const list = await paginate()<
       Content & { category: ContentCategory & { parent: ContentCategory } },
       Prisma.ContentFindManyArgs
@@ -91,7 +102,7 @@ export class ContentAdminService {
       {
         where: filters,
         include: { category: { include: { parent: true } }, feature_image: true, video: true },
-        orderBy: { id: 'desc' },
+        orderBy,
       },
       { page, perPage },
     );

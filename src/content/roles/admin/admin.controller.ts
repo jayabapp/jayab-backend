@@ -50,7 +50,7 @@ export class ContentAdminController {
     const filterQuery = filterValidator(dto);
     if (!filterQuery) throw new BadRequestException('FILTER1');
 
-    const result = await this.contentAdminService.findAll(filterQuery, dto.page, dto.per_page);
+    const result = await this.contentAdminService.findAll(filterQuery, dto.page, dto.per_page, dto.sort_by);
 
     return { result };
   }
