@@ -56,6 +56,7 @@ model Admin {
   activities          AdminActivity[]
   content_questions   ContentQuestion[]
   photo_upgrade_items PropertyPhotoUpgradeRequestItem[]
+  notifications       Notification[]
 
   @@map("admins")
 }
@@ -1019,6 +1020,7 @@ model Bookmark {
 model Notification {
   id               Int       @id() @default(autoincrement())
   user_id          Int?      @db.Integer
+  admin_id         Int?      @db.Integer
   is_sent_by_admin Boolean   @default(false)
   role             String?
   title            String    @db.Text
@@ -1030,9 +1032,11 @@ model Notification {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
-  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  user  User?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  admin Admin? @relation(fields: [admin_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
+  @@index([admin_id])
   @@map("notifications")
 }
 

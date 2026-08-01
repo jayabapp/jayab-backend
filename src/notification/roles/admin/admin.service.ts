@@ -21,7 +21,7 @@ export class NotificationAdminService {
    */
   async findAll(adminId: number, dto: FindAllNotificationAdminDto): Promise<Notification[]> {
     const result = await this.db.notification.findMany({
-      where: { user_id: adminId, role: UserRole.ADMIN, seen_at: null },
+      where: { admin_id: adminId, role: UserRole.ADMIN, seen_at: null },
       orderBy: { created_at: 'desc' },
     });
 
@@ -36,7 +36,7 @@ export class NotificationAdminService {
    */
   async findBadgeCount(adminId: number): Promise<number> {
     const count = await this.db.notification.count({
-      where: { user_id: adminId, role: UserRole.ADMIN, seen_at: null },
+      where: { admin_id: adminId, role: UserRole.ADMIN, seen_at: null },
     });
 
     return count;
@@ -50,7 +50,7 @@ export class NotificationAdminService {
    */
   async updateSeenAt(adminId: number, notifId: number): Promise<void> {
     await this.db.notification.update({
-      where: { id: notifId, user_id: adminId, role: UserRole.ADMIN },
+      where: { id: notifId, admin_id: adminId, role: UserRole.ADMIN },
       data: { seen_at: new Date() },
     });
 
@@ -64,7 +64,7 @@ export class NotificationAdminService {
    */
   async updateSeenAll(adminId: number): Promise<void> {
     await this.db.notification.updateMany({
-      where: { user_id: adminId, role: UserRole.ADMIN, seen_at: null },
+      where: { admin_id: adminId, role: UserRole.ADMIN, seen_at: null },
       data: { seen_at: new Date() },
     });
 

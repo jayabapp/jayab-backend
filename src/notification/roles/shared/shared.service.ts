@@ -169,7 +169,7 @@ export class NotificationSharedService {
     if (user.role === UserRole.USER) {
       createData = { ...createData, user_id: user.id, role: UserRole.USER };
     } else if (user.role === UserRole.ADMIN) {
-      createData = { ...createData, user_id: user.id, role: UserRole.ADMIN };
+      createData = { ...createData, admin_id: user.id, role: UserRole.ADMIN };
     }
 
     // console.log({ createData });
