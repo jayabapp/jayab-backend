@@ -82,7 +82,7 @@ export class SendNotificationAdminService {
   ): Promise<PaginatedResult<any>> {
     const list = await paginate()<Notification, Prisma.NotificationFindManyArgs>(
       this.db.notification,
-      { where: { ...filters, is_sent_by_admin: true } },
+      { where: filters },
       { page, perPage },
     );
 

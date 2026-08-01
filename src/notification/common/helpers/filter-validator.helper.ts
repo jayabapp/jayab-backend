@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { FindAllSentNotificationAdminDto } from 'src/notification/roles/admin/dto/find-all.dto';
+import { NotificationSourceFilter } from '../notification-source.type';
 
 /**
  * validate filters
@@ -20,7 +21,7 @@ export const filterValidator = (filters: FindAllSentNotificationAdminDto): Prism
   const fields = Object.keys(filters).filter((e) => filters[e]);
 
   // eslint-disable-next-line
-  let query: Prisma.NotificationWhereInput = {};
+  let query: Prisma.NotificationWhereInput = { is_sent_by_admin: true };
 
   for (const field of fields) {
     /**
@@ -33,6 +34,11 @@ export const filterValidator = (filters: FindAllSentNotificationAdminDto): Prism
     switch (field) {
       case 'mobile_number':
         query.user = { mobile_number: { contains: filters.mobile_number } };
+        break;
+
+      case 'source':
+        if (filters.source === NotificationSourceFilter.SYSTEM) query.is_sent_by_admin = false;
+        if (filters.source === NotificationSourceFilter.ALL) delete query.is_sent_by_admin;
         break;
 
       default:

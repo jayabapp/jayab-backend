@@ -11,6 +11,7 @@ import {
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 import { NotificationType } from '../notification-type.type';
 import { FirebaseTopicType, FirebaseTopicTypeList } from 'src/firebase/constants/topic-types';
+import { NotificationSourceFilterList, NotificationSourceList } from '../notification-source.type';
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -110,7 +111,14 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 3, title: 'ارسال به موبایل', key: 'data', cellType: 'object', nestedKey: 'mobile_number' },
       { id: 5, title: 'ارسال به گروه', key: 'topic', cellType: 'boolean' },
       { id: 6, title: 'نام گروه', key: 'topic', cellType: 'enum', enumList: FirebaseTopicTypeList },
-      { id: 7, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
+      {
+        id: 7,
+        title: 'نوع ارسال',
+        key: 'is_sent_by_admin',
+        cellType: 'enum',
+        enumList: NotificationSourceList,
+      },
+      { id: 8, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -124,6 +132,7 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'شماره تماس', state: 'mobile_number', type: 'input' },
+    { title: 'نوع ارسال', state: 'source', type: 'select', selectItems: NotificationSourceFilterList },
     // { title: 'نام و نام خانوادگی', state: 'full_name', type: 'input' },
     // { title: '', state: 'status', type: 'select', isHidden: true },
   ];
