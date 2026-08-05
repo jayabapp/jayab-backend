@@ -25,6 +25,7 @@ import { SendMessageDto } from 'src/chat/common/dto/send-message.dto';
 import { ROUTE_GROUP } from 'src/chat/common/route-group.constant';
 import { MessengerMessagesSerializer } from 'src/chat/serializer/messager-message.serializer';
 import { SharedChatService } from 'src/chat/shared-chat.service';
+import { containsMobileNumber } from 'src/common/helpers/contains-mobile-number.helper';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { RequestType } from 'src/common/interfaces/user.interface';
@@ -111,8 +112,11 @@ export class ChatUserController {
         ? chatroom.participants.self
         : chatroom.participants.recipient;
 
-    if (userParticipant.role == UserRole.OWNER && chatroom.isPropertyExpired) {
-      throw new BadRequestException('CHAT10');
+    if (chatroom.isPropertyExpired) {
+      if (userParticipant.role == UserRole.OWNER) throw new BadRequestException('CHAT10');
+      if (userParticipant.role == UserRole.USER) {
+        if (dto.text && containsMobileNumber(dto.text)) throw new BadRequestException('CHAT11');
+      }
     }
 
     /* -------------------------------------------------------------------------- */
