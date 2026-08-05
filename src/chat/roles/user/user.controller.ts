@@ -112,8 +112,14 @@ export class ChatUserController {
         ? chatroom.participants.self
         : chatroom.participants.recipient;
 
+    /**
+     * اگر آگهی منقضی باشد:
+     * مالک نمیتواند پیام دهد
+     * کاربر نمیتواند شماره موبایل و تصویر بفرستد
+     */
     if (chatroom.isPropertyExpired) {
       if (userParticipant.role == UserRole.OWNER) throw new BadRequestException('CHAT10');
+      if (userParticipant.role == UserRole.USER && dto.media_id) throw new BadRequestException('CHAT12');
       if (userParticipant.role == UserRole.USER) {
         if (dto.text && containsMobileNumber(dto.text)) throw new BadRequestException('CHAT11');
       }
