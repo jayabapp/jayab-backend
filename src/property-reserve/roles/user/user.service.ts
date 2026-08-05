@@ -110,8 +110,8 @@ export class PropertyReserveUserService {
    */
   async findAll(dto: FindAllPropertyReserveUserDto, userId: number): Promise<PropertyReserve[]> {
     let q: Prisma.PropertyReserveWhereInput = { user_id: userId };
-    //در تاریخ ۱۳ مرداد ۴۰۵ درخواست کارفرما این شد که درخواست های ۲۴ ساعت گذشته رو ببینه و محدودیتی نباشه
-    if (dto.type === 'active') q = { ...q, created_at: { gte: moment().subtract(24, 'hours').toDate() } };
+
+    if (dto.type === 'active') q = { ...q, ...this.ACTIVE_RESERVE_QUERY };
 
     const list = await this.db.propertyReserve.findMany({
       where: q,
