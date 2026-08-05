@@ -28,7 +28,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PropertyReserveUserService {
-  ACTIVE_RESERVE_QUERY: Prisma.PropertyReserveWhereInput = {};
+  private ACTIVE_RESERVE_QUERY: Prisma.PropertyReserveWhereInput = {};
   constructor(
     private readonly db: PrismaService,
     private readonly smsService: SmsService,
@@ -110,7 +110,8 @@ export class PropertyReserveUserService {
    */
   async findAll(dto: FindAllPropertyReserveUserDto, userId: number): Promise<PropertyReserve[]> {
     let q: Prisma.PropertyReserveWhereInput = { user_id: userId };
-    if (dto.type === 'active') q = { ...q, ...this.ACTIVE_RESERVE_QUERY };
+    //در تاریخ ۱۳ مرداد ۴۰۵ درخواست کارفرما این شد که درخواست های ۲۴ ساعت گذشته رو ببینه و محدودیتی نباشه
+    if (dto.type === 'active') q = { ...q, created_at: { gte: moment().subtract(24, 'hours').toDate() } };
 
     const list = await this.db.propertyReserve.findMany({
       where: q,
@@ -129,6 +130,7 @@ export class PropertyReserveUserService {
           },
         },
       },
+      orderBy: { created_at: 'desc' },
     });
 
     const formatted = [];
