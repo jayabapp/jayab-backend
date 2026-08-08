@@ -67,7 +67,10 @@ export class MessengerMessagesAdminService {
       MessengerMessages & {
         media: Attachment;
         participant: MessengerParticipant;
-        chatroom: MessengerChatroom & { property: Property & { owner: Owner & { user: User } } };
+        chatroom: MessengerChatroom & {
+          participants: MessengerParticipant[];
+          property: Property & { owner: Owner & { user: User } };
+        };
       },
       Prisma.MessengerMessagesFindManyArgs
     >(
@@ -77,7 +80,12 @@ export class MessengerMessagesAdminService {
         include: {
           media: true,
           participant: true,
-          chatroom: { include: { property: { include: { owner: { include: { user: true } } } } } },
+          chatroom: {
+            include: {
+              participants: true,
+              property: { include: { owner: { include: { user: true } } } },
+            },
+          },
         },
       },
       { page, perPage, skip },
@@ -85,7 +93,12 @@ export class MessengerMessagesAdminService {
 
     const newList = list.data.map((e) => {
       const property = e?.chatroom?.property;
-      const user = e?.participant;
+      const customerParticipant = e.chatroom.participants.find(
+        (participant) => participant.role === UserRole.USER,
+      );
+      const user = customerParticipant
+        ? { ...customerParticipant, id: customerParticipant.user_id }
+        : e.participant;
       const owner = property?.owner.user;
       const sender = e?.participant.role == UserRole.USER ? 'مشتری' : 'مالک';
 
@@ -116,14 +129,24 @@ export class MessengerMessagesAdminService {
       where: { id },
       include: {
         participant: true,
-        chatroom: { include: { property: { include: { owner: { include: { user: true } } } } } },
+        chatroom: {
+          include: {
+            participants: true,
+            property: { include: { owner: { include: { user: true } } } },
+          },
+        },
         media: true,
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     const property = item?.chatroom?.property;
-    const user = item?.participant;
+    const customerParticipant = item.chatroom.participants.find(
+      (participant) => participant.role === UserRole.USER,
+    );
+    const user = customerParticipant
+      ? { ...customerParticipant, id: customerParticipant.user_id }
+      : item.participant;
     const owner = property?.owner.user as User;
     const sender = item?.participant.role == UserRole.USER ? 'مشتری' : 'مالک';
 
