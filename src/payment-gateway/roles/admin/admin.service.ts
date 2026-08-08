@@ -4,13 +4,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdatePaymentGatewayAdminDto } from './dto/update.dto';
 import {
   CreateProps,
-  FilterProps,
   OperatorItems,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import {
   allActionsBuilder,
@@ -102,11 +101,13 @@ export class PaymentGatewayAdminService {
     //validate params
     const gateParams = gate.params as PaymentGatewayParams[];
     const reg = new RegExp(/^[-\w\s]+$/);
+    const isBazaarPay = gate.key === PaymentGatewayEnum.BAZAARPAY;
     for (const param of dto.params) {
       if (gateParams.findIndex((e) => e.key === param.key) === -1)
         throw new UnprocessableEntityException('GATEWAY1');
       if (!param.value) throw new UnprocessableEntityException('GATEWAY2');
-      if (!reg.test(param.value)) throw new UnprocessableEntityException('GATEWAY3');
+      if (param.value && !isBazaarPay && !reg.test(param.value))
+        throw new UnprocessableEntityException('GATEWAY3');
     }
 
     //update
@@ -138,8 +139,11 @@ export class PaymentGatewayAdminService {
     if (dto.is_active) {
       const gateParams = gate.params as PaymentGatewayParams[];
       const reg = new RegExp(/^[-\w\s]+$/);
+      const isBazaarPay = gate.key === PaymentGatewayEnum.BAZAARPAY;
       for (const param of gateParams) {
-        if (!param.value || !reg.test(param.value)) throw new UnprocessableEntityException('GATEWAY4');
+        if (!param.value) throw new UnprocessableEntityException('GATEWAY4');
+        if (param.value && !isBazaarPay && !reg.test(param.value))
+          throw new UnprocessableEntityException('GATEWAY4');
       }
     }
 

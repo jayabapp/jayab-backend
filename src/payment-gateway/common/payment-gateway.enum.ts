@@ -1,6 +1,7 @@
 export enum PaymentGatewayEnum {
   SANDBOX = 'SANDBOX',
   ZARINPAL = 'ZARINPAL',
+  BAZAARPAY = 'BAZAARPAY',
   SEP = 'SEP',
   MELLAT = 'MELLAT',
 }

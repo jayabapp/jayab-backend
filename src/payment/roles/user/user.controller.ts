@@ -34,7 +34,13 @@ export class PaymentUserController {
   ): Promise<SuccessResponseArgs> {
     /*  */
     const { payment, isAuthValid } = await this.paymentUserService.checkAuthority(authority);
-    const isGatewayValid = await this.paymentUserService.checkGateWay(payment);
+    let isGatewayValid = false;
+    let shouldCommit = false;
+    if (isAuthValid) {
+      const gatewayVerification = await this.paymentUserService.checkGateWay(payment);
+      isGatewayValid = gatewayVerification.isValid;
+      shouldCommit = gatewayVerification.shouldCommit;
+    }
 
     /*  */
     const redirectUrl = payment ? payment.redirect_url : '';
@@ -59,12 +65,6 @@ export class PaymentUserController {
     switch (payment.type) {
       case TurnoverType.PAY_SUBSCRIPTION:
         result = await this.paymentUserService.subscriptionPaymentCallback(payment);
-        if (result.subscription.is_promote) {
-          const user = result.subscription.property.owner.user;
-          await this.smsService.sendPromoteSmsToOwner(user.mobile_number, user.full_name);
-        }
-        if (result.subscription.extends_expire)
-          this.paymentSmsQueue.add(PAYMENT_SMS_JOB, { propertyId: result.subscription.property_id });
         break;
 
       case TurnoverType.PAY_ADVISOR_SUBSCRIPTION:
@@ -73,6 +73,17 @@ export class PaymentUserController {
 
       default:
         throw new BadRequestException('COMMON4');
+    }
+
+    if (shouldCommit) await this.paymentUserService.commitGatewayPayment(payment);
+
+    if (payment.type === TurnoverType.PAY_SUBSCRIPTION) {
+      if (result.subscription.is_promote) {
+        const user = result.subscription.property.owner.user;
+        await this.smsService.sendPromoteSmsToOwner(user.mobile_number, user.full_name);
+      }
+      if (result.subscription.extends_expire)
+        this.paymentSmsQueue.add(PAYMENT_SMS_JOB, { propertyId: result.subscription.property_id });
     }
 
     //success

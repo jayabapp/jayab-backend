@@ -9,11 +9,16 @@ import { ConfigService } from '@nestjs/config';
 import { MD5 } from 'crypto-js';
 import { PaymentStatuses } from 'src/payment/common/payment-status.enum';
 import { PartialUser } from 'src/common/interfaces/user.interface';
-import { endOfDate } from 'src/common/helpers/date.helper';
 import moment from 'moment-jalaali';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
+import { BazaarPayCheckoutStatus, BazaarPayService } from 'src/payment-gateway/gateways/bazaarpay.service';
+
+export type PaymentGatewayVerificationResult = {
+  isValid: boolean;
+  shouldCommit: boolean;
+};
 
 @Injectable()
 export class PaymentUserService {
@@ -21,6 +26,7 @@ export class PaymentUserService {
     private readonly db: PrismaService,
     private readonly config: ConfigService,
     private readonly zarinpalService: ZarinpalService,
+    private readonly bazaarPayService: BazaarPayService,
   ) {}
 
   /**
@@ -43,7 +49,7 @@ export class PaymentUserService {
     if (amount < minAmount) throw new UnprocessableEntityException('PAY2');
 
     try {
-      let payByGateway = amount;
+      const payByGateway = amount;
 
       /* ------------------------------- PAYMENT URL ------------------------------ */
       let paymentUrl = '';
@@ -68,12 +74,19 @@ export class PaymentUserService {
           authority = res?.gatewayAuthority;
           break;
 
+        case PaymentGatewayEnum.BAZAARPAY:
+          const bazaarPayResponse = await this.bazaarPayService.create(amountIRR, user.mobile_number);
+
+          paymentUrl = bazaarPayResponse.gatewayUrl;
+          authority = bazaarPayResponse.gatewayAuthority;
+          break;
+
         default:
           break;
       }
 
       /* ----------------------------- CREATE PAYMENT ----------------------------- */
-      let doc: Prisma.PaymentUncheckedCreateInput = {
+      const doc: Prisma.PaymentUncheckedCreateInput = {
         user_id: user.id,
         amount,
         debt: 0,
@@ -144,7 +157,7 @@ export class PaymentUserService {
             .toDate();
       }
 
-      let propertyUpdateData: Prisma.PropertyUpdateInput = { subscription_expired_at: newExpDate };
+      const propertyUpdateData: Prisma.PropertyUpdateInput = { subscription_expired_at: newExpDate };
       if (subscription.is_promote) {
         propertyUpdateData['sort_order'] = Date.now();
         propertyUpdateData['promoted_at'] = new Date();
@@ -233,7 +246,6 @@ export class PaymentUserService {
     });
 
     if (payment?.status !== PaymentStatuses.INIT) {
-      if (payment) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
       return { payment, isAuthValid: false };
     }
 
@@ -244,9 +256,11 @@ export class PaymentUserService {
     return await this.db.payment.update({ where: { id: paymentId }, data: { status } });
   }
 
-  async checkGateWay(payment: Payment): Promise<boolean> {
+  async checkGateWay(payment: Payment): Promise<PaymentGatewayVerificationResult> {
     const gateway = payment.gateway_key as PaymentGatewayEnum;
     let isVerified = false;
+    let shouldCommit = false;
+    let shouldMarkFailed = true;
 
     switch (gateway) {
       case PaymentGatewayEnum.SANDBOX:
@@ -258,12 +272,27 @@ export class PaymentUserService {
         isVerified = res?.isValid;
         break;
 
+      case PaymentGatewayEnum.BAZAARPAY:
+        const bazaarPayStatus = await this.bazaarPayService.trace(payment.authority);
+        isVerified = [
+          BazaarPayCheckoutStatus.PAID_NOT_COMMITTED,
+          BazaarPayCheckoutStatus.PAID_COMMITTED,
+        ].includes(bazaarPayStatus);
+        shouldCommit = bazaarPayStatus === BazaarPayCheckoutStatus.PAID_NOT_COMMITTED;
+        shouldMarkFailed = bazaarPayStatus !== BazaarPayCheckoutStatus.UNPAID;
+        break;
+
       default:
         break;
     }
 
-    if (!isVerified) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
+    if (!isVerified && shouldMarkFailed) await this.updatePaymentStatus(payment.id, PaymentStatuses.FAILED);
 
-    return isVerified;
+    return { isValid: isVerified, shouldCommit };
+  }
+
+  async commitGatewayPayment(payment: Payment): Promise<void> {
+    const gateway = payment.gateway_key as PaymentGatewayEnum;
+    if (gateway === PaymentGatewayEnum.BAZAARPAY) await this.bazaarPayService.commit(payment.authority);
   }
 }

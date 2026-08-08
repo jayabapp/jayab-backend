@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 /* -------------------------------------------------------------------------- */
 /*                                    SEED                                    */
 /* -------------------------------------------------------------------------- */
-const gateways = (): Prisma.PaymentGatewayCreateInput[] => {
+export const gateways = (): Prisma.PaymentGatewayCreateInput[] => {
   const data: Prisma.PaymentGatewayCreateInput[] = [
     {
       title: 'سندباکس (تست)',
@@ -24,6 +24,29 @@ const gateways = (): Prisma.PaymentGatewayCreateInput[] => {
         {
           title: 'مرچنت کد',
           key: 'merchant',
+          value: '',
+        },
+      ],
+    },
+    {
+      title: 'بازارپی',
+      key: PaymentGatewayEnum.BAZAARPAY,
+      logo: '',
+      is_active: false,
+      params: [
+        {
+          title: 'نام پذیرنده',
+          key: 'destination',
+          value: '',
+        },
+        {
+          title: 'نام سرویس',
+          key: 'service_name',
+          value: 'خرید اشتراک جایاب',
+        },
+        {
+          title: 'توکن احراز هویت',
+          key: 'authorization_token',
           value: '',
         },
       ],
@@ -75,7 +98,7 @@ const gateways = (): Prisma.PaymentGatewayCreateInput[] => {
 export async function paymentGatewaySeeder(): Promise<void> {
   console.time('✅ PAYMENT GATEWAY');
   for (const e of gateways()) {
-    await prisma.paymentGateway.upsert({ where: { key: e.key }, update: { logo: e.logo }, create: e });
+    await prisma.paymentGateway.upsert({ where: { key: e.key }, update: {}, create: e });
   }
   console.timeEnd('✅ PAYMENT GATEWAY');
 }
