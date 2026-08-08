@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   // Delete,
   Get,
   Param,
@@ -90,8 +91,20 @@ export class UserAdminController {
 
   @ApiOperation({ summary: 'Find One', description: '' })
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
-    const result = await this.userAdminService.findOne(id);
+  async findOne(@Req() req, @Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const rbac = req.adminRbac as AccessControlList;
+    const result = await this.userAdminService.findOne(id, rbac);
+
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'User SSO', description: '' })
+  @Get(':id/sso')
+  async generateSSOToken(@Req() req, @Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const rbac = req.adminRbac as AccessControlList;
+    if (!rbac.u) throw new ForbiddenException('RBAC3');
+
+    const result = await this.userAdminService.generateSSOToken(id);
 
     return { result };
   }

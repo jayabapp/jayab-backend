@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { AccessControlList, Prisma, User } from '@prisma/client';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { CreateUserAdminDto } from './dto/create.dto';
 import moment from 'moment-jalaali';
@@ -13,6 +16,7 @@ import {
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
 import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
+import { UserRole } from 'src/common/interfaces/role.enum';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
@@ -33,6 +37,8 @@ export class UserAdminService {
   constructor(
     private readonly db: PrismaService,
     private readonly setting: SettingAdminService,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -74,11 +80,14 @@ export class UserAdminService {
    * @param id
    * @returns
    */
-  async findOne(id: number): Promise<{ showProps: Partial<ShowProps>[]; actions: Array<ShowAction> }> {
+  async findOne(
+    id: number,
+    rbac: AccessControlList,
+  ): Promise<{ showProps: Partial<ShowProps>[]; actions: Array<ShowAction> }> {
     const item = await this.db.user.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
-    const { showProps, actions } = showPropsBuilder(item);
+    const { showProps, actions } = showPropsBuilder(item, rbac);
 
     return { showProps, actions };
   }
@@ -93,6 +102,21 @@ export class UserAdminService {
     if (!item) throw new NotFoundException('NOT_FOUND');
 
     return item;
+  }
+
+  /** Generate a short-lived token for an admin to enter a user's website account. */
+  async generateSSOToken(id: number): Promise<string> {
+    const user = await this.findById(id);
+    const payload: TokenPayload = {
+      id: user.id,
+      jwtLevel: user.jwt_level || 1,
+      role: UserRole.USER,
+    };
+
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get('auth.secret'),
+      expiresIn: '30m',
+    });
   }
 
   /**

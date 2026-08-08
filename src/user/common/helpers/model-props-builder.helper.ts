@@ -28,6 +28,7 @@ const types = [
 /* -------------------------------------------------------------------------- */
 export const showPropsBuilder = (
   item: User,
+  rbac: AccessControlList,
 ): { showProps: Partial<ShowProps>[]; actions: Array<ShowAction> } => {
   const showProps: Array<ShowProps> = [
     { state: 'id', title: 'شناسه', value: item.id, type: 'number' },
@@ -78,6 +79,14 @@ export const showPropsBuilder = (
       route: `advisor?user_id=${item.id}`,
     },
   ];
+
+  if (rbac.u)
+    actions.push({
+      title: 'ورود به حساب کاربر',
+      route: `/users/signin/${item.id}`,
+      color: 'success',
+      targetBlank: true,
+    });
 
   return { showProps, actions };
 };
