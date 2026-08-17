@@ -6,6 +6,7 @@ import { RESERVE_QUEUE, RESERVE_SMS_JOB } from 'src/property-reserve/processors/
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { PropertyReserveUserService } from './user.service';
+import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/constants/reserve.constant';
 import { RESERVE_CALL_DELAY_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
@@ -17,6 +18,7 @@ import { RequestType } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
 import { UserRole } from 'src/common/interfaces/role.enum';
 import { Queue } from 'bull';
+import moment from 'moment-jalaali';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -90,7 +92,6 @@ export class PropertyReserveUserController {
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
     const result = await this.propertyReserveUserService.findAll(dto, user.id);
-
     return { result };
   }
 
@@ -102,7 +103,10 @@ export class PropertyReserveUserController {
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
     const reserve = await this.propertyReserveUserService.findById(propertyReserveId, user.id);
-    if (reserve.expired_at) throw new BadRequestException('RESERVE5');
+    const isVisibleForGuest = moment(reserve.created_at)
+      .add(GUEST_RESERVE_VISIBILITY_HOURS, 'hours')
+      .isAfter(moment());
+    if (reserve.canceled_at || !isVisibleForGuest) throw new BadRequestException('RESERVE5');
     const result = await this.propertyReserveUserService.cancel(propertyReserveId);
     return { result, messageCode: 'RESERVE1' };
   }
