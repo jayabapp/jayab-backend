@@ -56,3 +56,7 @@ liara.json
 
 #pm2
 ecosystem.config*
+
+# local-only docs
+project-overview.md
+coding-standard.md

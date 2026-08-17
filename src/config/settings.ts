@@ -1,1 +1,1 @@
-export const __baseDir = process.env.PWD;
+export const __baseDir = process.env.PWD || process.cwd();

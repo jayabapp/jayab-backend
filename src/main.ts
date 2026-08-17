@@ -165,7 +165,10 @@ async function bootstrap(): Promise<void> {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  await app.listen(process.env.PORT || 3000, '127.0.0.1');
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '127.0.0.1');
+
+  console.log(`Server listening at http://localhost:${port}`);
 }
 
 bootstrap();
