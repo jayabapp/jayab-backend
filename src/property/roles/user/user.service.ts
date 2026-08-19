@@ -1,4 +1,5 @@
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
+import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
 import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
@@ -55,7 +56,7 @@ export class PropertyUserService {
   ): Promise<PaginatedResult<PropertyArrayResType>> {
     let {
       code,
-    consprovinces,
+      provinces,
       cities = '',
       regions,
       total_bedrooms,
@@ -113,7 +114,7 @@ export class PropertyUserService {
 
     let options = [];
     /* ------------------------------ options query (new) ----------------------------- */
-    cons (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
+    if (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
     if (ownership) options.push({ options_array: { hasSome: parseQueryNumberArray(ownership) } });
     if (guest_type) options.push({ options_array: { hasSome: parseQueryNumberArray(guest_type) } });
     if (pattern) options.push({ options_array: { hasSome: parseQueryNumberArray(pattern) } });
@@ -146,18 +147,8 @@ export class PropertyUserService {
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title } };
 
-    /* ---------------------------------- price --------------------------------- */
-    if (min_price >= 0 || max_price >= 0) {
-      query = {
-        ...query,
-        daily_price: {
-          AND: [
-            { [today]: { gte: min_price ?? 0 } },
-            { [today]: { lte: max_price || Number.MAX_SAFE_INTEGER } },
-          ],
-        },
-      };
-    }
+    const hasPriceFilter = min_price !== undefined || max_price !== undefined;
+    const hasPriceSort = dto.sort_type === 'price_asc' || dto.sort_type === 'price_desc';
 
     /* ------------------------------ building area ----------------------------- */
     if (min_building_area >= 0 || max_building_area >= 0) {
@@ -207,12 +198,6 @@ export class PropertyUserService {
       case 'newset':
         orderByQuery = { sort_order: 'desc' };
         break;
-      case 'price_asc':
-        orderByQuery = { daily_price: { [today]: 'asc' } };
-        break;
-      case 'price_desc':
-        orderByQuery = { daily_price: { [today]: 'desc' } };
-        break;
       case 'commission_desc':
         orderByQuery = { advisor_commission: 'desc' };
         break;
@@ -221,11 +206,7 @@ export class PropertyUserService {
         break;
     }
 
-    const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
-      this.db.property,
-      {
-        where: query,
-        include: {
+    const include = {
           feature_image: true,
           province: { select: { title: true } },
           city: { select: { title: true } },
@@ -238,7 +219,61 @@ export class PropertyUserService {
           calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
           bedrooms: { select: { total_bedrooms: true } },
           _count: { select: { property_images: true } },
+    } satisfies Prisma.PropertyInclude;
+
+    let orderedPageIds: number[] = null;
+    let priceMeta: PaginatedResult<PropertyArrayResType>['meta'] = null;
+
+    if (hasPriceFilter || hasPriceSort) {
+      const candidates = await this.db.property.findMany({
+        where: query,
+        select: {
+          id: true,
+          daily_price: true,
+          calendar: { where: { date: startOfToday() }, select: { effective_price: true } },
         },
+      });
+      const pricedCandidates = candidates
+        .map((property) => ({ id: property.id, price: getEffectiveTodayPrice(property, today) }))
+        .filter(({ price }) => isEffectivePriceInRange(price, min_price, max_price));
+
+      if (hasPriceSort) {
+        const direction = dto.sort_type === 'price_asc' ? 1 : -1;
+        pricedCandidates.sort((a, b) => direction * (a.price - b.price) || a.id - b.id);
+        const page = Number(dto.page) || 1;
+        const perPage = Number(dto.per_page) || 10;
+        const total = pricedCandidates.length;
+        const lastPage = Math.ceil(total / perPage);
+        orderedPageIds = pricedCandidates.slice((page - 1) * perPage, page * perPage).map(({ id }) => id);
+        priceMeta = {
+          total,
+          lastPage,
+          currentPage: page,
+          perPage,
+          prev: page > 1 ? page - 1 : null,
+          next: page < lastPage ? page + 1 : null,
+        };
+      } else {
+        query = { ...query, id: { in: pricedCandidates.map(({ id }) => id) } };
+      }
+    }
+
+    if (hasPriceSort) {
+      const pageData = await this.db.property.findMany({
+        where: { ...query, id: { in: orderedPageIds } },
+        include,
+      });
+      const order = new Map(orderedPageIds.map((id, index) => [id, index]));
+      pageData.sort((a, b) => order.get(a.id) - order.get(b.id));
+      const serialized = await this.propertySerializer.toArray(pageData, today, isAdvisor, false);
+      return { data: serialized, meta: priceMeta };
+    }
+
+    const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
+      this.db.property,
+      {
+        where: query,
+        include,
         orderBy: orderByQuery,
       },
       { page: dto.page, perPage: dto.per_page },
@@ -699,7 +734,7 @@ export class PropertyUserService {
 
     let citiesList = [];
     for (const c of cityRecords) {
-    conscitiesList.push({
+      citiesList.push({
         id: c.id,
         title: c.title,
         parent_id: c.parent_id,
@@ -761,7 +796,7 @@ export class PropertyUserService {
     const strings = searchTerm.trim().replace(specialChars, ' ').split(/\s+/);
     let query = [];
     for (const text of strings) {
-    consquery.push({ [column]: { contains: text } });
+      query.push({ [column]: { contains: text } });
     }
     return query;
   };
@@ -773,6 +808,5 @@ export class PropertyUserService {
    */
   async duplicate(propertyId: number): Promise<void> {
     return;
-    const propPure = await this.db.property.findUnique({ where: { id: propertyId }, omit: { id: true } });
-    const prop = await this.db.property.findUnique({
-      where: { id: propertyId },
+  }
+}
