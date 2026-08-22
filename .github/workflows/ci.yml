@@ -52,5 +52,11 @@ jobs:
       - name: Build
         run: npx nest build
 
+      # The default reporter's live status renderer crashes on a clean install
+      # ("stripAnsi is not a function") because of a strip-ansi ESM/CJS clash.
+      # package.json carries a `resolutions` entry meant to fix that, but it sits
+      # nested inside the "jest" block instead of at the package.json top level,
+      # so yarn never applies it. These reporters avoid the broken code path and
+      # surface failures as GitHub annotations.
       - name: Unit tests
-        run: npx jest --ci
+        run: npx jest --ci --reporters=github-actions --reporters=summary
