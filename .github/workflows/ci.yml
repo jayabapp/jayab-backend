@@ -32,8 +32,13 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      # Pinned to match the @prisma/client version resolved in yarn.lock (6.19.0).
+      # The `prisma` CLI is NOT a declared dependency of this repo, so a bare
+      # `npx prisma` pulls the latest major (7.x) from the registry, which rejects
+      # this v6 schema. Keep this in sync with @prisma/client, or better: add
+      # `prisma` to devDependencies and drop the pin.
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: npx prisma@6.19.0 generate
 
       - name: Typecheck
         run: npx tsc --noEmit
