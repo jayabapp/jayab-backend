@@ -19,7 +19,7 @@ const admin = (): Prisma.AdminUncheckedCreateInput => {
   return {
     username: 'superadmin',
     password: password,
-    mobile_number: '09126048740',
+    mobile_number: '09120680481',
     full_name: 'سوپر ادمین',
     role_id: 1,
   };
