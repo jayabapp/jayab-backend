@@ -60,3 +60,6 @@ ecosystem.config*
 # local-only docs
 project-overview.md
 coding-standard.md
+# Firebase credentials
+src/common/utils/constants/*firebase-adminsdk*.json
+
