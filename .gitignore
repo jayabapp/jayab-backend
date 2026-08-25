@@ -57,9 +57,17 @@ liara.json
 #pm2
 ecosystem.config*
 
+<<<<<<< HEAD
 # local-only docs
 project-overview.md
 coding-standard.md
 # Firebase credentials
 src/common/utils/constants/*firebase-adminsdk*.json
+=======
+
+src/common/utils/constants/*firebase-adminsdk*.json
+
+coding-standard.md
+project-overview.md
+>>>>>>> origin/main
 
