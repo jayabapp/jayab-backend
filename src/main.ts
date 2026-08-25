@@ -131,7 +131,7 @@ async function bootstrap(): Promise<void> {
       .build();
 
     const document = SwaggerModule.createDocument(app, config, {});
-    // SwaggerModule.setup('api', app, document,{swaggerOptions:{}});
+    SwaggerModule.setup('api', app, document);
 
     RapidocModule.setup('docs', app, document, {
       customLogo: process.env.APP_LOGO,
