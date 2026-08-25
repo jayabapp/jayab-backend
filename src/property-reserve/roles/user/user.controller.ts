@@ -2,25 +2,21 @@ import {
   BadRequestException,
   Body,
   Controller,
-  // Delete,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-  Put,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-// import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { USER_ROUTE_GROUP } from 'src/property-reserve/common/route-group.constant';
-import { PropertyReserveUserService } from './user.service';
-import { CreatePropertyReserveUserDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdatePropertyReserveUserDto } from './dto/update.dto';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
+import { CreatePropertyReserveUserDto } from './dto/create.dto';
+import { PropertyReserveUserService } from './user.service';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { USER_ROUTE_GROUP } from 'src/property-reserve/common/route-group.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
@@ -32,12 +28,14 @@ import {
 } from 'src/property-reserve/processors/queue-name.constants';
 import { Queue } from 'bull';
 import {
+  GUEST_RESERVE_VISIBILITY_HOURS,
   RESERVE_CALL_DELAY_MINUTES,
   RESERVE_TTL_MINUTES,
 } from 'src/property-reserve/common/constants/reserve.constant';
 import { SocketService } from 'src/socket/socket.service';
 import { SocketEvents } from 'src/socket/common/socket-event.enum';
 import { UserRole } from 'src/common/interfaces/role.enum';
+import moment from 'moment-jalaali';
 
 @ApiTags('PropertyReserve - USER')
 @UseGuards(UserJwtGuard)
@@ -57,7 +55,6 @@ export class PropertyReserveUserController {
     @Body() dto: CreatePropertyReserveUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    //بررسی داشتن درخواست فعال روی این ملک
     const activeReserveId = await this.propertyReserveUserService.checkActiveReserveOnProperty(
       user.id,
       dto.property_id,
@@ -67,30 +64,24 @@ export class PropertyReserveUserController {
       return { result: activeReserve };
     }
 
-    //بررسی سقف درخواست فعال
     await this.propertyReserveUserService.canCreateReserves(user.id);
 
-    //create reserve
     const { reserve, ownerId } = await this.propertyReserveUserService.create(dto, user.id);
 
-    //send sms
     await this.queue.add(RESERVE_SMS_JOB, { reserveId: reserve.id });
 
-    //send call
     await this.queue.add(
       RESERVE_CALL_JOB,
       { reserveId: reserve.id },
       { delay: RESERVE_CALL_DELAY_MINUTES * 60 * 1000 },
     );
 
-    //expire
     await this.queue.add(
       RESERVE_EXPIRE_JOB,
       { reserveId: reserve.id },
       { delay: RESERVE_TTL_MINUTES * 60 * 1000 },
     );
 
-    //send reserve event to owner
     this.socketService.emit(
       [ownerId],
       {
@@ -113,7 +104,6 @@ export class PropertyReserveUserController {
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
     const result = await this.propertyReserveUserService.findAll(dto, user.id);
-
     return { result };
   }
 
@@ -125,10 +115,11 @@ export class PropertyReserveUserController {
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
     const reserve = await this.propertyReserveUserService.findById(propertyReserveId, user.id);
-    if (reserve.expired_at) throw new BadRequestException('RESERVE5');
-
+    const isVisibleForGuest = moment(reserve.created_at)
+      .add(GUEST_RESERVE_VISIBILITY_HOURS, 'hours')
+      .isAfter(moment());
+    if (reserve.canceled_at || !isVisibleForGuest) throw new BadRequestException('RESERVE5');
     const result = await this.propertyReserveUserService.cancel(propertyReserveId);
-
     return { result, messageCode: 'RESERVE1' };
   }
 }
