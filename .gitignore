@@ -57,5 +57,9 @@ liara.json
 #pm2
 ecosystem.config*
 
+
+src/common/utils/constants/*firebase-adminsdk*.json
+
 coding-standard.md
 project-overview.md
+
