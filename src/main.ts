@@ -165,8 +165,7 @@ async function bootstrap(): Promise<void> {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-const port = process.env.PORT || 3000;
-await app.listen(port, '0.0.0.0');
+  await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 
 bootstrap();

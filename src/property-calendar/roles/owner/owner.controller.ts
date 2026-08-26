@@ -1,21 +1,33 @@
-import { Body, Controller, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  // Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { Get, Param, ParseIntPipe, Post } from '@nestjs/common';
-import { OwnerUpdatePropertyInterceptor } from 'src/property/common/interceptors/owner-property.interceptor';
+// import { OwnerJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { OWNER_ROUTE_GROUP } from 'src/property-calendar/common/route-group.constant';
 import { PropertyCalendarOwnerService } from './owner.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { OWNER_ROUTE_GROUP } from 'src/property-calendar/common/route-group.constant';
-import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { UpdatePropertyCalendarOwnerDto } from './dto/update.dto';
+import { FindAllPropertyCalendarOwnerDto } from './dto/find-all.dto';
 import { OwnerGuard } from 'src/auth/guards/owner.guard';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { OwnerUpdatePropertyInterceptor } from 'src/property/common/interceptors/owner-property.interceptor';
 import {
-  BulkUpdatePropertyDayPriceOwnerDto,
-  BulkUpdatePropertyReservedStatusOwnerDto,
   CreatePropertyCalendarNoteOwnerDto,
   UpdatePropertyAdvisorCommissionOwnerDto,
   UpdatePropertyDayPriceOwnerDto,
   UpdatePropertyReservedStatusOwnerDto,
 } from './dto/create.dto';
+import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
 
 @ApiTags('PropertyCalendar - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -45,17 +57,6 @@ export class PropertyCalendarOwnerController {
     @Body() dto: UpdatePropertyReservedStatusOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const result = await this.propertyCalendarOwnerService.updateReserveStatus(propertyId, dto);
-
-    return { result };
-  }
-
-  @ApiOperation({ summary: 'Update Reserve Status Of Many Days', description: '' })
-  @Post('reserves/bulk')
-  async createReserveDays(
-    @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: BulkUpdatePropertyReservedStatusOwnerDto,
-  ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.bulkUpdateReserveStatus(propertyId, dto);
 
     return { result };
   }
@@ -90,17 +91,6 @@ export class PropertyCalendarOwnerController {
     @Body() dto: UpdatePropertyDayPriceOwnerDto,
   ): Promise<SuccessResponseArgs> {
     const result = await this.propertyCalendarOwnerService.updatePrice(propertyId, dto);
-
-    return { result };
-  }
-
-  @ApiOperation({ summary: 'Update Price Of Many Days', description: '' })
-  @Post('price/bulk')
-  async updatePrices(
-    @Param('propertyId', ParseIntPipe) propertyId: number,
-    @Body() dto: BulkUpdatePropertyDayPriceOwnerDto,
-  ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyCalendarOwnerService.bulkUpdatePrice(propertyId, dto);
 
     return { result };
   }

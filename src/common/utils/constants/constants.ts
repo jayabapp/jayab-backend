@@ -1,3 +1,1 @@
 export const MAX_ACTIVE_DEVICES = 10;
-
-export const MAX_PROPERTY_PRICE = 1000000000;

@@ -1,19 +1,18 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { PropertyCalendar, Prisma } from '@prisma/client';
-import { convertJalaaliDtoToDate } from 'src/common/helpers/date.helper';
-import { MAX_PROPERTY_PRICE } from 'src/common/utils/constants/constants';
-import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { DayHelper } from 'src/common/helpers/day.helper';
-import { uniqBy } from 'lodash';
+import { UpdatePropertyCalendarOwnerDto } from './dto/update.dto';
+import { FindAllPropertyCalendarOwnerDto } from './dto/find-all.dto';
+import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import {
-  BulkUpdatePropertyDayPriceOwnerDto,
-  BulkUpdatePropertyReservedStatusOwnerDto,
   CreatePropertyCalendarNoteOwnerDto,
   UpdatePropertyAdvisorCommissionOwnerDto,
   UpdatePropertyDayPriceOwnerDto,
   UpdatePropertyReservedStatusOwnerDto,
 } from './dto/create.dto';
+import { JalaaliDateDto } from 'src/common/dto/jalaali-date.dto';
+import { convertJalaaliDtoToDate, startOfDate } from 'src/common/helpers/date.helper';
+import { DayHelper } from 'src/common/helpers/day.helper';
 
 @Injectable()
 export class PropertyCalendarOwnerService {
@@ -77,7 +76,6 @@ export class PropertyCalendarOwnerService {
 
   /**
    * بازه قیمتی قابل قبول برای قیمت گذاری را برمیگرداند
-   * سقف، محدودیتی روی افزایش قیمت روزانه نمیگذارد و فقط حد بالای مجاز قیمت است
    * @param propertyId
    * @param dto
    * @returns
@@ -87,16 +85,15 @@ export class PropertyCalendarOwnerService {
     const dailyPrice = await this.db.propertyDailyPrice.findFirst({ where: { property_id: propertyId } });
 
     const MAX_MIN_RATIO = 4; // adaptive
-    const basePrice = dailyPrice[targetDay.requestedDays[0]];
+    const maxPrice = dailyPrice[targetDay.requestedDays[0]];
 
-    const roundHelper = basePrice / MAX_MIN_RATIO < 100000 ? Math.pow(10, 4) : Math.pow(10, 5);
-    const minPrice = Math.floor(basePrice / (MAX_MIN_RATIO * roundHelper)) * roundHelper;
+    const roundHelper = maxPrice / MAX_MIN_RATIO < 100000 ? Math.pow(10, 4) : Math.pow(10, 5);
+    const minPrice = Math.floor(maxPrice / (MAX_MIN_RATIO * roundHelper)) * roundHelper;
 
     return {
-      max_price: MAX_PROPERTY_PRICE,
+      max_price: maxPrice * 2,
       min_price: minPrice,
       step: roundHelper,
-      base_price: basePrice,
     };
   }
 
@@ -126,102 +123,6 @@ export class PropertyCalendarOwnerService {
       },
     });
     return newPropertyCalendar;
-  }
-
-  /* --------------------------- CHANGING MANY DAYS --------------------------- */
-
-  /**
-   * تعیین پر یا خالی بودن چند روز با هم
-   * برخلاف حالت تک روزه وضعیت toggle نمیشود و مقدار صریح ست میشود
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
-  async bulkUpdateReserveStatus(
-    propertyId: number,
-    dto: BulkUpdatePropertyReservedStatusOwnerDto,
-  ): Promise<PropertyCalendar[]> {
-    return this.db.$transaction(
-      this.uniqueDays(dto.days).map((day) =>
-        this.db.propertyCalendar.upsert({
-          where: {
-            property_id_day_month_year: {
-              property_id: propertyId,
-              day: day.day,
-              month: day.month,
-              year: day.year,
-            },
-          },
-          create: {
-            property_id: propertyId,
-            day: day.day,
-            month: day.month,
-            year: day.year,
-            date: convertJalaaliDtoToDate(day),
-            is_reserved: dto.is_reserved,
-          },
-          update: { is_reserved: dto.is_reserved },
-        }),
-      ),
-    );
-  }
-
-  /**
-   * تغییر قیمت چند روز با هم
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
-  async bulkUpdatePrice(
-    propertyId: number,
-    dto: BulkUpdatePropertyDayPriceOwnerDto,
-  ): Promise<PropertyCalendar[]> {
-    if (dto.discounted_price > dto.price) throw new UnprocessableEntityException('PROPERTY_CALENDAR1');
-
-    const effectivePrice = dto.discounted_price ?? dto.price;
-    let percentage = 0;
-    if (dto.discounted_price > 0)
-      percentage = +(((dto.price - dto.discounted_price) / dto.price) * 100).toFixed(2);
-
-    const priceData = {
-      price: dto.price,
-      discounted_price: dto.discounted_price,
-      effective_price: effectivePrice,
-      discount_percentage: percentage,
-    };
-
-    return this.db.$transaction(
-      this.uniqueDays(dto.days).map((day) =>
-        this.db.propertyCalendar.upsert({
-          where: {
-            property_id_day_month_year: {
-              property_id: propertyId,
-              day: day.day,
-              month: day.month,
-              year: day.year,
-            },
-          },
-          create: {
-            property_id: propertyId,
-            day: day.day,
-            month: day.month,
-            year: day.year,
-            date: convertJalaaliDtoToDate(day),
-            ...priceData,
-          },
-          update: priceData,
-        }),
-      ),
-    );
-  }
-
-  /**
-   * حذف روزهای تکراری تا یک روز دوبار در تراکنش upsert نشود
-   * @param days
-   * @returns
-   */
-  private uniqueDays(days: JalaaliDateDto[]): JalaaliDateDto[] {
-    return uniqBy(days, (day) => `${day.year}/${day.month}/${day.day}`);
   }
 
   /**
@@ -255,7 +156,9 @@ export class PropertyCalendarOwnerService {
     const item = await this.db.propertyCalendar.findFirst({
       where: { id: propertyCalendarId },
     });
+
     if (!item) throw new NotFoundException('NOT_FOUND');
+
     return item;
   }
 
@@ -281,4 +184,12 @@ export class PropertyCalendarOwnerService {
 
     return item;
   }
+
+  // /**
+  //  * remove
+  //  * @param propertyCalendarId
+  //  */
+  // async remove(propertyCalendarId: number): Promise<void> {
+  //   await this.db.propertyCalendar.delete({ where: { id: propertyCalendarId } });
+  // }
 }

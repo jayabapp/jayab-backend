@@ -1,31 +1,38 @@
-import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
-import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
-import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import {
+  BadRequestException,
+  ForbiddenException,
+  GoneException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
-import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { Redis } from 'ioredis';
+import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
+import moment from 'moment-jalaali';
+import randomstring from 'randomstring';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import Num2persian from 'src/common/helpers/Num2Persian';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { sanitizeText, slugify } from 'src/common/helpers/slugify';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { PartialUser } from 'src/common/interfaces/user.interface';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import {
+  PropertyArrayResType,
+  PropertyJsonType,
+  PropertyResType,
+  PropertySerializer,
+} from 'src/property/serializer/property.serializer';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
-import { DayHelper } from 'src/common/helpers/day.helper';
-import { Redis } from 'ioredis';
-
-import randomstring from 'randomstring';
-import Num2persian from 'src/common/helpers/Num2Persian';
-import moment from 'moment-jalaali';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 
 @Injectable()
 export class PropertyUserService {
@@ -105,6 +112,7 @@ export class PropertyUserService {
     else if (!isEmpty(provincesArray)) queryOR.push({ province_id: { in: provincesArray } });
 
     /* ------------------------------------ q ----------------------------------- */
+    // if (q) queryOR = queryOR.concat(this.preprocessSearchTerms(dto.q, 'slug') as Prisma.PropertyWhereInput[]);
     if (q) queryOR.push({ title: { contains: dto.q, mode: 'insensitive' } });
 
     /* ----------------------------- total bedrooms ----------------------------- */
@@ -154,8 +162,18 @@ export class PropertyUserService {
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title } };
 
-    const hasPriceFilter = min_price !== undefined || max_price !== undefined;
-    const hasPriceSort = dto.sort_type === 'price_asc' || dto.sort_type === 'price_desc';
+    /* ---------------------------------- price --------------------------------- */
+    if (min_price >= 0 || max_price >= 0) {
+      query = {
+        ...query,
+        daily_price: {
+          AND: [
+            { [today]: { gte: min_price ?? 0 } },
+            { [today]: { lte: max_price || Number.MAX_SAFE_INTEGER } },
+          ],
+        },
+      };
+    }
 
     /* ------------------------------ building area ----------------------------- */
     if (min_building_area >= 0 || max_building_area >= 0) {
@@ -205,6 +223,12 @@ export class PropertyUserService {
       case 'newset':
         orderByQuery = { sort_order: 'desc' };
         break;
+      case 'price_asc':
+        orderByQuery = { daily_price: { [today]: 'asc' } };
+        break;
+      case 'price_desc':
+        orderByQuery = { daily_price: { [today]: 'desc' } };
+        break;
       case 'commission_desc':
         orderByQuery = { advisor_commission: 'desc' };
         break;
@@ -213,86 +237,24 @@ export class PropertyUserService {
         break;
     }
 
-    const include = {
-      feature_image: true,
-      province: { select: { title: true } },
-      city: { select: { title: true } },
-      region: { select: { title: true } },
-      property_options: {
-        where: { option: { deleted_at: null } },
-        select: { option: { select: { title: true, group: true } } },
-      },
-      daily_price: true,
-      calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-      bedrooms: { select: { total_bedrooms: true } },
-      _count: { select: { property_images: true } },
-    } satisfies Prisma.PropertyInclude;
-
-    let orderedPageIds: number[] = null;
-    let effectivePriceIds: number[] = null;
-    let priceMeta: PaginatedResult<PropertyArrayResType>['meta'] = null;
-
-    if (hasPriceFilter || hasPriceSort) {
-      const candidates = await this.db.property.findMany({
-        where: query,
-        select: {
-          id: true,
-          daily_price: true,
-          calendar: {
-            where: { date: startOfToday() },
-            select: { effective_price: true },
-          },
-        },
-      });
-
-      const pricedCandidates = candidates
-        .map((property) => ({
-          id: property.id,
-          price: getEffectiveTodayPrice(property, today),
-        }))
-        .filter(({ price }) => isEffectivePriceInRange(price, min_price, max_price));
-
-      effectivePriceIds = pricedCandidates.map(({ id }) => id);
-
-      if (hasPriceSort) {
-        const direction = dto.sort_type === 'price_asc' ? 1 : -1;
-        pricedCandidates.sort((a, b) => direction * (a.price - b.price) || a.id - b.id);
-
-        const page = Number(dto.page) || 1;
-        const perPage = Number(dto.per_page) || 10;
-        const total = pricedCandidates.length;
-        const lastPage = Math.ceil(total / perPage);
-        orderedPageIds = pricedCandidates.slice((page - 1) * perPage, page * perPage).map(({ id }) => id);
-        priceMeta = {
-          total,
-          lastPage,
-          currentPage: page,
-          perPage,
-          prev: page > 1 ? page - 1 : null,
-          next: page < lastPage ? page + 1 : null,
-        };
-      } else {
-        query = { ...query, id: { in: effectivePriceIds } };
-      }
-    }
-
-    if (hasPriceSort) {
-      const pageData = await this.db.property.findMany({
-        where: { ...query, id: { in: orderedPageIds } },
-        include,
-      });
-      const order = new Map(orderedPageIds.map((id, index) => [id, index]));
-      pageData.sort((a, b) => order.get(a.id) - order.get(b.id));
-
-      const serialized = await this.propertySerializer.toArray(pageData, today, isAdvisor, false);
-      return { data: serialized, meta: priceMeta };
-    }
-
     const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
         where: query,
-        include,
+        include: {
+          feature_image: true,
+          province: { select: { title: true } },
+          city: { select: { title: true } },
+          region: { select: { title: true } },
+          property_options: {
+            where: { option: { deleted_at: null } },
+            select: { option: { select: { title: true, group: true } } },
+          },
+          daily_price: true,
+          calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+          bedrooms: { select: { total_bedrooms: true } },
+          _count: { select: { property_images: true } },
+        },
         orderBy: orderByQuery,
       },
       { page: dto.page, perPage: dto.per_page },
@@ -337,6 +299,7 @@ export class PropertyUserService {
 
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (!!item.deleted_at) throw new GoneException('GONE');
+    //در تاریخ ۲۷ خرداد ۴۰۵ قرار شد فقط پاک شده ها ۴۱۰ بشن. به دلیل کش مرورگر روی ارور ۴۱۰
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
 
     const today = await this.dayHelper.today();
@@ -361,6 +324,9 @@ export class PropertyUserService {
     return item;
   }
 
+  /**
+   * اطلاعات تماس ملک را برمی‌گرداند (در صورت منقضی بودن اشتراک، شماره مالک با جایاب جایگزین می‌شود)
+   */
   async findContactInfo(
     propertySlug: string,
   ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
@@ -383,7 +349,34 @@ export class PropertyUserService {
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
 
+    //
+    /**
+     * اگر اشتراک ملک منقضی شده باشد اطلاعات جایاب نشان داده می‌شود
+     * این مورد در توسعه اسفند ۴۰۴ بابت اضافه شدن رزرو برداشته شد
+     */
+    // if (property.subscription_expired_at < startOfToday()) {
+    //   const jayabMobileNumber = await this.setting.get(SettingKey.JAYAB_MOBILE_NUMBER);
+
+    //   //باید با خروجی اخر یکی باشد
+    //   return {
+    //     owner: {
+    //       selfie_image: property.owner?.user?.profile_image,
+    //       mobile: property.owner?.user?.mobile_number,
+    //     },
+    //     list: [
+    //       {
+    //         assistant_full_name: property.owner?.user?.full_name,
+    //         assistant_mobile_number: jayabMobileNumber,
+    //         property_id: property.id,
+    //         is_owner: true,
+    //       },
+    //     ],
+    //     isPropertyExpired: true,
+    //   };
+    // }
+
     const list = await this.db.propertyOwnerAssistant.findMany({
+      // where: { property: { ...this.validProperty(), code } },// درتوسعه دی ماه ۴۰۴ قرار شد آگهی های منقضی هم نمایش داده بشه
       where: { property: { code } },
       select: {
         assistant_full_name: true,
@@ -401,12 +394,16 @@ export class PropertyUserService {
       },
       list,
     };
-    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60);
+
+    //set cache
+    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60); //one hour
+
     return result;
   }
 
   async storeCallLog(propertyId: number, user: PartialUser, ownerMobile: string): Promise<void> {
     const userId = user.id;
+
     const todayRec = await this.db.callLog.findFirst({
       where: {
         property_id: propertyId,
@@ -419,6 +416,13 @@ export class PropertyUserService {
     if (todayRec)
       await this.db.callLog.update({ where: { id: todayRec.id }, data: { attempts: { increment: 1 } } });
     else {
+      /* ---------------------------- first check limit --------------------------- */
+      /**
+       * مثلا: کاربر اگر در ۱۲۰ دقیقه گذشته روی ۱۰ شماره کلیک کند ۲ روز بلاک میشود
+       * اگر بلاک شد یک ستون روی کاربر داریم که تاریخ بلاک موندن رو میندازیم
+       * هر دفعه چک میکنیم اگر تاریخ نداشت که دفعه اوله و مستقیم بلاک میشه
+       * اگر تاریخ داشت تاریخ رو مقایسه میکنم
+       */
       const callClickLimit = +(await this.setting.get(SettingKey.CALL_CLICK_LIMIT));
       const callClickCheckingDuration = +(await this.setting.get(SettingKey.CALL_CLICK_CHECKING_DURATION));
       const callClickBanTtl = +(await this.setting.get(SettingKey.CALL_CLICK_BAN_TTL));
@@ -455,8 +459,10 @@ export class PropertyUserService {
       await this.db.callLog.create({
         data: { property_id: propertyId, user_id: userId, attempts: 1 },
       });
-      if (user?.mobile_number !== ownerMobile)
+
+      if (user?.mobile_number !== ownerMobile) {
         this.smsService.sendCallLogToOwner(ownerMobile, user.mobile_number);
+      }
     }
   }
 
@@ -468,6 +474,7 @@ export class PropertyUserService {
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
+      // subscription_expired_at: { gte: startOfToday() },
     };
   }
 
@@ -492,7 +499,15 @@ export class PropertyUserService {
    * @returns
    */
   async updateViewStatistics(propertyId: number, count: number, type: 'impression' | 'view'): Promise<void> {
+    /*  */
+    // const redisKey = userPropertyViewKey(propertyId, fingerprint);
+    // const userViewedPost = await this.redis.get(redisKey);
+    // if (userViewedPost) return;
+    // await this.redis.set(redisKey, 1, 'EX', 86400);
+
     const now = startOfToday();
+
+    // create statistics
     await this.db.propertyStatistics.upsert({
       where: { property_id_date: { property_id: propertyId, date: now } },
       update: {
@@ -530,12 +545,15 @@ export class PropertyUserService {
     await this.db.advisorShare.create({
       data: { key, property_id: propertyId, advisor_id: advisorId, elements: dto.elements },
     });
+
     const url = `${advisorShareUrl}/s?content=${key}`;
+
     return url;
   }
   async findAdvisorShareData(dto: FindAdvisorShareDto): Promise<any> {
     const data = await this.db.advisorShare.findUnique({ where: { key: dto.content } });
     if (!data) throw new BadRequestException();
+
     const prop = await this.db.property.findUnique({
       where: { id: data.property_id },
       select: { slug: true, feature_image: true },
@@ -633,8 +651,14 @@ export class PropertyUserService {
 
   async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
     let words = sanitizeText(dto.q);
+    // console.log({ words });
+
     let clientQuery = {};
-    if (dto.q.includes('استخر')) clientQuery['has_pool'] = 1;
+    //pool
+    if (dto.q.includes('استخر')) {
+      clientQuery['has_pool'] = 1;
+    }
+
     const exactCity = await this.db.city.findFirst({
       where: { AND: [{ title: dto.q }, { title: { notIn: ['استخر'] } }] },
       select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
@@ -665,8 +689,10 @@ export class PropertyUserService {
         else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
         else clientQuery['provinces'] = (clientQuery['provinces'] || '') + `${city.id},`;
       }
+      // console.log(cities);
     }
 
+    //property type
     const propertyTypes = await this.db.propertyOption.findMany({
       where: { OR: words.map((e) => ({ title: { contains: e } })), group: PropertyOptionGroup.PROPERTY_TYPE },
     });
@@ -689,8 +715,19 @@ export class PropertyUserService {
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
+    // if (isEmpty(Object.values(clientQuery).filter((e) => e)))
     clientQuery = { ...clientQuery, q: dto.q };
+
+    // if (clientQuery['provinces']) {
+    //   delete clientQuery['regions'];
+    //   delete clientQuery['cities'];
+    // }
+
+    //شهر به استان ارجحیت دارد
     if (clientQuery['cities']) delete clientQuery['provinces'];
+    /**
+     * ایجاد لیست شهرها برای نمایش در پاپ آپ سرچ
+     */
     const cityRecords = await this.db.city.findMany({
       where: {
         id: {
@@ -726,9 +763,13 @@ export class PropertyUserService {
     if (citiesList.every((e) => e.level === 'region') && hasUniqueParent)
       clientQuery['cities'] = `${citiesList[0]?.parent_id}`;
     else if (citiesList.filter((e) => e.level === 'region')?.length === 1) {
+      //اگر یک محله پیدا کردیم شهر های دیگه رو پاک میکنیم شهر همون محله رو برمیگردونیم
       const region = citiesList.find((e) => e.level === 'region');
       clientQuery['cities'] = `${region.parent_id}`;
     }
+    // console.log({ cityRecords, citiesList, clientQuery });
+    // console.log({ cityRecords });
+
     return { client_query: clientQuery, cities_list: citiesList };
   }
 
@@ -878,3 +919,25 @@ export class PropertyUserService {
     }
   }
 }
+
+/**
+* old options query
+ if (property_type) options.push(...parseQueryNumberArray(property_type));
+if (ownership) options.push(...parseQueryNumberArray(ownership));
+if (guest_type) options.push(...parseQueryNumberArray(guest_type));
+if (pattern) optionsOR.push(...parseQueryNumberArray(pattern));
+if (welfare) optionsOR.push(...parseQueryNumberArray(welfare));
+if (kitchen) optionsOR.push(...parseQueryNumberArray(kitchen));
+if (cool_heat) optionsOR.push(...parseQueryNumberArray(cool_heat));
+if (neighborhood) optionsOR.push(...parseQueryNumberArray(neighborhood));
+if (!isEmpty(entertainment)) optionsOR.push(...parseQueryNumberArray(entertainment));
+if (party) optionsOR.push(...parseQueryNumberArray(party));
+if (pool_type) optionsOR.push(...parseQueryNumberArray(pool_type));
+if (pet) optionsOR.push(...parseQueryNumberArray(pet));
+if (!isEmpty(optionsOR)) {
+       query = {
+         ...query,
+         AND: [{ options_array: { hasEvery: options } }, { options_array: { hasSome: optionsOR } }],
+       };
+     } else query = { ...query, options_array: { hasEvery: options } };
+ */

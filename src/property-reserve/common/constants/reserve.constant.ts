@@ -1,4 +1,2 @@
 export const RESERVE_TTL_MINUTES = 15;
 export const RESERVE_CALL_DELAY_MINUTES = 5;
-
-export const GUEST_RESERVE_VISIBILITY_HOURS = 24;
