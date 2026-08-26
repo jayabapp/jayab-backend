@@ -1,40 +1,21 @@
-import { InjectQueue } from '@nestjs/bull';
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  // Delete,
-  Get,
-  Headers,
-  Param,
-  ParseIntPipe,
-  Put,
-  Query,
-  Req,
-  UseGuards,
-  Version,
-} from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nestjs/common';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
+import { ParseIntPipe, Put, Query, Req, UseGuards, Version } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Queue } from 'bull';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
+import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
+import { PropertyOwnerService } from '../owner/owner.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { RequestType } from 'src/common/interfaces/user.interface';
+import { PropertyUserService } from './user.service';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import {
-  CALL_LOG_JOB,
-  CALL_LOG_QUEUE,
-  VIEW_COUNT_JOB,
-  VIEW_COUNT_QUEUE,
-} from 'src/property/processors/queue-name.constants';
-import { PropertyOwnerService } from '../owner/owner.service';
-import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
-import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { PropertyUserService } from './user.service';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @ApiTags('Property - USER')
-// @UseGuards(UserJwtGuard)
-// @ApiBearerAuth('user-jwt')
 @Controller(USER_ROUTE_GROUP)
 export class PropertyUserController {
   constructor(
@@ -45,26 +26,17 @@ export class PropertyUserController {
     private readonly propertyOwnerService: PropertyOwnerService,
   ) {}
 
-  @ApiOperation({ summary: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '', operationId: 'propertyUserFindAll' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get()
   async findAll(
     @Query() dto: FindAllPropertyUserDto,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
-    /**
-     * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
-     */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-
     const result = await this.propertyUserService.findAll(dto, isAdvisor);
-
-    /**
-     * اپدیت تعداد بازدید آگهی ها
-     */
     const ids = result.data?.map((e) => e.id);
     await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
-
     return { result };
   }
 
@@ -75,11 +47,7 @@ export class PropertyUserController {
     @Param('propertySlug') propertySlug: string,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
-    /**
-     * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
-     */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-
     const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
     return { result };
   }
@@ -93,10 +61,6 @@ export class PropertyUserController {
     @Query('year', ParseIntPipe) year: number,
     @Headers('authorization') authorization?: string,
   ) {
-    /**
-     * در توسعه فروردین ۴۰۵ مشاهده وضعیت رزرو برای همه باز شد
-     */
-    // const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const property = await this.propertyUserService.findById(propertyId);
     const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, true);
 
@@ -110,7 +74,6 @@ export class PropertyUserController {
     @Query('months', ParseIntPipe) months: number,
   ) {
     const result = await this.propertyUserService.findPropertyReservedDays(propertyId, months);
-
     return { result };
   }
 
@@ -134,29 +97,16 @@ export class PropertyUserController {
     @Query('action') action: 'view' | 'sms' | 'call',
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-
     const result = await this.propertyUserService.findContactInfo(propertySlug);
-
     if (result.list?.length > 0 && (action === 'call' || action === 'sms')) {
       const ownerMobile = result.owner.mobile;
       const propertyId = result.list[0]?.property_id;
       await this.callLogQueue.add(CALL_LOG_JOB, { propertyId, user, ownerMobile });
     }
-
     delete result.owner.mobile;
     return { result };
   }
 
-  // @ApiOperation({ summary: 'Duplicate', description: '' })
-  // @Post(':propertyId/duplicate')
-  // async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
-  //   const result = await this.propertyUserService.duplicate(propertyId);
-  //   return { result };
-  // }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                    SHARE                                   */
-  /* -------------------------------------------------------------------------- */
   @ApiOperation({ summary: 'Generate Advisor Share Link', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share/link')
@@ -167,7 +117,6 @@ export class PropertyUserController {
   ): Promise<SuccessResponseArgs> {
     const { isAdvisor, advisorId } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     if (!isAdvisor) throw new ForbiddenException('FORBIDDEN');
-
     const result = await this.propertyUserService.generateAdvisorShare(propertyId, advisorId, dto);
     return { result };
   }
@@ -184,7 +133,7 @@ export class PropertyUserController {
     const result = await this.propertyUserService.findAdvisorShareData(dto);
     return { result };
   }
-  /* ---------------------------- SEARCH SUGGESTION --------------------------- */
+
   @ApiOperation({ summary: 'Search Suggestion', description: '' })
   @Get('search/suggestions')
   async searchSuggestions(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
