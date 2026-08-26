@@ -134,7 +134,7 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Search Suggestion', description: '' })
+  @ApiOperation({ summary: 'Search Suggestion', description: '', operationId: 'propertyUserSearchSuggestions' })
   @Get('search/suggestions')
   async searchSuggestions(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestions(dto);
@@ -142,14 +142,14 @@ export class PropertyUserController {
   }
 
   @Version('2')
-  @ApiOperation({ summary: 'Search Suggestion V2', description: '' })
+  @ApiOperation({ summary: 'Search Suggestion V2', description: '', operationId: 'propertyUserSearchSuggestionsV2' })
   @Get('search/suggestions')
   async searchSuggestionsV2(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestionsV2(dto);
     return { result };
   }
 
-  @ApiOperation({ summary: 'Search', description: '' })
+  @ApiOperation({ summary: 'Search', description: '', operationId: 'propertyUserSearchExtract' })
   @Get('search/extract')
   async search(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.search(dto);
