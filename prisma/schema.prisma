@@ -1,16 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views", "fullTextSearchPostgres"]
+  previewFeatures = ["fullTextSearchPostgres", "views"]
 }
-
-// generator dbml {
-//   provider              = "prisma-dbml-generator"
-//   includeRelationFields = false
-//   outputName            = "b2c-erd.dbml"
-// }
 
 datasource db {
   provider = "postgresql"
@@ -18,321 +9,280 @@ datasource db {
 }
 
 model Base {
-  id Int @id() @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   @@map("generator_base")
 }
 
 model Otp {
-  id            Int      @id() @default(autoincrement())
-  mobile_number String   @unique() @db.VarChar(11)
+  id            Int      @id @default(autoincrement())
+  mobile_number String   @unique @db.VarChar(11)
   attempts      Int      @default(0) @db.SmallInt
   code          String
-  ip_address    String?  @db.VarChar()
   sms_send_at   DateTime @default(now())
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  ip_address    String?  @db.VarChar
 
   @@map("otps")
 }
 
-// -------------------------------------------------------------------------- //
-//                                    ADMIN                                   //
-// -------------------------------------------------------------------------- //
 model Admin {
-  id            Int     @id() @default(autoincrement())
-  username      String  @unique @db.VarChar(64)
-  password      String  @db.VarChar
-  full_name     String  @db.VarChar(64)
-  mobile_number String  @unique @db.VarChar(11)
-  role_id       Int     @db.SmallInt
-  is_active     Boolean @default(true)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  role                AccessControlRole                 @relation(fields: [role_id], references: [id])
+  id                  Int                               @id @default(autoincrement())
+  username            String                            @unique @db.VarChar(64)
+  password            String                            @db.VarChar
+  full_name           String                            @db.VarChar(64)
+  mobile_number       String                            @unique @db.VarChar(11)
+  role_id             Int                               @db.SmallInt
+  is_active           Boolean                           @default(true)
+  created_at          DateTime                          @default(now())
+  updated_at          DateTime                          @updatedAt
   activities          AdminActivity[]
+  role                AccessControlRole                 @relation(fields: [role_id], references: [id])
   content_questions   ContentQuestion[]
-  photo_upgrade_items PropertyPhotoUpgradeRequestItem[]
   notifications       Notification[]
+  photo_upgrade_items PropertyPhotoUpgradeRequestItem[]
 
   @@map("admins")
 }
 
-// --------------------------------- ACL --------------------------------- //
 model AccessControlModule {
-  id   Int    @id() @default(autoincrement())
-  key  String @unique @db.VarChar(64)
-  name String @db.VarChar(64)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  acl AccessControlList[]
+  id         Int                 @id @default(autoincrement())
+  key        String              @unique @db.VarChar(64)
+  name       String              @db.VarChar(64)
+  created_at DateTime            @default(now())
+  updated_at DateTime            @updatedAt
+  acl        AccessControlList[]
 
   @@map("access_control_modules")
 }
 
 model AccessControlRole {
-  id   Int     @id() @default(autoincrement())
-  name String  @unique @db.VarChar(64)
-  key  String? @unique
-  tree String?
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-
+  id                       Int                              @id @default(autoincrement())
+  name                     String                           @unique @db.VarChar(64)
+  key                      String?                          @unique
+  tree                     String?
+  created_at               DateTime                         @default(now())
+  updated_at               DateTime                         @updatedAt
+  deleted_at               DateTime?
   acl                      AccessControlList[]
-  admin                    Admin[]
   notification_permissions AdminRoleNotificationPermission?
+  admin                    Admin[]
 
   @@map("access_control_roles")
 }
 
 model AccessControlList {
-  id        Int     @id() @default(autoincrement())
-  module_id Int
-  role_id   Int
-  c         Boolean @default(false)
-  r         Boolean @default(false)
-  u         Boolean @default(false)
-  d         Boolean @default(false)
-  v         Boolean @default(false)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  module AccessControlModule @relation(fields: [module_id], references: [id])
-  role   AccessControlRole   @relation(fields: [role_id], references: [id])
+  id         Int                 @id @default(autoincrement())
+  module_id  Int
+  role_id    Int
+  c          Boolean             @default(false)
+  r          Boolean             @default(false)
+  u          Boolean             @default(false)
+  d          Boolean             @default(false)
+  v          Boolean             @default(false)
+  created_at DateTime            @default(now())
+  updated_at DateTime            @updatedAt
+  module     AccessControlModule @relation(fields: [module_id], references: [id])
+  role       AccessControlRole   @relation(fields: [role_id], references: [id])
 
   @@unique([module_id, role_id])
   @@map("access_control_list")
 }
 
 model AdminRoleNotificationPermission {
-  id          Int     @id() @default(autoincrement())
-  role_id     Int     @unique
+  id          Int               @id @default(autoincrement())
+  role_id     Int               @unique
   permissions String?
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  role AccessControlRole? @relation(fields: [role_id], references: [id])
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  role        AccessControlRole @relation(fields: [role_id], references: [id])
 
   @@map("admin_role_notification_permissions")
 }
 
-// --------------------------------- ACL END --------------------------------- //
-
-// ----------------------------- ADMIN ACTIVITY ----------------------------- //
 model AdminActivity {
-  id Int @id() @default(autoincrement())
-
-  // user agent info
-  os          String? @db.VarChar(32)
-  browser     String? @db.VarChar(32)
-  browser_ver String? @db.VarChar(32)
-
-  // req & res info
-  ip_v4       String? @db.VarChar(16)
-  admin_id    Int     @db.Integer
-  module      String  @db.VarChar(32)
-  path        String  @db.VarChar
-  method      String  @db.VarChar(8)
-  className   String  @db.VarChar(128)
-  classMethod String  @db.VarChar(128)
+  id          Int      @id @default(autoincrement())
+  os          String?  @db.VarChar(32)
+  browser     String?  @db.VarChar(32)
+  browser_ver String?  @db.VarChar(32)
+  ip_v4       String?  @db.VarChar(16)
+  admin_id    Int
+  module      String   @db.VarChar(32)
+  path        String   @db.VarChar
+  method      String   @db.VarChar(8)
+  className   String   @db.VarChar(128)
+  classMethod String   @db.VarChar(128)
   param       Json?
   query       Json?
   body        Json?
-  result_id   Int?    @db.Integer
-  status_code Int     @db.Integer
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  admin Admin @relation(fields: [admin_id], references: [id])
+  result_id   Int?
+  status_code Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  admin       Admin    @relation(fields: [admin_id], references: [id])
 
   @@map("admin_activities")
 }
 
-// ---------------------------------- ATTACHMENT ---------------------------------- //
 model Attachment {
-  id        Int     @id() @default(autoincrement())
-  user_id   Int?
-  admin_id  Int?
-  user_role String?
-  name      String  @db.VarChar
-  meta      String? @db.VarChar
-  thumbnail String?
-  type      Int     @default(1) // 1 -> image, 2 -> video, 3 -> audio
-  path      String
-  bucket    String
-  region    String?
-  end_point String
-  medium    String?
-  alt       String?
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
-
-  content_attachment           ContentAttachment[]
-  content_categories           ContentCategory[]
-  content_feature_image        Content[]                         @relation(name: "featureImage")
-  content_video                Content[]                         @relation(name: "ContentVideo")
-  content_question_image       ContentQuestion[]
-  property_images              PropertyImage[]
-  property_temp                Property[]                        @relation("Property_Temp")
-  feature_image                Property[]                        @relation("FeatureImage")
-  property_video               Property[]                        @relation("Video")
+  id                           Int                               @id @default(autoincrement())
+  user_id                      Int?
+  admin_id                     Int?
+  user_role                    String?
+  name                         String                            @db.VarChar
+  meta                         String?                           @db.VarChar
+  thumbnail                    String?
+  type                         Int                               @default(1)
+  path                         String
+  bucket                       String
+  region                       String?
+  end_point                    String
+  medium                       String?
+  alt                          String?
+  created_at                   DateTime                          @default(now())
+  updated_at                   DateTime                          @updatedAt
+  deleted_at                   DateTime?                         @db.Timestamp(6)
+  advisor_document_image       Advisor?                          @relation("DocumentImage")
+  advisor_national_card_image  Advisor?                          @relation("NationalCard")
   banners                      Banner[]                          @relation("Image")
   banner_image_sm              Banner[]                          @relation("ImageSm")
-  advisor_national_card_image  Advisor?                          @relation("NationalCard")
-  advisor_document_image       Advisor?                          @relation("DocumentImage")
-  user_profile_image           User?
-  owner_selfie_image           Owner?
   category_image               Category?
-  submitted_form_items         SubmittedFormItems[]
   city                         City[]
-  messenger_media              MessengerMessages[]
-  property_auth_nc             PropertyAuthorize[]               @relation("PropertyAuthNcImage")
-  property_auth_docs           PropertyAuthorize[]               @relation("PropertyAuthDocsImage")
+  content_attachment           ContentAttachment[]
+  content_categories           ContentCategory[]
+  content_question_image       ContentQuestion[]
+  content_feature_image        Content[]                         @relation("featureImage")
+  content_video                Content[]                         @relation("ContentVideo")
   landing_page_image           LandingPage[]
+  messenger_media              MessengerMessages[]
+  owner_selfie_image           Owner?
+  feature_image                Property[]                        @relation("FeatureImage")
+  property_video               Property[]                        @relation("Video")
+  property_auth_nc             PropertyAuthorize[]               @relation("PropertyAuthNcImage")
+  property_images              PropertyImage[]
   property_options             PropertyOption[]
   photo_upgrade_items          PropertyPhotoUpgradeRequestItem[] @relation("PhotoUpgradeItemAttachment")
   original_photo_upgrade_items PropertyPhotoUpgradeRequestItem[] @relation("PhotoUpgradeItemOriginalAttachment")
+  user_profile_image           User?
+  submitted_form_items         SubmittedFormItems[]              @relation("AttachmentToSubmittedFormItems")
+  property_auth_docs           PropertyAuthorize[]               @relation("PropertyAuthDocsImage")
+  property_temp                Property[]                        @relation("Property_Temp")
 
   @@map("attachments")
 }
 
-// ----------------------------- CONTENT ------------------------------ //
-
 model ContentCategory {
-  id              Int     @id() @default(autoincrement())
-  title           String  @db.VarChar
-  slug            String  @unique
-  key             String  @unique @db.VarChar(64)
-  image_id        Int?    @db.Integer
-  dynamic_fields  Json?   @db.JsonB
+  id              Int               @id @default(autoincrement())
+  title           String            @db.VarChar
+  slug            String            @unique
+  key             String            @unique @db.VarChar(64)
+  image_id        Int?
+  dynamic_fields  Json?
   parent_id       Int?
-  description     String? @db.Text
-  html            String? @db.Text
-  show_in_sitemap Boolean @default(true)
-  seo             Json?   @db.JsonB
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  parent    ContentCategory?  @relation("Parent", fields: [parent_id], references: [id])
-  child     ContentCategory[] @relation("Parent")
-  content   Content[]
-  image     Attachment?       @relation(fields: [image_id], references: [id])
-  questions ContentQuestion[]
+  description     String?
+  html            String?
+  show_in_sitemap Boolean           @default(true)
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+  seo             Json?
+  image           Attachment?       @relation(fields: [image_id], references: [id])
+  parent          ContentCategory?  @relation("Parent", fields: [parent_id], references: [id])
+  child           ContentCategory[] @relation("Parent")
+  questions       ContentQuestion[]
+  content         Content[]
 
   @@map("content_categories")
 }
 
 model Content {
-  id               Int       @id() @default(autoincrement())
-  title            String    @db.VarChar
-  slug             String?   @unique
-  key              String?   @db.VarChar(64)
+  id               Int                 @id @default(autoincrement())
+  title            String              @db.VarChar
+  slug             String?             @unique
+  key              String?             @db.VarChar(64)
   small_text       String?
   full_text        String?
   feature_image_id Int?
-  is_active        Boolean   @default(true)
-  category_id      Int?      @db.Integer
-  order            Int?      @db.Integer
-  html             String?   @db.Text
-  view_count       Int       @default(0)
+  is_active        Boolean             @default(true)
+  category_id      Int?
+  order            Int?
+  html             String?
+  view_count       Int                 @default(0)
   link             String?
   video_id         Int?
-  show_in_sitemap  Boolean   @default(true)
+  show_in_sitemap  Boolean             @default(true)
+  fields           Json?
+  seo              Json?
+  form_id          Int?
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
   published_at     DateTime?
-
-  fields      Json?               @db.JsonB
-  seo         Json?               @db.JsonB
-  form_id     Int?
-  attachments ContentAttachment[] //images
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  category       ContentCategory?  @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  feature_image  Attachment?       @relation("featureImage", fields: [feature_image_id], references: [id], onDelete: SetNull)
-  video          Attachment?       @relation("ContentVideo", fields: [video_id], references: [id], onDelete: SetNull)
-  questions      ContentQuestion[]
-  forms          FormBuilder[]
-  submitted_form SubmittedForm[]
-  landing_page   LandingPage[]
+  attachments      ContentAttachment[]
+  questions        ContentQuestion[]
+  category         ContentCategory?    @relation(fields: [category_id], references: [id])
+  feature_image    Attachment?         @relation("featureImage", fields: [feature_image_id], references: [id])
+  video            Attachment?         @relation("ContentVideo", fields: [video_id], references: [id])
+  forms            FormBuilder[]
+  landing_page     LandingPage[]
+  submitted_form   SubmittedForm[]
 
   @@map("contents")
 }
 
 model ContentAttachment {
-  id            Int       @id() @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   content_id    Int
   attachment_id Int
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
-  deleted_at    DateTime? @db.Timestamp(6)
-
-  attachment Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
-  content    Content    @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?  @db.Timestamp(6)
+  attachment    Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+  content       Content    @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
   @@map("content_attachments")
 }
 
 model ContentQuestion {
-  id                  Int     @id() @default(autoincrement())
+  id                  Int              @id @default(autoincrement())
   content_id          Int?
   content_category_id Int?
-  question            String  @db.Text
-  answer              String? @db.Text
-  image_id            Int?    @db.Integer
-  admin_id            Int?    @db.Integer
+  question            String
+  answer              String?
+  image_id            Int?
+  admin_id            Int?
   rate                Int?
   author_name         String?
   mobile_number       String?
-  is_publish          Boolean @default(false)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  image            Attachment?      @relation(fields: [image_id], references: [id])
-  content          Content?         @relation(fields: [content_id], references: [id], onDelete: Cascade)
-  content_category ContentCategory? @relation(fields: [content_category_id], references: [id], onDelete: SetNull)
-  admin            Admin?           @relation(fields: [admin_id], references: [id])
+  is_publish          Boolean          @default(false)
+  created_at          DateTime         @default(now())
+  updated_at          DateTime         @updatedAt
+  admin               Admin?           @relation(fields: [admin_id], references: [id])
+  content_category    ContentCategory? @relation(fields: [content_category_id], references: [id])
+  content             Content?         @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  image               Attachment?      @relation(fields: [image_id], references: [id])
 
   @@map("content_questions")
 }
 
-// ---------------------------------- CITY ---------------------------------- //
 model City {
-  id         Int     @id() @default(autoincrement())
-  title      String  @db.VarChar
-  parent_id  Int?
-  sort_order Int?
-  slug       String?
-  slug_fa    String?
-  tel_prefix String?
-  image_id   Int?
-  parent     City?   @relation("Parent", fields: [parent_id], references: [id])
-  child      City[]  @relation("Parent")
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
-
-  image             Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
-  advisors          Advisor[] //@relation(fields: [advisorId], references: [id])
-  // advisorId         Int?
+  id                Int         @id @default(autoincrement())
+  title             String      @db.VarChar
+  parent_id         Int?
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  deleted_at        DateTime?   @db.Timestamp(6)
+  slug              String?
+  sort_order        Int?
+  tel_prefix        String?
+  image_id          Int?
+  slug_fa           String?
+  image             Attachment? @relation(fields: [image_id], references: [id])
+  parent            City?       @relation("Parent", fields: [parent_id], references: [id])
+  child             City[]      @relation("Parent")
   property_city     Property[]  @relation("PropertyCity")
   Property_province Property[]  @relation("PropertyProvince")
   Property_region   Property[]  @relation("PropertyRegion")
+  advisors          Advisor[]   @relation("AdvisorToCity")
 
   @@index([id, sort_order, slug])
   @@index([title])
@@ -340,143 +290,115 @@ model City {
   @@map("cities")
 }
 
-// --------------------------------- SETTINGS --------------------------------- //
 model Setting {
-  id         Int    @id() @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   title      String
-  key        String
+  key        String   @unique
   value      String
   max        Int?
   min        Int?
-  data_type  String @default("NUMBER")
+  data_type  String   @default("NUMBER")
   sort_order Int?
-
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
 
-  @@unique([key])
   @@map("settings")
 }
 
-// --------------------------------- BANNER --------------------------------- //
 model Banner {
-  id          Int     @id() @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String
-  is_active   Boolean @default(true)
+  is_active   Boolean     @default(true)
   description String?
   link        String?
   category_id Int?
-  property_id Int?
   brand_id    Int?
   position    String
   sort_order  Int?
   image_id    Int?
   image_sm_id Int?
-  view_count  Int     @default(0)
-
-  image    Attachment? @relation("Image", fields: [image_id], references: [id])
-  image_sm Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
-  category Category?   @relation(fields: [category_id], references: [id])
-  property Property?   @relation(fields: [property_id], references: [id])
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  created_at  DateTime    @default(now()) @db.Timestamp(6)
+  updated_at  DateTime    @updatedAt
+  property_id Int?
+  view_count  Int         @default(0)
+  category    Category?   @relation(fields: [category_id], references: [id])
+  image       Attachment? @relation("Image", fields: [image_id], references: [id])
+  image_sm    Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
+  property    Property?   @relation(fields: [property_id], references: [id])
 
   @@map("banners")
 }
 
-// -------------------------------- CATEGORY -------------------------------- //
 model Category {
-  id                  Int     @id() @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   parent_id           Int?
-  title               String  @db.VarChar
-  key                 String? @unique @db.VarChar
-  image_id            Int?    @unique
-  sort_order          Int?    @db.SmallInt
-  is_active           Boolean @default(true)
+  title               String      @db.VarChar
+  key                 String?     @unique @db.VarChar
+  image_id            Int?        @unique
+  sort_order          Int?        @db.SmallInt
+  is_active           Boolean     @default(true)
   path                String
   hex_color           String?
-  is_feature_category Boolean @default(false)
-  feature_title       String? //عنوان در صفحه اصلی
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
-
-  parent   Category?   @relation("ParentChild", fields: [parent_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  children Category[]  @relation("ParentChild")
-  image    Attachment? @relation(fields: [image_id], references: [id])
-  banners  Banner[]
+  is_feature_category Boolean     @default(false)
+  feature_title       String?
+  created_at          DateTime    @default(now())
+  updated_at          DateTime    @updatedAt
+  deleted_at          DateTime?   @db.Timestamp(6)
+  banners             Banner[]
+  image               Attachment? @relation(fields: [image_id], references: [id])
+  parent              Category?   @relation("ParentChild", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children            Category[]  @relation("ParentChild")
 
   @@map("categories")
 }
 
-// -------------------------------------------------------------------------- //
-//                                  ADMIN END                                 //
-// -------------------------------------------------------------------------- //
-
-// ---------------------------------- USER ---------------------------------- //
-
-// اگر کاربر در هر نقش نام و عکسش رو تغییر بده برای همه نقش ها اعمال میشه
 model User {
-  id                              Int       @id() @default(autoincrement())
-  mobile_number                   String    @unique @db.VarChar(11)
-  full_name                       String?   @db.VarChar
-  profile_image_id                Int?      @unique
-  // -------------------------------------------------------------------------- //
-  owner_id                        Int?      @unique()
-  advisor_id                      Int?      @unique()
-  is_banned                       Boolean   @default(false)
-  // -------------------------------------------------------------------------- //
-  referral_code                   String?   @unique @db.VarChar()
-  referrer_code                   String?   @db.VarChar()
-  // -------------------------------------------------------------------------- //
+  id                              Int                  @id @default(autoincrement())
+  mobile_number                   String               @unique @db.VarChar(11)
+  full_name                       String?              @db.VarChar
   fcm_token                       String?
-  jwt_level                       Int       @default(1)
-  notification_read_at            DateTime  @default(now())
-  // -------------------------------------------------------------------------- //
+  jwt_level                       Int                  @default(1)
+  notification_read_at            DateTime             @default(now())
+  created_at                      DateTime             @default(now())
+  updated_at                      DateTime             @updatedAt
+  profile_image_id                Int?                 @unique
+  referral_code                   String?              @unique @db.VarChar
+  referrer_code                   String?              @db.VarChar
+  owner_id                        Int?                 @unique
+  advisor_id                      Int?                 @unique
+  is_banned                       Boolean              @default(false)
   contact_click_limit_exceeded_at DateTime?
-
-  // -------------------------------------------------------------------------- //
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @updatedAt
-  // -------------------------------------------------------------------------- //
-  profile_image Attachment? @relation(fields: [profile_image_id], references: [id])
-  referrer      User?       @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
-  referrals     User[]      @relation("UserReferrals")
-  owner         Owner?      @relation(fields: [owner_id], references: [id])
-  advisor       Advisor?    @relation(fields: [advisor_id], references: [id])
-
-  tickets           Ticket[]
-  // payments         Payment[]
-  // offer_codes      CustomerOfferCode[]
-  turnovers         Turnover[]
-  favorites         Favorite[]
-  black_list        MessengerBlackList[]
-  bookmarks         Bookmark[]
-  call_logs         CallLog[]
-  property_reports  PropertyReport[]
-  property_reserves PropertyReserve[]
-  auth_logs         AuthLog[]
-  notifications     Notification[]
+  auth_logs                       AuthLog[]
+  bookmarks                       Bookmark[]
+  call_logs                       CallLog[]
+  favorites                       Favorite[]
+  black_list                      MessengerBlackList[]
+  notifications                   Notification[]
+  property_reports                PropertyReport[]
+  property_reserves               PropertyReserve[]
+  tickets                         Ticket[]
+  turnovers                       Turnover[]
+  advisor                         Advisor?             @relation(fields: [advisor_id], references: [id])
+  owner                           Owner?               @relation(fields: [owner_id], references: [id])
+  profile_image                   Attachment?          @relation(fields: [profile_image_id], references: [id])
+  referrer                        User?                @relation("UserReferrals", fields: [referrer_code], references: [referral_code])
+  referrals                       User[]               @relation("UserReferrals")
 
   @@map("users")
 }
 
 model Owner {
-  id                 Int    @id() @default(autoincrement())
-  national_code      String @db.VarChar(10) //چون دیتاهای جایاب قبلی کد ملی نداره مجبوریم از یکتایی دربیاریم و اونها رو ۱۱۱۱۱۱۱۱۱۱ بزاریم
-  selfie_image_id    Int?   @unique
-  status             Int    @db.SmallInt
-  admin_descriptions Json[] @db.JsonB
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
+  id                     Int                           @id @default(autoincrement())
+  national_code          String                        @db.VarChar(10)
+  selfie_image_id        Int?                          @unique
+  status                 Int                           @db.SmallInt
+  created_at             DateTime                      @default(now())
+  updated_at             DateTime                      @updatedAt
+  admin_descriptions     Json[]
   selfie_image           Attachment?                   @relation(fields: [selfie_image_id], references: [id])
-  user                   User?
   properties             Property[]
   photo_upgrade_requests PropertyPhotoUpgradeRequest[]
+  user                   User?
 
   @@index([status])
   @@index([national_code])
@@ -484,65 +406,56 @@ model Owner {
 }
 
 model Advisor {
-  id                          Int       @id() @default(autoincrement())
-  national_code               String?   @unique @db.VarChar(10)
-  //
-  tel                         String?   @db.VarChar(11)
-  area_code                   String?   @db.VarChar(3)
-  //
-  address                     String?   @db.Text
-  cities                      City[]
-  //
-  is_special                  Boolean   @default(false)
-  status                      Int       @db.SmallInt
-  admin_descriptions          Json[]    @db.JsonB
+  id                          Int                    @id @default(autoincrement())
+  national_code               String?                @unique @db.VarChar(10)
+  tel                         String?                @db.VarChar(11)
+  area_code                   String?                @db.VarChar(3)
+  address                     String?
+  is_special                  Boolean                @default(false)
+  status                      Int                    @db.SmallInt
   sort_order                  Int?
-  subscription_expired_at     DateTime? @db.Date
-  //
-  users_satisfaction          Int?
-  owners_satisfaction         Int?
+  national_card_image_id      Int?                   @unique
+  document_image_id           Int?                   @unique
+  created_at                  DateTime               @default(now())
+  updated_at                  DateTime               @updatedAt
+  admin_descriptions          Json[]
+  subscription_expired_at     DateTime?              @db.Date
   advisor_behavior            Int?
   advisor_responsibility      Int?
+  owners_satisfaction         Int?
   response_speed_and_followup Int?
-  //
-  national_card_image_id      Int?      @unique
-  document_image_id           Int?      @unique
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  national_card_image    Attachment?            @relation("NationalCard", fields: [national_card_image_id], references: [id])
-  document_image         Attachment?            @relation("DocumentImage", fields: [document_image_id], references: [id])
-  user                   User?
-  subscriptions          Subscription[]
-  subscription_reminders SubscriptionReminder[]
+  users_satisfaction          Int?
+  document_image              Attachment?            @relation("DocumentImage", fields: [document_image_id], references: [id])
+  national_card_image         Attachment?            @relation("NationalCard", fields: [national_card_image_id], references: [id])
+  subscription_reminders      SubscriptionReminder[]
+  subscriptions               Subscription[]
+  user                        User?
+  cities                      City[]                 @relation("AdvisorToCity")
 
   @@map("advisors")
 }
 
 model Rate {
-  id                          Int  @id() @default(autoincrement())
+  id                          Int      @id @default(autoincrement())
   user_id                     Int
   advisor_id                  Int
-  advisor_behavior            Int? @db.SmallInt
-  advisor_responsibility      Int? @db.SmallInt
-  response_speed_and_followup Int? @db.SmallInt
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  advisor_behavior            Int?     @db.SmallInt
+  advisor_responsibility      Int?     @db.SmallInt
+  response_speed_and_followup Int?     @db.SmallInt
+  created_at                  DateTime @default(now()) @db.Timestamp(6)
+  updated_at                  DateTime @updatedAt
 
   @@unique([user_id, advisor_id])
   @@map("rates")
 }
 
-// -------------------------------- PROPERTY -------------------------------- //
 model Property {
-  id                      Int       @id() @default(autoincrement())
-  code                    String    @unique
+  id                      Int                           @id @default(autoincrement())
+  code                    String                        @unique
   owner_id                Int
   title                   String?
-  slug                    String?   @unique
-  slug_hash               String?   @unique
+  slug                    String?                       @unique
+  slug_hash               String?                       @unique
   land_area               Int?
   building_area           Int?
   floors                  Int?
@@ -555,66 +468,57 @@ model Property {
   address                 String?
   lat                     Float?
   lng                     Float?
-  feature_image_id        Int?
-  video_id                Int?
+  status                  Int                           @db.SmallInt
   is_chat_enabled         Boolean?
   is_location_visible     Boolean?
-  has_pool                Boolean?
-  std_capacity            Int?
-  max_capacity            Int?
-  canceling_type          String?
-  advisor_commission      Int       @default(0) @db.SmallInt
+  sort_order              BigInt                        @default(0)
+  subscription_expired_at DateTime?                     @db.Date
   check_in_hour           String?
   check_out_hour          String?
-  subscription_expired_at DateTime? @db.Date
+  advisor_commission      Int                           @default(0) @db.SmallInt
+  max_capacity            Int?
+  std_capacity            Int?
+  canceling_type          String?
+  has_pool                Boolean?
+  options_array           Int[]
+  created_at              DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at              DateTime                      @updatedAt
+  deleted_at              DateTime?
+  feature_image_id        Int?
+  video_id                Int?
+  contact_type            Int                           @default(1) @db.SmallInt
+  has_blue_tick           Boolean                       @default(false)
+  is_authorized           Boolean                       @default(false)
+  admin_descriptions      Json[]
+  favorite_count          Int                           @default(0)
   promoted_at             DateTime?
-  sort_order              BigInt    @default(0) // timestamp - promote
-  contact_type            Int       @default(1) @db.SmallInt
-  status                  Int       @db.SmallInt
-  admin_descriptions      Json[]    @db.JsonB
-  is_authorized           Boolean   @default(false) @db.Boolean
-  has_blue_tick           Boolean   @default(false) @db.Boolean
-  options_array           Int[] //برای راحتی کوئری ارایه امکانات رو اینجا هم نگه میداریم
-  favorite_count          Int       @default(0) @db.Integer
-
-  // calendar_updated_at DateTime?
-  // rate                Float?
-  // rate_count               Int       @default(0)
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-
-  // -------------------------------------------------------------------------- //
-  owner                  Owner                         @relation(fields: [owner_id], references: [id])
-  property_options       OptionsOnProperty[]
-  region                 City?                         @relation("PropertyRegion", fields: [region_id], references: [id])
-  province               City?                         @relation("PropertyProvince", fields: [province_id], references: [id])
-  city                   City?                         @relation("PropertyCity", fields: [city_id], references: [id])
-  feature_image          Attachment?                   @relation("FeatureImage", fields: [feature_image_id], references: [id])
-  video                  Attachment?                   @relation("Video", fields: [video_id], references: [id])
-  property_images        PropertyImage[]
-  temp_attachments       Attachment[]                  @relation("Property_Temp")
-  bedrooms               PropertyBedroom?
-  daily_price            PropertyDailyPrice?
-  assistants             PropertyOwnerAssistant[]
-  description            PropertyDescription?
-  property_authorize     PropertyAuthorize?
-  banners                Banner[]
-  // hourly_price          PropertyHourlyPrice?
-  // monthly_price         PropertyMonthlyPrice?
-  // yearly_price          PropertyYearlyPrice?
-  subscriptions          Subscription[]
-  payments               Payment[]
-  chatrooms              MessengerChatroom[]
-  calendar               PropertyCalendar[]
-  blue_tick              PropertyBadge?
-  favorites              Favorite[]
-  bookmarks              Bookmark[]
-  subscription_reminders SubscriptionReminder[]
-  call_logs              CallLog[]
-  reports                PropertyReport[]
-  reserves               PropertyReserve[]
-  photo_upgrade_requests PropertyPhotoUpgradeRequest[]
+  banners                 Banner[]
+  bookmarks               Bookmark[]
+  call_logs               CallLog[]
+  favorites               Favorite[]
+  chatrooms               MessengerChatroom[]
+  property_options        OptionsOnProperty[]
+  payments                Payment[]
+  city                    City?                         @relation("PropertyCity", fields: [city_id], references: [id])
+  feature_image           Attachment?                   @relation("FeatureImage", fields: [feature_image_id], references: [id])
+  owner                   Owner                         @relation(fields: [owner_id], references: [id])
+  province                City?                         @relation("PropertyProvince", fields: [province_id], references: [id])
+  region                  City?                         @relation("PropertyRegion", fields: [region_id], references: [id])
+  video                   Attachment?                   @relation("Video", fields: [video_id], references: [id])
+  property_authorize      PropertyAuthorize?
+  blue_tick               PropertyBadge?
+  bedrooms                PropertyBedroom?
+  calendar                PropertyCalendar[]
+  daily_price             PropertyDailyPrice?
+  description             PropertyDescription?
+  property_images         PropertyImage[]
+  assistants              PropertyOwnerAssistant[]
+  photo_upgrade_requests  PropertyPhotoUpgradeRequest[]
+  reports                 PropertyReport[]
+  reserves                PropertyReserve[]
+  subscription_reminders  SubscriptionReminder[]
+  subscriptions           Subscription[]
+  temp_attachments        Attachment[]                  @relation("Property_Temp")
 
   @@index([id])
   @@index([code])
@@ -627,20 +531,19 @@ model Property {
   @@index([city_id])
   @@index([region_id])
   @@index([owner_id])
+  @@index([options_array], map: "properties_options_array_gin_idx", type: Gin)
   @@map("properties")
 }
 
 model PropertyImage {
-  id            Int @id() @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   property_id   Int
   attachment_id Int
-  sort_order    Int @default(0)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property   Property   @relation(fields: [property_id], references: [id], onDelete: Cascade)
-  attachment Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+  sort_order    Int        @default(0)
+  created_at    DateTime   @default(now()) @db.Timestamp(6)
+  updated_at    DateTime   @updatedAt
+  attachment    Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+  property      Property   @relation(fields: [property_id], references: [id], onDelete: Cascade)
 
   @@unique([property_id, attachment_id])
   @@index([property_id, sort_order])
@@ -651,10 +554,9 @@ model PropertyImage {
 model OptionsOnProperty {
   property_id Int
   option_id   Int
-  assigned_at DateTime @default(now()) @db.Timestamp(6)
-
-  property Property       @relation(fields: [property_id], references: [id])
-  option   PropertyOption @relation(fields: [option_id], references: [id])
+  assigned_at DateTime       @default(now()) @db.Timestamp(6)
+  option      PropertyOption @relation(fields: [option_id], references: [id])
+  property    Property       @relation(fields: [property_id], references: [id])
 
   @@id([property_id, option_id])
   @@index([property_id, option_id])
@@ -662,8 +564,8 @@ model OptionsOnProperty {
 }
 
 model PropertyDescription {
-  id            Int     @id() @default(autoincrement())
-  property_id   Int     @unique()
+  id            Int      @id @default(autoincrement())
+  property_id   Int      @unique
   property_dscr String?
   pattern_dscr  String?
   distance_dscr String?
@@ -674,137 +576,119 @@ model PropertyDescription {
   doc_dscr      String?
   other_dscr    String?
   ad_dscr       String?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property Property @relation(fields: [property_id], references: [id])
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @updatedAt
+  property      Property @relation(fields: [property_id], references: [id])
 
   @@index([property_id])
   @@map("property_descriptions")
 }
 
 model PropertyBedroom {
-  id               Int   @id() @default(autoincrement())
-  property_id      Int   @unique()
-  bedrooms         Int[] //lenght of this field shawn bedrooms count
+  id               Int      @id @default(autoincrement())
+  property_id      Int      @unique
+  bedrooms         Int[]
   additional_bed   Int
   master_room      Int
   sofa_bed         Int
-  wc               Int?  @default(0)
-  wc_ir            Int?  @default(0)
-  bathroom_master  Int?  @default(0)
-  bathroom_general Int?  @default(0)
-  bathroom_in_wc   Int?  @default(0)
-  bathroom_tub     Int?  @default(0)
-  total_bedrooms   Int   @default(0)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property Property @relation(fields: [property_id], references: [id])
+  wc               Int?     @default(0)
+  wc_ir            Int?     @default(0)
+  bathroom_master  Int?     @default(0)
+  bathroom_general Int?     @default(0)
+  bathroom_in_wc   Int?     @default(0)
+  bathroom_tub     Int?     @default(0)
+  total_bedrooms   Int      @default(0)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @updatedAt
+  property         Property @relation(fields: [property_id], references: [id])
 
   @@index([property_id])
   @@map("property_bedrooms")
 }
 
 model PropertyDailyPrice {
-  id                Int  @id() @default(autoincrement())
-  property_id       Int  @unique()
+  id                Int      @id @default(autoincrement())
+  property_id       Int      @unique
   normal            Int
   wednesday         Int
   thursday          Int
   friday            Int
   peak              Int
-  cleaning          Int? @default(0)
+  cleaning          Int?     @default(0)
   additional_person Int
   today_offer       Int?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property Property @relation(fields: [property_id], references: [id])
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @updatedAt
+  property          Property @relation(fields: [property_id], references: [id])
 
   @@index([property_id])
   @@map("property_daily_prices")
 }
 
 model PropertyOwnerAssistant {
-  id                      Int      @id() @default(autoincrement())
+  id                      Int      @id @default(autoincrement())
   property_id             Int
-  is_owner                Boolean? @default(false)
   assistant_mobile_number String?  @db.VarChar(11)
+  created_at              DateTime @default(now()) @db.Timestamp(6)
+  updated_at              DateTime @updatedAt
   assistant_full_name     String?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property Property @relation(fields: [property_id], references: [id])
+  is_owner                Boolean? @default(false)
+  property                Property @relation(fields: [property_id], references: [id])
 
   @@index([property_id])
   @@map("property_owner_assistants")
 }
 
 model PropertyStatistics {
-  id               Int      @id() @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   property_id      Int
-  view_count       Int      @default(0) // تعداد بازدید
-  impression_count Int      @default(0) // تعداد نمایش
+  view_count       Int      @default(0)
   date             DateTime
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  impression_count Int      @default(0)
 
   @@unique([property_id, date])
   @@index([property_id, date])
   @@map("property_statistics")
 }
 
-// ---------------------------- PROPERTY OPTIONS ---------------------------- //
 model PropertyOption {
-  id          Int     @id() @default(autoincrement())
-  title       String  @db.VarChar
-  key         String? @db.VarChar(128)
-  description String? @db.VarChar(256)
+  id          Int                 @id @default(autoincrement())
+  title       String              @db.VarChar
+  description String?             @db.VarChar(256)
   group       String
   sort        Int?
+  key         String?             @db.VarChar(128)
+  created_at  DateTime            @default(now()) @db.Timestamp(6)
+  updated_at  DateTime            @updatedAt
+  deleted_at  DateTime?           @db.Timestamp(6)
   image_id    Int?
-
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
-
-  properties OptionsOnProperty[]
-  image      Attachment?         @relation(fields: [image_id], references: [id], onDelete: SetNull)
+  properties  OptionsOnProperty[]
+  image       Attachment?         @relation(fields: [image_id], references: [id])
 
   @@index([group])
   @@map("property_options")
 }
 
-// -------------------------------- AUTHORIZE ------------------------------- //
 model PropertyAuthorize {
-  id          Int    @id() @default(autoincrement())
-  property_id Int    @unique
+  id          Int          @id @default(autoincrement())
+  property_id Int          @unique
   nc_image_id Int
   status      Int
-  changelog   Json[] @db.JsonB
-
-  //explicit many to many
-  docs Attachment[] @relation("PropertyAuthDocsImage")
-
-  property Property   @relation(fields: [property_id], references: [id])
-  nc_image Attachment @relation("PropertyAuthNcImage", fields: [nc_image_id], references: [id])
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  created_at  DateTime     @default(now()) @db.Timestamp(6)
+  updated_at  DateTime     @updatedAt
+  changelog   Json[]
+  nc_image    Attachment   @relation("PropertyAuthNcImage", fields: [nc_image_id], references: [id])
+  property    Property     @relation(fields: [property_id], references: [id])
+  docs        Attachment[] @relation("PropertyAuthDocsImage")
 
   @@index([property_id])
   @@map("property_authorize")
 }
 
-//---------------------------------- Calendar ---------------------------------//
 model PropertyCalendar {
-  id                  Int      @id() @default(autoincrement())
+  id                  Int      @id @default(autoincrement())
   property_id         Int
   day                 Int      @db.SmallInt
   month               Int      @db.SmallInt
@@ -814,14 +698,12 @@ model PropertyCalendar {
   is_reserved         Boolean  @default(false)
   price               Int?
   discounted_price    Int?
-  discount_percentage Int      @default(0)
   effective_price     Int?
   advisor_commission  Int?     @db.SmallInt
-
-  property Property @relation(fields: [property_id], references: [id])
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  discount_percentage Int      @default(0)
+  created_at          DateTime @default(now()) @db.Timestamp(6)
+  updated_at          DateTime @updatedAt
+  property            Property @relation(fields: [property_id], references: [id])
 
   @@unique([property_id, day, month, year])
   @@unique([property_id, date])
@@ -831,95 +713,84 @@ model PropertyCalendar {
   @@map("property_calendar")
 }
 
-//---------------------------------- Badge ---------------------------------//
 model PropertyBadge {
-  id          Int    @id() @default(autoincrement())
-  property_id Int    @unique
+  id          Int      @id @default(autoincrement())
+  property_id Int      @unique
   status      Int
-  changelog   Json[] @db.JsonB
-
-  property Property @relation(fields: [property_id], references: [id])
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  changelog   Json[]
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt
+  property    Property @relation(fields: [property_id], references: [id])
 
   @@index([property_id])
   @@map("property_badges")
 }
 
-// ---------------------------- SUBSCRIPTION PLAN --------------------------- //
 model SubscriptionPlan {
-  id                  Int       @id() @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   group               String
   title               String    @db.VarChar
-  description         String?   @db.Text
   duration            Int
   price               Int
   price_with_discount Int?
   is_active           Boolean   @default(true)
   sort                Int?      @default(1)
-  is_promote          Boolean   @default(false)
-  is_special          Boolean   @default(false) // for advisors plan
-  ribbon_title        String?   @db.VarChar
-  ribbon_title_color  String?   @db.VarChar
-  ribbon_bg_color     String?   @db.VarChar
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime? @db.Timestamp(6)
-
-  // payments Payment[]
+  is_promote          Boolean   @default(false)
+  description         String?
+  is_special          Boolean   @default(false)
+  ribbon_bg_color     String?   @db.VarChar
+  ribbon_title        String?   @db.VarChar
+  ribbon_title_color  String?   @db.VarChar
 
   @@map("subscription_plans")
 }
 
-// --------------------------------- PAYMENT -------------------------------- //
 model Payment {
-  id             Int      @id() @default(autoincrement())
-  property_id    Int?
-  user_id        Int?
-  advisor_id     Int?
-  gateway_key    String?
-  amount         Int
-  pay_by_wallet  Int?
-  pay_by_gateway Int?
-  debt           Int?
-  gate           String
-  authority      String
-  ref_id         String?
-  type           String
-  status         Int
-  description    String?
-  redirect_url   String?
-  created_at     DateTime @default(now()) @db.Timestamp(6)
-  updated_at     DateTime @updatedAt()
-
+  id                     Int                           @id @default(autoincrement())
+  user_id                Int?
+  advisor_id             Int?
+  gateway_key            String?
+  amount                 Int
+  pay_by_wallet          Int?
+  pay_by_gateway         Int?
+  debt                   Int?
+  gate                   String
+  authority              String
+  ref_id                 String?
+  type                   String
+  status                 Int
+  description            String?
+  redirect_url           String?
+  created_at             DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at             DateTime                      @updatedAt
+  property_id            Int?
   gateway                PaymentGateway?               @relation(fields: [gateway_key], references: [key])
   property               Property?                     @relation(fields: [property_id], references: [id])
-  subscriptions          Subscription[]
   photo_upgrade_requests PropertyPhotoUpgradeRequest[]
+  subscriptions          Subscription?
 
   @@map("payments")
 }
 
 model PaymentGateway {
-  id        Int     @id() @default(autoincrement())
-  title     String
-  logo      String
-  key       String  @unique
-  is_active Boolean @default(false)
-  params    Json[]  @db.JsonB
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt()
-
-  payment Payment[]
+  id         Int       @id @default(autoincrement())
+  title      String
+  logo       String
+  key        String    @unique
+  is_active  Boolean   @default(false)
+  params     Json[]
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt
+  payment    Payment[]
 
   @@map("payment_gateways")
 }
 
-// -------------------------------- TURNOVER -------------------------------- //
 model Turnover {
-  id                Int      @id() @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   user_id           Int?
   turnoverable_id   Int?
   turnoverable_type String?
@@ -929,181 +800,111 @@ model Turnover {
   type              String
   balance           Int?
   created_at        DateTime @default(now()) @db.Timestamp(6)
-  updated_at        DateTime @updatedAt()
-
-  user User? @relation(fields: [user_id], references: [id])
+  updated_at        DateTime @updatedAt
+  user              User?    @relation(fields: [user_id], references: [id])
 
   @@map("turnovers")
 }
 
-// model PaymentMethod {
-//   id                  Int     @id() @default(autoincrement())
-//   title               String
-//   key                 String?
-//   description         String? @db.Text
-//   percentage_increase Int     @db.SmallInt
-//   is_active           Boolean @default(false)
-
-//   created_at DateTime @default(now()) @db.Timestamp(6)
-//   updated_at DateTime @updatedAt()
-
-//   @@map("payment_methods")
-// }
-
-// model Turnover {
-//   id                Int      @id() @default(autoincrement())
-//   user_id           Int?
-//   business_id       Int?
-//   turnoverable_id   Int?
-//   turnoverable_type String?
-//   amount            Int
-//   title             String
-//   description       String
-//   type              String
-//   created_at        DateTime @default(now()) @db.Timestamp(6)
-//   updated_at        DateTime @updatedAt()
-
-//   user     User?     @relation(fields: [user_id], references: [id])
-//   business Business? @relation(fields: [business_id], references: [id])
-
-//   @@map("turnovers")
-// }
-
-// ------------------------------- FAVORITE ------------------------------- //
 model Favorite {
-  id          Int @id() @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   property_id Int
   user_id     Int
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  property    Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, property_id])
   @@map("favorites")
 }
 
 model Bookmark {
-  id          Int @id() @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   property_id Int
   user_id     Int
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  property    Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, property_id])
   @@map("bookmarks")
 }
 
-// // ------------------------------- CONTACT US ------------------------------- //
-// model ContactUs {
-//   id            Int     @id() @default(autoincrement())
-//   email         String? @db.VarChar()
-//   mobile_number String? @db.VarChar(11)
-//   full_name     String? @db.VarChar()
-//   title         String? @db.VarChar()
-//   body          String? @db.Text
-//   ip            String? @db.VarChar()
-//   type          String
-//   status        Int     @db.SmallInt
-
-//   created_at DateTime @default(now()) @db.Timestamp(6)
-//   updated_at DateTime @updatedAt
-
-//   @@map("contact_us")
-// }
-
-// ------------------------------ NOTIFICATION ------------------------------ //
 model Notification {
-  id               Int       @id() @default(autoincrement())
-  user_id          Int?      @db.Integer
-  admin_id         Int?      @db.Integer
-  is_sent_by_admin Boolean   @default(false)
+  id               Int       @id @default(autoincrement())
+  user_id          Int?
   role             String?
-  title            String    @db.Text
-  body             String    @db.Text
-  topic            String?   @db.VarChar()
-  data             Json?     @db.JsonB
+  title            String
+  body             String
+  topic            String?   @db.VarChar
+  data             Json?
   seen_at          DateTime?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  user  User?  @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  admin Admin? @relation(fields: [admin_id], references: [id], onDelete: SetNull)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt
+  is_sent_by_admin Boolean   @default(false)
+  admin_id         Int?
+  admin            Admin?    @relation(fields: [admin_id], references: [id])
+  user             User?     @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([admin_id])
   @@map("notifications")
 }
 
-// --------------------------------- TICKET --------------------------------- //
 model Ticket {
-  id      Int    @id() @default(autoincrement())
-  user_id Int
-  title   String @db.VarChar
-  message String @db.Text
-  status  Int
-
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
+  id         Int             @id @default(autoincrement())
+  user_id    Int
+  title      String          @db.VarChar
+  message    String
+  status     Int
+  created_at DateTime        @default(now()) @db.Timestamp(6)
+  updated_at DateTime        @updatedAt
   deleted_at DateTime?
-
-  user    User            @relation(fields: [user_id], references: [id])
-  replies TicketReplies[]
+  replies    TicketReplies[]
+  user       User            @relation(fields: [user_id], references: [id])
 
   @@map("tickets")
 }
 
 model TicketReplies {
-  id        Int     @id() @default(autoincrement())
-  ticket_id Int
-  message   String  @db.Text
-  by_admin  Boolean @default(false)
-
+  id         Int      @id @default(autoincrement())
+  ticket_id  Int
+  message    String
+  by_admin   Boolean  @default(false)
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
-
-  ticket Ticket @relation(fields: [ticket_id], references: [id])
+  ticket     Ticket   @relation(fields: [ticket_id], references: [id])
 
   @@map("ticket_replies")
 }
 
-// -------------------------------- FORM BUILDER -------------------------------- //
 model FormBuilder {
-  id           Int     @id() @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   title        String
   type         String
   content_id   Int?
-  options      Json    @default("[]") @db.JsonB
+  options      Json      @default("[]")
   key          String?
   sort_order   Int?
-  is_mandatory Boolean @default(true)
+  is_mandatory Boolean   @default(true)
   description  String?
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-
-  content Content? @relation(fields: [content_id], references: [id], onDelete: SetNull)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  deleted_at   DateTime?
+  content      Content?  @relation(fields: [content_id], references: [id])
 
   @@map("form_builder")
 }
 
 model SubmittedForm {
-  id            Int     @id() @default(autoincrement())
-  content_id    Int?
-  mobile_number String? @db.VarChar(11)
-  full_name     String? @db.VarChar()
-  ip            String? @db.VarChar()
-  status        Int     @db.SmallInt
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
+  id                   Int                  @id @default(autoincrement())
+  content_id           Int?
+  mobile_number        String?              @db.VarChar(11)
+  full_name            String?              @db.VarChar
+  ip                   String?              @db.VarChar
+  status               Int                  @db.SmallInt
+  created_at           DateTime             @default(now()) @db.Timestamp(6)
+  updated_at           DateTime             @updatedAt
   submitted_form_items SubmittedFormItems[]
   content              Content?             @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
@@ -1111,39 +912,30 @@ model SubmittedForm {
 }
 
 model SubmittedFormItems {
-  id                Int     @id() @default(autoincrement())
+  id                Int           @id @default(autoincrement())
   submitted_form_id Int
   title             String
   value             String
   type              String?
-
-  images Attachment[]
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  submitted_from SubmittedForm @relation(fields: [submitted_form_id], references: [id], onDelete: Cascade)
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  submitted_from    SubmittedForm @relation(fields: [submitted_form_id], references: [id], onDelete: Cascade)
+  images            Attachment[]  @relation("AttachmentToSubmittedFormItems")
 
   @@map("submitted_form_items")
 }
 
-// -------------------------------------------------------------------------- //
-//                                    CHAT                                    //
-// -------------------------------------------------------------------------- //
 model MessengerChatroom {
-  id              Int    @id() @default(autoincrement())
-  uuid            String @unique @default(uuid(7))
+  id              Int                    @id @default(autoincrement())
+  uuid            String                 @unique @default(uuid(7))
   property_id     Int?
-  last_message_id Int?   @unique
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  participants MessengerParticipant[]
-  messages     MessengerMessages[]
-  last_message MessengerMessages?     @relation("LastMessage", fields: [last_message_id], references: [id])
-
-  property Property? @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  created_at      DateTime               @default(now()) @db.Timestamp(6)
+  updated_at      DateTime               @updatedAt
+  last_message_id Int?                   @unique
+  last_message    MessengerMessages?     @relation("LastMessage", fields: [last_message_id], references: [id])
+  property        Property?              @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  messages        MessengerMessages[]
+  participants    MessengerParticipant[]
 
   @@index([uuid])
   @@index([created_at])
@@ -1152,20 +944,17 @@ model MessengerChatroom {
 }
 
 model MessengerParticipant {
-  id Int @id() @default(autoincrement())
-
+  id                 Int                 @id @default(autoincrement())
   chatroom_id        Int
   user_id            Int
+  role               String
+  message_read_at    DateTime            @default(now()) @db.Timestamp(6)
+  created_at         DateTime            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime            @updatedAt
+  deleted_at         DateTime?           @db.Timestamp(6)
   user_mobile_number String?
-  role               String // customer, owner
-  message_read_at    DateTime @default(now()) @db.Timestamp(6)
-
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
-
-  chatroom MessengerChatroom   @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
-  messages MessengerMessages[]
+  messages           MessengerMessages[]
+  chatroom           MessengerChatroom   @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
 
   @@unique([chatroom_id, user_id, role])
   @@index([chatroom_id])
@@ -1175,21 +964,19 @@ model MessengerParticipant {
 }
 
 model MessengerMessages {
-  id             Int     @id() @default(autoincrement())
-  chatroom_id    Int
-  participant_id Int
-  text           String?
-  media_id       Int?
-  third_party    String?
-
-  chatroom              MessengerChatroom    @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
-  participant           MessengerParticipant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  id                    Int                  @id @default(autoincrement())
+  chatroom_id           Int
+  participant_id        Int
+  text                  String?
+  media_id              Int?
+  third_party           String?
+  created_at            DateTime             @default(now()) @db.Timestamp(6)
+  updated_at            DateTime             @updatedAt
+  deleted_at            DateTime?            @db.Timestamp(6)
   chatroom_last_message MessengerChatroom?   @relation("LastMessage")
+  chatroom              MessengerChatroom    @relation(fields: [chatroom_id], references: [id], onDelete: Cascade)
   media                 Attachment?          @relation(fields: [media_id], references: [id])
-
-  created_at DateTime  @default(now()) @db.Timestamp(6)
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime? @db.Timestamp(6)
+  participant           MessengerParticipant @relation(fields: [participant_id], references: [id], onDelete: Cascade)
 
   @@index([created_at])
   @@index([chatroom_id, participant_id])
@@ -1198,34 +985,13 @@ model MessengerMessages {
   @@map("messenger_messages")
 }
 
-view UnreadMessageCount {
-  user_id      Int
-  unread_count Int
-
-  @@map("unread_message_counts")
-}
-
-// CREATE OR REPLACE VIEW unread_message_counts AS
-// SELECT 
-//     mp.user_id,
-//     COUNT(mm.id) AS unread_count
-// FROM 
-//     messenger_participants mp
-// LEFT JOIN 
-//     messenger_messages mm ON mm.chatroom_id = mp.chatroom_id 
-//          AND mm.participant_id != mp.id 
-//          AND mm.created_at > mp.message_read_at
-// GROUP BY mp.user_id
-
 model MessengerBlackList {
-  id         Int @id() @default(autoincrement())
-  blocker_id Int //کاربر بلاک کننده
-  blocked_id Int //کاربر بلاک شده
-
-  blocked_user User @relation(fields: [blocked_id], references: [id], onDelete: Cascade)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  blocker_id   Int
+  blocked_id   Int
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt
+  blocked_user User     @relation(fields: [blocked_id], references: [id], onDelete: Cascade)
 
   @@unique([blocked_id, blocker_id])
   @@index([blocked_id])
@@ -1233,53 +999,48 @@ model MessengerBlackList {
   @@map("messenger_black_list")
 }
 
-// ---------------------------------- SUBSCRIPTION ---------------------------------- //
 model Subscription {
-  id                        Int      @id() @default(autoincrement())
+  id                        Int                          @id @default(autoincrement())
   property_id               Int?
-  advisor_id                Int?
-  is_promote                Boolean  @default(false)
-  is_special_advisor        Boolean?
+  is_promote                Boolean                      @default(false)
   title                     String
   duration                  Int?
   price                     Int?
-  payment_id                Int?     @unique
-  status                    Int      @db.SmallInt
+  payment_id                Int?                         @unique
+  status                    Int                          @db.SmallInt
+  created_at                DateTime                     @default(now()) @db.Timestamp(6)
+  updated_at                DateTime                     @updatedAt
+  advisor_id                Int?
+  is_special_advisor        Boolean?
   description               String?
-  extends_expire            Boolean  @default(false) //added in 1/feb/2026: یعنی این اشتراک انقضا رو هم زیاد میکنه یا مثلا فقط نردبانه
-  has_photo_upgrade_request Boolean  @default(false) //یعنی این پرداخت شامل درخواست ارتقا تصویر است
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  advisor               Advisor?                     @relation(fields: [advisor_id], references: [id])
-  property              Property?                    @relation(fields: [property_id], references: [id], onDelete: SetNull)
-  payment               Payment?                     @relation(fields: [payment_id], references: [id], onDelete: SetNull)
-  photo_upgrade_request PropertyPhotoUpgradeRequest?
+  extends_expire            Boolean                      @default(false)
+  has_photo_upgrade_request Boolean                      @default(false)
+  photo_upgrade_request     PropertyPhotoUpgradeRequest?
+  advisor                   Advisor?                     @relation(fields: [advisor_id], references: [id])
+  payment                   Payment?                     @relation(fields: [payment_id], references: [id])
+  property                  Property?                    @relation(fields: [property_id], references: [id])
 
   @@map("subscriptions")
 }
 
 model PropertyPhotoUpgradeRequest {
-  id              Int       @id() @default(autoincrement())
+  id              Int                               @id @default(autoincrement())
   property_id     Int
   owner_id        Int
-  subscription_id Int?      @unique
+  subscription_id Int?                              @unique
   payment_id      Int?
-  status          Int       @default(1) @db.SmallInt
-  image_count     Int       @default(0) @db.SmallInt
+  status          Int                               @default(1) @db.SmallInt
+  image_count     Int                               @default(0) @db.SmallInt
   price_per_image Int
   total_amount    Int
   completed_at    DateTime?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  property     Property                          @relation(fields: [property_id], references: [id], onDelete: Cascade)
-  owner        Owner                             @relation(fields: [owner_id], references: [id], onDelete: Cascade)
-  subscription Subscription?                     @relation(fields: [subscription_id], references: [id], onDelete: SetNull)
-  payment      Payment?                          @relation(fields: [payment_id], references: [id], onDelete: SetNull)
-  items        PropertyPhotoUpgradeRequestItem[]
+  created_at      DateTime                          @default(now()) @db.Timestamp(6)
+  updated_at      DateTime                          @updatedAt
+  items           PropertyPhotoUpgradeRequestItem[]
+  owner           Owner                             @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  payment         Payment?                          @relation(fields: [payment_id], references: [id])
+  property        Property                          @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  subscription    Subscription?                     @relation(fields: [subscription_id], references: [id])
 
   @@index([property_id])
   @@index([owner_id])
@@ -1289,21 +1050,19 @@ model PropertyPhotoUpgradeRequest {
 }
 
 model PropertyPhotoUpgradeRequestItem {
-  id                     Int       @id() @default(autoincrement())
+  id                     Int                         @id @default(autoincrement())
   request_id             Int
   attachment_id          Int
-  original_attachment_id Int?
-  status                 Int       @default(1) @db.SmallInt
+  status                 Int                         @default(1) @db.SmallInt
   edited_at              DateTime?
   edited_by_admin_id     Int?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  request             PropertyPhotoUpgradeRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
-  attachment          Attachment                  @relation("PhotoUpgradeItemAttachment", fields: [attachment_id], references: [id], onDelete: Restrict)
-  original_attachment Attachment?                 @relation("PhotoUpgradeItemOriginalAttachment", fields: [original_attachment_id], references: [id], onDelete: SetNull)
-  edited_by_admin     Admin?                      @relation(fields: [edited_by_admin_id], references: [id], onDelete: SetNull)
+  created_at             DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at             DateTime                    @updatedAt
+  original_attachment_id Int?
+  attachment             Attachment                  @relation("PhotoUpgradeItemAttachment", fields: [attachment_id], references: [id])
+  edited_by_admin        Admin?                      @relation(fields: [edited_by_admin_id], references: [id])
+  original_attachment    Attachment?                 @relation("PhotoUpgradeItemOriginalAttachment", fields: [original_attachment_id], references: [id])
+  request                PropertyPhotoUpgradeRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
 
   @@unique([request_id, attachment_id])
   @@index([request_id])
@@ -1314,159 +1073,141 @@ model PropertyPhotoUpgradeRequestItem {
 }
 
 model SubscriptionReminder {
-  id          Int       @id() @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   property_id Int?
   advisor_id  Int?
   type        String
-  sent_at     DateTime? @db.Date //تاریخ ارسال
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt //تاریخ  و ساعت  ارسال
-
-  property Property? @relation(fields: [property_id], references: [id], onDelete: SetNull)
-  advisor  Advisor?  @relation(fields: [advisor_id], references: [id], onDelete: SetNull)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  sent_at     DateTime? @db.Date
+  advisor     Advisor?  @relation(fields: [advisor_id], references: [id])
+  property    Property? @relation(fields: [property_id], references: [id])
 
   @@map("subscription_reminders")
 }
 
-// --------------------------------- PEAK DAYS --------------------------------- //
 model PeakDay {
-  id        Int      @id() @default(autoincrement())
-  day       Int      @db.SmallInt
-  month     Int      @db.SmallInt
-  year      Int
-  date      DateTime @db.Date
-  timestamp BigInt
-  is_nowruz Boolean  @default(false)
-
+  id         Int      @id @default(autoincrement())
+  day        Int      @db.SmallInt
+  month      Int      @db.SmallInt
+  year       Int
+  date       DateTime @unique @db.Date
+  timestamp  BigInt
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt
+  is_nowruz  Boolean  @default(false)
 
   @@unique([day, month, year])
-  @@unique([date])
   @@index([date, timestamp])
   @@map("peak_days")
 }
 
 model LandingPage {
-  id                      Int     @id() @default(autoincrement())
+  id                      Int         @id @default(autoincrement())
   title                   String
-  main_content_id         Int?
-  related_contents        Int[]
-  related_landings        Int[]
-  url                     String  @unique
-  is_active               Boolean @default(false)
-  show_in_home            Boolean @default(false)
-  show_in_footer          Boolean @default(false)
+  url                     String      @unique
+  is_active               Boolean     @default(false)
+  show_in_home            Boolean     @default(false)
   options                 Int[]
   province_id             Int?
   cities                  Int[]
-  has_pool                Boolean @default(false)
+  has_pool                Boolean     @default(false)
   property_type           Int?
-  min_discount_percentage Int?    @db.SmallInt
-  is_premium              Boolean @default(false)
+  min_discount_percentage Int?        @db.SmallInt
+  is_premium              Boolean     @default(false)
   min_price               Int?
   max_price               Int?
   min_bedroom             Int?
   max_bedroom             Int?
   image_id                Int?
   sort_order              Int?
+  created_at              DateTime    @default(now()) @db.Timestamp(6)
+  updated_at              DateTime    @updatedAt
+  main_content_id         Int?
+  related_contents        Int[]
+  related_landings        Int[]
   position                String?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  image        Attachment? @relation(fields: [image_id], references: [id], onDelete: SetNull)
-  main_content Content?    @relation(fields: [main_content_id], references: [id], onDelete: SetNull)
+  show_in_footer          Boolean     @default(false)
+  image                   Attachment? @relation(fields: [image_id], references: [id])
+  main_content            Content?    @relation(fields: [main_content_id], references: [id])
 
   @@index([url])
   @@map("landing_pages")
 }
 
 model CallLog {
-  id          Int @id() @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   user_id     Int
   property_id Int
-  attempts    Int @default(1)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  attempts    Int      @default(1)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt
+  property    Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, property_id])
   @@map("call_logs")
 }
 
-// ------------------------------ REDIRECT URL ------------------------------ //
 model RedirectUrl {
-  id          Int     @id() @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   source      String
   destination String
-  permanent   Boolean @default(true)
-  source_hash String  @unique() @db.VarChar()
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  permanent   Boolean  @default(true)
+  source_hash String   @unique @db.VarChar
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt
 
   @@index([source_hash])
   @@map("redirect_urls")
 }
 
 model PageSeoAnalyze {
-  id                      Int      @id() @default(autoincrement())
-  url                     String   @unique
-  url_sha1                String   @unique
+  id                      Int                  @id @default(autoincrement())
+  url                     String               @unique
+  url_sha1                String               @unique
   h1_count                Int?
   h2_count                Int?
   meta_title_length       Int?
   meta_description_length Int?
   canonical               String?
-  schemas                 Json[]   @db.Json
+  schemas                 Json[]               @db.Json
   no_alt_images           String[]
   h1_array                String[]
-  scraper_flag            Int      @default(0)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  links PageSeoLinkAnalyze[]
+  scraper_flag            Int                  @default(0)
+  created_at              DateTime             @default(now()) @db.Timestamp(6)
+  updated_at              DateTime             @updatedAt
+  links                   PageSeoLinkAnalyze[]
 
   @@index([url_sha1])
   @@map("page_seo_analyzes")
 }
 
 model PageSeoLinkAnalyze {
-  id          Int     @id() @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   page_id     Int
   href        String
   rel         String?
-  is_internal Boolean @default(true)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
-
-  page PageSeoAnalyze @relation(fields: [page_id], references: [id], onDelete: Cascade)
+  is_internal Boolean        @default(true)
+  created_at  DateTime       @default(now()) @db.Timestamp(6)
+  updated_at  DateTime       @updatedAt
+  page        PageSeoAnalyze @relation(fields: [page_id], references: [id], onDelete: Cascade)
 
   @@index([page_id])
   @@map("page_seo_link_analyzes")
 }
 
-// ----------------------------- PROPERTY REPORT ---------------------------- //
 model PropertyReport {
-  id            Int     @id() @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   user_id       Int
   property_id   Int
-  title         String  @db.VarChar
-  description   String? @db.Text
-  seen_by_admin Boolean @default(false)
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [property_id], references: [id])
+  title         String   @db.VarChar
+  description   String?
+  seen_by_admin Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  property      Property @relation(fields: [property_id], references: [id])
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, property_id])
   @@index([seen_by_admin])
@@ -1476,20 +1217,18 @@ model PropertyReport {
 }
 
 model AdvisorShare {
-  id          Int    @id() @default(autoincrement())
-  key         String @unique @db.VarChar(10)
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @db.VarChar(10)
   property_id Int
   advisor_id  Int
-  elements    String @db.Text
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
+  elements    String
+  created_at  DateTime @default(now()) @db.Timestamp(6)
 
   @@map("advisor_shares")
 }
 
-// ---------------------------- PROPERTY RESERVE ---------------------------- //
 model PropertyReserve {
-  id                         Int       @id() @default(autoincrement())
+  id                         Int       @id @default(autoincrement())
   property_id                Int
   status                     Int
   user_id                    Int
@@ -1499,15 +1238,13 @@ model PropertyReserve {
   owner_seen_at              DateTime?
   canceled_at                DateTime?
   expired_at                 DateTime?
-  owner_called_at            DateTime? //وقتی میزبان روی شماره کاربر کلیک میکنه و تماس میگیره
+  owner_called_at            DateTime?
   description                String?
-  owner_clicked_guest_mobile Int?      @default(0) //تعداد کلیک برای وقتی که اشتراک نداره
-
-  property Property @relation(fields: [property_id], references: [id])
-  user     User     @relation(fields: [user_id], references: [id])
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt
+  owner_clicked_guest_mobile Int?      @default(0)
+  created_at                 DateTime  @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime  @updatedAt
+  property                   Property  @relation(fields: [property_id], references: [id])
+  user                       User      @relation(fields: [user_id], references: [id])
 
   @@index([property_id])
   @@index([user_id])
@@ -1516,26 +1253,29 @@ model PropertyReserve {
 }
 
 model AuthLog {
-  id           String  @id() @default(uuid(7))
+  id           String   @id @default(uuid(7))
   user_id      Int
-  is_new_user  Boolean @default(false)
-  ua           String? //user-agent
+  ua           String?
   ua_parsed    Json?
   ip_address   String?
   redirect_url String?
-
-  // UTM Parameters
-  utm_source   String? @db.VarChar(255)
-  utm_medium   String? @db.VarChar(255)
-  utm_campaign String? @db.VarChar(255)
-  utm_term     String? @db.VarChar(255)
-  utm_content  String? @db.VarChar(255)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  user User @relation(fields: [user_id], references: [id])
+  utm_source   String?  @db.VarChar(255)
+  utm_medium   String?  @db.VarChar(255)
+  utm_campaign String?  @db.VarChar(255)
+  utm_term     String?  @db.VarChar(255)
+  utm_content  String?  @db.VarChar(255)
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  is_new_user  Boolean  @default(false)
+  user         User     @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([created_at])
   @@map("auth_logs")
+}
+
+view UnreadMessageCount {
+  user_id      Int
+  unread_count BigInt
+
+  @@map("unread_message_counts")
 }

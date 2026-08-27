@@ -1,30 +1,22 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
-import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import {
-  PropertyReserveStatus,
-  PropertyReserveStatusList,
-} from 'src/property-reserve/common/interfaces/property-reserve-status.type';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import moment from 'moment-jalaali';
-import { SmsService } from 'src/sms/sms.service';
-import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
-import { isEmpty } from 'lodash';
-import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
-import { AvanakService } from 'src/sms/avanak.service';
+import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { AvanakService } from 'src/sms/avanak.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
+import { SmsService } from 'src/sms/sms.service';
+import { isEmpty } from 'lodash';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class PropertyReserveUserService {
@@ -56,7 +48,6 @@ export class PropertyReserveUserService {
       },
       select: { id: true },
     });
-
     return activeReserve?.id;
   }
 
@@ -72,7 +63,6 @@ export class PropertyReserveUserService {
         ...this.ACTIVE_RESERVE_QUERY,
       },
     });
-
     if (count >= 3) throw new BadRequestException('RESERVE6');
   }
 
@@ -84,7 +74,8 @@ export class PropertyReserveUserService {
   async create(
     dto: CreatePropertyReserveUserDto,
     userId: number,
-  ): Promise<{ reserve: PropertyReserve; ownerId: number }> {
+    idempotencyKey?: string,
+  ): Promise<{ reserve: PropertyReserve; ownerId: number; created: boolean }> {
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id, status: PropertyStatuses.PUBLISHED },
     });
@@ -96,10 +87,25 @@ export class PropertyReserveUserService {
     if (diff < 0) throw new UnprocessableEntityException('RESERVE2');
     if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
 
-    const newPropertyReserve = await this.db.propertyReserve.create({
-      data: { ...dto, user_id: userId, status: PropertyReserveStatus.PENDING },
-    });
-    return { reserve: newPropertyReserve, ownerId: property.owner_id };
+    try {
+      const newPropertyReserve = await this.db.propertyReserve.create({
+        data: {
+          ...dto,
+          user_id: userId,
+          status: PropertyReserveStatus.PENDING,
+          idempotency_key: idempotencyKey || null,
+        },
+      });
+      return { reserve: newPropertyReserve, ownerId: property.owner_id, created: true };
+    } catch (error) {
+      if (idempotencyKey && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const existingReserve = await this.db.propertyReserve.findFirst({
+          where: { user_id: userId, idempotency_key: idempotencyKey },
+        });
+        if (existingReserve) return { reserve: existingReserve, ownerId: property.owner_id, created: false };
+      }
+      throw error;
+    }
   }
 
   /**
@@ -110,9 +116,7 @@ export class PropertyReserveUserService {
    */
   async findAll(dto: FindAllPropertyReserveUserDto, userId: number): Promise<PropertyReserve[]> {
     let q: Prisma.PropertyReserveWhereInput = { user_id: userId };
-
     if (dto.type === 'active') q = { ...q, ...this.ACTIVE_RESERVE_QUERY };
-
     const list = await this.db.propertyReserve.findMany({
       where: q,
       include: {
@@ -150,10 +154,8 @@ export class PropertyReserveUserService {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
     });
-
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
-
     return item;
   }
 
@@ -176,10 +178,8 @@ export class PropertyReserveUserService {
         },
       },
     });
-
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
-
     const serialized = await this.serializer(item);
     return serialized;
   }
@@ -194,7 +194,6 @@ export class PropertyReserveUserService {
       where: { id: propertyReserveId },
       data: { canceled_at: new Date(), status: PropertyReserveStatus.CANCELED_BY_USER },
     });
-
     return;
   }
 
@@ -265,7 +264,6 @@ export class PropertyReserveUserService {
   }
 
   async sendReserveCall(reserveId: number): Promise<void> {
-    //عدم تماس بین ساعت ۱۲ تا ۸ صبح
     const hour = moment().hour();
     if (hour >= 0 && hour < 8) return;
 
@@ -288,7 +286,6 @@ export class PropertyReserveUserService {
     const p = reserve.property;
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
 
-    //طبق سناریو اگر اشتراک داشت نیاز به تماس صوتی نیست
     if (!isPropertyExpired) return;
 
     const reserveOwnerMessageId = await this.configService.get('avanak.reserveOwnerMessageId');
@@ -325,7 +322,7 @@ export class PropertyReserveUserService {
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
     if (!isPropertyExpired) return;
 
-    let q: Prisma.PropertyWhereInput = {
+    const q: Prisma.PropertyWhereInput = {
       id: { not: p.id },
       subscription_expired_at: { gt: startOfToday() },
       is_authorized: true,
@@ -333,20 +330,16 @@ export class PropertyReserveUserService {
       city_id: p.city_id,
     };
     if (p.has_pool) q['has_pool'] = true;
-    // if (p.region_id) q['region_id'] = p.region_id;
-
     let r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
 
     if (r1?.length < 3) {
       delete q.has_pool;
       r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
     }
-
-    let links: string[] = [];
+    const links: string[] = [];
     for (const item of r1) {
       links.push(item.code);
     }
-
     if (!isEmpty(links))
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
@@ -356,7 +349,6 @@ export class PropertyReserveUserService {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
     const isChatEnabled = item.property.is_chat_enabled;
     const showCounter = item.status === PropertyReserveStatus.PENDING;
-
     return {
       ...item,
       ttl_seconds: ttl > 0 ? ttl : 0,
