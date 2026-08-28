@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { City, Prisma } from '@prisma/client';
+import { persianSearchVariants } from 'src/property/common/helpers/search-text.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllCityUserDto } from './roles/user/dto/find-all.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { City, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CitySharedService {
@@ -17,7 +18,14 @@ export class CitySharedService {
     let query: Prisma.CityWhereInput = {};
     if (dto.cities) query = { ...query, id: { in: parseQueryNumberArray(dto.cities) } };
     if (dto.is_parent) query = { ...query, parent_id: null };
-    if (dto.q) query = { ...query, title: { contains: dto.q, mode: 'insensitive' } };
+    if (dto.q) {
+      query = {
+        ...query,
+        OR: persianSearchVariants(dto.q).map((variant) => ({
+          title: { contains: variant, mode: 'insensitive' },
+        })),
+      };
+    }
 
     const cities = await this.db.city.findMany({
       where: query,
@@ -42,15 +50,7 @@ export class CitySharedService {
               },
             },
           },
-          // take: +dto.depth || 5,
         },
-        // _count: {
-        //   select: {
-        //     Property_province: {
-        //       where: { status: PropertyStatuses.PUBLISHED, subscription_expired_at: { gte: startOfToday() } },
-        //     },
-        //   },
-        // },
       },
     });
 

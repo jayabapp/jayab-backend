@@ -9,13 +9,17 @@ import {
   _IsNotEmpty,
   _IsNumberString,
   _IsString,
+  _Length,
   _Max,
   _Min,
 } from 'src/common/pipes/validator-translate.pipe';
+import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 
 export class FindAllPropertyUserDto extends PaginationDto {
   @ApiProperty({ title: 'سرچ', required: false })
+  @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
+  @_Length(2, 80)
   @IsOptional()
   q?: string;
 
@@ -211,8 +215,9 @@ export class FindAllPropertyUserDto extends PaginationDto {
 
 export class PropertySearchSuggestionUserDto {
   @ApiProperty({ required: true, title: '' })
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
   @_IsNotEmpty()
+  @_Length(2, 80)
   q: string;
 }

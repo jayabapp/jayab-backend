@@ -1,17 +1,23 @@
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { groupBy, isEmpty, omit, orderBy, random, uniq } from 'lodash';
 import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
-import { BadRequestException,ForbiddenException } from '@nestjs/common';
-import {PropertyArrayResType,PropertyJsonType} from 'src/property/serializer/property.serializer';
-import {PropertyResType,PropertySerializer} from 'src/property/serializer/property.serializer';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
+import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { groupBy, isEmpty, orderBy, uniq } from 'lodash';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
+import {normalizePersianSearchText} from 'src/property/common/helpers/search-text.helper';
+import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
+import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { sanitizeText, slugify } from 'src/common/helpers/slugify';
+import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
+import {persianSearchVariants} from 'src/property/common/helpers/search-text.helper';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import {isExactPropertyCode} from 'src/property/common/helpers/search-text.helper';
+import {tokenizeSearchText} from 'src/property/common/helpers/search-text.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -23,7 +29,6 @@ import { DayHelper } from 'src/common/helpers/day.helper';
 import { Redis } from 'ioredis';
 
 import randomstring from 'randomstring';
-import Num2persian from 'src/common/helpers/Num2Persian';
 import moment from 'moment-jalaali';
 
 @Injectable()
@@ -50,7 +55,7 @@ export class PropertyUserService {
   ): Promise<PaginatedResult<PropertyArrayResType>> {
     let {
       code,
-      provinces,
+    consprovinces,
       cities = '',
       regions,
       total_bedrooms,
@@ -97,16 +102,18 @@ export class PropertyUserService {
     const provincesArray = parseQueryNumberArray(provinces);
     const regionsArray = parseQueryNumberArray(regions);
 
-    if (!isEmpty(regionsArray)) query = { ...query, region_id: { in: regionsArray } };
-    else if (!isEmpty(citiesArray)) query = { ...query, city_id: { in: citiesArray } };
-    else if (!isEmpty(provincesArray)) query = { ...query, province_id: { in: provincesArray } };
-    if (q) query = { ...query, title: { contains: q, mode: 'insensitive' } };
+    query = applyPropertySearchScope(query, {
+      regions: regionsArray,
+      cities: citiesArray,
+      provinces: provincesArray,
+      q,
+    });
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
     if (total_guests > 0) query = { ...query, max_capacity: { gte: total_guests } };
 
     let options = [];
     /* ------------------------------ options query (new) ----------------------------- */
-    if (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
+    cons (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
     if (ownership) options.push({ options_array: { hasSome: parseQueryNumberArray(ownership) } });
     if (guest_type) options.push({ options_array: { hasSome: parseQueryNumberArray(guest_type) } });
     if (pattern) options.push({ options_array: { hasSome: parseQueryNumberArray(pattern) } });
@@ -301,19 +308,13 @@ export class PropertyUserService {
     return item;
   }
 
-  /**
-   * اطلاعات تماس ملک را برمی‌گرداند (در صورت منقضی بودن اشتراک، شماره مالک با جایاب جایگزین می‌شود)
-   */
   async findContactInfo(
     propertySlug: string,
   ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
     const code = this.checkSlug(propertySlug);
     const CACHE_KEY = `contact:${code}`;
-
     const redisValue = await this.redis.get(CACHE_KEY);
-
     if (redisValue) return JSON.parse(redisValue) as { owner: any; list: Partial<PropertyOwnerAssistant>[] };
-
     const property = await this.db.property.findUnique({
       where: { code },
       select: {
@@ -325,7 +326,6 @@ export class PropertyUserService {
       },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
-
     const list = await this.db.propertyOwnerAssistant.findMany({
       where: { property: { code } },
       select: {
@@ -344,7 +344,7 @@ export class PropertyUserService {
       },
       list,
     };
-  await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60); //one hour
+    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60); //one hour
     return result;
   }
 
@@ -366,7 +366,6 @@ export class PropertyUserService {
       const callClickLimit = +(await this.setting.get(SettingKey.CALL_CLICK_LIMIT));
       const callClickCheckingDuration = +(await this.setting.get(SettingKey.CALL_CLICK_CHECKING_DURATION));
       const callClickBanTtl = +(await this.setting.get(SettingKey.CALL_CLICK_BAN_TTL));
-
       const clickCount = await this.db.callLog.count({
         where: {
           user_id: userId,
@@ -468,27 +467,22 @@ export class PropertyUserService {
     dto: GenerateAdvisorShareDto,
   ): Promise<string> {
     const advisorShareUrl = this.config.get('url.advisorShareUrl');
-
     const key = randomstring.generate({ length: 10, charset: 'alphanumeric' });
-
     await this.db.advisorShare.create({
       data: { key, property_id: propertyId, advisor_id: advisorId, elements: dto.elements },
     });
-
     const url = `${advisorShareUrl}/s?content=${key}`;
-
     return url;
   }
+
   async findAdvisorShareData(dto: FindAdvisorShareDto): Promise<any> {
     const data = await this.db.advisorShare.findUnique({ where: { key: dto.content } });
     if (!data) throw new BadRequestException();
-
     const prop = await this.db.property.findUnique({
       where: { id: data.property_id },
       select: { slug: true, feature_image: true },
     });
     const property = await this.findOne(prop.slug, false);
-
     const advisor = await this.db.advisor.findUnique({
       where: { id: data.advisor_id },
       select: { user: { select: { full_name: true, mobile_number: true, profile_image: true } } },
@@ -496,15 +490,11 @@ export class PropertyUserService {
     return { property, advisor, elements: data.elements?.split(',') };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   SEARCH                                   */
-  /* -------------------------------------------------------------------------- */
   async searchSuggestions(dto: PropertySearchSuggestionUserDto): Promise<any> {
     const exactProperty = await this.db.property.findFirst({
       where: { title: dto.q, ...this.validProperty() },
       select: { id: true, title: true, slug: true },
     });
-
     const properties = await this.db.property.findMany({
       where: {
         ...this.validProperty(),
@@ -540,10 +530,9 @@ export class PropertyUserService {
 
   async searchSuggestionsV2(
     dto: PropertySearchSuggestionUserDto,
-  ): Promise<{ cities: any[]; landings: any[]; properties?: any[] }> {
-    const q = dto.q;
-
-    if (/^\d+$/.test(q)) {
+  ): Promise<{ cities: any[]; landings: any[]; properties: any[]; items: any[] }> {
+    const q = normalizePersianSearchText(dto.q);
+    if (isExactPropertyCode(q)) {
       const exactProperty = await this.db.property.findFirst({
         where: { code: q, status: PropertyStatuses.PUBLISHED },
         select: { id: true, title: true, slug: true },
@@ -552,31 +541,86 @@ export class PropertyUserService {
         cities: [],
         landings: [],
         properties: !!exactProperty ? [exactProperty] : [],
+        items: exactProperty
+          ? [
+              {
+                type: SearchSuggestionType.PROPERTY,
+                id: exactProperty.id,
+                label: exactProperty.title ?? '',
+                target: `/rooms/${exactProperty.slug}`,
+              },
+            ]
+          : [],
       };
     }
-    const words = sanitizeText(q);
-    if (isEmpty(words)) return { cities: [], landings: [] };
-
-    /* ---------------------------------- city ---------------------------------- */
+    const words = tokenizeSearchText(q);
+    if (isEmpty(words)) return { cities: [], landings: [], properties: [], items: [] };
 
     const cities = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, 3));
 
-    const landings = await this.db.landingPage.findMany({
-      where: {
-        AND: words.map((e) => ({ title: { contains: e } })),
-      },
-      select: { id: true, title: true, url: true },
-      take: 5,
-    });
+    const [landings, properties] = await Promise.all([
+      this.db.landingPage.findMany({
+        where: {
+          AND: words.map((word) => ({
+            OR: persianSearchVariants(word).map((variant) => ({
+              title: { contains: variant, mode: 'insensitive' as const },
+            })),
+          })),
+        },
+        select: { id: true, title: true, url: true },
+        orderBy: [{ title: 'asc' }, { id: 'asc' }],
+        take: 5,
+      }),
+      this.db.property.findMany({
+        where: {
+          ...this.validProperty(),
+          AND: words.map((word) => ({
+            OR: persianSearchVariants(word).map((variant) => ({
+              title: { contains: variant, mode: 'insensitive' as const },
+            })),
+          })),
+        },
+        select: { id: true, title: true, slug: true },
+        orderBy: [{ title: 'asc' }, { id: 'asc' }],
+        take: 5,
+      }),
+    ]);
 
     return {
       cities,
       landings,
+      properties,
+      items: [
+        ...properties.map((property) => ({
+          type: SearchSuggestionType.PROPERTY,
+          id: property.id,
+          label: property.title ?? '',
+          target: `/rooms/${property.slug}`,
+        })),
+        ...cities.map((city) => ({
+          type: city.level as SearchSuggestionType,
+          id: city.id,
+          label: city.title,
+          parentLabel: city.parent_title || undefined,
+          target:
+            city.level === SearchSuggestionType.PROVINCE
+              ? `/rooms?provinces=${city.id}`
+              : city.level === SearchSuggestionType.REGION
+                ? `/rooms?cities=${city.parent_id}&regions=${city.id}`
+                : `/rooms?cities=${city.id}`,
+        })),
+        ...landings.map((landing) => ({
+          type: SearchSuggestionType.LANDING,
+          id: landing.id,
+          label: landing.title,
+          target: `/${landing.url}`,
+        })),
+      ],
     };
   }
 
   async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
-    let words = sanitizeText(dto.q);
+    let words = tokenizeSearchText(dto.q);
     let clientQuery = {};
     if (dto.q.includes('استخر')) clientQuery['has_pool'] = 1;
     const exactCity = await this.db.city.findFirst({
@@ -633,7 +677,7 @@ export class PropertyUserService {
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
-    clientQuery = { ...clientQuery, q: dto.q };
+    clientQuery = { ...clientQuery, q: normalizePersianSearchText(dto.q) };
     if (clientQuery['cities']) delete clientQuery['provinces'];
     const cityRecords = await this.db.city.findMany({
       where: {
@@ -655,7 +699,7 @@ export class PropertyUserService {
 
     let citiesList = [];
     for (const c of cityRecords) {
-      citiesList.push({
+    conscitiesList.push({
         id: c.id,
         title: c.title,
         parent_id: c.parent_id,
@@ -703,40 +747,7 @@ export class PropertyUserService {
    * @returns
    */
   cityQueryBuilder(words: string[], limit: number): Prisma.Sql {
-    const conditions = Prisma.join(
-      words.map((term) => Prisma.sql`c.title ILIKE ${`%${term}%`}`),
-      ' OR ',
-    );
-    const exactMatch = words.join(' ');
-    return Prisma.sql`
-        SELECT 
-            c.id,
-            c.title,
-            c.parent_id,
-            CASE 
-                WHEN c.parent_id IS NULL THEN 'province'
-                WHEN p.parent_id IS NULL THEN 'city'
-                ELSE 'region'
-            END as level,
-            COALESCE(p.title, '') as parent_title,
-            COALESCE(p.id, null) as parent_id,
-            COALESCE(g.title, '') as grandparent_title,
-            COALESCE(g.id, null) as grandparent_id
-        FROM cities c
-        LEFT JOIN cities p ON p.id = c.parent_id
-        LEFT JOIN cities g ON g.id = p.parent_id
-        WHERE (${conditions}) AND c.deleted_at is null AND c.title != 'استخر'
-        ORDER BY 
-            CASE WHEN c.title = ${exactMatch} THEN 1 ELSE 2 END,
-            CASE 
-               WHEN c.parent_id IS NULL THEN 1
-               WHEN p.parent_id IS NULL THEN 2
-               ELSE 3
-            END,
-            LENGTH(c.title),
-            c.title
-        LIMIT ${limit}
-    `;
+    return buildCitySuggestionQuery(words, limit);
   }
 
   /**
@@ -750,7 +761,7 @@ export class PropertyUserService {
     const strings = searchTerm.trim().replace(specialChars, ' ').split(/\s+/);
     let query = [];
     for (const text of strings) {
-      query.push({ [column]: { contains: text } });
+    consquery.push({ [column]: { contains: text } });
     }
     return query;
   };
@@ -765,60 +776,3 @@ export class PropertyUserService {
     const propPure = await this.db.property.findUnique({ where: { id: propertyId }, omit: { id: true } });
     const prop = await this.db.property.findUnique({
       where: { id: propertyId },
-      include: {
-        property_options: true,
-        bedrooms: true,
-        daily_price: true,
-        description: true,
-      },
-    });
-
-    const titleMock = ['ویلای', 'سوییت', 'آپارتمان'];
-
-    for (let i = 0; i < 100; i++) {
-      const code = `${random(10_000, 99_999).toString()}`;
-      const title = `${titleMock[random(0, titleMock.length - 1)]} ${Num2persian(i + 1)}`;
-      const slug = `${code}-${slugify(title)}`;
-      const cityId = random(32, 165);
-      const province = await this.db.city.findUnique({ where: { id: cityId } });
-
-      await this.db.$transaction(async (tx) => {
-        const newProp = await tx.property.create({
-          data: {
-            ...propPure,
-            title: title,
-            slug: slug,
-            slug_hash: `${random(0, 1_000_000_000) + random(0, 1_000).toString(16)}`,
-            code,
-            city_id: cityId,
-            province_id: province?.parent_id,
-            is_chat_enabled: random(0, 1) === 0 ? false : true,
-            has_pool: random(0, 1) === 0 ? false : true,
-            has_blue_tick: random(0, 1) === 0 ? false : true,
-            std_capacity: random(1, 10),
-            advisor_commission: random(5, 50),
-            building_area: random(50, 200),
-            floor: random(1, 3),
-            feature_image_id: random(5, 20),
-            daily_price: { create: { ...omit(prop?.daily_price, ['id', 'property_id']) } },
-            bedrooms: { create: { ...omit(prop?.bedrooms, ['id', 'property_id']) } },
-            description: { create: { ...omit(prop?.description, ['id', 'property_id']) } },
-            property_images: {
-              create: [
-                { attachment_id: random(5, 20), sort_order: 0 },
-                { attachment_id: random(5, 20), sort_order: 1 },
-                { attachment_id: random(5, 20), sort_order: 2 },
-              ],
-            },
-          },
-        });
-        await tx.optionsOnProperty.createMany({
-          data: prop?.property_options.map((item) => ({
-            property_id: newProp.id,
-            option_id: item.option_id,
-          })),
-        });
-      });
-    }
-  }
-}

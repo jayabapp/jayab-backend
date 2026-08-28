@@ -1,8 +1,9 @@
+import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nestjs/common';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { ParseIntPipe, Put, Query, Req, UseGuards, Version } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { SearchSuggestionsSuccessResponseDto } from './dto/search-suggestion-response.dto';
 import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
 import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
 import { PropertyOwnerService } from '../owner/owner.service';
@@ -134,7 +135,11 @@ export class PropertyUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Search Suggestion', description: '', operationId: 'propertyUserSearchSuggestions' })
+  @ApiOperation({
+    summary: 'Search Suggestion',
+    description: '',
+    operationId: 'propertyUserSearchSuggestions',
+  })
   @Get('search/suggestions')
   async searchSuggestions(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestions(dto);
@@ -142,7 +147,12 @@ export class PropertyUserController {
   }
 
   @Version('2')
-  @ApiOperation({ summary: 'Search Suggestion V2', description: '', operationId: 'propertyUserSearchSuggestionsV2' })
+  @ApiOperation({
+    summary: 'Search Suggestion V2',
+    description: '',
+    operationId: 'propertyUserSearchSuggestionsV2',
+  })
+  @ApiOkResponse({ type: SearchSuggestionsSuccessResponseDto })
   @Get('search/suggestions')
   async searchSuggestionsV2(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestionsV2(dto);
