@@ -9,16 +9,16 @@ import { PropertyResType, PropertySerializer } from 'src/property/serializer/pro
 import { groupBy, isEmpty, orderBy, uniq } from 'lodash';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
-import {normalizePersianSearchText} from 'src/property/common/helpers/search-text.helper';
+import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
 import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
-import {persianSearchVariants} from 'src/property/common/helpers/search-text.helper';
+import { persianSearchVariants } from 'src/property/common/helpers/search-text.helper';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import {isExactPropertyCode} from 'src/property/common/helpers/search-text.helper';
-import {tokenizeSearchText} from 'src/property/common/helpers/search-text.helper';
+import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
+import { tokenizeSearchText } from 'src/property/common/helpers/search-text.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -54,7 +54,7 @@ export class PropertyUserService {
     isAdvisor: boolean = false,
     propertyIds?: number[],
   ): Promise<PaginatedResult<PropertyArrayResType>> {
-    let {
+    const {
       code,
       provinces,
       cities = '',
@@ -112,7 +112,7 @@ export class PropertyUserService {
     if (total_bedrooms > 0) query = { ...query, bedrooms: { total_bedrooms: total_bedrooms } };
     if (total_guests > 0) query = { ...query, max_capacity: { gte: total_guests } };
 
-    let options = [];
+    const options = [];
     /* ------------------------------ options query (new) ----------------------------- */
     if (property_type) options.push({ options_array: { hasSome: parseQueryNumberArray(property_type) } });
     if (ownership) options.push({ options_array: { hasSome: parseQueryNumberArray(ownership) } });
@@ -207,18 +207,18 @@ export class PropertyUserService {
     }
 
     const include = {
-          feature_image: true,
-          province: { select: { title: true } },
-          city: { select: { title: true } },
-          region: { select: { title: true } },
-          property_options: {
-            where: { option: { deleted_at: null } },
-            select: { option: { select: { title: true, group: true } } },
-          },
-          daily_price: true,
-          calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-          bedrooms: { select: { total_bedrooms: true } },
-          _count: { select: { property_images: true } },
+      feature_image: true,
+      province: { select: { title: true } },
+      city: { select: { title: true } },
+      region: { select: { title: true } },
+      property_options: {
+        where: { option: { deleted_at: null } },
+        select: { option: { select: { title: true, group: true } } },
+      },
+      daily_price: true,
+      calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+      bedrooms: { select: { total_bedrooms: true } },
+      _count: { select: { property_images: true } },
     } satisfies Prisma.PropertyInclude;
 
     let orderedPageIds: number[] = null;
@@ -732,7 +732,7 @@ export class PropertyUserService {
       },
     });
 
-    let citiesList = [];
+    const citiesList = [];
     for (const c of cityRecords) {
       citiesList.push({
         id: c.id,
@@ -794,7 +794,7 @@ export class PropertyUserService {
   preprocessSearchTerms = (searchTerm: string, column: string): string[] => {
     const specialChars = /[()|&:*!]/g;
     const strings = searchTerm.trim().replace(specialChars, ' ').split(/\s+/);
-    let query = [];
+    const query = [];
     for (const text of strings) {
       query.push({ [column]: { contains: text } });
     }
@@ -806,7 +806,7 @@ export class PropertyUserService {
    * faker
    * @param propertyId
    */
-  async duplicate(propertyId: number): Promise<void> {
+  async duplicate(_propertyId: number): Promise<void> {
     return;
   }
 }
