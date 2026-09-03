@@ -10,7 +10,10 @@ import { groupBy, isEmpty, orderBy, uniq } from 'lodash';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
-import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
+import {
+  applyPropertySearchScope,
+  toAndArray,
+} from 'src/property/common/helpers/property-search-query.helper';
 import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
@@ -127,10 +130,16 @@ export class PropertyUserService {
     if (pool_type) options.push({ options_array: { hasSome: parseQueryNumberArray(pool_type) } });
     if (pet) options.push({ options_array: { hasSome: parseQueryNumberArray(pet) } });
 
+    // concat، نه جایگزینی: `applyPropertySearchScope` هم روی `AND` می‌نویسد.
+    // Assigning `AND: options` outright used to drop whatever was already there.
+    // That was dormant while nothing else wrote to `AND`, but the free-text
+    // predicate now does — and /extract emits `property_type` alongside `q`, so
+    // the overwrite would have silently thrown the text filter away on exactly
+    // the queries the search box produces.
     if (options?.length > 0)
       query = {
         ...query,
-        AND: options,
+        AND: [...toAndArray(query.AND), ...options],
       };
 
     /* ------------------------------ فقط استخردار ------------------------------ */

@@ -10,7 +10,12 @@ export const normalizePersianSearchText = (value: string): string =>
     .normalize('NFKC')
     .replace(/[يى]/g, 'ی')
     .replace(/ك/g, 'ک')
-    .replace(/[‌‍‎‏]/g, ' ')
+    // نیم‌فاصله داخل کلمه است، نه بین کلمه‌ها: حذف می‌شود، نه تبدیل به فاصله.
+    // ZWNJ/ZWJ and the directional marks were being turned into a space, which
+    // split one Persian word into two — "اقامت‌گاه" tokenized as "اقامت" + "گاه",
+    // and "۱٢‌۳" normalized to "12 3" instead of "123". Persian keyboards emit
+    // ZWNJ constantly, so this hit ordinary queries, not edge cases.
+    .replace(/[‌‍‎‏]/g, '')
     .replace(/[۰-۹]/g, (digit) => String(PERSIAN_DIGITS.indexOf(digit)))
     .replace(/[٠-٩]/g, (digit) => String(ARABIC_DIGITS.indexOf(digit)))
     .replace(/\s+/g, ' ')

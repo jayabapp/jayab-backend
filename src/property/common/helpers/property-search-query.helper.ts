@@ -1,4 +1,4 @@
-import { normalizePersianSearchText, persianSearchVariants } from './search-text.helper';
+import { persianSearchVariants, tokenizeSearchText } from './search-text.helper';
 import { isEmpty } from 'lodash';
 import { Prisma } from '@prisma/client';
 
@@ -8,6 +8,10 @@ type PropertySearchScope = {
   provinces: number[];
   q?: string;
 };
+
+/** `AND` may already hold a single predicate or a list; normalize to a list so nothing is lost. */
+export const toAndArray = (value: Prisma.PropertyWhereInput['AND']): Prisma.PropertyWhereInput[] =>
+  isEmpty(value) ? [] : Array.isArray(value) ? value : [value];
 
 export const applyPropertySearchScope = (
   base: Prisma.PropertyWhereInput,
@@ -21,12 +25,29 @@ export const applyPropertySearchScope = (
         ? { province_id: { in: provinces } }
         : {};
 
-  const normalizedQuery = normalizePersianSearchText(q ?? '');
-  const text = normalizedQuery
-    ? { title: { contains: normalizedQuery, mode: Prisma.QueryMode.insensitive } }
-    : {};
+  // هر کلمه باید جایی در عنوان بیاید — نه کل عبارت به‌صورت یک زیررشته‌ی پیوسته.
+  //
+  // The previous version tested the whole phrase with a single `contains`, so a
+  // search for "ویلا تبریز" demanded that exact substring and returned nothing
+  // for "ویلا دوبلکس دوخوابه در تبریز": the more precisely a user typed, the
+  // fewer results they got. Measured against production, `q=ویلا تبریز` gave 0
+  // results while the city+type filters that /extract derived from the very same
+  // phrase gave 17.
+  //
+  // `persianSearchVariants` is here for the same reason `buildCitySuggestionQuery`
+  // and `searchSuggestionsV2` already use it: stored titles are not normalized,
+  // so a title typed with Arabic ك/ي is unreachable from normalized Persian ک/ی.
+  const words = tokenizeSearchText(q ?? '');
+  const text = words.map((word) => ({
+    OR: persianSearchVariants(word).map((variant) => ({
+      title: { contains: variant, mode: Prisma.QueryMode.insensitive },
+    })),
+  }));
 
-  return { ...base, ...location, ...text };
+  const merged: Prisma.PropertyWhereInput = { ...base, ...location };
+  const and = [...toAndArray(base.AND), ...text];
+
+  return isEmpty(and) ? merged : { ...merged, AND: and };
 };
 
 export const buildCitySuggestionQuery = (words: string[], limit: number): Prisma.Sql => {
