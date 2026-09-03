@@ -27,6 +27,26 @@ model Otp {
   @@map("otps")
 }
 
+enum TestAccessRole {
+  TEAM_LEAD
+  QA
+}
+
+model TestAccessMember {
+  id                Int            @id @default(autoincrement())
+  mobile_number     String         @unique @db.VarChar(11)
+  role              TestAccessRole @default(QA)
+  is_active         Boolean        @default(true)
+  created_by_mobile String?        @db.VarChar(11)
+  revoked_by_mobile String?        @db.VarChar(11)
+  revoked_at        DateTime?
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+
+  @@index([is_active, role])
+  @@map("test_access_members")
+}
+
 model Admin {
   id                  Int                               @id @default(autoincrement())
   username            String                            @unique @db.VarChar(64)

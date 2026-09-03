@@ -82,6 +82,7 @@ import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.mo
 import { SubscriptionModule } from './subscription/subscription.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TicketModule } from './ticket/ticket.module';
+import { TestAccessModule } from './test-access/test-access.module';
 import { UserModule } from './user/user.module';
 import { ClientModule } from './client/client.module';
 import { HealthController } from './health.controller';
@@ -148,6 +149,7 @@ import { HealthController } from './health.controller';
     CommandModule,
     GeneratorModule,
     TasksModule,
+    TestAccessModule,
     AuthModule,
     AccessControlModule,
     AdminPanelModule,

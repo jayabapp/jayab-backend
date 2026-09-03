@@ -68,6 +68,10 @@ export default () => ({
     maxOtpAttempts: process.env.MAX_OTP_ATTEMPTS,
     advisorShareLinkSecret: process.env.ADVISOR_SHARE_LINK_SECRET,
   },
+  testAccess: {
+    enabled: process.env.TEST_ACCESS_ENABLED === '1',
+    teamLeadMobile: process.env.TEST_TEAM_LEAD_MOBILE,
+  },
   payment: {
     paymentCallBackUrl: process.env.PAYMENT_CALLBACK_URL,
     paymentBaseUrl: process.env.PAYMENT_BASE_URL,

@@ -1,13 +1,15 @@
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PassportStrategy } from '@nestjs/passport';
-import Redis from 'ioredis';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { getUserInfoCacheManagerKey } from 'src/common/helpers/cache-manager-key.constant';
-import { PartialUser } from 'src/common/interfaces/user.interface';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
+import { TestAccessService } from 'src/test-access/test-access.service';
+import { PassportStrategy } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+
+import Redis from 'ioredis';
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
@@ -15,6 +17,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     private readonly db: PrismaService,
     private configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
+    private readonly testAccessService: TestAccessService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -23,10 +26,17 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
   }
 
   public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
-    const CACHE_KEY = getUserInfoCacheManagerKey(payload.id);
+    if (this.testAccessService.isEnabled()) {
+      const accessUser = await this.db.user.findUnique({
+        where: { id: payload.id },
+        select: { mobile_number: true },
+      });
+      if (!accessUser) throw new UnauthorizedException();
+      if (!(await this.testAccessService.isAllowed(accessUser.mobile_number)))
+        throw new UnauthorizedException('TEST_ACCESS_DENIED');
+    }
 
-    /* -------------------------------------------------------------------------- */
-    // check the token key in cache
+    const CACHE_KEY = getUserInfoCacheManagerKey(payload.id);
     const cacheData: string = await this.redis.get(CACHE_KEY);
 
     if (cacheData) {
@@ -52,7 +62,6 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
 
     this.isUserAuthenticated(user.jwt_level, payload?.jwtLevel);
 
-    /* -------------------------------------------------------------------------- */
     const base64String = Buffer.from(JSON.stringify(user)).toString('base64');
     await this.redis.set(CACHE_KEY, base64String, 'EX', 60);
     return user;

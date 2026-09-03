@@ -46,6 +46,12 @@ const configValidations = Joi.object({
   AVANAK_RESERVE_OWNER_MESSAGE_ID: Joi.string().required(),
 
   MAX_OTP_ATTEMPTS: Joi.string().required(),
+  TEST_ACCESS_ENABLED: Joi.string().valid('0', '1').default('0'),
+  TEST_TEAM_LEAD_MOBILE: Joi.when('TEST_ACCESS_ENABLED', {
+    is: '1',
+    then: Joi.string().pattern(/^09\d{9}$/).required(),
+    otherwise: Joi.string().pattern(/^09\d{9}$/).allow('').optional(),
+  }),
 
   S3_FS1_ENDPOINT: Joi.string().required(),
   S3_FS1_ACCESS_KEY: Joi.string().required(),
