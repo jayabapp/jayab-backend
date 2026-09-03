@@ -1,39 +1,18 @@
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import {
-  BadRequestException,
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from '@nestjs/common';
-import Redis from 'ioredis';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CallHandler, NestInterceptor, NotFoundException } from '@nestjs/common';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
 
 @Injectable()
 export class FindOneChatInterceptor implements NestInterceptor {
-  constructor(
-    @InjectRedis() private readonly redis: Redis,
-    private readonly db: PrismaService,
-  ) {}
+  constructor(private readonly db: PrismaService) {}
   async intercept(context: ExecutionContext, next: CallHandler): Promise<any> {
     const request = context.switchToHttp().getRequest();
-
     const userId = request.user.id;
-    const isAdmin = request.user?.role_id;
-
     const chatroomId = request.params?.chatroomId;
-    if (!chatroomId) throw new BadRequestException('CHAT1');
-    const CACHE_KEY = `chat:interceptor:${chatroomId}`;
+    if (!chatroomId) throw new NotFoundException('CHAT4');
 
-    const redisValue = await this.redis.get(CACHE_KEY);
-    if (redisValue) {
-      request.interceptor_data = JSON.parse(redisValue);
-      return next.handle();
-    }
-
-    /* -------------------------------------------------------------------------- */
     const item = await this.db.messengerChatroom.findUnique({
       where: { uuid: chatroomId },
       select: {
@@ -48,18 +27,10 @@ export class FindOneChatInterceptor implements NestInterceptor {
         },
       },
     });
-
-    /* -------------------------------------------------------------------------- */
-    if (!item) throw new BadRequestException('NOT_FOUND');
-
-    //ممکنه ای دی کاربر و ادمین یکی باشه در نتیجه رول هم باید چک بشه
+    if (!item) throw new NotFoundException('NOT_FOUND');
     const sender = item.participants.find((e) => e.user_id === userId);
     const recipient = item.participants.find((e) => e.user_id !== userId);
-
-    // console.log({ sender, recipient });
-
-    if (!sender) throw new BadRequestException('CHAT3');
-
+    if (!sender) throw new ForbiddenException('CHAT13');
     const isPropertyExpired = item.property.subscription_expired_at < startOfToday();
 
     const data = {
@@ -86,13 +57,7 @@ export class FindOneChatInterceptor implements NestInterceptor {
           : null,
       },
     };
-    /* -------------------------------------------------------------------------- */
     request.interceptor_data = data;
-
-    //cache
-    await this.redis.set(CACHE_KEY, JSON.stringify(data), 'EX', 30);
-
-    //next
     return next.handle();
   }
 }
