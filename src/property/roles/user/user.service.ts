@@ -202,16 +202,16 @@ export class PropertyUserService {
       [];
     switch (dto.sort_type) {
       case 'popular':
-        orderByQuery = { favorite_count: 'desc' };
+        orderByQuery = [{ favorite_count: 'desc' }, { id: 'desc' }];
         break;
       case 'newset':
-        orderByQuery = { sort_order: 'desc' };
+        orderByQuery = [{ sort_order: 'desc' }, { id: 'desc' }];
         break;
       case 'commission_desc':
-        orderByQuery = { advisor_commission: 'desc' };
+        orderByQuery = [{ advisor_commission: 'desc' }, { id: 'desc' }];
         break;
       default:
-        orderByQuery = { sort_order: 'desc' };
+        orderByQuery = [{ sort_order: 'desc' }, { id: 'desc' }];
         break;
     }
 
