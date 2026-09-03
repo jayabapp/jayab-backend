@@ -1,17 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Attachment, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import sharp from 'sharp';
-import md5 from 'crypto-js/md5';
-import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 import { AttachmentImagePropsType, AttachmentVoicePropsType } from './interfaces/attachment-props.type';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Attachment, Prisma } from '@prisma/client';
+import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { VIDEO_FOLDER } from 'src/common/utils/constants/storage-folders';
-import fs from 'fs/promises';
 import { __baseDir } from 'src/config/settings';
+
+import sharp from 'sharp';
+import md5 from 'crypto-js/md5';
+import fs from 'fs/promises';
 
 @Injectable()
 export class AttachmentService {
+  private static readonly IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+  private readonly logger = new Logger(AttachmentService.name);
+
   constructor(
     private readonly db: PrismaService,
     private readonly s3ManagerService: S3ManagerService,
@@ -20,8 +24,6 @@ export class AttachmentService {
   /* ---------------------------------- IMAGE --------------------------------- */
   async createAttachment(args: AttachmentImagePropsType): Promise<Attachment> {
     const { file, folder, resizeWidth, resizeMode, adminId, userId, repository = 'attachment', alt } = args;
-
-    // const storagePath = STORAGE_PUBLIC + folder;
     const MIN_WIDTH = 32;
     const MIN_HEIGHT = 32;
 
@@ -36,8 +38,6 @@ export class AttachmentService {
     const isVertical = width >= height;
 
     if (width < MIN_WIDTH || height < MIN_HEIGHT) throw new BadRequestException('ATTACH2');
-    // if (resizeMode == 'square' && width != height) throw new BadGatewayException('ATTACH1');
-
     const resizeDimension: { width?: number; height?: number } =
       resizeMode == 'square'
         ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth) }
@@ -64,51 +64,27 @@ export class AttachmentService {
       resizeDimensionThumb = { ...resizeDimensionThumb, height: Math.floor(resizeDimension.height / 4) };
     }
 
-    // console.log({ resizeDimension, resizeDimensionMedium, resizeDimensionThumb });
-
-    /**
-     * Create file name
-     */
-    const hashOriginalName = md5(file.originalname).toString().substring(3, 9);
     const fileName = `${uuidv4()}-${new Date().getTime()}-${width}x${height}.webp`;
     const largeName = `${fileName}`;
     const mediumName = `medium-${fileName}`;
     const thumbName = `thumb-${fileName}`;
     const fitMode = ['square', '1/2', '2/3', '2/5'].includes(resizeMode) ? 'cover' : 'contain';
 
-    /**
-     * resize image
-     */
     const l = await largeImage
       .resize({
         ...resizeDimension,
         fit: fitMode,
-        // background: { r: 0, g: 0, b: 0, alpha: 0 },
       })
       .webp()
       .toBuffer();
 
-    /**
-     * save to S3
-     */
-
-    //original
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${largeName}`,
       buffer: l,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: 'image/webp',
     });
 
-    /**
-     * Derivatives (medium ~= 1/2 the stored width, thumbnail ~= 1/4).
-     *
-     * Deliberately generated AFTER the original is safely on S3, and each one is
-     * isolated in its own try/catch: `medium` and `thumbnail` are nullable, so a
-     * sharp failure or a dead file server must degrade to `null` and leave the
-     * attachment usable, never abort the upload. `uploadObject` swallows its own
-     * errors and returns `undefined` on failure, so the returned bucket is checked
-     * rather than assumed -- writing the key on a failed PUT would point the
-     * frontend at an object that does not exist.
-     */
     let mediumKey: string | null = null;
     let thumbnailKey: string | null = null;
 
@@ -124,13 +100,18 @@ export class AttachmentService {
       const mediumOnS3 = await this.s3ManagerService.uploadObject({
         fullPath: `${folder}/${mediumName}`,
         buffer: m,
+        cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+        contentType: 'image/webp',
         fs: mainOnS3.fs,
       });
 
       if (mediumOnS3?.bucket) mediumKey = mediumName;
     } catch (error) {
-      console.log('MEDIUM DERIVATIVE FAILED');
-      console.log(error);
+      this.logger.warn(
+        `Medium derivative upload failed for ${fileName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
 
     try {
@@ -145,13 +126,18 @@ export class AttachmentService {
       const thumbOnS3 = await this.s3ManagerService.uploadObject({
         fullPath: `${folder}/${thumbName}`,
         buffer: t,
+        cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+        contentType: 'image/webp',
         fs: mainOnS3.fs,
       });
 
       if (thumbOnS3?.bucket) thumbnailKey = thumbName;
     } catch (error) {
-      console.log('THUMBNAIL DERIVATIVE FAILED');
-      console.log(error);
+      this.logger.warn(
+        `Thumbnail derivative upload failed for ${fileName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
 
     let updateData: Prisma.AttachmentUncheckedCreateInput = {
@@ -169,16 +155,11 @@ export class AttachmentService {
     if (repository == 'attachment')
       updateData = { ...updateData, admin_id: adminId || null, user_id: userId || null };
 
-    //Save to DB
     let data: Attachment;
     if (repository == 'attachment')
       data = await this.db.attachment.create({
         data: updateData,
       });
-    // else
-    //   data = await this.db.messengerMedia.create({
-    //     data: updateData,
-    //   });
 
     return data;
   }
@@ -195,11 +176,13 @@ export class AttachmentService {
     const { width, height } = metadata;
 
     const hashOriginalName = md5(file.originalname).toString().substring(3, 9);
-    const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.webp`;
+    const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.gif`;
 
     const uploadedObj = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: 'image/gif',
     });
 
     const data = await this.db.attachment.create({
@@ -224,12 +207,11 @@ export class AttachmentService {
     const mime = file.mimetype.split('/')[1];
     const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}.${mime}`;
 
-    /**
-     * save to S3
-     */
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: file.mimetype || 'application/octet-stream',
     });
     let updateData: Prisma.AttachmentUncheckedCreateInput = {
       name: fileName,
@@ -246,11 +228,6 @@ export class AttachmentService {
       data = await this.db.attachment.create({
         data: updateData,
       });
-    // else
-    //   data = await this.db.messengerMedia.create({
-    //     data: updateData,
-    //   });
-
     return data;
   }
 
@@ -260,12 +237,11 @@ export class AttachmentService {
     const mime = file.mimetype.split('/')[1];
     const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}.${mime}`;
 
-    /**
-     * save to S3
-     */
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: file.mimetype || 'application/octet-stream',
     });
 
     const createData: Prisma.AttachmentUncheckedCreateInput = {
@@ -326,7 +302,6 @@ export class AttachmentService {
     try {
       const { fileName, file, thumbFile, folder, adminId, userId } = args;
 
-      // const storagePath = STORAGE_PUBLIC + folder;
       const MIN_WIDTH = 32;
       const MIN_HEIGHT = 32;
 
@@ -338,19 +313,11 @@ export class AttachmentService {
       const metadata = await image.metadata();
       const { width, height } = metadata;
 
-      /**
-       * Create file name
-       */
-
       const name = `${fileName.replace('.jpg', '.webp')}`;
       const largeName = `${name}`;
       const mediumName = `medium-v1-${name}`;
       const thumbName = `thumbnail-${name}`;
       const fitMode = 'contain';
-
-      /**
-       * resize image
-       */
       const l = await largeImage.webp().toBuffer();
 
       const m = await mediumImage
@@ -367,45 +334,6 @@ export class AttachmentService {
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${largeName}`, l);
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${mediumName}`, m);
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${thumbName}`, t);
-      /**
-       * save to S3
-       */
-
-      //original
-      // const mainOnS3 = await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${largeName}`,
-      //   buffer: l,
-      // });
-
-      //medium
-      // await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${mediumName}`,
-      //   buffer: m,
-      //   fs: mainOnS3.fs,
-      // });
-
-      // //thumbnail
-      // await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${thumbName}`,
-      //   buffer: t,
-      //   fs: mainOnS3.fs,
-      // });
-
-      // let updateData: Prisma.AttachmentUncheckedCreateInput = {
-      //   name: largeName,
-      //   medium: mediumName,
-      //   thumbnail: thumbName,
-      //   // meta: (metadata || {}) as Prisma.JsonValue,
-      //   bucket: mainOnS3.bucket,
-      //   end_point: mainOnS3.end_point,
-      //   alt: '',
-      //   type: 1,
-      //   path: folder,
-      // };
-
-      // const data = await this.db.attachment.create({
-      //   data: { ...updateData, admin_id: adminId || null, user_id: userId || null },
-      // });
     } catch (error) {
       console.log(error);
     }

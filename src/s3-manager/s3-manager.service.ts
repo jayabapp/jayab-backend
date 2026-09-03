@@ -1,19 +1,17 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { FILE_SERVERS, FILE_SERVERS_TYPE } from './common/s3.constants';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { S3ObjectInputType } from './interfaces/s3.interface';
 import { ConfigService } from '@nestjs/config';
 import { sample } from 'lodash';
-import { FILE_SERVERS, FILE_SERVERS_TYPE } from './common/s3.constants';
-import { PutObjectCommand, PutObjectCommandOutput, S3, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class S3ManagerService {
+  private readonly logger = new Logger(S3ManagerService.name);
+
   constructor(
     @Inject('fs1')
     private readonly fs1: S3Client,
-    // @Inject('fs2')
-    // private readonly fs2: S3,
-    // @Inject('fs3')
-    // private readonly fs3: S3,
     private readonly configService: ConfigService,
   ) {}
 
@@ -30,15 +28,6 @@ export class S3ManagerService {
         fileServer = this.fs1;
         endPoint = this.configService.get('aws.fs1.endPoint');
         break;
-      // case 'fs2':
-      //   fileServer = this.fs2;
-      //   endPoint = this.configService.get('aws.fs2.endPoint');
-      //   break;
-      // case 'fs3':
-      //   fileServer = this.fs3;
-      //   endPoint = this.configService.get('aws.fs3.endPoint');
-      //   break;
-
       default:
         throw new BadRequestException('Wrong fs');
     }
@@ -50,13 +39,18 @@ export class S3ManagerService {
           Key: body.fullPath,
           Body: body.buffer,
           ACL: 'public-read',
+          CacheControl: body.cacheControl,
+          ContentType: body.contentType,
         }),
       );
 
       return { bucket: this.BUCKET_NAME, end_point: endPoint, fs: randomFileServer };
     } catch (error) {
-      console.log('FILE UPLOAD ERROR');
-      console.log(error);
+      this.logger.error(
+        `S3 upload failed for ${body.fullPath} on ${randomFileServer}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new ServiceUnavailableException('FILE_UPLOAD_FAILED');
     }
   }
 }
