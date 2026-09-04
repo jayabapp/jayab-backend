@@ -1,16 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LandingPage, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllLandingPageUserDto } from './dto/find-all.dto';
-import { ContentSharedService } from 'src/content/shared.service';
+import { LandingPage, Prisma } from '@prisma/client';
 import { groupBy, isEmpty } from 'lodash';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class LandingPageUserService {
-  constructor(
-    private readonly db: PrismaService,
-    private readonly contentSharedService: ContentSharedService,
-  ) {}
+  constructor(private readonly db: PrismaService) {}
 
   /**
    * find all LandingPage
@@ -18,7 +14,7 @@ export class LandingPageUserService {
    * @returns
    */
   async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
-    let q: Prisma.LandingPageWhereInput = { is_active: true };
+    const q: Prisma.LandingPageWhereInput = { is_active: true };
     if (dto.placement === 'home') q['show_in_home'] = true;
     else if (dto.placement === 'footer') q['show_in_footer'] = true;
 
@@ -46,7 +42,13 @@ export class LandingPageUserService {
           include: {
             questions: {
               where: { is_publish: true },
-              select: { question: true, answer: true, updated_at: true },
+              select: {
+                id: true,
+                question: true,
+                answer: true,
+                updated_at: true,
+              },
+              orderBy: { id: 'asc' },
             },
           },
         },
@@ -55,7 +57,7 @@ export class LandingPageUserService {
 
     if (!landing) throw new NotFoundException('NOT_FOUND');
 
-    let options = {};
+    const options = {};
     if (!isEmpty(landing.options)) {
       const opt = await this.db.propertyOption.findMany({
         where: { id: { in: landing.options } },
@@ -90,21 +92,18 @@ export class LandingPageUserService {
       });
     }
 
-    let result: Record<string, any> = {
+    const result: Record<string, any> = {
       query: {
         ...options,
       },
       content: landing.main_content,
       related_landings: relatedLandings,
     };
-
     if (landing.has_pool) result['query'] = { ...result['query'], has_pool: 1 };
     if (landing.min_discount_percentage > 0) result['query'] = { ...result['query'], has_discount: 1 };
     if (landing.is_premium) result['query'] = { ...result['query'], is_premium: 1 };
     if (landing.province_id) result['query'] = { ...result['query'], provinces: `${landing.province_id}` };
     else if (!isEmpty(cities)) result['query'] = { ...result['query'], cities: cities.map((e) => e.id) };
-
-    // console.dir(result);
     return result;
   }
 }
