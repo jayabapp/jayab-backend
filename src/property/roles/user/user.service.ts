@@ -7,17 +7,15 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
 import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { groupBy, isEmpty, orderBy, uniq } from 'lodash';
+import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
+import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
-import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
-import {
-  applyPropertySearchScope,
-  toAndArray,
-} from 'src/property/common/helpers/property-search-query.helper';
+import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
 import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
-import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
 import { persianSearchVariants } from 'src/property/common/helpers/search-text.helper';
+import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
@@ -29,6 +27,7 @@ import { PartialUser } from 'src/common/interfaces/user.interface';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SmsService } from 'src/sms/sms.service';
+import { toAndArray } from 'src/property/common/helpers/property-search-query.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { Redis } from 'ioredis';
 
@@ -129,13 +128,6 @@ export class PropertyUserService {
     if (party) options.push({ options_array: { hasSome: parseQueryNumberArray(party) } });
     if (pool_type) options.push({ options_array: { hasSome: parseQueryNumberArray(pool_type) } });
     if (pet) options.push({ options_array: { hasSome: parseQueryNumberArray(pet) } });
-
-    // concat، نه جایگزینی: `applyPropertySearchScope` هم روی `AND` می‌نویسد.
-    // Assigning `AND: options` outright used to drop whatever was already there.
-    // That was dormant while nothing else wrote to `AND`, but the free-text
-    // predicate now does — and /extract emits `property_type` alongside `q`, so
-    // the overwrite would have silently thrown the text filter away on exactly
-    // the queries the search box produces.
     if (options?.length > 0)
       query = {
         ...query,
@@ -559,6 +551,8 @@ export class PropertyUserService {
 
     const landings = await this.db.landingPage.findMany({
       where: {
+        is_active: true,
+        main_content_id: { not: null },
         OR: this.preprocessSearchTerms(dto.q, 'title') as Prisma.LandingPageWhereInput[],
       },
       select: { id: true, title: true, url: true },
@@ -600,11 +594,27 @@ export class PropertyUserService {
     const words = tokenizeSearchText(q);
     if (isEmpty(words)) return { cities: [], landings: [], properties: [], items: [] };
 
-    const cities = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, 3));
+    const cityMatches = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, 3));
+    const cities = await Promise.all(
+      cityMatches.map(async (city) => {
+        const url = await findCanonicalLocationLanding(this.db, {
+          cityId:
+            city.level === SearchSuggestionType.REGION
+              ? Number(city.parent_id)
+              : city.level === SearchSuggestionType.CITY
+                ? Number(city.id)
+                : undefined,
+          provinceId: city.level === SearchSuggestionType.PROVINCE ? Number(city.id) : undefined,
+        });
+        return { ...city, target: url ? `/${url}` : undefined };
+      }),
+    );
 
     const [landings, properties] = await Promise.all([
       this.db.landingPage.findMany({
         where: {
+          is_active: true,
+          main_content_id: { not: null },
           AND: words.map((word) => ({
             OR: persianSearchVariants(word).map((variant) => ({
               title: { contains: variant, mode: 'insensitive' as const },
@@ -647,11 +657,12 @@ export class PropertyUserService {
           label: city.title,
           parentLabel: city.parent_title || undefined,
           target:
-            city.level === SearchSuggestionType.PROVINCE
+            city.target ||
+            (city.level === SearchSuggestionType.PROVINCE
               ? `/rooms?provinces=${city.id}`
               : city.level === SearchSuggestionType.REGION
                 ? `/rooms?cities=${city.parent_id}&regions=${city.id}`
-                : `/rooms?cities=${city.id}`,
+                : `/rooms?cities=${city.id}`),
         })),
         ...landings.map((landing) => ({
           type: SearchSuggestionType.LANDING,
@@ -675,7 +686,7 @@ export class PropertyUserService {
       let level;
       if (exactCity.parent?.parent_id) level = 'regions';
       else if (exactCity?.parent_id) level = 'cities';
-      else level = 'province_id';
+      else level = 'provinces';
       clientQuery[level] = `${exactCity.id}`;
       words = [];
     } else {
@@ -761,7 +772,20 @@ export class PropertyUserService {
       const region = citiesList.find((e) => e.level === 'region');
       clientQuery['cities'] = `${region.parent_id}`;
     }
-    return { client_query: clientQuery, cities_list: citiesList };
+    const canonicalLocation =
+      citiesList.length === 1
+        ? await findCanonicalLocationLanding(this.db, {
+            cityId:
+              citiesList[0].level === 'region'
+                ? Number(citiesList[0].parent_id)
+                : citiesList[0].level === 'city'
+                  ? Number(citiesList[0].id)
+                  : undefined,
+            provinceId: citiesList[0].level === 'province' ? Number(citiesList[0].id) : undefined,
+          })
+        : null;
+
+    return { client_query: clientQuery, cities_list: citiesList, landing_url: canonicalLocation };
   }
 
   /**

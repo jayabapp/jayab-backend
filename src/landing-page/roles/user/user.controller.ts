@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { FindAllLandingPageUserDto } from './dto/find-all.dto';
+import { ResolveLandingLocationDto } from './dto/resolve-location.dto';
 import { LandingPageUserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
@@ -18,6 +19,18 @@ export class LandingPageUserController {
   @Get()
   async findAll(@Query() dto: FindAllLandingPageUserDto): Promise<SuccessResponseArgs> {
     const result = await this.landingPageUserService.findAll(dto);
+    return { result };
+  }
+
+  @ApiOperation({
+    summary: 'Resolve canonical landing for a location',
+    operationId: 'landingPageResolveLocation',
+  })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(THREE_MINUTES_TTL)
+  @Get('resolve/location')
+  async resolveLocation(@Query() dto: ResolveLandingLocationDto): Promise<SuccessResponseArgs> {
+    const result = await this.landingPageUserService.resolveLocation(dto);
     return { result };
   }
 

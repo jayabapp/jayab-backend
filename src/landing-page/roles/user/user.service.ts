@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { FindAllLandingPageUserDto } from './dto/find-all.dto';
+import { ResolveLandingLocationDto } from './dto/resolve-location.dto';
 import { LandingPage, Prisma } from '@prisma/client';
 import { groupBy, isEmpty } from 'lodash';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -7,6 +9,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class LandingPageUserService {
   constructor(private readonly db: PrismaService) {}
+
+  async resolveLocation(dto: ResolveLandingLocationDto): Promise<{ url: string } | null> {
+    const url = await findCanonicalLocationLanding(this.db, {
+      cityId: dto.city_id,
+      provinceId: dto.province_id,
+    });
+    return url ? { url } : null;
+  }
 
   /**
    * find all LandingPage
@@ -35,7 +45,7 @@ export class LandingPageUserService {
    */
   async findOne(landingPageUrl: string): Promise<any> {
     const landing = await this.db.landingPage.findFirst({
-      where: { url: landingPageUrl },
+      where: { url: landingPageUrl, is_active: true },
       include: {
         image: true,
         main_content: {

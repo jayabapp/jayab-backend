@@ -1157,6 +1157,8 @@ model LandingPage {
   main_content            Content?    @relation(fields: [main_content_id], references: [id])
 
   @@index([url])
+  @@index([is_active, province_id], map: "landing_pages_active_province_idx")
+  @@index([cities], map: "landing_pages_cities_gin_idx", type: Gin)
   @@map("landing_pages")
 }
 
