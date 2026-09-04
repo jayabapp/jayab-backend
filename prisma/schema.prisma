@@ -212,6 +212,7 @@ model ContentCategory {
   questions       ContentQuestion[]
   content         Content[]
 
+  @@index([parent_id], map: "content_categories_parent_id_idx")
   @@map("content_categories")
 }
 
@@ -246,6 +247,8 @@ model Content {
   landing_page     LandingPage[]
   submitted_form   SubmittedForm[]
 
+  @@index([category_id, is_active, published_at], map: "contents_category_active_published_idx")
+  @@index([category_id, is_active, order, created_at], map: "contents_category_order_created_idx")
   @@map("contents")
 }
 
@@ -259,6 +262,7 @@ model ContentAttachment {
   attachment    Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
   content       Content    @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
+  @@index([content_id], map: "content_attachments_content_id_idx")
   @@map("content_attachments")
 }
 

@@ -14,6 +14,8 @@ export class ContentSharedController {
   constructor(private readonly contentSharedService: ContentSharedService) {}
 
   @ApiOperation({ summary: 'Find All', description: '', operationId: 'contentSharedFindAll' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(THREE_MINUTES_TTL)
   @Get()
   async findAll(@Query() dto: FindAllContentSharedDto): Promise<SuccessResponseArgs> {
     const result = await this.contentSharedService.findAll(dto);
