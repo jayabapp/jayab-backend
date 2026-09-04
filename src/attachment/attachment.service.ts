@@ -1,11 +1,14 @@
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AttachmentImagePropsType, AttachmentVoicePropsType } from './interfaces/attachment-props.type';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { DEFAULT_IMAGE_ENCODING_QUALITY, IMAGE_WEBP_OPTIONS } from './constants/image-processing.constant';
 import { Attachment, Prisma } from '@prisma/client';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { VIDEO_FOLDER } from 'src/common/utils/constants/storage-folders';
 import { __baseDir } from 'src/config/settings';
+import { Readable } from 'stream';
 
 import sharp from 'sharp';
 import md5 from 'crypto-js/md5';
@@ -22,8 +25,58 @@ export class AttachmentService {
   ) {}
 
   /* ---------------------------------- IMAGE --------------------------------- */
+  async getPublicPropertyImageDownload(id: number): Promise<{
+    contentLength?: number;
+    stream: Readable;
+  }> {
+    const attachment = await this.db.attachment.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+        type: 1,
+        OR: [
+          {
+            feature_image: {
+              some: { status: PropertyStatuses.PUBLISHED, deleted_at: null },
+            },
+          },
+          {
+            property_images: {
+              some: {
+                property: {
+                  status: PropertyStatuses.PUBLISHED,
+                  deleted_at: null,
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { name: true, path: true },
+    });
+    if (!attachment) throw new NotFoundException('NOT_FOUND');
+
+    const object = await this.s3ManagerService.getObject(`${attachment.path}/${attachment.name}`);
+    if (!object.Body) throw new NotFoundException('NOT_FOUND');
+
+    return {
+      contentLength: object.ContentLength,
+      stream: object.Body as Readable,
+    };
+  }
+
   async createAttachment(args: AttachmentImagePropsType): Promise<Attachment> {
-    const { file, folder, resizeWidth, resizeMode, adminId, userId, repository = 'attachment', alt } = args;
+    const {
+      file,
+      folder,
+      resizeWidth,
+      resizeMode,
+      adminId,
+      userId,
+      repository = 'attachment',
+      alt,
+      encodingQuality = DEFAULT_IMAGE_ENCODING_QUALITY,
+    } = args;
     const MIN_WIDTH = 32;
     const MIN_HEIGHT = 32;
 
@@ -74,8 +127,9 @@ export class AttachmentService {
       .resize({
         ...resizeDimension,
         fit: fitMode,
+        withoutEnlargement: true,
       })
-      .webp()
+      .webp({ quality: encodingQuality.large, ...IMAGE_WEBP_OPTIONS })
       .toBuffer();
 
     const mainOnS3 = await this.s3ManagerService.uploadObject({
@@ -93,8 +147,9 @@ export class AttachmentService {
         .resize({
           ...resizeDimensionMedium,
           fit: fitMode,
+          withoutEnlargement: true,
         })
-        .webp()
+        .webp({ quality: encodingQuality.medium, ...IMAGE_WEBP_OPTIONS })
         .toBuffer();
 
       const mediumOnS3 = await this.s3ManagerService.uploadObject({
@@ -119,8 +174,9 @@ export class AttachmentService {
         .resize({
           ...resizeDimensionThumb,
           fit: fitMode,
+          withoutEnlargement: true,
         })
-        .webp()
+        .webp({ quality: encodingQuality.thumbnail, ...IMAGE_WEBP_OPTIONS })
         .toBuffer();
 
       const thumbOnS3 = await this.s3ManagerService.uploadObject({
@@ -144,7 +200,6 @@ export class AttachmentService {
       name: largeName,
       medium: mediumKey,
       thumbnail: thumbnailKey,
-      // meta: (metadata || {}) as Prisma.JsonValue,
       bucket: mainOnS3.bucket,
       end_point: mainOnS3.end_point,
       alt: alt,
@@ -300,18 +355,11 @@ export class AttachmentService {
     adminId?: number;
   }): Promise<void> {
     try {
-      const { fileName, file, thumbFile, folder, adminId, userId } = args;
+      const { fileName, file, thumbFile } = args;
 
-      const MIN_WIDTH = 32;
-      const MIN_HEIGHT = 32;
-
-      const image = sharp(file);
       const largeImage = sharp(file);
       const mediumImage = sharp(file);
       const thumbImage = sharp(thumbFile);
-
-      const metadata = await image.metadata();
-      const { width, height } = metadata;
 
       const name = `${fileName.replace('.jpg', '.webp')}`;
       const largeName = `${name}`;

@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { GetObjectCommand, GetObjectCommandOutput, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { FILE_SERVERS, FILE_SERVERS_TYPE } from './common/s3.constants';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { S3ObjectInputType } from './interfaces/s3.interface';
 import { ConfigService } from '@nestjs/config';
 import { sample } from 'lodash';
@@ -51,6 +51,23 @@ export class S3ManagerService {
         error instanceof Error ? error.stack : String(error),
       );
       throw new ServiceUnavailableException('FILE_UPLOAD_FAILED');
+    }
+  }
+
+  async getObject(fullPath: string): Promise<GetObjectCommandOutput> {
+    try {
+      return await this.fs1.send(
+        new GetObjectCommand({
+          Bucket: this.BUCKET_NAME,
+          Key: fullPath,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(
+        `S3 download failed for ${fullPath}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new ServiceUnavailableException('FILE_DOWNLOAD_FAILED');
     }
   }
 }
