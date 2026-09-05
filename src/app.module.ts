@@ -229,7 +229,7 @@ export class AppModule {
           mkdirSync(folder);
         }
       }
-      cpSync(VIEWS_FONTS, __baseDir + STORAGE_FONTS, { recursive: true });
+      cpSync(VIEWS_FONTS, STORAGE_FONTS, { recursive: true });
     } catch (error) {
       console.log('file create error', error);
     }

@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 const configValidations = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   DATABASE_URL: Joi.string().required(),
   WEBSITE_URL: Joi.string().required(),
   ADVISOR_SHARE_URL: Joi.string().required(),
@@ -49,7 +50,11 @@ const configValidations = Joi.object({
   TEST_ACCESS_ENABLED: Joi.string().valid('0', '1').default('0'),
   TEST_TEAM_LEAD_MOBILE: Joi.when('TEST_ACCESS_ENABLED', {
     is: '1',
-    then: Joi.string().pattern(/^09\d{9}$/).required(),
+    then: Joi.when('NODE_ENV', {
+      is: 'production',
+      then: Joi.string().pattern(/^09\d{9}$/).required(),
+      otherwise: Joi.string().pattern(/^09\d{9}$/).allow('').optional(),
+    }),
     otherwise: Joi.string().pattern(/^09\d{9}$/).allow('').optional(),
   }),
 

@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jayab-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jayab
+      POSTGRES_PASSWORD: jayab_local
+      POSTGRES_DB: jayab_sandbox_db
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - jayab_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jayab -d jayab_sandbox_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: jayab-local-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "jayab_local"]
+    ports:
+      - "127.0.0.1:56379:6379"
+    volumes:
+      - jayab_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "jayab_local", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  jayab_postgres_data:
+  jayab_redis_data:

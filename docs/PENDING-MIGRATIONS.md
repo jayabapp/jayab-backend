@@ -225,3 +225,7 @@ ALTER TABLE "property_reserves" DROP COLUMN IF EXISTS "idempotency_key";
 `src/property/common/effective-price.helper.ts` درست به نظر می‌رسد، که احتمالش را
 بالا می‌برد که سرور نسخه‌ی قدیمی‌تری اجرا می‌کند. بعد از این دیپلوی دوباره تستش
 کنید — ممکن است خودبه‌خود حل شده باشد.
+# هشدار: این فایل آرشیوی و ناقص است
+
+فهرست نهایی ۶ migration، envها و ترتیب انتشار در
+[`NEW-APP-DEPLOYMENT.md`](./NEW-APP-DEPLOYMENT.md) نگهداری می‌شود. برای deploy فقط سند جدید را مبنا قرار دهید.
