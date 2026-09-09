@@ -675,11 +675,12 @@ export class PropertyUserService {
   }
 
   async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
-    let words = tokenizeSearchText(dto.q);
-    let clientQuery = {};
-    if (dto.q.includes('استخر')) clientQuery['has_pool'] = 1;
+    const normalizedQuery = normalizePersianSearchText(dto.q).replace(/\bبیلیار\b/g, 'بیلیارد');
+    let words = tokenizeSearchText(normalizedQuery);
+    let clientQuery: Record<string, string | number> = {};
+    if (normalizedQuery.includes('استخر')) clientQuery.has_pool = 1;
     const exactCity = await this.db.city.findFirst({
-      where: { AND: [{ title: dto.q }, { title: { notIn: ['استخر'] } }] },
+      where: { AND: [{ title: normalizedQuery }, { title: { notIn: ['استخر'] } }] },
       select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
     });
     if (exactCity) {
@@ -699,26 +700,30 @@ export class PropertyUserService {
         }
       }
 
-      const cities = await this.db.city.findMany({
+      const cityMatches = await this.db.city.findMany({
         where: { AND: [{ title: { in: citySearchTerms } }, { title: { notIn: ['استخر'] } }] },
         select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
       });
-      for (const city of cities) {
-        if (city.parent?.parent_id) clientQuery['regions'] = (clientQuery['regions'] || '') + `${city.id},`;
-        else if (city.parent_id) clientQuery['cities'] = (clientQuery['cities'] || '') + `${city.id},`;
-        else clientQuery['provinces'] = (clientQuery['provinces'] || '') + `${city.id},`;
+      const city = cityMatches.sort((left, right) => {
+        const titleLength = normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length;
+        if (titleLength !== 0) return titleLength;
+        const level = (item: (typeof cityMatches)[number]) => (item.parent?.parent_id ? 3 : item.parent_id ? 2 : 1);
+        return level(right) - level(left);
+      })[0];
+      if (city) {
+        if (city.parent?.parent_id) clientQuery.regions = `${city.id}`;
+        else if (city.parent_id) clientQuery.cities = `${city.id}`;
+        else clientQuery.provinces = `${city.id}`;
+        const matchedCityWords = new Set(tokenizeSearchText(city.title));
+        words = words.filter((word) => !matchedCityWords.has(word));
       }
     }
 
-    const propertyTypes = await this.db.propertyOption.findMany({
-      where: { OR: words.map((e) => ({ title: { contains: e } })), group: PropertyOptionGroup.PROPERTY_TYPE },
-    });
-
-    const options = await this.db.propertyOption.findMany({
+    const searchableOptions = await this.db.propertyOption.findMany({
       where: {
-        OR: words.map((e) => ({ title: { equals: e } })),
         group: {
           in: [
+            PropertyOptionGroup.PROPERTY_TYPE,
             PropertyOptionGroup.ENTERTAINMENT,
             PropertyOptionGroup.PATTERN,
             PropertyOptionGroup.OWNERSHIP,
@@ -728,19 +733,32 @@ export class PropertyUserService {
       },
     });
 
+    const queryWords = new Set(words);
+    const optionMatches = searchableOptions.filter((option) => {
+      const optionWords = tokenizeSearchText(option.title);
+      if (option.group === PropertyOptionGroup.PROPERTY_TYPE)
+        return optionWords.length > 0 && optionWords.every((word) => queryWords.has(word));
+      return optionWords.some((word) => queryWords.has(word));
+    });
+    const propertyTypes = optionMatches
+      .filter((option) => option.group === PropertyOptionGroup.PROPERTY_TYPE)
+      .sort((left, right) => normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length)
+      .slice(0, 1);
+    const options = optionMatches.filter((option) => option.group !== PropertyOptionGroup.PROPERTY_TYPE);
+
     const groupedOptions = groupBy([...options, ...propertyTypes], 'group');
     for (const key in groupedOptions) {
       clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
     }
-    clientQuery = { ...clientQuery, q: normalizePersianSearchText(dto.q) };
+    if (isEmpty(clientQuery)) clientQuery.q = normalizedQuery;
     if (clientQuery['cities']) delete clientQuery['provinces'];
     const cityRecords = await this.db.city.findMany({
       where: {
         id: {
           in: [
-            ...parseQueryNumberArray(clientQuery['provinces'] || ''),
-            ...parseQueryNumberArray(clientQuery['cities'] || ''),
-            ...parseQueryNumberArray(clientQuery['regions'] || ''),
+            ...parseQueryNumberArray(String(clientQuery.provinces || '')),
+            ...parseQueryNumberArray(String(clientQuery.cities || '')),
+            ...parseQueryNumberArray(String(clientQuery.regions || '')),
           ],
         },
       },

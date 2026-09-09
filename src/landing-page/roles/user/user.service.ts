@@ -89,6 +89,12 @@ export class LandingPageUserService {
         },
       });
     }
+    const province = landing.province_id
+      ? await this.db.city.findUnique({
+          where: { id: landing.province_id },
+          select: { id: true, title: true, slug: true },
+        })
+      : null;
 
     //find related landings
     let relatedLandings: any;
@@ -107,6 +113,12 @@ export class LandingPageUserService {
         ...options,
       },
       content: landing.main_content,
+      cities,
+      location: province
+        ? { ...province, level: 'province' }
+        : cities.length === 1
+          ? { ...cities[0], level: 'city' }
+          : null,
       related_landings: relatedLandings,
     };
     if (landing.has_pool) result['query'] = { ...result['query'], has_pool: 1 };
