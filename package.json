@@ -25,7 +25,10 @@
     "patch": "tsx prisma/patch/patcher.ts"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20"
+  },
+  "resolutions": {
+    "string-width": "^4.2.3"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.654.0",
