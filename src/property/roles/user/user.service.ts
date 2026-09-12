@@ -34,6 +34,8 @@ import { Redis } from 'ioredis';
 import randomstring from 'randomstring';
 import moment from 'moment-jalaali';
 
+const CITY_SUGGESTION_LIMIT = 5;
+
 @Injectable()
 export class PropertyUserService {
   constructor(
@@ -594,7 +596,7 @@ export class PropertyUserService {
     const words = tokenizeSearchText(q);
     if (isEmpty(words)) return { cities: [], landings: [], properties: [], items: [] };
 
-    const cityMatches = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, 3));
+    const cityMatches = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, CITY_SUGGESTION_LIMIT));
     const cities = await Promise.all(
       cityMatches.map(async (city) => {
         const url = await findCanonicalLocationLanding(this.db, {
@@ -705,9 +707,11 @@ export class PropertyUserService {
         select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
       });
       const city = cityMatches.sort((left, right) => {
-        const titleLength = normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length;
+        const titleLength =
+          normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length;
         if (titleLength !== 0) return titleLength;
-        const level = (item: (typeof cityMatches)[number]) => (item.parent?.parent_id ? 3 : item.parent_id ? 2 : 1);
+        const level = (item: (typeof cityMatches)[number]) =>
+          item.parent?.parent_id ? 3 : item.parent_id ? 2 : 1;
         return level(right) - level(left);
       })[0];
       if (city) {
@@ -742,7 +746,10 @@ export class PropertyUserService {
     });
     const propertyTypes = optionMatches
       .filter((option) => option.group === PropertyOptionGroup.PROPERTY_TYPE)
-      .sort((left, right) => normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length)
+      .sort(
+        (left, right) =>
+          normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length,
+      )
       .slice(0, 1);
     const options = optionMatches.filter((option) => option.group !== PropertyOptionGroup.PROPERTY_TYPE);
 
