@@ -4541,7 +4541,15 @@ bytes@3.1.2:
   resolved "https://registry.yarnpkg.com/bytes/-/bytes-3.1.2.tgz#8b0beeb98605adf1b128fa4386403c009e0221a5"
   integrity sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==
 
-cache-manager@^5.4.0:
+cache-manager-ioredis-yet@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/cache-manager-ioredis-yet/-/cache-manager-ioredis-yet-1.2.2.tgz#b780d037dba99c93931c81886e1e25e26b8054c1"
+  integrity sha512-o03N/tQxfFONZ1XLGgIxOFHuQQpjpRdnSAL1THG1YWZIVp1JMUfjU3ElSAjFN1LjbJXa55IpC8waG+VEoLUCUw==
+  dependencies:
+    cache-manager "^5.2.3"
+    ioredis "^5.3.2"
+
+cache-manager@^5.2.3, cache-manager@^5.4.0:
   version "5.7.6"
   resolved "https://registry.yarnpkg.com/cache-manager/-/cache-manager-5.7.6.tgz#bdd8a154c73e5233824aa09ceb359ed225d37b7e"
   integrity sha512-wBxnBHjDxF1RXpHCBD6HGvKER003Ts7IIm0CHpggliHzN1RZditb7rXoduE1rplc2DEFYKxhLKgFuchXMJje9w==

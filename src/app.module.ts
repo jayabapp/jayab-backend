@@ -2,7 +2,7 @@ import 'multer';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
 import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bull';
-import { CacheModule } from '@nestjs/cache-manager';
+import { CacheModule, type CacheStore } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
@@ -11,6 +11,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { redisStore } from 'cache-manager-ioredis-yet';
 import { cpSync, existsSync, mkdirSync } from 'fs';
 import { CommandModule } from 'nestjs-command';
 import { join } from 'path';
@@ -99,10 +100,28 @@ import { HealthController } from './health.controller';
       configPath:
         __baseDir + '/src/common/utils/constants/jayab-test-firebase-adminsdk-fbsvc-bcf224fe8e.json',
     }),
-    CacheModule.register({
-      // ttl: 60 * 1000,
-      max: 1000, // maximum number of items in cache
+    CacheModule.registerAsync({
       isGlobal: true,
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => ({
+        // `@CacheTTL()` on each route sets its own lifetime; no module-wide
+        // default is set here, matching the previous in-memory registration.
+        //
+        // `RedisStore` (cache-manager-ioredis-yet) implements every member of
+        // `CacheStore` (get/set/del) at runtime; the cast is only needed
+        // because `@nestjs/cache-manager` declares its own minimal `CacheStore`
+        // shape instead of importing `cache-manager`'s `Store`, so the two
+        // structurally-identical interfaces don't line up for `tsc`.
+        store: (await redisStore({
+          host: config.get('redis.host'),
+          port: config.get('redis.port'),
+          password: config.get('redis.password'),
+          // A prefix of its own: `jayab:` (RedisModule) and `jayab` (Bull) are
+          // shared with unrelated data, so a cache-wide flush here can never
+          // touch a session, a queue job, or the login throttle counter.
+          keyPrefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab:cache:' : 'jayab:cache:',
+        })) as unknown as CacheStore,
+      }),
     }),
     ThrottlerModule.forRoot({
       throttlers: [
