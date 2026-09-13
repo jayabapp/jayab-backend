@@ -1,92 +1,88 @@
-import 'multer';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
-import { HttpModule } from '@nestjs/axios';
-import { BullModule } from '@nestjs/bull';
-import { CacheModule, type CacheStore } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
-import { MulterModule } from '@nestjs/platform-express';
+import { STORAGE_FONTS, STORAGE_PUBLIC, STORAGE_SEO } from './common/utils/constants/storage-folders';
 import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import { STORAGE, STORAGE_EXCEL, VIEWS_FONTS } from './common/utils/constants/storage-folders';
+import { PropertyPhotoUpgradeRequestModule } from './property-photo-upgrade-request/property-photo-upgrade-request.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { redisStore } from 'cache-manager-ioredis-yet';
 import { cpSync, existsSync, mkdirSync } from 'fs';
-import { CommandModule } from 'nestjs-command';
-import { join } from 'path';
-import { BaseModule } from './__base/base.module';
-import { AccessControlModule } from './access-control/access-control.module';
-import { AdminPanelModule } from './admin-panel/admin-panel.module';
-import { AdvisorModule } from './advisor/advisor.module';
-import { AppClusterService } from './app-cluster/app-cluster.service';
-import { AttachmentModule } from './attachment/attachment.module';
-import { AuthModule } from './auth/auth.module';
-import { BannerModule } from './banner/banner.module';
-import { BookmarkModule } from './bookmark/bookmark.module';
-import { CallLogModule } from './call-log/call-log.module';
-import { CategoryModule } from './category/category.module';
-import { ChatModule } from './chat/chat.module';
-import { CityModule } from './city/city.module';
-import {
-  STORAGE,
-  STORAGE_EXCEL,
-  STORAGE_FONTS,
-  STORAGE_PUBLIC,
-  STORAGE_SEO,
-  VIEWS_FONTS,
-} from './common/utils/constants/storage-folders';
+import { CacheModule, type CacheStore } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IsCorrectPropertyOption } from './common/validators/is-correct-prop-opts.validator';
-import { IsExist } from './common/validators/is-exists.validator';
-import { IsNotExist } from './common/validators/is-not-exists.validator';
-import { IsParentCategory } from './common/validators/is-parent-category.validator';
-import { IsSubCategory } from './common/validators/is-sub-category.validator';
-import { IsPrice } from './common/validators/price-validator.decorator';
-import configuration from './config/configuration';
-import configValidations from './config/configuration-validation';
-import { multerOptions } from './config/multer.config';
-import { __baseDir } from './config/settings';
-import { ContentCategoryModule } from './content-category/content-category.module';
-import { ContentQuestionModule } from './content-question/content-question.module';
-import { ContentModule } from './content/content.module';
-import { FavoriteModule } from './favorite/favorite.module';
-import { FirebaseModule } from './firebase/firebase.module';
-import { FormBuilderModule } from './form-builder/form-builder.module';
 import { GeneratorCommandService } from './generator/command/generator-command.service';
-import { GeneratorCommand } from './generator/command/generator.command';
-import { GeneratorModule } from './generator/generator.module';
-import { GeneratorService } from './generator/generator.service';
-import { LandingPageModule } from './landing-page/landing-page.module';
 import { MessengerChatroomModule } from './messenger-chatroom/messenger-chatroom.module';
 import { MessengerMessagesModule } from './messenger-messages/messenger-messages.module';
-import { NotificationModule } from './notification/notification.module';
-import { OwnerModule } from './owner/owner.module';
+import { PropertyAuthorizeModule } from './property-authorize/property-authorize.module';
+import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
+import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
+import { ContentCategoryModule } from './content-category/content-category.module';
+import { ContentQuestionModule } from './content-question/content-question.module';
+import { PropertyReserveModule } from './property-reserve/property-reserve.module';
 import { PageSeoAnalyzeModule } from './page-seo-analyze/page-seo-analyze.module';
 import { PaymentGatewayModule } from './payment-gateway/payment-gateway.module';
-import { PeakDayModule } from './peak-day/peak-day.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ProfileModule } from './profile/profile.module';
-import { PropertyAuthorizeModule } from './property-authorize/property-authorize.module';
-import { PropertyBadgeModule } from './property-badge/property-badge.module';
-import { PropertyCalendarModule } from './property-calendar/property-calendar.module';
-import { PropertyPhotoUpgradeRequestModule } from './property-photo-upgrade-request/property-photo-upgrade-request.module';
 import { PropertyOptionModule } from './property-option/property-option.module';
 import { PropertyReportModule } from './property-report/property-report.module';
-import { PropertyReserveModule } from './property-reserve/property-reserve.module';
-import { PropertyModule } from './property/property.module';
-import { RedirectUrlModule } from './redirect-url/redirect-url.module';
-import { S3ManagerModule } from './s3-manager/s3-manager.module';
-import { SettingModule } from './setting/setting.module';
-import { SocketModule } from './socket/socket.module';
 import { SubmittedFormModule } from './submitted-form/submitted-form.module';
-import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
+import { PropertyBadgeModule } from './property-badge/property-badge.module';
+import { AccessControlModule } from './access-control/access-control.module';
+import { NotificationModule } from './notification/notification.module';
 import { SubscriptionModule } from './subscription/subscription.module';
-import { TasksModule } from './tasks/tasks.module';
-import { TicketModule } from './ticket/ticket.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { AppClusterService } from './app-cluster/app-cluster.service';
+import { FormBuilderModule } from './form-builder/form-builder.module';
+import { LandingPageModule } from './landing-page/landing-page.module';
+import { RedirectUrlModule } from './redirect-url/redirect-url.module';
+import { AdminPanelModule } from './admin-panel/admin-panel.module';
+import { AttachmentModule } from './attachment/attachment.module';
+import { GeneratorCommand } from './generator/command/generator.command';
+import { GeneratorService } from './generator/generator.service';
+import { IsParentCategory } from './common/validators/is-parent-category.validator';
 import { TestAccessModule } from './test-access/test-access.module';
-import { UserModule } from './user/user.module';
-import { ClientModule } from './client/client.module';
 import { HealthController } from './health.controller';
+import { GeneratorModule } from './generator/generator.module';
+import { S3ManagerModule } from './s3-manager/s3-manager.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { CategoryModule } from './category/category.module';
+import { FirebaseModule } from './firebase/firebase.module';
+import { PropertyModule } from './property/property.module';
+import { AdvisorModule } from './advisor/advisor.module';
+import { CommandModule } from 'nestjs-command';
+import { CallLogModule } from './call-log/call-log.module';
+import { IsSubCategory } from './common/validators/is-sub-category.validator';
+import { ProfileModule } from './profile/profile.module';
+import { PeakDayModule } from './peak-day/peak-day.module';
+import { multerOptions } from './config/multer.config';
+import { ContentModule } from './content/content.module';
+import { SettingModule } from './setting/setting.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { BannerModule } from './banner/banner.module';
+import { TicketModule } from './ticket/ticket.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { SocketModule } from './socket/socket.module';
+import { ClientModule } from './client/client.module';
+import { TasksModule } from './tasks/tasks.module';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { OwnerModule } from './owner/owner.module';
+import { HttpModule } from '@nestjs/axios';
+import { redisStore } from 'cache-manager-ioredis-yet';
+import { BullModule } from '@nestjs/bull';
+import { BaseModule } from './__base/base.module';
+import { ChatModule } from './chat/chat.module';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
+import { CityModule } from './city/city.module';
+import { IsNotExist } from './common/validators/is-not-exists.validator';
+import { APP_GUARD } from '@nestjs/core';
+import { __baseDir } from './config/settings';
+import { JwtModule } from '@nestjs/jwt';
+import { IsPrice } from './common/validators/price-validator.decorator';
+import { IsExist } from './common/validators/is-exists.validator';
+import { Module } from '@nestjs/common';
+import { join } from 'path';
+
+import configValidations from './config/configuration-validation';
+import configuration from './config/configuration';
+
+import 'multer';
 
 @Module({
   imports: [
@@ -104,21 +100,10 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
-        // `@CacheTTL()` on each route sets its own lifetime; no module-wide
-        // default is set here, matching the previous in-memory registration.
-        //
-        // `RedisStore` (cache-manager-ioredis-yet) implements every member of
-        // `CacheStore` (get/set/del) at runtime; the cast is only needed
-        // because `@nestjs/cache-manager` declares its own minimal `CacheStore`
-        // shape instead of importing `cache-manager`'s `Store`, so the two
-        // structurally-identical interfaces don't line up for `tsc`.
         store: (await redisStore({
           host: config.get('redis.host'),
           port: config.get('redis.port'),
           password: config.get('redis.password'),
-          // A prefix of its own: `jayab:` (RedisModule) and `jayab` (Bull) are
-          // shared with unrelated data, so a cache-wide flush here can never
-          // touch a session, a queue job, or the login throttle counter.
           keyPrefix: process.env.IS_SANDBOX == '1' ? 'sandbox:jayab:cache:' : 'jayab:cache:',
         })) as unknown as CacheStore,
       }),
@@ -164,7 +149,6 @@ import { HealthController } from './health.controller';
     },
     { ...JwtModule.register({}), global: true },
     NestScheduleModule.forRoot(),
-    // ...(process.env.NODE_ENV == 'productionn' ? [TasksModule] : []) ,
     CommandModule,
     GeneratorModule,
     TasksModule,
@@ -216,15 +200,15 @@ import { HealthController } from './health.controller';
     BaseModule,
   ],
   providers: [
-    GeneratorCommand,
-    GeneratorCommandService,
-    GeneratorService,
-    IsNotExist,
     IsExist,
     IsPrice,
-    IsParentCategory,
+    IsNotExist,
     IsSubCategory,
+    GeneratorService,
+    IsParentCategory,
+    GeneratorCommand,
     AppClusterService,
+    GeneratorCommandService,
     IsCorrectPropertyOption,
     {
       provide: APP_GUARD,
