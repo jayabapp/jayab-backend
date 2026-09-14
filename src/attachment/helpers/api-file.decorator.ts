@@ -1,8 +1,8 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { fileMimetypeFilter } from '../filters/file-mimetype.filter';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 
 export function ApiFile(fieldName = 'file', required = false, localOptions?: MulterOptions): any {
   return applyDecorators(
@@ -38,7 +38,7 @@ export function ApiImageFile(fileName = 'image', required = false): any {
       'gif',
     ),
     limits: {
-      fileSize: 1024 * 1024 * 15,
+      fileSize: 1024 * 1024 * 30,
     },
   });
 }
