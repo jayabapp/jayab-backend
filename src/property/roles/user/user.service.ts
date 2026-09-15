@@ -1,25 +1,34 @@
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
+import { GoneException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
-import { GoneException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
+import { SearchCityListItem, SearchExtractResult } from './dto/search-extract-response.dto';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
+import { buildMatchedOrder, buildSearchTokens } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
-import { groupBy, isEmpty, orderBy, uniq } from 'lodash';
+import { MatchedEntry, ResolvedLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
+import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
+import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
 import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
+import { SEARCHABLE_OPTION_GROUPS } from 'src/property/common/helpers/search-query-parser.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { persianSearchVariants } from 'src/property/common/helpers/search-text.helper';
 import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
+import { buildFuzzyCityQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
+import { buildLocationSpans } from 'src/property/common/helpers/search-query-parser.helper';
 import { tokenizeSearchText } from 'src/property/common/helpers/search-text.helper';
+import { LocationCandidate } from 'src/property/common/helpers/search-query-parser.helper';
+import { isEmpty, orderBy } from 'lodash';
+import { SearchableOption } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -35,9 +44,18 @@ import randomstring from 'randomstring';
 import moment from 'moment-jalaali';
 
 const CITY_SUGGESTION_LIMIT = 5;
+const SEARCHABLE_OPTIONS_TTL_MS = 5 * 60 * 1000;
+const TITLE_CANDIDATE_LIMIT = 20;
+const FUZZY_CITY_SIMILARITY = 0.45;
+const FUZZY_MIN_WORD_LENGTH = 3;
+const TRIGRAM_RETRY_MS = 10 * 60 * 1000;
 
 @Injectable()
 export class PropertyUserService {
+  private readonly logger = new Logger(PropertyUserService.name);
+  private searchableOptions: { expiresAt: number; options: SearchableOption[] } | null = null;
+  private trigramRetryAt = 0;
+
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private readonly db: PrismaService,
@@ -148,7 +166,7 @@ export class PropertyUserService {
     if (is_premium === 1) query = { ...query, has_blue_tick: true };
 
     /* ---------------------------------- title --------------------------------- */
-    if (title) query = { ...query, title: { contains: title } };
+    if (title) query = { ...query, title: { contains: title, mode: 'insensitive' } };
 
     const hasPriceFilter = min_price !== undefined || max_price !== undefined;
     const hasPriceSort = dto.sort_type === 'price_asc' || dto.sort_type === 'price_desc';
@@ -575,7 +593,7 @@ export class PropertyUserService {
     if (isExactPropertyCode(q)) {
       const exactProperty = await this.db.property.findFirst({
         where: { code: q, status: PropertyStatuses.PUBLISHED },
-        select: { id: true, title: true, slug: true },
+        select: { id: true, title: true, slug: true, code: true },
       });
       return {
         cities: [],
@@ -636,7 +654,7 @@ export class PropertyUserService {
             })),
           })),
         },
-        select: { id: true, title: true, slug: true },
+        select: { id: true, title: true, slug: true, code: true },
         orderBy: [{ title: 'asc' }, { id: 'asc' }],
         take: 5,
       }),
@@ -676,99 +694,230 @@ export class PropertyUserService {
     };
   }
 
-  async search(dto: PropertySearchSuggestionUserDto): Promise<any> {
-    const normalizedQuery = normalizePersianSearchText(dto.q).replace(/\bبیلیار\b/g, 'بیلیارد');
-    let words = tokenizeSearchText(normalizedQuery);
-    let clientQuery: Record<string, string | number> = {};
-    if (normalizedQuery.includes('استخر')) clientQuery.has_pool = 1;
-    const exactCity = await this.db.city.findFirst({
-      where: { AND: [{ title: normalizedQuery }, { title: { notIn: ['استخر'] } }] },
-      select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
-    });
-    if (exactCity) {
-      let level;
-      if (exactCity.parent?.parent_id) level = 'regions';
-      else if (exactCity?.parent_id) level = 'cities';
-      else level = 'provinces';
-      clientQuery[level] = `${exactCity.id}`;
-      words = [];
-    } else {
-      const citySearchTerms = [...words];
-      for (let start = 0; start < words.length; start++) {
-        let cityTitle = words[start];
-        for (let end = start + 1; end < words.length; end++) {
-          cityTitle += ` ${words[end]}`;
-          citySearchTerms.push(cityTitle);
+  async search(dto: PropertySearchSuggestionUserDto): Promise<SearchExtractResult> {
+    const startedAt = Date.now();
+    const query = normalizePersianSearchText(dto.q);
+    const result = await this.extractSearchFilters(query);
+    this.logger.debug(
+      `search/extract q="${query}" filters=${JSON.stringify(result.client_query)} ` +
+        `order=${result.matched_order.join(',')} ignored=${result.ignored_terms.join(',')} ` +
+        `${Date.now() - startedAt}ms`,
+    );
+    return result;
+  }
+
+  private async extractSearchFilters(query: string): Promise<SearchExtractResult> {
+    if (isExactPropertyCode(query)) {
+      const property = await this.db.property.findFirst({
+        where: { code: query, ...this.validProperty() },
+        select: { id: true, title: true, slug: true, code: true },
+      });
+      return {
+        client_query: { code: query },
+        cities_list: [],
+        landing_url: null,
+        matched_order: ['code'],
+        property,
+        ignored_terms: [],
+      };
+    }
+
+    const tokens = buildSearchTokens(query);
+    const consumed = new Set<number>();
+    const order: MatchedEntry[] = [];
+    const clientQuery: Record<string, string | number> = {};
+    const consume = (positions: number[]): void => positions.forEach((position) => consumed.add(position));
+
+    const applyLocation = (location: ResolvedLocation): void => {
+      clientQuery[location.key] = location.ids.join(',');
+      if (location.parentCityId) clientQuery.cities = `${location.parentCityId}`;
+      consume(location.consumed);
+      order.push(...location.order);
+    };
+
+    const location = resolveLocation(await this.findLocationCandidates(buildLocationSpans(tokens)));
+    if (location) applyLocation(location);
+
+    const pool = detectPool(tokens);
+    if (pool) {
+      clientQuery.has_pool = pool.value;
+      consume(pool.consumed);
+      order.push({ key: 'has_pool', position: pool.position });
+    }
+
+    const optionMatches = matchOptions(tokens, consumed, await this.getSearchableOptions());
+    for (const match of optionMatches) {
+      clientQuery[match.key] = match.ids.join(',');
+      consume(match.positions);
+      order.push({ key: match.key, position: match.positions[0] });
+    }
+
+    let residual = residualWords(tokens, consumed);
+    const ignoredTerms: string[] = [];
+
+    if (residual.length > 0) {
+      const titleMatches = await this.findTitleCandidates(
+        residual.map(({ word }) => word),
+        clientQuery,
+      );
+
+      if (titleMatches.length > 0) {
+        for (const match of optionMatches) {
+          const ids = new Set(match.ids);
+          const isSatisfied = titleMatches.some((property) =>
+            property.options_array.some((id) => ids.has(id)),
+          );
+          const isPartOfTitle =
+            match.words.length > 0 &&
+            titleMatches.some((property) => {
+              const titleWords = new Set(tokenizeSearchText(property.title ?? ''));
+              return match.words.every((word) => titleWords.has(word));
+            });
+          if (isSatisfied || !isPartOfTitle) continue;
+
+          delete clientQuery[match.key];
+          const index = order.findIndex((entry) => entry.key === match.key);
+          if (index >= 0) order.splice(index, 1);
+          match.positions.forEach((position) => consumed.delete(position));
+        }
+        residual = residualWords(tokens, consumed);
+      } else {
+        if (!location) {
+          const fuzzy = await this.findFuzzyLocation(residual);
+          if (fuzzy) {
+            applyLocation(fuzzy);
+            residual = residual.filter(({ position }) => !consumed.has(position));
+          }
+        }
+        if (residual.length > 0 && !isEmpty(clientQuery)) {
+          ignoredTerms.push(...residual.map(({ word }) => word));
+          residual = [];
         }
       }
-
-      const cityMatches = await this.db.city.findMany({
-        where: { AND: [{ title: { in: citySearchTerms } }, { title: { notIn: ['استخر'] } }] },
-        select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
-      });
-      const city = cityMatches.sort((left, right) => {
-        const titleLength =
-          normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length;
-        if (titleLength !== 0) return titleLength;
-        const level = (item: (typeof cityMatches)[number]) =>
-          item.parent?.parent_id ? 3 : item.parent_id ? 2 : 1;
-        return level(right) - level(left);
-      })[0];
-      if (city) {
-        if (city.parent?.parent_id) clientQuery.regions = `${city.id}`;
-        else if (city.parent_id) clientQuery.cities = `${city.id}`;
-        else clientQuery.provinces = `${city.id}`;
-        const matchedCityWords = new Set(tokenizeSearchText(city.title));
-        words = words.filter((word) => !matchedCityWords.has(word));
-      }
     }
 
-    const searchableOptions = await this.db.propertyOption.findMany({
-      where: {
-        group: {
-          in: [
-            PropertyOptionGroup.PROPERTY_TYPE,
-            PropertyOptionGroup.ENTERTAINMENT,
-            PropertyOptionGroup.PATTERN,
-            PropertyOptionGroup.OWNERSHIP,
-            PropertyOptionGroup.POOL_TYPE,
-          ],
-        },
-      },
-    });
-
-    const queryWords = new Set(words);
-    const optionMatches = searchableOptions.filter((option) => {
-      const optionWords = tokenizeSearchText(option.title);
-      if (option.group === PropertyOptionGroup.PROPERTY_TYPE)
-        return optionWords.length > 0 && optionWords.every((word) => queryWords.has(word));
-      return optionWords.some((word) => queryWords.has(word));
-    });
-    const propertyTypes = optionMatches
-      .filter((option) => option.group === PropertyOptionGroup.PROPERTY_TYPE)
-      .sort(
-        (left, right) =>
-          normalizePersianSearchText(right.title).length - normalizePersianSearchText(left.title).length,
-      )
-      .slice(0, 1);
-    const options = optionMatches.filter((option) => option.group !== PropertyOptionGroup.PROPERTY_TYPE);
-
-    const groupedOptions = groupBy([...options, ...propertyTypes], 'group');
-    for (const key in groupedOptions) {
-      clientQuery = { ...clientQuery, [key.toLowerCase()]: groupedOptions[key].map((e) => e.id).join(',') };
+    if (residual.length > 0) {
+      clientQuery.q = residual.map(({ word }) => word).join(' ');
+      order.push({ key: 'q', position: residual[0].position });
     }
-    if (isEmpty(clientQuery)) clientQuery.q = normalizedQuery;
-    if (clientQuery['cities']) delete clientQuery['provinces'];
-    const cityRecords = await this.db.city.findMany({
-      where: {
-        id: {
-          in: [
-            ...parseQueryNumberArray(String(clientQuery.provinces || '')),
-            ...parseQueryNumberArray(String(clientQuery.cities || '')),
-            ...parseQueryNumberArray(String(clientQuery.regions || '')),
-          ],
-        },
-      },
+
+    const citiesList = await this.buildSearchCitiesList(clientQuery);
+    const landingUrl =
+      citiesList.length === 1 && !clientQuery.q && !clientQuery.regions
+        ? await findCanonicalLocationLanding(this.db, {
+            cityId: citiesList[0].level === 'city' ? Number(citiesList[0].id) : undefined,
+            provinceId: citiesList[0].level === 'province' ? Number(citiesList[0].id) : undefined,
+          })
+        : null;
+
+    return {
+      client_query: clientQuery,
+      cities_list: citiesList,
+      landing_url: landingUrl ?? null,
+      matched_order: buildMatchedOrder(order),
+      property: null,
+      ignored_terms: ignoredTerms,
+    };
+  }
+
+  private async findLocationCandidates(
+    spans: { text: string; start: number; end: number }[],
+  ): Promise<LocationCandidate[]> {
+    if (spans.length === 0) return [];
+    const titles = [...new Set(spans.flatMap((span) => persianSearchVariants(span.text)))];
+    const rows = await this.db.city.findMany({
+      where: { deleted_at: null, title: { in: titles, notIn: ['استخر'] } },
+      select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
+    });
+
+    return spans.flatMap((span) =>
+      rows
+        .filter((row) => normalizePersianSearchText(row.title) === span.text)
+        .map((row) => ({
+          id: row.id,
+          title: row.title,
+          parent_id: row.parent_id,
+          grandparent_id: row.parent?.parent_id ?? null,
+          start: span.start,
+          end: span.end,
+        })),
+    );
+  }
+
+  private async findFuzzyLocation(
+    residual: { word: string; position: number }[],
+  ): Promise<ResolvedLocation | null> {
+    const terms = residual.filter(
+      ({ word }) => word.length >= FUZZY_MIN_WORD_LENGTH && !isExactPropertyCode(word),
+    );
+    if (terms.length === 0 || Date.now() < this.trigramRetryAt) return null;
+
+    try {
+      const rows = await this.db.$queryRaw<
+        { term: string; id: number; title: string; parent_id: number | null; grandparent_id: number | null }[]
+      >(buildFuzzyCityQuery([...new Set(terms.map(({ word }) => word))], FUZZY_CITY_SIMILARITY));
+      return resolveLocation(
+        rows.flatMap((row) =>
+          terms
+            .filter(({ word }) => word === row.term)
+            .map(({ position }) => ({
+              id: Number(row.id),
+              title: row.title,
+              parent_id: row.parent_id === null ? null : Number(row.parent_id),
+              grandparent_id: row.grandparent_id === null ? null : Number(row.grandparent_id),
+              start: position,
+              end: position,
+            })),
+        ),
+      );
+    } catch (error) {
+      this.trigramRetryAt = Date.now() + TRIGRAM_RETRY_MS;
+      this.logger.warn(`Fuzzy city search unavailable: ${(error as Error)?.message}`);
+      return null;
+    }
+  }
+
+  private findTitleCandidates(
+    words: string[],
+    clientQuery: Record<string, string | number>,
+  ): Promise<{ id: number; title: string | null; options_array: number[] }[]> {
+    const where = applyPropertySearchScope(this.validProperty(), {
+      regions: parseQueryNumberArray(String(clientQuery.regions ?? '')),
+      cities: parseQueryNumberArray(String(clientQuery.cities ?? '')),
+      provinces: parseQueryNumberArray(String(clientQuery.provinces ?? '')),
+      q: words.join(' '),
+    });
+    return this.db.property.findMany({
+      where,
+      select: { id: true, title: true, options_array: true },
+      take: TITLE_CANDIDATE_LIMIT,
+    });
+  }
+
+  private async getSearchableOptions(): Promise<SearchableOption[]> {
+    if (this.searchableOptions && this.searchableOptions.expiresAt > Date.now())
+      return this.searchableOptions.options;
+
+    const options = await this.db.propertyOption.findMany({
+      where: { deleted_at: null, group: { in: [...SEARCHABLE_OPTION_GROUPS] } },
+      select: { id: true, title: true, group: true },
+    });
+    this.searchableOptions = { expiresAt: Date.now() + SEARCHABLE_OPTIONS_TTL_MS, options };
+    return options;
+  }
+
+  private async buildSearchCitiesList(
+    clientQuery: Record<string, string | number>,
+  ): Promise<SearchCityListItem[]> {
+    const ids = [
+      ...parseQueryNumberArray(String(clientQuery.provinces || '')),
+      ...parseQueryNumberArray(String(clientQuery.cities || '')),
+      ...parseQueryNumberArray(String(clientQuery.regions || '')),
+    ];
+    if (ids.length === 0) return [];
+
+    const records = await this.db.city.findMany({
+      where: { id: { in: ids } },
       select: {
         id: true,
         title: true,
@@ -777,40 +926,15 @@ export class PropertyUserService {
       },
     });
 
-    const citiesList = [];
-    for (const c of cityRecords) {
-      citiesList.push({
-        id: c.id,
-        title: c.title,
-        parent_id: c.parent_id,
-        level: c.parent?.parent ? 'region' : c.parent_id ? 'city' : 'province',
-        parent_title: c.parent?.title,
-        grandparent_title: c.parent?.parent?.title,
-        grandparent_id: c.parent?.parent?.id,
-      });
-    }
-
-    const hasUniqueParent = uniq(citiesList.map((e) => e.parent_id))?.length === 1;
-    if (citiesList.every((e) => e.level === 'region') && hasUniqueParent)
-      clientQuery['cities'] = `${citiesList[0]?.parent_id}`;
-    else if (citiesList.filter((e) => e.level === 'region')?.length === 1) {
-      const region = citiesList.find((e) => e.level === 'region');
-      clientQuery['cities'] = `${region.parent_id}`;
-    }
-    const canonicalLocation =
-      citiesList.length === 1
-        ? await findCanonicalLocationLanding(this.db, {
-            cityId:
-              citiesList[0].level === 'region'
-                ? Number(citiesList[0].parent_id)
-                : citiesList[0].level === 'city'
-                  ? Number(citiesList[0].id)
-                  : undefined,
-            provinceId: citiesList[0].level === 'province' ? Number(citiesList[0].id) : undefined,
-          })
-        : null;
-
-    return { client_query: clientQuery, cities_list: citiesList, landing_url: canonicalLocation };
+    return records.map((city) => ({
+      id: city.id,
+      title: city.title,
+      parent_id: city.parent_id,
+      level: city.parent?.parent ? 'region' : city.parent_id ? 'city' : 'province',
+      parent_title: city.parent?.title,
+      grandparent_title: city.parent?.parent?.title,
+      grandparent_id: city.parent?.parent?.id,
+    }));
   }
 
   /**

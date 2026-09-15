@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { applyPropertySearchScope, buildCitySuggestionQuery } from './property-search-query.helper';
+import { buildFuzzyCityQuery } from './property-search-query.helper';
 
 describe('property search query helpers', () => {
   it('matches each word separately instead of the whole phrase', () => {
@@ -45,6 +46,26 @@ describe('property search query helpers', () => {
     const where = applyPropertySearchScope({ status: 30 }, { regions: [], cities: [7], provinces: [] });
 
     expect(where).toEqual({ status: 30, city_id: { in: [7] } });
+  });
+
+  it('lets a numeric word match a listing code as well as a title', () => {
+    const where = applyPropertySearchScope(
+      { status: 30 },
+      { regions: [], cities: [], provinces: [], q: '12345' },
+    );
+
+    const clauses = (where.AND as Prisma.PropertyWhereInput[])[0].OR as Prisma.PropertyWhereInput[];
+    expect(clauses).toContainEqual({ code: '12345' });
+    expect(clauses.some((clause) => clause.title)).toBe(true);
+  });
+
+  it('keeps fuzzy city terms in Prisma values instead of SQL text', () => {
+    const payload = "گویم' OR 1=1 --";
+    const query = buildFuzzyCityQuery([payload], 0.45);
+
+    expect(query.strings.join('')).not.toContain(payload);
+    expect(query.values).toContain(payload);
+    expect(query.values).toContain(0.45);
   });
 
   it('keeps user input in Prisma values instead of SQL text', () => {

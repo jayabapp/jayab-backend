@@ -26,9 +26,13 @@ export const applyPropertySearchScope = (
 
   const words = tokenizeSearchText(q ?? '');
   const text = words.map((word) => ({
-    OR: persianSearchVariants(word).map((variant) => ({
-      title: { contains: variant, mode: Prisma.QueryMode.insensitive },
-    })),
+    OR: [
+      ...persianSearchVariants(word).map((variant) => ({
+        title: { contains: variant, mode: Prisma.QueryMode.insensitive },
+      })),
+      // A typed number may be a listing code; `code` is unique-indexed, so this stays cheap.
+      ...(/^\d+$/.test(word) ? [{ code: word }] : []),
+    ],
   }));
 
   const merged: Prisma.PropertyWhereInput = { ...base, ...location };
@@ -36,6 +40,23 @@ export const applyPropertySearchScope = (
 
   return isEmpty(and) ? merged : { ...merged, AND: and };
 };
+
+export const buildFuzzyCityQuery = (terms: string[], threshold: number): Prisma.Sql => Prisma.sql`
+  SELECT DISTINCT ON (t.term)
+    t.term,
+    c.id,
+    c.title,
+    c.parent_id,
+    p.parent_id AS grandparent_id
+  FROM unnest(ARRAY[${Prisma.join(terms)}]::text[]) AS t(term)
+  JOIN cities c
+    ON c.deleted_at IS NULL
+    AND c.title % t.term
+    AND similarity(c.title, t.term) >= ${threshold}::real
+  LEFT JOIN cities p ON p.id = c.parent_id
+  WHERE c.title != 'استخر'
+  ORDER BY t.term, similarity(c.title, t.term) DESC, LENGTH(c.title), c.id
+`;
 
 export const buildCitySuggestionQuery = (words: string[], limit: number): Prisma.Sql => {
   const conditions = Prisma.join(
