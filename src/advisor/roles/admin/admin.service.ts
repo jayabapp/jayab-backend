@@ -1,53 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, Advisor, City, Prisma, User } from '@prisma/client';
-import { isEmpty } from 'lodash';
-import moment from 'moment-jalaali';
-import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
-import {
-  allActionsBuilder,
-  createPropsBuilder,
-  filterPropsBuilder,
-  showActionBuilder,
-  showPropsBuilder,
-  tablePropsBuilder,
-} from 'src/advisor/common/helpers/model-props-builder.helper';
+import { allActionsBuilder, showActionBuilder } from 'src/advisor/common/helpers/model-props-builder.helper';
+import { showPropsBuilder, tablePropsBuilder } from 'src/advisor/common/helpers/model-props-builder.helper';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { ShowAction, ShowProps, TableProps } from 'src/common/interfaces/model-props.interface';
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
+import { CreateProps, OperatorItems } from 'src/common/interfaces/model-props.interface';
+import { UpdateAdvisorAdminDto } from './dto/update.dto';
+import { createPropsBuilder } from 'src/advisor/common/helpers/model-props-builder.helper';
+import { filterPropsBuilder } from 'src/advisor/common/helpers/model-props-builder.helper';
+import { AdvisorStatusList } from 'src/advisor/common/advisor-status.type';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
-import {
-  CreateProps,
-  OperatorItems,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { AdminType } from 'src/common/interfaces/user.interface';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UpdatePartialAdvisorAdminDto } from './dto/update-partial.dto';
-import { UpdateAdvisorAdminDto } from './dto/update.dto';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { isEmpty } from 'lodash';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class AdvisorAdminService {
   constructor(private readonly db: PrismaService) {}
 
-  // /* -------------------------------------------------------------------------- */
-  // /*                                   CREATE                                   */
-  // /* -------------------------------------------------------------------------- */
-  // /**
-  //  * create
-  //  * @param dto
-  //  * @returns
-  //  */
-  // async create(dto: CreateAdvisorAdminDto): Promise<Advisor> {
-  //   const newAdvisor = await this.db.advisor.create({ data: dto });
-  //   return newAdvisor;
-  // }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                    FETCH                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * find all Advisor
    * @param filers
@@ -81,13 +57,11 @@ export class AdvisorAdminService {
   }
 
   /**
-   * find one advisor
-   * this method is used in the findOne controller to include or select items
    * @param id
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
-    let item = await this.db.advisor.findUnique({
+    const item = await this.db.advisor.findUnique({
       where: { id },
       include: {
         document_image: true,
@@ -120,9 +94,6 @@ export class AdvisorAdminService {
     return item;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   UPDATE                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * update
    * @param id
@@ -130,13 +101,11 @@ export class AdvisorAdminService {
    * @returns
    */
   async update(advisor: Advisor & { user: User; cities: City[] }, dto: UpdateAdvisorAdminDto): Promise<void> {
-    /*  */
-    const fullName = dto.full_name; // چون نام برای کاربر است نه برای مشاور
+    const fullName = dto.full_name;
     const profileImageId = dto.profile_image_id;
     delete dto.full_name;
     delete dto.profile_image_id;
 
-    /*  */
     let data: Prisma.AdvisorUncheckedUpdateInput = dto;
 
     if (!isEmpty(dto.cityIds)) {
@@ -185,9 +154,6 @@ export class AdvisorAdminService {
     return item;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * remove
    * @param id
@@ -196,9 +162,6 @@ export class AdvisorAdminService {
     await this.db.advisor.delete({ where: { id } });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    EXCEL                                   */
-  /* -------------------------------------------------------------------------- */
   async createExcel(
     list: PaginatedResult<Advisor & { user: User; has_sub: boolean; sub_remaining_days: number }>,
   ): Promise<any> {
@@ -235,9 +198,6 @@ export class AdvisorAdminService {
     return url;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   HELPER                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * find model props
    * @param rbac
@@ -249,14 +209,10 @@ export class AdvisorAdminService {
     tableProps: TableProps;
     operators: Array<OperatorItems>;
   }> {
-    // ACTIONS
     const availableActions = allActionsBuilder(rbac);
-
-    // PROPS
     const filterProps = filterPropsBuilder();
     const tableProps = tablePropsBuilder(availableActions);
     const createProps = createPropsBuilder();
-
     return { operators: operatorsList, filterProps, createProps, tableProps };
   }
 }

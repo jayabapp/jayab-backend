@@ -1,14 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PropertyPhotoUpgradeRequest } from '@prisma/client';
-import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
-import {
-  PropertyPhotoUpgradeRequestItemStatus,
-  PropertyPhotoUpgradeRequestItemStatusesList,
-  PropertyPhotoUpgradeRequestStatus,
-  PropertyPhotoUpgradeRequestStatusesList,
-} from 'src/property/common/types/property-photo-upgrade-status.type';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PropertyPhotoUpgradeRequestItemStatusesList } from 'src/property/common/types/property-photo-upgrade-status.type';
 import { FindAllPropertyPhotoUpgradeRequestOwnerDto } from './dto/find-all.dto';
+import { PropertyPhotoUpgradeRequestStatusesList } from 'src/property/common/types/property-photo-upgrade-status.type';
+import { PropertyPhotoUpgradeRequestItemStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
+import { Prisma, PropertyPhotoUpgradeRequest } from '@prisma/client';
+import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PropertyPhotoUpgradeRequestOwnerService {
@@ -18,7 +15,7 @@ export class PropertyPhotoUpgradeRequestOwnerService {
     ownerId: number,
     dto: FindAllPropertyPhotoUpgradeRequestOwnerDto,
   ): Promise<PropertyPhotoUpgradeRequest[]> {
-    let q: Prisma.PropertyPhotoUpgradeRequestWhereInput = {
+    const q: Prisma.PropertyPhotoUpgradeRequestWhereInput = {
       owner_id: ownerId,
       status: { gt: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT },
     };

@@ -1,10 +1,10 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { isEmpty } from 'lodash';
-import { firstValueFrom } from 'rxjs';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class SmsService {
@@ -255,28 +255,16 @@ export class SmsService {
     }
   }
 
-  /**
-   * اطلاع به ادمین بعد از کلیک مالک روی موبایل
-   * @param ownerMobile
-   * @param title
-   * @param guestMobile
-   * @param date
-   * @param duration
-   * @param guestsCount
-   * @returns
-   */
   async sendClickGuestMobileToAdmin(
     adminMobile: string,
     propertyCode: string,
     reserveNumber: number,
   ): Promise<void> {
     if (!this.isProduction) return;
-
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.sendClickGuestMobileSmsTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
-
       const body = {
         parameters: [
           { name: 'PROPERTY_CODE', value: propertyCode },
@@ -297,34 +285,23 @@ export class SmsService {
     }
   }
 
-  /**
-   * ارسال لینک های مشابه برای مهمان
-   * @param mobile
-   * @param links
-   * @param propertyTitle
-   * @returns
-   */
   async sendRecommendationLinks(mobile: string, links: string[], propertyTitle: string): Promise<void> {
     if (!this.isProduction) return;
-
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.sendRecommendedPropertyTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
-
       if (links?.length < 1) return;
-      let parameters = [];
+      const parameters = [];
       links.map((e, i) => {
         parameters.push({ name: `PROPERTY_CODE${i + 1}`, value: e });
       });
       parameters.push({ name: 'TITLE', value: propertyTitle.substring(0, 39) });
-
       const body = {
         parameters: parameters,
         mobile: mobile,
         templateId: templateId,
       };
-
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
@@ -335,20 +312,12 @@ export class SmsService {
     }
   }
 
-  /**
-   * ارسال پیام به میزبان بابت پیام مهمان
-   * @param mobile
-   * @param propertyTitle
-   * @param chatroomId
-   */
   async sendChatHintToOwner(mobile: string, propertyTitle: string, chatroomId: string): Promise<void> {
     if (!this.isProduction) return;
-
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.sendChatHintTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
-
       const body = {
         parameters: [
           { name: 'TITLE', value: propertyTitle.substring(0, 39) },
@@ -368,28 +337,17 @@ export class SmsService {
     }
   }
 
-  /**
-   * پیامک به مهمانی که رزرو کرده بعد از خرید اشتراک توسط میزبان
-   * @param mobile
-   * @param propertyTitle
-   * @param chatroomId
-   */
   async sendPropertyReserveHintToGuest(mobile: string, propertyTitle: string): Promise<void> {
     if (!this.isProduction) return;
-
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.sendReserveHintToGuestTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
-
       const body = {
         parameters: [{ name: 'TITLE', value: propertyTitle.substring(0, 39) }],
         mobile: mobile,
         templateId: templateId,
       };
-
-      console.log({ body });
-
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
@@ -400,38 +358,24 @@ export class SmsService {
     }
   }
 
-  /**
-   * ارسال پیامک برای ادمین وقتی تیکت جدید ثبت میشه
-   * @param ticketId
-   * @returns
-   */
   async sendNewTicketHintToAdmin(ticketId: number): Promise<void> {
-    // if (!this.isProduction) return;
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const sendUrl = this.configService.get('sms.sendUrl');
       const templateId = this.configService.get('sms.newTicketToAdminTemplateId');
-
       const adminMobiles = [];
       const mobile1 = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_TICKET_1);
       const mobile2 = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_TICKET_2);
-
-      console.log({ mobile1, mobile2 });
-
       for (const e of [mobile1, mobile2]) {
         if (e && e != 0) adminMobiles.push(e);
       }
-
       if (isEmpty(adminMobiles)) return;
-
       for (const mobile of adminMobiles) {
         const body = {
           parameters: [{ name: 'TICKET_ID', value: ticketId }],
           mobile: mobile,
           templateId: templateId,
         };
-        console.log({ body });
-
         await firstValueFrom(
           this.httpService.post(sendUrl, body, {
             headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },

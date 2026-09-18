@@ -1,36 +1,30 @@
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
 import { Prisma, Property, PropertyStatistics, SubscriptionPlan } from '@prisma/client';
-import { Redis } from 'ioredis';
-import { difference, isEmpty, random, xor } from 'lodash';
-import moment from 'moment-jalaali';
 import { convertJalaaliDtoToDate, startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
-import { slugify } from 'src/common/helpers/slugify';
-import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
-import { PartialUser } from 'src/common/interfaces/user.interface';
-import { TurnoverType } from 'src/payment/common/turnover-type.enum';
-import { PaymentUserService } from 'src/payment/roles/user/user.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
+import { DayColumn, DayHelper, resolveDayColumn, toDayKey } from 'src/common/helpers/day.helper';
+import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InProgressReserveStatus, PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
+import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { PropertyPhotoUpgradeRequestStatus } from 'src/property/common/types/property-photo-upgrade-status.type';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import {
-  PropertyArrayResType,
-  PropertyResType,
-  PropertySerializer,
-} from 'src/property/serializer/property.serializer';
-import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { difference, isEmpty, random, xor } from 'lodash';
 import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { SubscriptionPlanUserService } from 'src/subscription-plan/roles/user/user.service';
+import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
+import { PropertyArrayResType } from 'src/property/serializer/property.serializer';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { PaymentUserService } from 'src/payment/roles/user/user.service';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { resolveNightPrice } from 'src/property/common/night-price.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { OptionConnect } from 'src/common/interfaces/option-connect.interface';
+import { TurnoverType } from 'src/payment/common/turnover-type.enum';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { slugify } from 'src/common/helpers/slugify';
+import { Redis } from 'ioredis';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyEnvOwnerDto,
@@ -42,7 +36,8 @@ import {
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { UpdatePropertyAdvisorCommissionOwnerDto } from './dto/update.dto';
+
+import moment from 'moment-jalaali';
 
 type PhotoUpgradeQuote = {
   property_id: number;
@@ -50,33 +45,6 @@ type PhotoUpgradeQuote = {
   image_count: number;
   price_per_image: number;
   total_amount: number;
-};
-
-type PhotoUpgradeServiceContent = {
-  title: string;
-  description: string;
-  steps: string[];
-  before_after: {
-    before: string;
-    after: string;
-  };
-  price_per_image: number;
-};
-
-type PhotoUpgradeCheckoutSummary = {
-  subscription_amount: number;
-  promote_amount: number;
-  photo_upgrade: PhotoUpgradeQuote | null;
-  total_amount: number;
-};
-
-type PhotoUpgradeProperty = {
-  id: number;
-  title: string;
-  code: string;
-  feature_image: unknown;
-  images_count: number;
-  images: unknown[];
 };
 
 @Injectable()
@@ -91,16 +59,7 @@ export class PropertyOwnerService {
     private readonly setting: SettingAdminService,
   ) {}
 
-  /**
-   * Create a property with init status
-   * If exist return this
-   * @param ownerId
-   * @returns
-   */
   async findLastInitProp(ownerId: number, propertyId?: number): Promise<Property> {
-    // const activeSubscription = await this.subscriptionService.findPlanByRole(user);
-    // if (!activeSubscription) throw new NotAcceptableException('OWNER_SUB1');
-
     let query: Prisma.PropertyWhereInput = { owner_id: ownerId };
     if (propertyId) query = { ...query, id: propertyId };
     else query = { ...query, status: { in: InProgressReserveStatus } };
@@ -124,8 +83,6 @@ export class PropertyOwnerService {
       bedrooms: true,
     };
 
-    /* -------------------------------------------------------------------------- */
-    // check the init property, if exist return this
     const initProp = await this.db.property.findFirst({ where: query, include });
     if (propertyId && !initProp) throw new NotFoundException('PROPERTY_NOT_FOUND');
     if (initProp)
@@ -134,34 +91,21 @@ export class PropertyOwnerService {
         attachments: initProp.property_images.map((propertyImage: any) => propertyImage.attachment),
       } as any;
 
-    /* -------------------------------------------------------------------------- */
-    // generate a random unique code
     let code: string;
     do {
       code = `${random(10_000, 99_999).toString()}`;
     } while (await this.db.property.findUnique({ where: { code } }));
 
-    /* -------------------------------------------------------------------------- */
-    // create new property
     const newProp = await this.db.property.create({
       data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
       include,
     });
-
     return newProp;
   }
 
-  /**
-   * update init
-   * @param property
-   * @param dto
-   * @returns
-   */
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {
     const slug = `${property.code}-${slugify(dto.title)}`;
 
-    /* -------------------------------------------------------------------------- */
-    // data without options
     let data: Prisma.PropertyUncheckedUpdateInput = {
       province_id: dto.province_id,
       region_id: dto.region_id || null,
@@ -178,67 +122,31 @@ export class PropertyOwnerService {
       is_chat_enabled: dto.is_chat_enabled,
       is_location_visible: dto.is_location_visible,
     };
-
-    // do not update status in edit
     if (property.status === PropertyStatuses.INIT) data = { ...data, status: PropertyStatuses.IN_PROCESS };
-
-    //بعد از انتشار عنوان قابل تغییر نیست
-    // if ([PropertyStatuses.PUBLISHED, PropertyStatuses.EDITED].includes(property.status)) {
-    //   delete data.title;
-    //   delete data.slug;
-    // }
-
-    // check region
     const city = await this.db.city.findUnique({
       where: { id: dto.city_id },
       select: { _count: { select: { child: true } } },
     });
-
-    if (city._count.child > 0 && !dto.region_id) {
-      throw new BadRequestException('PROPERTY1');
-    }
-
-    /* -------------------------------------------------------------------------- */
-    // create options relations - delete old options
+    if (city._count.child > 0 && !dto.region_id) throw new BadRequestException('PROPERTY1');
     const { options, numericIds } = await this.deleteAndCreateNewOption(property.id, dto, [
       PropertyOptionGroup.PROPERTY_TYPE,
       PropertyOptionGroup.OWNERSHIP,
       PropertyOptionGroup.BUILDING_DIRECTION,
     ]);
 
-    /* -------------------------------------------------------------------------- */
     await this.db.property.update({
       where: { id: property.id },
       data: { ...data, property_options: { create: options }, options_array: { set: numericIds } },
     });
-
-    // return prop;
   }
-
-  /**
-   * Update location
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateLocation(propertyId: number, dto: UpdatePropertyLocationOwnerDto): Promise<void> {
     const prop = await this.db.property.update({
       where: { id: propertyId },
       data: { lat: Number(dto.lat.toFixed(6)), lng: Number(dto.lng.toFixed(6)) },
     });
-
-    // return { lat: prop.lat, lng: prop.lng };
   }
 
-  /**
-   * Update images and video
-   * @param user
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateMedia(property: Property, dto: UpdatePropertyMediaOwnerDto): Promise<void> {
-    // اگر عکس ها تغییری نکرده باشن دیگه نیازی به ادامه فرایند نیست
     const propertyAttachments = await this.db.propertyImage.findMany({
       where: { property_id: property.id },
       select: { attachment_id: true },
@@ -247,23 +155,16 @@ export class PropertyOwnerService {
 
     const currentAttachmentIds = propertyAttachments.map((e) => e.attachment_id);
     if (isEmpty(xor(dto.images, currentAttachmentIds))) {
-      // اگر عکس شاخص تغییر کرده باشد فقط اونو آپدیت میکنیم
-      // برای تغییر عکس شاخص نیازی به تغییر وضعیت ملک نیست
       if (dto.feature_image_id !== property.feature_image_id)
         await this.db.property.update({
           where: { id: property.id },
           data: { feature_image_id: dto.feature_image_id },
         });
-
       return;
     }
-
     const images = Array.from(new Set(dto.images || []));
-
-    // اگر عکس های ملک تغییر کنن وضعیت ملک باید به وضعیت در حال بررسی ادمین تغییر کند
     let status = property.status;
     if (property.status === PropertyStatuses.PUBLISHED) status = PropertyStatuses.EDITED;
-
     await this.db.property.update({
       where: { id: property.id },
       data: {
@@ -281,20 +182,12 @@ export class PropertyOwnerService {
     });
   }
 
-  /**
-   * Update Environment data
-   * @param id
-   * @param dto
-   * @returns
-   */
   async updateEnvironment(propertyId: number, dto: UpdatePropertyEnvOwnerDto): Promise<void> {
-    // CREATE OPTIONS RELATION - DELETE OLD OPTION
     const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.PATTERN,
       PropertyOptionGroup.ACCESS,
       PropertyOptionGroup.NEIGHBORHOOD,
     ]);
-
     await this.db.property.update({
       where: { id: propertyId },
       data: { property_options: { create: options }, options_array: { set: numericIds } },
@@ -307,19 +200,10 @@ export class PropertyOwnerService {
       update: data,
       create: { property_id: propertyId, ...data },
     });
-
-    // return updatedProperty;
   }
 
-  /**
-   * Update Bedroom and Bathroom data
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateBedroom(propertyId: number, dto: UpdatePropertyBedroomOwnerDto): Promise<void> {
-    const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0; //+ dto.master_room ?? 0;
-
+    const total_bedrooms = (dto.bedrooms?.length ?? 0) || 0;
     await this.db.propertyBedroom.upsert({
       where: { property_id: propertyId },
       update: { ...dto, total_bedrooms },
@@ -327,14 +211,7 @@ export class PropertyOwnerService {
     });
   }
 
-  /**
-   * Facility
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateFacility(propertyId: number, dto: UpdatePropertyFacilityOwnerDto): Promise<void> {
-    // CREATE OPTIONS RELATION - DELETE OLD OPTION
     const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.POOL_TYPE,
       PropertyOptionGroup.ENTERTAINMENT,
@@ -352,23 +229,14 @@ export class PropertyOwnerService {
       },
     });
 
-    // UPDATE DESCRIPTION
     const queryData = { facility_dscr: dto.facility_dscr };
-
     await this.db.propertyDescription.upsert({
       where: { property_id: propertyId },
       update: queryData,
       create: { property_id: propertyId, ...queryData },
     });
-
-    // return updatedProperty;
   }
 
-  /**
-   * Prices and Capacity
-   * @param propertyId
-   * @param dto
-   */
   async updatePrices(propertyId: number, dto: UpdatePropertyPriceOwnerDto): Promise<void> {
     await this.db.property.update({
       where: { id: propertyId },
@@ -378,8 +246,6 @@ export class PropertyOwnerService {
         advisor_commission: dto.advisor_commission,
       },
     });
-
-    // DAILY
     const dailyQueryData = {
       normal: dto.normal,
       wednesday: dto.wednesday,
@@ -397,20 +263,8 @@ export class PropertyOwnerService {
     });
   }
 
-  /**
-   * Update canceling and other terms - Last step
-   * @param user
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateAssistant(user: PartialUser, propertyId: number, dto: UpdatePropertyOwnerAssistantOwnerDto) {
     const owner = await this.db.user.findUnique({ where: { id: user.id } });
-
-    /* -------------------------------------------------------------------------- */
-    /**
-     * Transaction: Delete, Create Assistants
-     */
     const property = await this.db.$transaction(async (tx) => {
       await tx.propertyOwnerAssistant.deleteMany({ where: { property_id: propertyId } });
 
@@ -440,36 +294,19 @@ export class PropertyOwnerService {
         data: { contact_type: dto.show_mobile_type },
         select: { code: true },
       });
-
       return property;
     });
-
     await this.redis.del(`contact:${property.code}`);
   }
 
-  /**
-   * Update canceling and other terms - Last step
-   * @param property
-   * @param dto
-   * @returns
-   */
   async updateTerms(property: PropertyInterceptorData, dto: UpdatePropertyTermsOwnerDto) {
     const propertyId = property.id;
-
-    /* -------------------------------------------------------------------------- */
-    /**
-     * Options: delete old options and create new ones
-     */
     const { options, numericIds } = await this.deleteAndCreateNewOption(propertyId, dto, [
       PropertyOptionGroup.GUEST_TYPE,
       PropertyOptionGroup.PET,
       PropertyOptionGroup.PARTY,
     ]);
 
-    /* -------------------------------------------------------------------------- */
-    /**
-     * Transaction: Property, Description, Subscription
-     */
     await this.db.$transaction(async (tx) => {
       const property = await tx.property.findUnique({ where: { id: propertyId } });
 
@@ -497,10 +334,6 @@ export class PropertyOwnerService {
         },
       });
 
-      /* -------------------------------------------------------------------------- */
-      /**
-       * Description: UPDATE
-       */
       const queryData = {
         guest_dscr: dto.guest_dscr,
         pet_dscr: dto.pet_dscr,
@@ -519,24 +352,12 @@ export class PropertyOwnerService {
     });
   }
 
-  /**
-   * Update advisor commission
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
   async updateCommission(propertyId: number, dto: UpdatePropertyAdvisorCommissionOwnerDto): Promise<void> {
     await this.db.property.update({
       where: { id: propertyId },
       data: { advisor_commission: dto.advisor_commission },
     });
   }
-
-  /**
-   *
-   * @param property
-   * @param dto
-   */
   async paySubscription(
     user: PartialUser,
     property: PropertyInterceptorData,
@@ -548,13 +369,7 @@ export class PropertyOwnerService {
 
     if (!dto.subscription_id && !dto.photo_upgrade_enabled && !dto.promote_id)
       throw new UnprocessableEntityException('BUY_SUBSCRIPTION3');
-    /* -------------------------------------------------------------------------- */
-    /** */
     await this.checkCanBuySubscriptionForFirstTime(property);
-
-    /* -------------------------------------------------------------------------- */
-    /** promote */
-    // اگر دفعه اولیست ک اشتراک خریداری میشود، اجازه خرید نردبان را ندارد
     if (dto.promote_id) {
       promote = await this.subscriptionPlanUserService.checkCanBuyPromote(
         dto.promote_id,
@@ -564,16 +379,10 @@ export class PropertyOwnerService {
       if (!promote) throw new BadRequestException('PROPERTY_SUB1');
     }
 
-    /* -------------------------------------------------------------------------- */
-    /** subscription */
-    // اولین پرداخت باید پرداخت اشتراک باشد
     if (!property.subscription_expired_at && !dto.subscription_id)
       throw new BadRequestException('PROPERTY_SUB3');
-
     if (dto.subscription_id)
       subscription = await this.subscriptionPlanUserService.findOne(dto.subscription_id);
-
-    //بهینه سازی تصاویر
     if (dto.photo_upgrade_enabled) {
       if (dto.photo_upgrade_image_ids?.length < 1) throw new BadRequestException('PROPERTY_PHOTO_UPGRADE1');
       photoUpgradeQuote = await this.buildPhotoUpgradeQuote(
@@ -583,15 +392,8 @@ export class PropertyOwnerService {
       );
     }
 
-    /* -------------------------------------------------------------------------- */
-    /**
-     * Transaction: payment, promote, subscription
-     */
-
     const result = await this.db.$transaction(
       async (tx) => {
-        /* -------------------------------------------------------------------------- */
-        /** payment */
         let amount = 0;
         if (subscription) amount += subscription?.price_with_discount || subscription?.price;
         if (promote) amount += promote?.price_with_discount || promote?.price;
@@ -605,18 +407,13 @@ export class PropertyOwnerService {
           TurnoverType.PAY_SUBSCRIPTION,
           tx,
         );
-        // console.log({ pay });
-
         await tx.propertyPhotoUpgradeRequest.deleteMany({
           where: { property_id: property.id, status: PropertyPhotoUpgradeRequestStatus.WAITING_PAYMENT },
         });
-
-        // حذف تمام درخواست پرداخت های پرداخت نشده
         await tx.subscription.deleteMany({
           where: { property_id: property.id, status: SubscriptionStatus.WAITING },
         });
 
-        //create title
         let subscriptionTitle = '';
         if (subscription?.title) subscriptionTitle += `${subscription.title}`;
         if (promote?.title) subscriptionTitle += `${subscription?.title ? ' - ' : ''}${promote.title}`;
@@ -631,7 +428,7 @@ export class PropertyOwnerService {
             duration: subscription?.duration || 0,
             price: pay.payment.amount,
             status: SubscriptionStatus.WAITING,
-            extends_expire: !!subscription, //اگر اشتراک بود انقضا رو در کال بک پرداخت اضافه میکنیم
+            extends_expire: !!subscription,
             has_photo_upgrade_request: !!photoUpgradeQuote,
             description: photoUpgradeQuote
               ? JSON.stringify({
@@ -674,14 +471,6 @@ export class PropertyOwnerService {
     return result.paymentUrl;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    FETCH                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * find all Property
-   * @param dto
-   * @returns
-   */
   async findAll(ownerId: number): Promise<Array<PropertyArrayResType>> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -710,12 +499,6 @@ export class PropertyOwnerService {
     return serialized;
   }
 
-  /**
-   * find one property
-   * owner checked in interceptor
-   * @param propertyId
-   * @returns
-   */
   async findOne(propertyId: number): Promise<PropertyResType> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -743,75 +526,56 @@ export class PropertyOwnerService {
     return serialized;
   }
 
-  /**
-   * calendar
-   * @param propertyId
-   * @param dto
-   * @returns
-   */
-  async findPropertyCalendar(
-    property: Property,
-    month: number,
-    year: number,
-    isAdvisor = false,
-    isOwner = false,
-  ): Promise<any> {
-    const calendar = await this.db.propertyCalendar.findMany({
-      where: { property_id: property.id, month, year },
-      omit: { created_at: true, id: true, updated_at: true, property_id: true },
-    });
+  async findPropertyCalendar(property: Property, month: number, year: number, isOwner = false): Promise<any> {
+    const daysInMonth = moment.jDaysInMonth(year, month - 1);
+    const monthStart = convertJalaaliDtoToDate({ year, month, day: 1 });
+    const monthEnd = convertJalaaliDtoToDate({ year, month, day: daysInMonth });
+    const [calendar, dailyPrice, peakDays] = await Promise.all([
+      this.db.propertyCalendar.findMany({
+        where: { property_id: property.id, month, year },
+        omit: { created_at: true, id: true, updated_at: true, property_id: true },
+      }),
+      this.db.propertyDailyPrice.findFirst({ where: { property_id: property.id } }),
+      this.db.peakDay.findMany({
+        where: { date: { gte: monthStart, lte: monthEnd } },
+        select: { date: true },
+      }),
+    ]);
 
-    const dailyPrice = await this.db.propertyDailyPrice.findFirst({
-      where: { property_id: property.id },
-    });
+    const peakDayKeys = new Set(peakDays.map((e) => toDayKey(e.date)));
 
-    const daysRange = await this.dayHelper.daysRange(convertJalaaliDtoToDate({ year, month, day: 1 }), 31);
-
-    let prices = [];
-    for (let i = 1; i <= 31; i++) {
+    const prices = [];
+    for (let i = 1; i <= daysInMonth; i++) {
       const date = convertJalaaliDtoToDate({ year, month, day: i });
 
-      const today = daysRange.requestedDays[i - 1];
-      const isPeak = today === DayColumn.peak;
+      const column = resolveDayColumn(date, peakDayKeys);
       const cal = calendar?.find((e) => e.day === i && e.month === month && e.year === year);
+      const { base, final, discounted } = resolveNightPrice(cal, dailyPrice, column);
 
       prices.push({
         date,
         day: i,
         month,
         year,
-        price: cal?.price ?? dailyPrice?.[today] ?? 0,
-        discounted_price: cal?.discounted_price ?? null,
+        price: base,
+        discounted_price: discounted ? final : null,
         note: isOwner ? cal?.note || null : null,
         is_reserved: cal?.is_reserved,
-        is_peak: isPeak,
+        is_peak: column === DayColumn.peak,
         advisor_commission: isOwner ? cal?.advisor_commission || property.advisor_commission : null, // just for owner
       });
     }
-
     return prices;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
   async remove(propertyId: number): Promise<void> {
     await this.db.property.update({ where: { id: propertyId }, data: { status: PropertyStatuses.DELETED } });
     await this.db.property.delete({ where: { id: propertyId } });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                 STATISTICS                                 */
-  /* -------------------------------------------------------------------------- */
-
-  /**
-   *
-   * @param propertyId
-   */
   async findStatistics(propertyId: number): Promise<Partial<PropertyStatistics>[]> {
     const aWeekAgo = startOfDate(moment().subtract(8, 'days').toDate());
     const now = startOfToday();
-
     const list = await this.db.propertyStatistics.findMany({
       where: { property_id: propertyId, date: { gte: aWeekAgo, lte: now } },
       select: { date: true, view_count: true, impression_count: true },
@@ -835,23 +599,11 @@ export class PropertyOwnerService {
     return formatted;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   HELPER                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   *
-   * @param propertyId
-   * @param dto
-   * @param groups
-   * @returns
-   */
   async deleteAndCreateNewOption(
     propertyId: number,
     dto: any,
     groups: PropertyOptionGroup[],
   ): Promise<{ options: OptionConnect[]; numericIds: number[] }> {
-    /* -------------------------------------------------------------------------- */
-    // delete old records
     await this.db.optionsOnProperty.deleteMany({
       where: {
         property_id: propertyId,
@@ -870,10 +622,8 @@ export class PropertyOwnerService {
       select: { option_id: true },
     });
 
-    /* -------------------------------------------------------------------------- */
-    // create new data
-    let optionsQuery = [];
-    let numericIds = remainedOptions.map((e) => e.option_id);
+    const optionsQuery = [];
+    const numericIds = remainedOptions.map((e) => e.option_id);
 
     for (const e of groups) {
       const data = dto[e.toLowerCase()];
@@ -951,16 +701,10 @@ export class PropertyOwnerService {
     };
   }
 
-  /**
-   *
-   * @param property
-   */
   async checkCanBuySubscriptionForFirstTime(property: Property): Promise<void> {
-    // در مرحله ثبت ملک فقط یکبار اشتراک میتوان خرید کرد
     const firstSub = await this.db.subscription.findFirst({
       where: { property_id: property.id, status: SubscriptionStatus.SUCCESS },
     });
-
     if (property.status === PropertyStatuses.WAITING && firstSub)
       throw new BadRequestException('PROPERTY_SUB4');
   }

@@ -1,26 +1,30 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { UpdatePropertyPhotoUpgradeRequestItemAdminDto } from './dto/photo-upgrade-request.dto';
+import { FindAllPropertyPhotoUpgradeRequestAdminDto } from './dto/photo-upgrade-request.dto';
+import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
+import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
 import { AccessControlList, Prisma, Property } from '@prisma/client';
-import moment from 'moment-jalaali';
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { DayHelper } from 'src/common/helpers/day.helper';
 import { ExcelCol, saveToExcel, SHEET_NAME } from 'src/common/helpers/excel-creator.helper';
+import { ShowAction, ShowProps, TableProps } from 'src/common/interfaces/model-props.interface';
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
+import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { CreateProps, OperatorItems } from 'src/common/interfaces/model-props.interface';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
+import { PropertySerializer } from 'src/property/serializer/property.serializer';
 import { AdminDescription } from 'src/common/interfaces/admin-description.type';
-import {
-  CreateProps,
-  OperatorItems,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { AdminType } from 'src/common/interfaces/user.interface';
 import { JALAALI_FORMAT } from 'src/common/utils/constants/date.constant';
 import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { DayHelper } from 'src/common/helpers/day.helper';
+import { AdminType } from 'src/common/interfaces/user.interface';
+import { UserRole } from 'src/common/interfaces/role.enum';
+
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import moment from 'moment-jalaali';
+
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -29,24 +33,12 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/property/common/helpers/model-props-builder.helper';
-import { PropertyStatuses, PropertyStatusesList } from 'src/property/common/types/property-status.type';
 import {
   PropertyPhotoUpgradeRequestItemStatus,
   PropertyPhotoUpgradeRequestStatus,
   PropertyPhotoUpgradeRequestItemStatusesList,
   PropertyPhotoUpgradeRequestStatusesList,
 } from 'src/property/common/types/property-photo-upgrade-status.type';
-import {
-  PropertyArrayResType,
-  PropertyJsonType,
-  PropertySerializer,
-} from 'src/property/serializer/property.serializer';
-import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
-import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
-import {
-  FindAllPropertyPhotoUpgradeRequestAdminDto,
-  UpdatePropertyPhotoUpgradeRequestItemAdminDto,
-} from './dto/photo-upgrade-request.dto';
 
 @Injectable()
 export class PropertyAdminService {
@@ -58,9 +50,6 @@ export class PropertyAdminService {
     private jwtService: JwtService,
   ) {}
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    FETCH                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * find all Property
    * @param filers
@@ -104,12 +93,6 @@ export class PropertyAdminService {
     return { data: serialized, meta: list.meta };
   }
 
-  /**
-   * find one property
-   * this method is used in the findOne controller to include or select items
-   * @param id
-   * @returns
-   */
   async findOne(
     id: number,
     rbac: AccessControlList,
@@ -131,7 +114,6 @@ export class PropertyAdminService {
         bedrooms: true,
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-        // assistants: true,
         description: true,
         favorites: true,
       },
@@ -142,21 +124,12 @@ export class PropertyAdminService {
       ...item,
       attachments: item.property_images.map((propertyImage) => propertyImage.attachment),
     };
-
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(serializedItem, today, false, true); //اطلاعاتی که ادمین میبینه با مالک یکسانه
-
+    const serialized = await this.propertySerializer.toJSON(serializedItem, today, false, true);
     const showProps = showPropsBuilder(serialized);
     const actions = showActionBuilder(serializedItem, rbac);
-
     return { showProps, actions, item: serializedItem };
   }
-
-  /**
-   * find by id
-   * @param id
-   * @returns
-   */
 
   async findById(id: number): Promise<
     Prisma.PropertyGetPayload<{
@@ -168,7 +141,6 @@ export class PropertyAdminService {
       include: { owner: { include: { user: { select: { mobile_number: true } } } } },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     return item;
   }
 
@@ -308,41 +280,25 @@ export class PropertyAdminService {
     return this.findOnePhotoUpgradeRequest(requestId);
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                 ADMIN SSO                                  */
-  /* -------------------------------------------------------------------------- */
-
-  /**
-   * generate token to admin login to owner profile
-   * @param propertyId
-   * @returns
-   */
   async generateSSOToken(propertyId: number): Promise<any> {
     const property = await this.db.property.findFirst({
       where: { id: propertyId },
       select: { owner: { select: { user: true } } },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
-
     const user = property.owner.user;
     const payload: TokenPayload = {
       id: user.id,
       jwtLevel: user.jwt_level || 1,
       role: UserRole.USER,
     };
-
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('auth.secret'),
       expiresIn: '30m',
     });
-
     return token;
   }
 
-  /**
-   * منقضی کردن دستی آگهی توسط ادمین
-   * @param propertyId
-   */
   async expireProperty(propertyId: number): Promise<void> {
     await this.db.property.update({
       where: { id: propertyId },
@@ -350,12 +306,6 @@ export class PropertyAdminService {
     });
   }
 
-  /**
-   * Update Property status
-   * @param id
-   * @param dto
-   * @returns
-   */
   async updateStatus(
     admin: AdminType,
     id: number,
@@ -372,10 +322,6 @@ export class PropertyAdminService {
       created_at: new Date(),
     };
     updateData = { ...updateData, admin_descriptions: { push: adminDscr } };
-    /**
-     * اپدیت سورت ملک بعد از تایید آگهی در دفعه اول
-     * اگر تا حالا تایید نشده باشه مقدار سورت صفره
-     */
     await this.db.$transaction(async (tx) => {
       if (
         dto.status === PropertyStatuses.PUBLISHED &&
@@ -384,16 +330,10 @@ export class PropertyAdminService {
       ) {
         updateData = { ...updateData, sort_order: Date.now() };
       }
-
       await tx.property.update({ where: { id }, data: updateData });
     });
   }
 
-  /**
-   * update property images
-   * @param id
-   * @param dto
-   */
   async updateImages(id: number, dto: UpdatePropertyImagesAdminDto): Promise<void> {
     const property = await this.db.property.findUnique({
       where: { id },
@@ -411,7 +351,7 @@ export class PropertyAdminService {
       ),
     );
 
-    let updateData: Prisma.PropertyUpdateInput = {
+    const updateData: Prisma.PropertyUpdateInput = {
       property_images: {
         deleteMany: {},
         create: imageIds.map((imageId, index) => ({
@@ -426,9 +366,6 @@ export class PropertyAdminService {
     await this.db.property.update({ where: { id }, data: updateData });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    EXCEL                                   */
-  /* -------------------------------------------------------------------------- */
   async createExcel(list: PropertyArrayResType[]): Promise<any> {
     const newList = list.map((e) => ({
       ...e,
@@ -468,24 +405,13 @@ export class PropertyAdminService {
     return url;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   HELPER                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * find model props
-   * @param rbac
-   * @returns
-   */
   async findModelProps(rbac: AccessControlList): Promise<{
     filterProps: Array<CreateProps>;
     createProps: Array<CreateProps>;
     tableProps: TableProps;
     operators: Array<OperatorItems>;
   }> {
-    // ACTIONS
     const availableActions = allActionsBuilder(rbac);
-
-    // PROPS
     const filterProps = filterPropsBuilder();
     const tableProps = tablePropsBuilder(availableActions);
     const createProps = createPropsBuilder();

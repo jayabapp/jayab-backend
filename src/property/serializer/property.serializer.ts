@@ -1,33 +1,24 @@
-import {
-  Attachment,
-  City,
-  Owner,
-  Property,
-  PropertyAuthorize,
-  PropertyBadge,
-  PropertyBedroom,
-  PropertyCalendar,
-  PropertyDailyPrice,
-  PropertyDescription,
-  PropertyImage,
-  PropertyOption,
-  User,
-} from '@prisma/client';
-import { isEmpty } from 'lodash';
-import moment from 'moment-jalaali';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { DayColumn } from 'src/common/helpers/day.helper';
-import { EnumList } from 'src/common/interfaces/model-props.interface';
+import { PropertyBedroom, PropertyCalendar, PropertyDailyPrice, PropertyDescription } from '@prisma/client';
+import { Attachment, City, PropertyImage, PropertyOption } from '@prisma/client';
+import { Property, PropertyAuthorize, PropertyBadge } from '@prisma/client';
+import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
+import { DayColumn } from 'src/common/helpers/day.helper';
 import { RentType } from '../common/types/property-rent-types.type';
-import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
+import { EnumList } from 'src/common/interfaces/model-props.interface';
+import { isEmpty } from 'lodash';
+
+import moment from 'moment-jalaali';
 
 type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
 
 type ReserveDay = { day_number: number; is_reserved: boolean };
+
+export type PropertyOptionItem = { group: string; title: string; icon: Attachment | null };
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -36,10 +27,10 @@ export type PropertyJsonType = Property & {
   city: Partial<City>;
   region?: Partial<City>;
   _count?: { property_images?: number };
-  property_options?: any[]; //مالک نیازی به این دیتا ندارد
-  bedrooms?: Partial<PropertyBedroom>; //مالک نیازی به این دیتا ندارد
-  daily_price?: PropertyDailyPrice; //مالک نیازی به این دیتا ندارد
-  description?: PropertyDescription; //مالک نیازی به این دیتا ندارد
+  property_options?: any[];
+  bedrooms?: Partial<PropertyBedroom>;
+  daily_price?: PropertyDailyPrice;
+  description?: PropertyDescription;
   property_authorize?: PropertyAuthorize;
   blue_tick?: PropertyBadge;
   calendar?: PropertyCalendar[];
@@ -96,6 +87,7 @@ export type PropertyJsonResType = {
   daily_price: PropertyDailyPrice;
   address: string;
   options: object[];
+  option_items: PropertyOptionItem[];
   property_descriptions: PropertyDescription;
   rent_type: RentType;
   is_chat_enabled: boolean;
@@ -122,7 +114,6 @@ export class PropertySerializer {
         ...this.summarize(e, today, true, isAdvisor, isOwner),
       });
     }
-
     return res;
   }
 
@@ -158,6 +149,15 @@ export class PropertySerializer {
     return groupByOption;
   }
 
+  formatPropertyOptionItems(options: any): PropertyOptionItem[] {
+    if (isEmpty(options)) return [];
+    return options.map((item) => ({
+      group: item.option?.group?.toLowerCase() || 'unknow_key',
+      title: item.option?.title,
+      icon: item.option?.image ?? null,
+    }));
+  }
+
   private findTodayPrice(
     calendar: PropertyCalendar,
     today: DayColumn,
@@ -169,16 +169,9 @@ export class PropertySerializer {
         discounted_price: calendar.discounted_price,
         discount_percentage: calendar.discount_percentage,
       };
-
     return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
-  /**
-   * حالتهای مختلف وجود تصاویر آگهی
-   * @param feature_image
-   * @param attachments
-   * @returns
-   */
   private findImages(feature_image?: Attachment, attachments?: Attachment[]) {
     if (!feature_image && isEmpty(attachments)) return [];
     if (!feature_image && !isEmpty(attachments)) return attachments;
@@ -221,7 +214,7 @@ export class PropertySerializer {
       (e) => moment(e.date).diff(startOfToday(), 'm') === 0,
     );
 
-    let list: PropertyArrayResType = {
+    const list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
       title: data.title,
@@ -255,11 +248,9 @@ export class PropertySerializer {
       is_promoted: !!data.promoted_at,
       favorite_count: data?.favorite_count,
       status_number: data.status,
-      //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
       status: this.findStatus(remainingDays, data.status),
       created_at: data.created_at,
       deleted_at: data.deleted_at,
-      //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
       authorize_status: data.hasOwnProperty('property_authorize')
         ? PropertyAuthorizeStatusesList.find((e) => e.id === data.property_authorize?.status)
@@ -282,8 +273,9 @@ export class PropertySerializer {
         unit_per_floor: data.unit_per_floor,
         floor: data.floor,
         construction_year: data.construction_year,
-        address: data.address,
+        address: data.is_location_visible || isOwner ? data.address : null,
         options: this.formatPropertyOptions(data.property_options, 'title'),
+        option_items: this.formatPropertyOptionItems(data.property_options),
         property_descriptions: data.description,
         rent_type: RentType.DAILY,
         is_chat_enabled: data.is_chat_enabled,
@@ -291,14 +283,14 @@ export class PropertySerializer {
         check_out_hour: data.check_out_hour,
       };
 
-    let reserveDays: ReserveDay[] = [];
+    const reserveDays: ReserveDay[] = [];
     for (let i = 0; i < 7; i++) {
       const date = startOfDate(moment().add(i, 'day').toDate());
       const calendar = data.calendar.find((e) => moment(e.date).isSame(date));
       reserveDays.push({ day_number: moment(date).day(), is_reserved: Boolean(calendar?.is_reserved) });
     }
 
-    let res: PropertyResType = { ...list, ...single, reserve_days: reserveDays || [] };
+    const res: PropertyResType = { ...list, ...single, reserve_days: reserveDays || [] };
     return res;
   }
 }

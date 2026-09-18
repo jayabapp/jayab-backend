@@ -1,12 +1,9 @@
 import { Category } from '@prisma/client';
 
-/**
- * create breadcrumb
- */
 type CategoryWithParent = Category & { parent: Category };
 
 const createCategoryBreadcrumb = (category: CategoryWithParent) => {
-  let breadcrumb = [];
+  const breadcrumb = [];
   let level = category as CategoryWithParent;
   for (let i = 0; i < 4; i++) {
     if (level) {

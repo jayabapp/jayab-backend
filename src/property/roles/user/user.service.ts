@@ -289,7 +289,6 @@ export class PropertyUserService {
       const serialized = await this.propertySerializer.toArray(pageData, today, isAdvisor, false);
       return { data: serialized, meta: priceMeta };
     }
-
     const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
       this.db.property,
       {
@@ -299,16 +298,10 @@ export class PropertyUserService {
       },
       { page: dto.page, perPage: dto.per_page },
     );
-
     const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor, false);
     return { data: serialized, meta: list.meta };
   }
 
-  /**
-   * find one property
-   * @param propertyId
-   * @returns
-   */
   async findOne(propertySlug: string, isAdvisor: boolean): Promise<PropertyResType & { owner_info: any }> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
@@ -325,39 +318,28 @@ export class PropertyUserService {
         region: { select: { title: true } },
         property_options: {
           where: { option: { deleted_at: null } },
-          select: { option: { select: { title: true, group: true } } },
+          select: { option: { select: { title: true, group: true, image: true } } },
         },
         bedrooms: true,
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         description: true,
-        favorites: true,
-        assistants: true,
+        assistants: { select: { assistant_full_name: true, is_owner: true } },
         owner: { select: { user: { select: { profile_image: true } } } },
       },
     });
-
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (!!item.deleted_at) throw new GoneException('GONE');
-    //در تاریخ ۲۷ خرداد ۴۰۵ قرار شد فقط پاک شده ها ۴۱۰ بشن. به دلیل کش مرورگر روی ارور ۴۱۰
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
-
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
-
     const ownerInfo = {
       avatar: item.owner.user.profile_image,
       full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
     };
-
     return { ...serialized, owner_info: ownerInfo };
   }
 
-  /**
-   * find by id
-   * @param id
-   * @returns
-   */
   async findById(id: number): Promise<Property> {
     const item = await this.db.property.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
@@ -449,27 +431,17 @@ export class PropertyUserService {
           throw new ForbiddenException('CALL_LOG2');
         }
       }
-
-      /* ---------------------- if limit not exceed continue ---------------------- */
       await this.db.callLog.create({
         data: { property_id: propertyId, user_id: userId, attempts: 1 },
       });
-
-      if (user?.mobile_number !== ownerMobile) {
+      if (user?.mobile_number !== ownerMobile)
         this.smsService.sendCallLogToOwner(ownerMobile, user.mobile_number);
-      }
     }
   }
 
-  /**
-   * valid property constant query
-   * در توسعه تاریخ ۹ دی ماه ۱۴۰۴، قرار شده که همه آگهی های منقضی شده نمایش داده بشن
-   * @returns
-   */
   validProperty() {
     return {
       status: PropertyStatuses.PUBLISHED,
-      // subscription_expired_at: { gte: startOfToday() },
     };
   }
 
@@ -487,12 +459,6 @@ export class PropertyUserService {
     return code;
   }
 
-  /**
-   *
-   * @param propertyId
-   * @param fingerprint
-   * @returns
-   */
   async updateViewStatistics(propertyId: number, count: number, type: 'impression' | 'view'): Promise<void> {
     const now = startOfToday();
     await this.db.propertyStatistics.upsert({
@@ -510,13 +476,6 @@ export class PropertyUserService {
     });
   }
 
-  /**
-   * اطلاعات اشتراک گذاری را ذخیره و لینک کوتاه آن را برمی گرداند
-   * @param propertyId
-   * @param advisorId
-   * @param dto
-   * @returns
-   */
   async generateAdvisorShare(
     propertyId: number,
     advisorId: number,
@@ -937,42 +896,21 @@ export class PropertyUserService {
     }));
   }
 
-  /**
-   * روزهای رزرو شده برای بستن روی دکمه رزرو
-   * @param propertyId
-   * @param months
-   * @returns
-   */
   async findPropertyReservedDays(propertyId: number, months: number): Promise<any> {
-    const duration = months > 3 ? 3 : 1;
-    const startDate = moment().startOf('jMonth').toDate();
+    const duration = Math.min(Math.max(months || 1, 1), 12);
+    const startDate = startOfToday();
     const endDate = moment().add(duration, 'jMonth').endOf('jMonth').toDate();
-
     const reserved = await this.db.propertyCalendar.findMany({
-      where: { property_id: propertyId, is_reserved: true, date: { gt: startDate, lte: endDate } },
+      where: { property_id: propertyId, is_reserved: true, date: { gte: startDate, lte: endDate } },
+      select: { date: true },
     });
-
     return reserved.map((e) => e.date);
   }
 
-  /* --------------------------------- HELPERS -------------------------------- */
-
-  /**
-   * create city raw query for search suggestion
-   * @param words
-   * @param limit
-   * @returns
-   */
   cityQueryBuilder(words: string[], limit: number): Prisma.Sql {
     return buildCitySuggestionQuery(words, limit);
   }
 
-  /**
-   * prepare text for search
-   * @param searchTerm
-   * @param column
-   * @returns
-   */
   preprocessSearchTerms = (searchTerm: string, column: string): string[] => {
     const specialChars = /[()|&:*!]/g;
     const strings = searchTerm.trim().replace(specialChars, ' ').split(/\s+/);
@@ -983,11 +921,6 @@ export class PropertyUserService {
     return query;
   };
 
-  /* -------------------------------------------------------------------------- */
-  /**
-   * faker
-   * @param propertyId
-   */
   async duplicate(_propertyId: number): Promise<void> {
     return;
   }

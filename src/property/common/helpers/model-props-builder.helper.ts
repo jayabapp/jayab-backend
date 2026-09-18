@@ -1,27 +1,11 @@
-import { AccessControlList, Property, Prisma, PropertyOption, OptionsOnProperty } from '@prisma/client';
-import {
-  AvailableAction,
-  Column,
-  CreateProps,
-  FilterProps,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { AvailableAction, ShowProps, TableProps } from 'src/common/interfaces/model-props.interface';
 import { PropertyStatuses, PropertyStatusesList } from '../types/property-status.type';
-import {
-  PropertyArrayResType,
-  PropertyJsonResType,
-  PropertyResType,
-} from 'src/property/serializer/property.serializer';
-import { isArray, isEmpty } from 'lodash';
+import { AccessControlList, Property, Prisma } from '@prisma/client';
+import { Column, CreateProps, ShowAction } from 'src/common/interfaces/model-props.interface';
 import { PropertyOptionGroupList } from 'src/property-option/common/property-option-groups.type';
-import { CancelingType, CancelingTypeList } from '../types/property-canceling-types.type';
+import { isArray, isEmpty } from 'lodash';
+import { PropertyResType } from 'src/property/serializer/property.serializer';
 
-/* -------------------------------------------------------------------------- */
-/*                                    TYPES                                   */
-/* -------------------------------------------------------------------------- */
 enum RefEnum {
   feature_image = 'feature_image',
   province = 'province',
@@ -35,18 +19,13 @@ type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
 type ModifiedColumn = Column & { key: ModelFields };
 type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 
-/* -------------------------------------------------------------------------- */
-/*                                    SHOW                                    */
-/* -------------------------------------------------------------------------- */
 const bedroomsInfo = (item: PropertyResType): Array<ShowProps> => {
   const bedrooms: number[] = item?.bedrooms?.bedrooms;
   if (isEmpty(bedrooms)) return [];
-
-  let list = [];
+  const list = [];
   for (let i = 0; i < bedrooms.length; i++) {
     const bedroomBeds = bedrooms[i];
     const number = i + 1;
-
     list.push({
       state: `bedroom${number}`,
       title: `تعداد تخت اتاق ${number}`,
@@ -54,16 +33,13 @@ const bedroomsInfo = (item: PropertyResType): Array<ShowProps> => {
       type: 'number',
     });
   }
-
   return list;
 };
 
 const options = (item: PropertyResType): Array<ShowProps> => {
-  let list: ShowProps[] = [];
-
+  const list: ShowProps[] = [];
   for (const optionKey of Object.keys(item.options)) {
     const propertyOption = PropertyOptionGroupList.find((e) => e.id == optionKey.toUpperCase());
-
     const optionValue = item.options[optionKey];
     const propValue = isArray(optionValue) ? optionValue.join(' - ') : optionValue;
     list.push({
@@ -74,14 +50,12 @@ const options = (item: PropertyResType): Array<ShowProps> => {
       titleClass: 'text-warning',
     });
   }
-
   return list;
 };
 
 export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
   const bedrooms = item.bedrooms;
   const dailyPrice = item.daily_price;
-
   const props: Array<ShowProps> = [
     { state: 'status_list', title: 'لیست وضعیت ها', value: PropertyStatusesList, isHidden: true },
     { state: 'admin_descriptions', title: 'لیست وضعیت ها', value: item.admin_descriptions, isHidden: true },
@@ -297,39 +271,11 @@ export const showActionBuilder = (item: Property, rbac: AccessControlList): Arra
   return actions;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   CREATE                                   */
-/* -------------------------------------------------------------------------- */
 export const createPropsBuilder = (): Array<CreateProps> => {
-  const createProps: Array<CreateProps> = [
-    /* ---------------------------------- IMAGE --------------------------------- */
-    // {state: 'image_id',type: 'image',title: 'تصویر اصلی',options: { isMandatory: true, titleHint: 'تنها یک عکس میتوانید آپلود کنید' },},
-    /* ------------------------------ MULTI IMAGES ------------------------------ */
-    // {state: 'media_ids',type: 'image',title: 'تصاویر ملک',options: { isMandatory: true, titleHint: 'آپلود حداقل یک مورد الزامی است', multiImage: true },},
-    /* ---------------------------------- TEXT ---------------------------------- */
-    // {state: 'title',type: 'input',title: 'عنوان',options: { maxLength: 100, isMandatory: true, placeholder: 'کد تخفیف تابستانه', keyboard: 'text' },},
-    /* --------------------------------- NUMBER --------------------------------- */
-    // {state: 'percentage',type: 'input',title: 'درصد تخفیف',options: { isMandatory: true, keyboard: 'number', convertToText: true,hint: 'سقف استفاده از تخفیف' },},
-    /* ---------------------------------- DATE ---------------------------------- */
-    // {state: 'start_at',type: 'date',title: 'تاریخ شروع کد تخفیف',options: { keyboard: 'number', isMandatory: true, convertToText: true },},
-    /* --------------------------------- SELECT --------------------------------- */
-    // {state: 'category_id',type: 'select',title: 'دسته بندی اصلی',selectItems: parentCategories,options: { isMandatory: true },},
-    /* ------------------------------ MULTI SELECT ------------------------------ */
-    // {state: 'tag_ids',type: 'multiSelect',title: 'تگ ها',selectItems: tags,options: {},},
-    /* -------------------------------- TEXT AREA ------------------------------- */
-    // {state: 'description',type: 'textarea',title: 'توضیحات',options: { keyboard: 'text', maxLength: 300 },},
-    /* ----------------------------------- MAP ---------------------------------- */
-    // {state: 'coordinate',type: 'map',title: 'موقعیت جغرافیایی',options: { isMandatory: true },},
-    /* --------------------------------- DIVIDER -------------------------------- */
-    // { type: 'divider' },
-  ];
-
+  const createProps: Array<CreateProps> = [];
   return createProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                    TABLE                                   */
-/* -------------------------------------------------------------------------- */
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'property',
@@ -360,15 +306,11 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
   return tableProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   FILTER                                   */
-/* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'کد', state: 'code', type: 'input' },
     { title: 'عنوان', state: 'title', type: 'input' },
     { title: 'شماره تماس میزبان', state: 'owner_mobile_number', type: 'input' },
-
     { title: 'منقضی شده ها', state: 'expired', type: 'switch' },
     { title: 'احراز شده ها', state: 'authorized', type: 'switch' },
     { title: 'نردبان شده ها', state: 'is_promoted', type: 'switch' },
@@ -377,28 +319,17 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
       state: 'paid_waiting_admin_approval',
       type: 'switch',
     },
-    /*  */
     { title: 'وضیعت', state: 'status', type: 'select', isHidden: true },
     { title: '', state: 'owner_id', type: 'input', isHidden: true },
   ];
-
   return filterProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                ADMIN ACTIONS                               */
-/* -------------------------------------------------------------------------- */
 export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableAction> => {
   const allActions: Array<AvailableAction> = ['create', 'show', 'edit', 'delete', 'submit'];
   const availableActions: Array<AvailableAction> = [];
-
   for (const act of allActions) {
-    // if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
-    // if (act === 'edit' && rbac.u) availableActions.push('edit');
-    // if (act === 'delete' && rbac.d) availableActions.push('delete');
-    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
-
   return availableActions;
 };
