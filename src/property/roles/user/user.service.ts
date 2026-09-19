@@ -55,6 +55,12 @@ const FUZZY_CITY_SIMILARITY = 0.45;
 const FUZZY_MIN_WORD_LENGTH = 3;
 const TRIGRAM_RETRY_MS = 10 * 60 * 1000;
 
+type ContactInfoCache = {
+  owner: any;
+  list: Partial<PropertyOwnerAssistant>[];
+  subscription_expired_at: Date | string;
+};
+
 @Injectable()
 export class PropertyUserService {
   private readonly logger = new Logger(PropertyUserService.name);
@@ -348,11 +354,13 @@ export class PropertyUserService {
 
   async findContactInfo(
     propertySlug: string,
-  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[] }> {
+  ): Promise<{ owner: any; list: Partial<PropertyOwnerAssistant>[]; isPropertyExpired: boolean }> {
     const code = this.checkSlug(propertySlug);
     const CACHE_KEY = `contact:${code}`;
     const redisValue = await this.redis.get(CACHE_KEY);
-    if (redisValue) return JSON.parse(redisValue) as { owner: any; list: Partial<PropertyOwnerAssistant>[] };
+    // entries cached before the expiry date was stored are treated as a miss
+    const cached = redisValue ? (JSON.parse(redisValue) as ContactInfoCache) : null;
+    if (cached?.subscription_expired_at) return this.withContactExpiry(cached);
     const property = await this.db.property.findUnique({
       where: { code },
       select: {
@@ -375,15 +383,26 @@ export class PropertyUserService {
       orderBy: { is_owner: 'desc' },
     });
 
-    const result = {
+    const result: ContactInfoCache = {
       owner: {
         selfie_image: property.owner?.user?.profile_image,
         mobile: property.owner?.user?.mobile_number,
       },
       list,
+      subscription_expired_at: property.subscription_expired_at,
     };
     await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60);
-    return result;
+    return this.withContactExpiry(result);
+  }
+
+  /** expiry is derived on every read, so the one-hour cache never serves a stale flag across midnight */
+  private withContactExpiry(cache: ContactInfoCache): {
+    owner: any;
+    list: Partial<PropertyOwnerAssistant>[];
+    isPropertyExpired: boolean;
+  } {
+    const { owner, list, subscription_expired_at: expiredAt } = cache;
+    return { owner, list, isPropertyExpired: new Date(expiredAt) < startOfToday() };
   }
 
   async storeCallLog(propertyId: number, user: PartialUser, ownerMobile: string): Promise<void> {

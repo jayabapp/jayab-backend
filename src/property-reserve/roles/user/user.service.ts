@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
+import { PropertyReserveGuestStatusTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/constants/reserve.constant';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
@@ -8,12 +9,14 @@ import { UpdatePropertyReserveUserDto } from './dto/update.dto';
 import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import { RESERVE_MAX_NIGHTS } from 'src/property-reserve/common/constants/reserve.constant';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { AvanakService } from 'src/sms/avanak.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { PartialUser } from 'src/common/interfaces/user.interface';
 import { SmsService } from 'src/sms/sms.service';
 import { isEmpty } from 'lodash';
 
@@ -34,12 +37,6 @@ export class PropertyReserveUserService {
     };
   }
 
-  /**
-   * بررسی رزرو اکتیو روی یک ملک
-   * @param userId
-   * @param propertyId
-   * @returns
-   */
   async checkActiveReserveOnProperty(userId: number, propertyId: number): Promise<number> {
     const activeReserve = await this.db.propertyReserve.findFirst({
       where: {
@@ -52,11 +49,6 @@ export class PropertyReserveUserService {
     return activeReserve?.id;
   }
 
-  /**
-   * بررسی شرایط ثبت رزرو جدید
-   * @param userId
-   * @returns
-   */
   async canCreateReserves(userId: number): Promise<void> {
     const count = await this.db.propertyReserve.count({
       where: {
@@ -67,24 +59,28 @@ export class PropertyReserveUserService {
     if (count >= 3) throw new BadRequestException('RESERVE6');
   }
 
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
   async create(
     dto: CreatePropertyReserveUserDto,
-    userId: number,
+    user: Pick<PartialUser, 'id' | 'owner_id'>,
     idempotencyKey?: string,
   ): Promise<{ reserve: PropertyReserve; ownerId: number; created: boolean }> {
+    const userId = user.id;
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id, status: PropertyStatuses.PUBLISHED },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
+    if (user.owner_id && property.owner_id === user.owner_id)
+      throw new ForbiddenException('RESERVE_OWN_PROPERTY');
     const diff = moment(dto.check_out).diff(dto.check_in, 'd');
     if (diff === 0) throw new UnprocessableEntityException('RESERVE1');
     if (diff < 0) throw new UnprocessableEntityException('RESERVE2');
     if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
+    if (diff > RESERVE_MAX_NIGHTS) throw new UnprocessableEntityException('RESERVE_MAX_NIGHTS');
+
+    const reservedNights = await this.db.propertyCalendar.count({
+      where: { property_id: property.id, is_reserved: true, date: { gte: dto.check_in, lt: dto.check_out } },
+    });
+    if (reservedNights > 0) throw new UnprocessableEntityException('RESERVE_DATES_UNAVAILABLE');
 
     try {
       const newPropertyReserve = await this.db.propertyReserve.create({
@@ -107,12 +103,6 @@ export class PropertyReserveUserService {
     }
   }
 
-  /**
-   * find all PropertyReserve
-   * درخواست های فعال کاربر
-   * @param dto
-   * @returns
-   */
   async findAll(dto: FindAllPropertyReserveUserDto, userId: number): Promise<PropertyReserve[]> {
     let q: Prisma.PropertyReserveWhereInput = { user_id: userId };
     if (dto.type === 'active')
@@ -149,11 +139,6 @@ export class PropertyReserveUserService {
     return formatted;
   }
 
-  /**
-   * find one propertyReserve
-   * @param propertyReserveId
-   * @returns
-   */
   async findById(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
@@ -188,11 +173,6 @@ export class PropertyReserveUserService {
     return serialized;
   }
 
-  /**
-   * کنسل کردن درخواست توسط مهمان
-   * @param propertyReserveId
-   * @returns
-   */
   async cancel(propertyReserveId: number): Promise<void> {
     await this.db.propertyReserve.update({
       where: { id: propertyReserveId },
@@ -201,12 +181,6 @@ export class PropertyReserveUserService {
     return;
   }
 
-  /**
-   * update
-   * @param propertyReserveId
-   * @param dto
-   * @returns
-   */
   async update(propertyReserveId: number, dto: UpdatePropertyReserveUserDto): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.update({
       where: { id: propertyReserveId },
@@ -216,10 +190,6 @@ export class PropertyReserveUserService {
     return item;
   }
 
-  /**
-   * ارسال پیامک به مالک بعد از ثبت درخواست رزرو
-   * @param reserveId
-   */
   async sendReserveSms(reserveId: number): Promise<void> {
     const reserve = await this.db.propertyReserve.findFirst({
       where: { id: reserveId },
@@ -289,11 +259,6 @@ export class PropertyReserveUserService {
     await this.avanakService.quickCall(reserve.property.owner.user.mobile_number, reserveOwnerMessageId);
   }
 
-  /**
-   * منقضی کردن درخواست رزرو
-   * @param reserveId
-   * @returns
-   */
   async expireReserve(reserveId: number): Promise<void> {
     const reserve = await this.db.propertyReserve.findFirst({
       where: { id: reserveId },
@@ -302,11 +267,6 @@ export class PropertyReserveUserService {
     await this.db.propertyReserve.update({ where: { id: reserveId }, data: { expired_at: new Date() } });
   }
 
-  /**
-   * آگهی های جایگزین در صورتی که مالک آگهی خودش رو تمدید نکنه
-   * @param reserveId
-   * @returns
-   */
   async reserveRecommendation(reserveId: number): Promise<any> {
     const reserve = await this.db.propertyReserve.findFirst({
       where: { id: reserveId },
@@ -338,6 +298,12 @@ export class PropertyReserveUserService {
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
 
+  private guestStatus(statusId: number) {
+    const status = PropertyReserveStatusList.find((e) => e.id === statusId);
+    const title = PropertyReserveGuestStatusTitle[statusId];
+    return status && title ? { ...status, title } : status;
+  }
+
   async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
     const isChatEnabled = item.property.is_chat_enabled;
@@ -349,7 +315,7 @@ export class PropertyReserveUserService {
       ttl_seconds: ttl > 0 ? ttl : 0,
       is_chat_enabled: isChatEnabled,
       is_answer_deadline_passed: ttl <= 0,
-      status: PropertyReserveStatusList.find((e) => e.id === item.status),
+      status: this.guestStatus(item.status),
       is_subscription_expired: item.property.subscription_expired_at < startOfToday(),
     };
   }

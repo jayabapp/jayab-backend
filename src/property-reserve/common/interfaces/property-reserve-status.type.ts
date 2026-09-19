@@ -42,3 +42,8 @@ export const PropertyReserveStatusList: Array<EnumList> = [
     hex: '#10b981',
   },
 ];
+
+export const PropertyReserveGuestStatusTitle: Record<number, string> = {
+  [PropertyReserveStatus.PENDING]: 'ارسال‌شده برای میزبان',
+  [PropertyReserveStatus.OWNER_CALLED]: 'میزبان تماس گرفت',
+};
