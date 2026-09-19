@@ -256,7 +256,7 @@ const failedMessages = {
   RESERVE4: 'این درخواست متعلق به شما نیست',
   RESERVE5: 'این درخواست منقضی شده است',
   RESERVE6: 'سقف مجاز ثبت درخواست رزرو',
-  RESERVE7: '',
+  QUOTE_MAX_NIGHTS: 'حداکثر مدت اقامت قابل استعلام ۱۵ شب است',
 
   CLIENT1: 'The x-api-key is invalid',
   CLIENT2: 'The ip is invalid',

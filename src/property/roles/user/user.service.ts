@@ -1,3 +1,4 @@
+import { PropertyQuoteNightBreakdown, PropertyQuoteResType, PropertyQuoteUserDto } from './dto/quote.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { GoneException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
@@ -6,9 +7,11 @@ import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
 import { SearchCityListItem, SearchExtractResult } from './dto/search-extract-response.dto';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
+import { DayColumn, resolveDayColumn, toDayKey } from 'src/common/helpers/day.helper';
 import { buildMatchedOrder, buildSearchTokens } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { MatchedEntry, ResolvedLocation } from 'src/property/common/helpers/search-query-parser.helper';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
@@ -26,6 +29,8 @@ import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
 import { buildLocationSpans } from 'src/property/common/helpers/search-query-parser.helper';
 import { tokenizeSearchText } from 'src/property/common/helpers/search-text.helper';
+import { CancelingTypeList } from 'src/property/common/types/property-canceling-types.type';
+import { resolveNightPrice } from 'src/property/common/night-price.helper';
 import { LocationCandidate } from 'src/property/common/helpers/search-query-parser.helper';
 import { isEmpty, orderBy } from 'lodash';
 import { SearchableOption } from 'src/property/common/helpers/search-query-parser.helper';
@@ -66,11 +71,6 @@ export class PropertyUserService {
     private readonly setting: SettingAdminService,
   ) {}
 
-  /**
-   * find all Property
-   * @param dto
-   * @returns
-   */
   async findAll(
     dto: FindAllPropertyUserDto,
     isAdvisor: boolean = false,
@@ -382,7 +382,7 @@ export class PropertyUserService {
       },
       list,
     };
-    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60); //one hour
+    await this.redis.set(CACHE_KEY, JSON.stringify(result), 'EX', 60 * 60);
     return result;
   }
 
@@ -905,6 +905,84 @@ export class PropertyUserService {
       select: { date: true },
     });
     return reserved.map((e) => e.date);
+  }
+
+  async quote(propertyId: number, dto: PropertyQuoteUserDto): Promise<PropertyQuoteResType> {
+    const nights = moment(dto.check_out).diff(dto.check_in, 'd');
+    if (nights === 0) throw new UnprocessableEntityException('RESERVE1');
+    if (nights < 0) throw new UnprocessableEntityException('RESERVE2');
+    if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
+    if (nights > 15) throw new UnprocessableEntityException('QUOTE_MAX_NIGHTS');
+
+    const [property, calendar, peaks] = await Promise.all([
+      this.db.property.findFirst({
+        where: { id: propertyId, ...this.validProperty() },
+        select: { id: true, std_capacity: true, max_capacity: true, canceling_type: true, daily_price: true },
+      }),
+      this.db.propertyCalendar.findMany({
+        where: { property_id: propertyId, date: { gte: dto.check_in, lt: dto.check_out } },
+        select: { date: true, price: true, discounted_price: true, is_reserved: true },
+      }),
+      this.db.peakDay.findMany({
+        where: { date: { gte: dto.check_in, lt: dto.check_out } },
+        select: { date: true },
+      }),
+    ]);
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const peakDayKeys = new Set(peaks.map((e) => toDayKey(e.date)));
+    const calendarByDate = new Map(calendar.map((e) => [toDayKey(e.date), e]));
+
+    const nightsBreakdown: PropertyQuoteNightBreakdown[] = [];
+    const unavailableDates: string[] = [];
+    let rentTotal = 0;
+    let discountTotal = 0;
+    for (let i = 0; i < nights; i++) {
+      const date = moment(dto.check_in).add(i, 'day').toDate();
+      const dayKey = toDayKey(date);
+      const calendarEntry = calendarByDate.get(dayKey);
+      const column = resolveDayColumn(date, peakDayKeys);
+      const { base, final, discounted } = resolveNightPrice(calendarEntry, property.daily_price, column);
+
+      if (calendarEntry?.is_reserved) unavailableDates.push(dayKey);
+      rentTotal += final;
+      discountTotal += base - final;
+      nightsBreakdown.push({
+        date: dayKey,
+        day_column: column,
+        base_price: base,
+        final_price: final,
+        is_discounted: discounted,
+        is_peak: column === DayColumn.peak,
+      });
+    }
+
+    const extraGuests = Math.max(0, dto.guests - (property.std_capacity ?? 0));
+    const extraGuestFeePerNight = property.daily_price?.additional_person ?? 0;
+    const extraGuestTotal = extraGuests * extraGuestFeePerNight * nights;
+    const cleaningFee = property.daily_price?.cleaning ?? 0;
+    const cancelingType = CancelingTypeList.find((e) => e.id === property.canceling_type);
+
+    return {
+      property_id: property.id,
+      check_in: toDayKey(dto.check_in),
+      check_out: toDayKey(dto.check_out),
+      nights,
+      guests: dto.guests,
+      is_available: unavailableDates.length === 0,
+      unavailable_dates: unavailableDates,
+      nights_breakdown: nightsBreakdown,
+      rent_total: rentTotal,
+      discount_total: discountTotal,
+      std_capacity: property.std_capacity ?? 0,
+      max_capacity: property.max_capacity ?? 0,
+      extra_guests: extraGuests,
+      extra_guest_fee_per_night: extraGuestFeePerNight,
+      extra_guest_total: extraGuestTotal,
+      cleaning_fee: cleaningFee,
+      total: rentTotal + extraGuestTotal + cleaningFee,
+      canceling_type: cancelingType ? { id: `${cancelingType.id}`, title: cancelingType.title } : null,
+    };
   }
 
   cityQueryBuilder(words: string[], limit: number): Prisma.Sql {

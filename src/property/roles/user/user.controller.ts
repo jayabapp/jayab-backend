@@ -4,14 +4,15 @@ import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nest
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { SearchSuggestionsSuccessResponseDto } from './dto/search-suggestion-response.dto';
+import { ONE_MINUTE_TTL, THREE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
 import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { PropertyQuoteUserDto } from './dto/quote.dto';
 import { PropertyOwnerService } from '../owner/owner.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { PropertyUserService } from './user.service';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
-import { THREE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
@@ -70,6 +71,18 @@ export class PropertyUserController {
     return { result };
   }
 
+  @ApiOperation({ summary: 'Quote', description: 'Estimated price and availability for a stay' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(ONE_MINUTE_TTL)
+  @Get(':propertyId/quote')
+  async quote(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: PropertyQuoteUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.quote(propertyId, dto);
+    return { result };
+  }
+
   @ApiOperation({ summary: 'Find Property Reserved Days' })
   @Get(':propertyId/reserved')
   async findPropertyReservedDays(
@@ -124,11 +137,6 @@ export class PropertyUserController {
     return { result };
   }
 
-  /**
-   * اطلاعات لینک رو رمز گشایی میکنه و دیتا رو برای سایت مشاوران برمیگردونه
-   * @param dto
-   * @returns
-   */
   @ApiOperation({ summary: 'Retrive Share Link Data', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share')
