@@ -2,6 +2,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 type LandingLocation = {
   cityId?: number;
+  hasPool?: boolean;
   provinceId?: number;
 };
 
@@ -28,7 +29,7 @@ const specificityScore = (landing: {
 
 export const findCanonicalLocationLanding = async (
   db: PrismaService,
-  { cityId, provinceId }: LandingLocation,
+  { cityId, hasPool, provinceId }: LandingLocation,
 ): Promise<string | null> => {
   if (!cityId && !provinceId) return null;
 
@@ -36,6 +37,7 @@ export const findCanonicalLocationLanding = async (
     where: {
       is_active: true,
       main_content_id: { not: null },
+      ...(hasPool === undefined ? {} : { has_pool: hasPool }),
       ...(cityId ? { cities: { has: cityId } } : { province_id: provinceId }),
     },
     select: {

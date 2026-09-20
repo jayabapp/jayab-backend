@@ -6,13 +6,11 @@ import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/cons
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
-import { resolveDayColumn, toDayKey } from 'src/common/helpers/day.helper';
 import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { RESERVE_MAX_NIGHTS } from 'src/property-reserve/common/constants/reserve.constant';
-import { resolveNightPrice } from 'src/property/common/night-price.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -71,7 +69,6 @@ export class PropertyReserveUserService {
     const userId = user.id;
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id, status: PropertyStatuses.PUBLISHED },
-      include: { daily_price: true },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
     if (user.owner_id && property.owner_id === user.owner_id)
@@ -87,29 +84,11 @@ export class PropertyReserveUserService {
     });
     if (reservedNights > 0) throw new UnprocessableEntityException('RESERVE_DATES_UNAVAILABLE');
 
-    const [calendar, peaks] = await Promise.all([
-      this.db.propertyCalendar.findMany({
-        where: { property_id: property.id, date: { gte: dto.check_in, lt: dto.check_out } },
-        select: { date: true, price: true, discounted_price: true },
-      }),
-      this.db.peakDay.findMany({
-        where: { date: { gte: dto.check_in, lt: dto.check_out } },
-        select: { date: true },
-      }),
-    ]);
-    const calendarByDate = new Map(calendar.map((entry) => [toDayKey(entry.date), entry]));
-    const peakDays = new Set(peaks.map((entry) => toDayKey(entry.date)));
-    const extraGuests = Math.max(0, Number(dto.guests_count) - (property.std_capacity ?? 0));
-    let quotedTotal = property.daily_price?.cleaning ?? 0;
-    for (let night = 0; night < diff; night += 1) {
-      const date = moment(dto.check_in).add(night, 'day').toDate();
-      const price = resolveNightPrice(
-        calendarByDate.get(toDayKey(date)),
-        property.daily_price,
-        resolveDayColumn(date, peakDays),
-      );
-      quotedTotal += price.final + extraGuests * (property.daily_price?.additional_person ?? 0);
-    }
+    const { total: quotedTotal } = await this.propertyUserService.quote(property.id, {
+      check_in: dto.check_in,
+      check_out: dto.check_out,
+      guests: Math.max(1, Number.parseInt(dto.guests_count, 10) || 1),
+    });
 
     try {
       const newPropertyReserve = await this.db.propertyReserve.create({
@@ -309,7 +288,7 @@ export class PropertyReserveUserService {
     const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
     if (!isPropertyExpired) return;
-    const links = (await this.propertyUserService.findSimilar(p.id, 3)).map((item) => item.code);
+    const links = await this.propertyUserService.findSimilarCodes(p, 3);
     if (!isEmpty(links))
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }

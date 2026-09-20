@@ -55,6 +55,9 @@ const FUZZY_CITY_SIMILARITY = 0.45;
 const FUZZY_MIN_WORD_LENGTH = 3;
 const TRIGRAM_RETRY_MS = 10 * 60 * 1000;
 
+type PropertySeoLinks = { villa: string | null; pool: string | null };
+type SimilarSource = Pick<Property, 'id' | 'province_id' | 'city_id' | 'has_pool'>;
+
 type ContactInfoCache = {
   owner: any;
   list: Partial<PropertyOwnerAssistant>[];
@@ -308,7 +311,10 @@ export class PropertyUserService {
     return { data: serialized, meta: list.meta };
   }
 
-  async findOne(propertySlug: string, isAdvisor: boolean): Promise<PropertyResType & { owner_info: any }> {
+  async findOne(
+    propertySlug: string,
+    isAdvisor: boolean,
+  ): Promise<PropertyResType & { owner_info: any; seo_links: PropertySeoLinks }> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
@@ -339,26 +345,52 @@ export class PropertyUserService {
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
-    const landingPages = await this.db.landingPage.findMany({
-      where: {
-        is_active: true,
-        OR: [{ cities: { has: item.city_id } }, { province_id: item.province_id }],
-      },
-      select: { url: true, has_pool: true },
-    });
+    const seoLinks = await this.findSeoLinks(item.city_id, item.province_id, item.has_pool);
     const ownerInfo = {
       avatar: item.owner.user.profile_image,
       full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
       since: item.owner.created_at,
     };
+    return { ...serialized, owner_info: ownerInfo, seo_links: seoLinks };
+  }
+
+  private async findSeoLinks(
+    cityId: number,
+    provinceId: number,
+    hasPool: boolean,
+  ): Promise<PropertySeoLinks> {
+    const cacheKey = `seo-links:${cityId}:${provinceId}:${hasPool ? 1 : 0}`;
+    const cached = await this.redis.get(cacheKey);
+    if (cached) return JSON.parse(cached) as PropertySeoLinks;
+    const [villa, pool] = await Promise.all([
+      findCanonicalLocationLanding(this.db, { cityId, provinceId, hasPool: false }),
+      hasPool ? findCanonicalLocationLanding(this.db, { cityId, provinceId, hasPool: true }) : null,
+    ]);
+    const links: PropertySeoLinks = { villa, pool };
+    await this.redis.set(cacheKey, JSON.stringify(links), 'EX', 60 * 60);
+    return links;
+  }
+
+  private similarWhere(property: SimilarSource, withPool: boolean): Prisma.PropertyWhereInput {
     return {
-      ...serialized,
-      owner_info: ownerInfo,
-      seo_links: {
-        villa: landingPages.find((landing) => !landing.has_pool)?.url ?? null,
-        pool: item.has_pool ? landingPages.find((landing) => landing.has_pool)?.url ?? null : null,
-      },
+      ...this.validProperty(),
+      id: { not: property.id },
+      subscription_expired_at: { gt: startOfToday() },
+      is_authorized: true,
+      province_id: property.province_id,
+      city_id: property.city_id,
+      ...(withPool ? { has_pool: true } : {}),
     };
+  }
+
+  private async pickSimilar<T>(
+    property: SimilarSource,
+    limit: number,
+    query: (where: Prisma.PropertyWhereInput) => Promise<T[]>,
+  ): Promise<T[]> {
+    const items = await query(this.similarWhere(property, property.has_pool));
+    if (!property.has_pool || items.length >= limit) return items;
+    return query(this.similarWhere(property, false));
   }
 
   async findSimilar(propertyId: number, limit = 8): Promise<PropertyArrayResType[]> {
@@ -368,28 +400,35 @@ export class PropertyUserService {
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
 
-    const where: Prisma.PropertyWhereInput = {
-      ...this.validProperty(), id: { not: property.id }, subscription_expired_at: { gt: startOfToday() },
-      is_authorized: true, province_id: property.province_id, city_id: property.city_id,
-      ...(property.has_pool ? { has_pool: true } : {}),
-    };
     const include = {
-      feature_image: true, property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' as const } },
-      province: { select: { title: true } }, city: { select: { title: true } }, region: { select: { title: true } },
-      bedrooms: true, daily_price: true,
-      calendar: { where: { date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) } } },
+      feature_image: true,
+      property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' as const } },
+      province: { select: { title: true } },
+      city: { select: { title: true } },
+      region: { select: { title: true } },
+      bedrooms: true,
+      daily_price: true,
+      calendar: {
+        where: { date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) } },
+      },
       _count: { select: { property_images: true } },
     };
-    let items = await this.db.property.findMany({ where, include, orderBy: { sort_order: 'desc' }, take: limit });
-    if (property.has_pool && items.length < limit)
-      items = await this.db.property.findMany({
-        where: {
-          ...this.validProperty(), id: { not: property.id }, subscription_expired_at: { gt: startOfToday() },
-          is_authorized: true, province_id: property.province_id, city_id: property.city_id,
-        },
-        include, orderBy: { sort_order: 'desc' }, take: limit,
-      });
+    const items = await this.pickSimilar(property, limit, (where) =>
+      this.db.property.findMany({ where, include, orderBy: { sort_order: 'desc' }, take: limit }),
+    );
     return this.propertySerializer.toArray(items, await this.dayHelper.today(), false, false);
+  }
+
+  async findSimilarCodes(property: SimilarSource, limit: number): Promise<string[]> {
+    const items = await this.pickSimilar(property, limit, (where) =>
+      this.db.property.findMany({
+        where,
+        select: { code: true },
+        orderBy: { sort_order: 'desc' },
+        take: limit,
+      }),
+    );
+    return items.map((item) => item.code);
   }
 
   async findById(id: number): Promise<Property> {
@@ -404,7 +443,6 @@ export class PropertyUserService {
     const code = this.checkSlug(propertySlug);
     const CACHE_KEY = `contact:${code}`;
     const redisValue = await this.redis.get(CACHE_KEY);
-    // entries cached before the expiry date was stored are treated as a miss
     const cached = redisValue ? (JSON.parse(redisValue) as ContactInfoCache) : null;
     if (cached?.subscription_expired_at) return this.withContactExpiry(cached);
     const property = await this.db.property.findUnique({
@@ -441,7 +479,6 @@ export class PropertyUserService {
     return this.withContactExpiry(result);
   }
 
-  /** expiry is derived on every read, so the one-hour cache never serves a stale flag across midnight */
   private withContactExpiry(cache: ContactInfoCache): {
     owner: any;
     list: Partial<PropertyOwnerAssistant>[];

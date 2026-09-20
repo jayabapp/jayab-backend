@@ -188,26 +188,17 @@ export class SmsService {
     }
   }
 
-  /**
-   * ارسال پیامک به مالک وقتی کاربر روی تماس کلیک میکنه
-   * @param mobile
-   * @param ownerMobile
-   * @returns
-   */
   async sendCallLogToOwner(mobile: string, targetUserMobile: string): Promise<void> {
     if (!this.isProduction) return;
-
     try {
       const apiToken = this.configService.get('sms.smsApiToken');
       const templateId = this.configService.get('sms.callLogTemplateId');
       const sendUrl = this.configService.get('sms.sendUrl');
-
       const body = {
         parameters: [{ name: 'MOBILE', value: targetUserMobile }],
         mobile: mobile,
         templateId: templateId,
       };
-
       await firstValueFrom(
         this.httpService.post(sendUrl, body, {
           headers: { 'X-API-KEY': apiToken, ACCEPT: 'application/json' },
@@ -241,7 +232,7 @@ export class SmsService {
           { name: 'DATE', value: date },
           { name: 'DURATION', value: duration },
           { name: 'GUESTS', value: guestsCount },
-          ...(quotedTotal != null ? [{ name: 'AMOUNT', value: `${quotedTotal}` }] : []),
+          { name: 'AMOUNT', value: quotedTotal != null ? `${quotedTotal}` : '-' },
         ],
         mobile: ownerMobile,
         templateId: templateId,
