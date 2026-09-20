@@ -7,6 +7,13 @@
 code: #VERIFICATIONCODE#
 @pakhshekhayam.ir ##VERIFICATIONCODE#
 
+# --------------------------- RESERVE REQUEST TO HOST ------------------------ #
+
+درخواست جدید برای #TITLE#
+مهمان: #PHONE#
+تاریخ: #DATE#، #DURATION#، #GUESTS#
+مبلغ تقریبی: #AMOUNT# تومان
+
 # ------------------------------- ORDER STATUS ------------------------------- #
 تغییر وضعیت سفارش
 

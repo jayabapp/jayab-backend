@@ -12,6 +12,7 @@
 | 4 | `20260903193000_add_test_access_whitelist` | enum و جدول whitelist دامنه تست | قبل از فعال‌کردن محدودیت ورود لازم است |
 | 5 | `20260904120000_optimize_blog_content_queries` | indexهای دسته‌بندی، انتشار و attachment بلاگ | index-only؛ در ساعت کم‌ترافیک اجرا شود |
 | 6 | `20260904150000_add_landing_location_indexes` | indexهای استان و شهرهای لندینگ | index-only؛ در ساعت کم‌ترافیک اجرا شود |
+| 7 | `20260920120000_add_reserve_quote_snapshot` | snapshot تعداد شب و مبلغ تقریبی درخواست | nullable؛ migration فقط ساخته شده و باید در deploy اجرا شود |
 
 Migrationها باید دقیقاً با همین ترتیب اجرا شوند. هیچ migration دیگری در اختلاف این branch با `main` وجود ندارد. تغییرات کیفیت و دانلود تصویر migration دیتابیس ندارند.
 

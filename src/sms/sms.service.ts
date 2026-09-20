@@ -225,6 +225,7 @@ export class SmsService {
     date: string,
     duration: string,
     guestsCount: string,
+    quotedTotal?: number | null,
   ): Promise<void> {
     if (!this.isProduction) return;
 
@@ -240,6 +241,7 @@ export class SmsService {
           { name: 'DATE', value: date },
           { name: 'DURATION', value: duration },
           { name: 'GUESTS', value: guestsCount },
+          ...(quotedTotal != null ? [{ name: 'AMOUNT', value: `${quotedTotal}` }] : []),
         ],
         mobile: ownerMobile,
         templateId: templateId,

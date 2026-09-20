@@ -331,7 +331,7 @@ export class PropertyUserService {
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         description: true,
         assistants: { select: { assistant_full_name: true, is_owner: true } },
-        owner: { select: { user: { select: { profile_image: true } } } },
+        owner: { select: { created_at: true, user: { select: { profile_image: true } } } },
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
@@ -339,11 +339,57 @@ export class PropertyUserService {
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
+    const landingPages = await this.db.landingPage.findMany({
+      where: {
+        is_active: true,
+        OR: [{ cities: { has: item.city_id } }, { province_id: item.province_id }],
+      },
+      select: { url: true, has_pool: true },
+    });
     const ownerInfo = {
       avatar: item.owner.user.profile_image,
       full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
+      since: item.owner.created_at,
     };
-    return { ...serialized, owner_info: ownerInfo };
+    return {
+      ...serialized,
+      owner_info: ownerInfo,
+      seo_links: {
+        villa: landingPages.find((landing) => !landing.has_pool)?.url ?? null,
+        pool: item.has_pool ? landingPages.find((landing) => landing.has_pool)?.url ?? null : null,
+      },
+    };
+  }
+
+  async findSimilar(propertyId: number, limit = 8): Promise<PropertyArrayResType[]> {
+    const property = await this.db.property.findFirst({
+      where: { id: propertyId, ...this.validProperty() },
+      select: { id: true, province_id: true, city_id: true, has_pool: true },
+    });
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const where: Prisma.PropertyWhereInput = {
+      ...this.validProperty(), id: { not: property.id }, subscription_expired_at: { gt: startOfToday() },
+      is_authorized: true, province_id: property.province_id, city_id: property.city_id,
+      ...(property.has_pool ? { has_pool: true } : {}),
+    };
+    const include = {
+      feature_image: true, property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' as const } },
+      province: { select: { title: true } }, city: { select: { title: true } }, region: { select: { title: true } },
+      bedrooms: true, daily_price: true,
+      calendar: { where: { date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) } } },
+      _count: { select: { property_images: true } },
+    };
+    let items = await this.db.property.findMany({ where, include, orderBy: { sort_order: 'desc' }, take: limit });
+    if (property.has_pool && items.length < limit)
+      items = await this.db.property.findMany({
+        where: {
+          ...this.validProperty(), id: { not: property.id }, subscription_expired_at: { gt: startOfToday() },
+          is_authorized: true, province_id: property.province_id, city_id: property.city_id,
+        },
+        include, orderBy: { sort_order: 'desc' }, take: limit,
+      });
+    return this.propertySerializer.toArray(items, await this.dayHelper.today(), false, false);
   }
 
   async findById(id: number): Promise<Property> {

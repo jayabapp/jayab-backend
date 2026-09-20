@@ -6,10 +6,13 @@ import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/cons
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
+import { resolveDayColumn, toDayKey } from 'src/common/helpers/day.helper';
 import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import { PropertyUserService } from 'src/property/roles/user/user.service';
 import { RESERVE_MAX_NIGHTS } from 'src/property-reserve/common/constants/reserve.constant';
+import { resolveNightPrice } from 'src/property/common/night-price.helper';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -30,6 +33,7 @@ export class PropertyReserveUserService {
     private readonly smsService: SmsService,
     private readonly avanakService: AvanakService,
     private readonly configService: ConfigService,
+    private readonly propertyUserService: PropertyUserService,
   ) {
     this.ACTIVE_RESERVE_QUERY = {
       expired_at: null,
@@ -67,6 +71,7 @@ export class PropertyReserveUserService {
     const userId = user.id;
     const property = await this.db.property.findFirst({
       where: { id: dto.property_id, status: PropertyStatuses.PUBLISHED },
+      include: { daily_price: true },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
     if (user.owner_id && property.owner_id === user.owner_id)
@@ -82,6 +87,30 @@ export class PropertyReserveUserService {
     });
     if (reservedNights > 0) throw new UnprocessableEntityException('RESERVE_DATES_UNAVAILABLE');
 
+    const [calendar, peaks] = await Promise.all([
+      this.db.propertyCalendar.findMany({
+        where: { property_id: property.id, date: { gte: dto.check_in, lt: dto.check_out } },
+        select: { date: true, price: true, discounted_price: true },
+      }),
+      this.db.peakDay.findMany({
+        where: { date: { gte: dto.check_in, lt: dto.check_out } },
+        select: { date: true },
+      }),
+    ]);
+    const calendarByDate = new Map(calendar.map((entry) => [toDayKey(entry.date), entry]));
+    const peakDays = new Set(peaks.map((entry) => toDayKey(entry.date)));
+    const extraGuests = Math.max(0, Number(dto.guests_count) - (property.std_capacity ?? 0));
+    let quotedTotal = property.daily_price?.cleaning ?? 0;
+    for (let night = 0; night < diff; night += 1) {
+      const date = moment(dto.check_in).add(night, 'day').toDate();
+      const price = resolveNightPrice(
+        calendarByDate.get(toDayKey(date)),
+        property.daily_price,
+        resolveDayColumn(date, peakDays),
+      );
+      quotedTotal += price.final + extraGuests * (property.daily_price?.additional_person ?? 0);
+    }
+
     try {
       const newPropertyReserve = await this.db.propertyReserve.create({
         data: {
@@ -89,6 +118,8 @@ export class PropertyReserveUserService {
           user_id: userId,
           status: PropertyReserveStatus.PENDING,
           idempotency_key: idempotencyKey || null,
+          nights: diff,
+          quoted_total: quotedTotal,
         },
       });
       return { reserve: newPropertyReserve, ownerId: property.owner_id, created: true };
@@ -230,6 +261,7 @@ export class PropertyReserveUserService {
       date,
       duration,
       guestsCount,
+      reserve.quoted_total,
     );
   }
 
@@ -277,23 +309,7 @@ export class PropertyReserveUserService {
     const p = await this.db.property.findFirst({ where: { id: reserve.property_id } });
     const isPropertyExpired = p.subscription_expired_at < startOfToday();
     if (!isPropertyExpired) return;
-    const q: Prisma.PropertyWhereInput = {
-      id: { not: p.id },
-      subscription_expired_at: { gt: startOfToday() },
-      is_authorized: true,
-      province_id: p.province_id,
-      city_id: p.city_id,
-    };
-    if (p.has_pool) q['has_pool'] = true;
-    let r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
-    if (r1?.length < 3) {
-      delete q.has_pool;
-      r1 = await this.db.property.findMany({ where: q, orderBy: { sort_order: 'desc' }, take: 3 });
-    }
-    const links: string[] = [];
-    for (const item of r1) {
-      links.push(item.code);
-    }
+    const links = (await this.propertyUserService.findSimilar(p.id, 3)).map((item) => item.code);
     if (!isEmpty(links))
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
