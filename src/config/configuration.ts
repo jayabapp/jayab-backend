@@ -12,6 +12,7 @@ export default () => ({
     password: process.env.REDIS_PASSWORD,
   },
   settings: {},
+  location: { obfuscationSalt: process.env.LOCATION_OBFUSCATION_SALT },
   url: { websiteUrl: process.env.WEBSITE_URL, advisorShareUrl: process.env.ADVISOR_SHARE_URL },
   app: {
     apiPrefix: 'api',

@@ -2,6 +2,7 @@ import { PropertyBedroom, PropertyCalendar, PropertyDailyPrice, PropertyDescript
 import { Attachment, City, PropertyImage, PropertyOption } from '@prisma/client';
 import { Property, PropertyAuthorize, PropertyBadge } from '@prisma/client';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
+import { ApproxLocation, buildApproxLocation } from '../common/helpers/approx-location.helper';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
@@ -78,6 +79,7 @@ export type PropertyJsonResType = {
   owner?: { id: number; mobile_number: string; full_name: string };
   latitude: number;
   longitude: number;
+  approx_location: ApproxLocation | null;
   land_area: number;
   building_area: number;
   floors: number;
@@ -267,6 +269,10 @@ export class PropertySerializer {
         daily_price: data.daily_price || null,
         latitude: data.is_location_visible || isOwner ? data.lat : null,
         longitude: data.is_location_visible || isOwner ? data.lng : null,
+        approx_location:
+          data.is_location_visible || isOwner
+            ? null
+            : buildApproxLocation(data.id, data.lat, data.lng, process.env.LOCATION_OBFUSCATION_SALT),
         land_area: data.land_area,
         building_area: data.building_area,
         floors: data.floors,
