@@ -128,7 +128,10 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       type: 'select',
       title: 'موقعیت نمایشی بنر',
       selectItems: BannerPositionList,
-      options: { isMandatory: true },
+      options: {
+        isMandatory: true,
+        hint: 'هر بنر دقیقاً یک تصویر (یک اسلاید) است. برای اسلایدر متحرک هیرو با چند تصویر، چند بنر جداگانه با موقعیت «اسلایدر هیرو (بالای صفحه اصلی)» بسازید؛ همه‌ی بنرهای این موقعیت خودکار پشت‌سرهم و متحرک نمایش داده می‌شوند.',
+      },
     },
     {
       state: 'link',
@@ -155,7 +158,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       title: 'تصویر',
       options: {
         isMandatory: true,
-        titleHint: 'تصویر اصلی بنر',
+        titleHint: 'تصویر اصلی این بنر (فقط یک تصویر؛ برای اسلاید بعدی یک بنر جدید بسازید)',
         imageType: AttachmentAdminFolder.BANNER,
       },
     },
