@@ -188,6 +188,7 @@ model Attachment {
   submitted_form_items         SubmittedFormItems[]              @relation("AttachmentToSubmittedFormItems")
   property_auth_docs           PropertyAuthorize[]               @relation("PropertyAuthDocsImage")
   property_temp                Property[]                        @relation("Property_Temp")
+  banner_attachments           BannerAttachment[]
 
   @@map("attachments")
 }
@@ -349,8 +350,23 @@ model Banner {
   image       Attachment? @relation("Image", fields: [image_id], references: [id])
   image_sm    Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
   property    Property?   @relation(fields: [property_id], references: [id])
+  attachments BannerAttachment[]
 
   @@map("banners")
+}
+
+model BannerAttachment {
+  id            Int        @id @default(autoincrement())
+  banner_id     Int
+  attachment_id Int
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  deleted_at    DateTime?  @db.Timestamp(6)
+  attachment    Attachment @relation(fields: [attachment_id], references: [id], onDelete: Cascade)
+  banner        Banner     @relation(fields: [banner_id], references: [id], onDelete: Cascade)
+
+  @@index([banner_id], map: "banner_attachments_banner_id_idx")
+  @@map("banner_attachments")
 }
 
 model Category {

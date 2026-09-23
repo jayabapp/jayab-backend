@@ -6,6 +6,7 @@ import {
   _IsString,
   _IsBoolean,
   _IsEnum,
+  _IsArray,
 } from 'src/common/pipes/validator-translate.pipe';
 import { Transform, Type } from 'class-transformer';
 import { IsExist } from 'src/common/validators/is-exists.validator';
@@ -63,4 +64,9 @@ export class CreateBannerAdminDto {
   @Type(() => Number)
   @IsOptional()
   sort_order: number;
+
+  @ApiProperty({ title: 'اسلایدهای اضافی', required: false, example: [1] })
+  @IsOptional()
+  @_IsArray()
+  attachments: number[];
 }

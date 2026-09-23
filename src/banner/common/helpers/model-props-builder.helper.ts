@@ -1,4 +1,12 @@
-import { AccessControlList, Attachment, Banner, Category, Prisma, Property } from '@prisma/client';
+import {
+  AccessControlList,
+  Attachment,
+  Banner,
+  BannerAttachment,
+  Category,
+  Prisma,
+  Property,
+} from '@prisma/client';
 import { AttachmentAdminFolder } from 'src/attachment/interfaces/attachment-folder.enum';
 import {
   AvailableAction,
@@ -32,8 +40,11 @@ export const showPropsBuilder = (
     image: Attachment;
     image_sm: Attachment;
     property: Property;
+    attachments: Array<BannerAttachment & { attachment: Attachment }>;
   },
 ): Array<ShowProps> => {
+  const attachments = item.attachments?.map((e) => e.attachment);
+
   const props: Array<ShowProps> = [
     { state: 'property', title: '', value: item.property, type: 'object', isHidden: true },
 
@@ -91,6 +102,13 @@ export const showPropsBuilder = (
       type: 'image',
       isHidden: true,
     },
+    { type: 'divider' },
+    {
+      state: 'attachments',
+      title: 'اسلایدهای اضافی',
+      value: attachments,
+      type: 'image',
+    },
   ];
 
   return props;
@@ -130,7 +148,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       selectItems: BannerPositionList,
       options: {
         isMandatory: true,
-        hint: 'هر بنر دقیقاً یک تصویر (یک اسلاید) است. برای اسلایدر متحرک هیرو با چند تصویر، چند بنر جداگانه با موقعیت «اسلایدر هیرو (بالای صفحه اصلی)» بسازید؛ همه‌ی بنرهای این موقعیت خودکار پشت‌سرهم و متحرک نمایش داده می‌شوند.',
+        hint: 'برای اسلایدر متحرک هیرو، موقعیت «اسلایدر هیرو (بالای صفحه اصلی)» رو انتخاب کن و تصویر اصلی + اسلایدهای اضافی رو پایین همین فرم اضافه کن؛ همه با هم و پشت‌سرهم به صورت متحرک نمایش داده می‌شوند.',
       },
     },
     {
@@ -158,7 +176,7 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       title: 'تصویر',
       options: {
         isMandatory: true,
-        titleHint: 'تصویر اصلی این بنر (فقط یک تصویر؛ برای اسلاید بعدی یک بنر جدید بسازید)',
+        titleHint: 'تصویر اصلی (اسلاید اول)',
         imageType: AttachmentAdminFolder.BANNER,
       },
     },
@@ -171,6 +189,18 @@ export const createPropsBuilder = (): Array<CreateProps> => {
         isMandatory: false,
         titleHint: 'تصویر برای سایز موبایل (اختیاری)',
         imageType: AttachmentAdminFolder.BANNER_SM,
+      },
+    },
+    { type: 'divider' },
+    {
+      state: 'attachments',
+      type: 'image',
+      title: 'اسلایدهای اضافی',
+      options: {
+        isMandatory: false,
+        titleHint: 'برای اسلایدر هیرو با چند عکس، بقیه‌ی تصاویر رو اینجا اضافه کن',
+        imageType: AttachmentAdminFolder.BANNER,
+        multiImage: true,
       },
     },
   ];

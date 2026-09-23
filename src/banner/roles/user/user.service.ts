@@ -30,6 +30,7 @@ export class BannerUserService {
         view_count: true,
         image_sm: true,
         property: { select: { id: true, slug: true } },
+        attachments: { select: { attachment: true } },
       },
       take,
     });
@@ -53,6 +54,7 @@ export class BannerUserService {
         position: true,
         view_count: true,
         property: { select: { id: true, slug: true } },
+        attachments: { select: { attachment: true } },
       },
     });
 
