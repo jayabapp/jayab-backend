@@ -85,7 +85,7 @@ export class PropertyReserveUserService {
     });
     if (reservedNights > 0) throw new UnprocessableEntityException('RESERVE_DATES_UNAVAILABLE');
 
-    const { total: quotedTotal } = await this.propertyUserService.quote(property.id, {
+    const { stay_total: quotedTotal } = await this.propertyUserService.quote(property.id, {
       check_in: dto.check_in,
       check_out: dto.check_out,
       guests: Math.max(1, Number.parseInt(dto.guests_count, 10) || 1),

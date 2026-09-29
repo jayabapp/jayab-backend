@@ -1082,7 +1082,11 @@ export class PropertyUserService {
       extra_guest_fee_per_night: extraGuestFeePerNight,
       extra_guest_total: extraGuestTotal,
       cleaning_fee: cleaningFee,
-      total: rentTotal + extraGuestTotal + cleaningFee,
+      // Cleaning is a conditional policy note (FEATURE.md §4.3), never summed
+      // into the reservation amount. `total` stays for callers still reading
+      // it and is kept equal to `stay_total`, not the old cleaning-inclusive sum.
+      stay_total: rentTotal + extraGuestTotal,
+      total: rentTotal + extraGuestTotal,
       canceling_type: cancelingType ? { id: `${cancelingType.id}`, title: cancelingType.title } : null,
     };
   }

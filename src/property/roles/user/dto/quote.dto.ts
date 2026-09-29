@@ -49,6 +49,9 @@ export type PropertyQuoteResType = {
   extra_guest_fee_per_night: number;
   extra_guest_total: number;
   cleaning_fee: number;
+  /** rent_total + extra_guest_total — the canonical reservation amount. */
+  stay_total: number;
+  /** @deprecated kept equal to `stay_total` for backward compatibility; cleaning_fee is never summed into it. */
   total: number;
   canceling_type: { id: string; title: string } | null;
 };
