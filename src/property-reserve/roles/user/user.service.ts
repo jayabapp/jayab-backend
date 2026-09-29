@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
 import { PropertyReserveGuestStatusTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import { PropertyReserveGuestSeenTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/constants/reserve.constant';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
@@ -293,10 +294,13 @@ export class PropertyReserveUserService {
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
 
-  private guestStatus(statusId: number) {
+  private guestStatus(statusId: number, ownerSeenAt: Date | null) {
     const status = PropertyReserveStatusList.find((e) => e.id === statusId);
     const title = PropertyReserveGuestStatusTitle[statusId];
-    return status && title ? { ...status, title } : status;
+    if (!status || !title) return status;
+    if (statusId === PropertyReserveStatus.PENDING && ownerSeenAt)
+      return { ...status, title: PropertyReserveGuestSeenTitle };
+    return { ...status, title };
   }
 
   async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
@@ -310,7 +314,7 @@ export class PropertyReserveUserService {
       ttl_seconds: ttl > 0 ? ttl : 0,
       is_chat_enabled: isChatEnabled,
       is_answer_deadline_passed: ttl <= 0,
-      status: this.guestStatus(item.status),
+      status: this.guestStatus(item.status, item.owner_seen_at),
       is_subscription_expired: item.property.subscription_expired_at < startOfToday(),
     };
   }
