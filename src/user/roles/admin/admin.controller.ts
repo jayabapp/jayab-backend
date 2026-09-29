@@ -104,7 +104,9 @@ export class UserAdminController {
     const rbac = req.adminRbac as AccessControlList;
     if (!rbac.u) throw new ForbiddenException('RBAC3');
 
-    const result = await this.userAdminService.generateSSOToken(id);
+    const actorAdminId = req.user.id;
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+    const result = await this.userAdminService.generateSSOToken(id, actorAdminId, ip);
 
     return { result };
   }

@@ -20,9 +20,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { AdminType } from 'src/common/interfaces/user.interface';
-import { UserRole } from 'src/common/interfaces/role.enum';
 
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { issueImpersonationToken } from 'src/auth/common/helpers/impersonation-token.helper';
 import moment from 'moment-jalaali';
 
 import {
@@ -280,23 +279,14 @@ export class PropertyAdminService {
     return this.findOnePhotoUpgradeRequest(requestId);
   }
 
-  async generateSSOToken(propertyId: number): Promise<any> {
+  async generateSSOToken(propertyId: number, actorAdminId: number, ip?: string): Promise<string> {
     const property = await this.db.property.findFirst({
       where: { id: propertyId },
       select: { owner: { select: { user: true } } },
     });
     if (!property) throw new NotFoundException('NOT_FOUND');
     const user = property.owner.user;
-    const payload: TokenPayload = {
-      id: user.id,
-      jwtLevel: user.jwt_level || 1,
-      role: UserRole.USER,
-    };
-    const token = this.jwtService.sign(payload, {
-      secret: this.configService.get('auth.secret'),
-      expiresIn: '30m',
-    });
-    return token;
+    return issueImpersonationToken(this.jwtService, this.configService, user, actorAdminId, ip);
   }
 
   async expireProperty(propertyId: number): Promise<void> {

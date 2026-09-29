@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -181,7 +182,14 @@ export class PropertyAdminController {
     @Req() req: AdminRequestType,
     @Param('id', ParseIntPipe) id: number,
   ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyAdminService.generateSSOToken(id);
+    // The RBAC interceptor only requires read access for a GET route; owner
+    // impersonation is as sensitive as user impersonation (SL-02's endpoint),
+    // so it deliberately requires the same stricter update permission.
+    if (!req.adminRbac?.u) throw new ForbiddenException('RBAC3');
+
+    const actorAdminId = req.user.id;
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.ip;
+    const result = await this.propertyAdminService.generateSSOToken(id, actorAdminId, ip);
 
     return { result };
   }

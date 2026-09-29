@@ -17,9 +17,8 @@ import { operatorsList } from 'src/common/utils/constants/filter-operators.const
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from 'src/common/interfaces/role.enum';
 
-import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+import { issueImpersonationToken } from 'src/auth/common/helpers/impersonation-token.helper';
 import moment from 'moment-jalaali';
 
 @Injectable()
@@ -56,18 +55,9 @@ export class UserAdminService {
     return item;
   }
 
-  async generateSSOToken(id: number): Promise<string> {
+  async generateSSOToken(id: number, actorAdminId: number, ip?: string): Promise<string> {
     const user = await this.findById(id);
-    const payload: TokenPayload = {
-      id: user.id,
-      jwtLevel: user.jwt_level || 1,
-      role: UserRole.USER,
-    };
-
-    return this.jwtService.sign(payload, {
-      secret: this.configService.get('auth.secret'),
-      expiresIn: '30m',
-    });
+    return issueImpersonationToken(this.jwtService, this.configService, user, actorAdminId, ip);
   }
 
   async search(dto: SearchUsersAdminDto): Promise<User[]> {

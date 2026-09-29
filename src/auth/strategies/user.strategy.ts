@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { PartialUser } from 'src/common/interfaces/user.interface';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
 
 import Redis from 'ioredis';
 
@@ -25,8 +26,14 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     });
   }
 
-  public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
-    if (this.testAccessService.isEnabled()) {
+  public async validate(payload: TokenPayload): Promise<PartialUser> {
+    // Only a token signed by the admin panel's own SSO endpoints carries this
+    // claim (never accepted from client input) — it bypasses the test-access
+    // allowlist below and nothing else. Ban status, jwt level and every other
+    // check in this method still run normally for an impersonated session.
+    const isAdminImpersonation = payload.purpose === 'admin_impersonation';
+
+    if (this.testAccessService.isEnabled() && !isAdminImpersonation) {
       const accessUser = await this.db.user.findUnique({
         where: { id: payload.id },
         select: { mobile_number: true },
@@ -36,18 +43,19 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         throw new UnauthorizedException('TEST_ACCESS_DENIED');
     }
 
+    const jwtLevel = payload.jwtLevel ?? 0;
     const CACHE_KEY = getUserInfoCacheManagerKey(payload.id);
     const cacheData: string = await this.redis.get(CACHE_KEY);
 
     if (cacheData) {
       const decodedCacheData = Buffer.from(cacheData, 'base64').toString('utf-8');
       const userDataFromCache: PartialUser = JSON.parse(decodedCacheData);
-      this.isUserAuthenticated(userDataFromCache.jwt_level, payload?.jwtLevel);
+      this.isUserAuthenticated(userDataFromCache.jwt_level, jwtLevel);
       return userDataFromCache;
     }
 
     const user = await this.db.user.findFirst({
-      where: { id: payload.id, jwt_level: { lt: payload.jwtLevel + MAX_ACTIVE_DEVICES } },
+      where: { id: payload.id, jwt_level: { lt: jwtLevel + MAX_ACTIVE_DEVICES } },
       select: {
         id: true,
         mobile_number: true,
@@ -59,8 +67,9 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         jwt_level: true,
       },
     });
+    if (!user) throw new UnauthorizedException();
 
-    this.isUserAuthenticated(user.jwt_level, payload?.jwtLevel);
+    this.isUserAuthenticated(user.jwt_level, jwtLevel);
 
     const base64String = Buffer.from(JSON.stringify(user)).toString('base64');
     await this.redis.set(CACHE_KEY, base64String, 'EX', 60);
