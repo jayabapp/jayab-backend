@@ -1,21 +1,23 @@
-import { RapidocModule } from '@b8n/nestjs-rapidoc';
 import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { useContainer } from 'class-validator';
-import * as requestIp from 'request-ip';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filter/http-exception.filter';
-import { P2EInterceptor } from './common/interceptors/p2e.interceptor';
-import { RBACInterceptor } from './common/interceptors/rbac.interceptor';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import validationOptions from './common/utils/validation-options';
-import { __baseDir } from './config/settings';
-import { LoggerService } from './logger/logger.service';
-import { CorsMiddleware } from './common/middlewares/cors.middleware';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { SocketIoCustomAdapter } from './socket/common/socketio-custom-adapter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filter/http-exception.filter';
+import { RBACInterceptor } from './common/interceptors/rbac.interceptor';
+import { P2EInterceptor } from './common/interceptors/p2e.interceptor';
+import { CorsMiddleware } from './common/middlewares/cors.middleware';
+import { RapidocModule } from '@b8n/nestjs-rapidoc';
+import { ConfigService } from '@nestjs/config';
+import { LoggerService } from './logger/logger.service';
+import { useContainer } from 'class-validator';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { __baseDir } from './config/settings';
+
+import validationOptions from './common/utils/validation-options';
+
+import * as requestIp from 'request-ip';
 
 declare global {
   interface BigInt {
@@ -45,10 +47,6 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(new ValidationPipe(validationOptions));
   app.useGlobalFilters(new HttpExceptionFilter(configService));
-  // app.enableCors({
-  //   origin: '*',
-  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  // });
 
   app.enableCors({});
   app.use(CorsMiddleware);
@@ -146,7 +144,6 @@ async function bootstrap(): Promise<void> {
         bgColor: '#1d293d',
         headerColor: '#0f172b',
         primaryColor: '#00bc7d',
-        // textColor: '#171717',
         navTextColor: '#cad5e2',
         persistAuth: true,
         showInfo: true,
@@ -156,7 +153,6 @@ async function bootstrap(): Promise<void> {
         infoDescriptionHeadingsInNavbar: false,
         headingText: 'Jayab',
         renderStyle: 'focused',
-        // showCurlBeforeTry: true,
         sortEndpointsBy: 'method',
         fillRequestFieldsWithExample: true,
       },
@@ -166,7 +162,9 @@ async function bootstrap(): Promise<void> {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   await app.listen(process.env.PORT || 3000, '127.0.0.1');
+  const url = await app.getUrl();
+  // eslint-disable-next-line no-console
+  console.log(`🚀 Server is running on: ${url}`);
 }
 
 bootstrap();
-// AppClusterService.clusterize(bootstrap);

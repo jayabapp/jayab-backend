@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Base {
@@ -331,9 +332,9 @@ model Setting {
 }
 
 model Banner {
-  id          Int         @id @default(autoincrement())
+  id          Int                @id @default(autoincrement())
   title       String
-  is_active   Boolean     @default(true)
+  is_active   Boolean            @default(true)
   description String?
   link        String?
   category_id Int?
@@ -342,14 +343,14 @@ model Banner {
   sort_order  Int?
   image_id    Int?
   image_sm_id Int?
-  created_at  DateTime    @default(now()) @db.Timestamp(6)
-  updated_at  DateTime    @updatedAt
+  created_at  DateTime           @default(now()) @db.Timestamp(6)
+  updated_at  DateTime           @updatedAt
   property_id Int?
-  view_count  Int         @default(0)
-  category    Category?   @relation(fields: [category_id], references: [id])
-  image       Attachment? @relation("Image", fields: [image_id], references: [id])
-  image_sm    Attachment? @relation("ImageSm", fields: [image_sm_id], references: [id])
-  property    Property?   @relation(fields: [property_id], references: [id])
+  view_count  Int                @default(0)
+  category    Category?          @relation(fields: [category_id], references: [id])
+  image       Attachment?        @relation("Image", fields: [image_id], references: [id])
+  image_sm    Attachment?        @relation("ImageSm", fields: [image_sm_id], references: [id])
+  property    Property?          @relation(fields: [property_id], references: [id])
   attachments BannerAttachment[]
 
   @@map("banners")
@@ -1292,10 +1293,10 @@ model PropertyReserve {
   property                   Property  @relation(fields: [property_id], references: [id])
   user                       User      @relation(fields: [user_id], references: [id])
 
+  @@unique([user_id, idempotency_key])
   @@index([property_id])
   @@index([user_id])
   @@index([created_at])
-  @@unique([user_id, idempotency_key])
   @@map("property_reserves")
 }
 
