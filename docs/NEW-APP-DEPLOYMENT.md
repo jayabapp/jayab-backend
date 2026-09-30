@@ -54,7 +54,10 @@ BASIC_AUTH_PASSWORD=<در secret manager>
 - `SANDBOX_MODE=1` فقط در Front تست باعث نمایش کد OTP برگشتی از Back می‌شود؛ روی `.app` حتماً `0` باشد.
 - `SITE_NOINDEX=true` و `NOINDEX_HOSTS` مانع indexشدن دامنه تست می‌شوند.
 - `NEXT_PUBLIC_MAIN_SITE_URL` مقصد انتقال مسیرهای محافظت‌شده از محیط تست به سایت اصلی است.
-- `BASIC_AUTH_USER`/`BASIC_AUTH_PASSWORD` گیت HTTP Basic Auth کل دامنهٔ `jayab.org` (`proxy.ts`, `helpers/basicAuthGate.ts`) را فعال می‌کنند؛ روی `.app` هر دو باید خالی بمانند. مقدار واقعی فقط در secret manager سرور تنظیم شود، نه در Git. برای rollback فوری بدون build مجدد، کافی است یکی از این دو را خالی کرده و Front را restart کنید. مسیر `/api/healthz` بدون این گیت در دسترس است تا health check خراب نشود.
+- `BASIC_AUTH_USER`/`BASIC_AUTH_PASSWORD` گیت دسترسی کل دامنهٔ `jayab.org` (`proxy.ts`, `helpers/basicAuthGate.ts`) را فعال می‌کنند؛ روی `.app` هر دو باید خالی بمانند. مقدار واقعی فقط در secret manager سرور تنظیم شود، نه در Git. **این گیت باید واقعاً روی سرور jayab.org دیپلوی و این دو env var آنجا ست شوند — تا وقتی این کار روی خود سرور انجام نشود، صرفاً push کردن کد کافی نیست و گیت غیرفعال می‌ماند.** بدون این دو env var، سایت دقیقاً مثل قبل بدون گیت بالا می‌آید (fail-open عمدی، نه باگ).
+  - **مکانیزم:** برخلاف Basic Auth (پاپ‌آپ native مرورگر)، حالا یک صفحهٔ ورود واقعی است — کاربر گیت‌شده به `/qa-login` ریدایرکت می‌شود، فرم یوزر/پسورد را پر می‌کند، و در صورت درستی یک کوکی نشست (`qa_gate_session`, تا ۳۰ روز) دریافت می‌کند. مسیرهای `/qa-login` و `/api/qa-login` خودشان از گیت مستثنی‌اند تا حلقهٔ ریدایرکت نیفتد.
+  - برای rollback فوری بدون build مجدد، کافی است یکی از این دو env var را خالی کرده و Front را restart کنید.
+  - مسیر `/api/healthz` بدون این گیت در دسترس است تا health check خراب نشود.
 - متغیرهای عمومی موجود مانند `NEXT_PUBLIC_BASE_URL`، `NEXT_PUBLIC_SITE_URL`، `NEXT_PUBLIC_WEB_SITE` و `NEXT_PUBLIC_WEBSITE_URL` باید برای هر deployment به دامنه همان محیط اشاره کنند.
 
 این متغیرها فقط برای توسعه و CI هستند و روی runtime سرور الزامی نیستند:
