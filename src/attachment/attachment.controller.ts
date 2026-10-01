@@ -7,6 +7,7 @@ import {
   Query,
   BadRequestException,
   Delete,
+  ForbiddenException,
   Param,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -21,12 +22,10 @@ import {
   BANNER_FOLDER,
   IMAGES_PROFILE_FOLDER,
   CATEGORY_FOLDER,
-  FORM_FOLDER,
   IMAGES_OWNER_SELFIE_FOLDER,
   IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
   IMAGES_ADVISOR_DOCUMENT_FOLDER,
   IMAGES_OWNER_PROPERTY_FOLDER,
-  VIDEOS_OWNER_PROPERTY_FOLDER,
   CHAT_MEDIA_FOLDER,
   IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
@@ -37,7 +36,7 @@ import { CreateAttachmentAdminDto } from './dto/create-attachment-admin.dto';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 import { AttachmentImagePropsType } from './interfaces/attachment-props.type';
 import { CreateAttachmentUserDto } from './dto/create-attachment-user.dto';
-import { OwnerGuard } from 'src/auth/guards/owner.guard';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 
 @ApiTags('📎 Attachment')
 @Controller()
@@ -45,6 +44,7 @@ export class AttachmentController {
   constructor(
     private readonly attachmentService: AttachmentService,
     private readonly s3: S3ManagerService,
+    private readonly setting: SettingAdminService,
   ) {}
 
   /* -------------------------------------------------------------------------- */
@@ -131,6 +131,8 @@ export class AttachmentController {
         break;
 
       case AttachmentUserFolder.CHAT:
+        // آپلود باید پیش از رسیدن به S3 متوقف شود؛ وگرنه فلگ فقط ارسال پیام را می‌بندد، نه هزینه‌ی ذخیره‌سازی را.
+        if (!(await this.setting.isGuestChatEnabled())) throw new ForbiddenException('CHAT13');
         args = {
           file,
           folder: CHAT_MEDIA_FOLDER,

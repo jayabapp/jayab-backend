@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bull';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
 import { Queue } from 'bull';
 import moment from 'moment-jalaali';
@@ -10,6 +10,7 @@ import { UserRole } from 'src/common/interfaces/role.enum';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { SmsService } from 'src/sms/sms.service';
 import { v7 as uuid } from 'uuid';
 import { PartialParticipant } from './common/chat.interface';
@@ -25,7 +26,20 @@ export class SharedChatService {
     private readonly db: PrismaService,
     private readonly fcmService: FirebaseService,
     private readonly smsService: SmsService,
+    private readonly setting: SettingAdminService,
   ) {}
+
+  /**
+   * کلید سراسری توقف چت (حالت Incident).
+   * وقتی خاموش است هیچ پیام جدیدی (نه مهمان و نه میزبان) و هیچ چت جدیدی ساخته نمی‌شود.
+   */
+  async isChatEnabled(): Promise<boolean> {
+    return this.setting.isGuestChatEnabled();
+  }
+
+  async assertChatEnabled(): Promise<void> {
+    if (!(await this.isChatEnabled())) throw new ForbiddenException('CHAT13');
+  }
 
   /**
    *
@@ -34,6 +48,9 @@ export class SharedChatService {
    * @returns
    */
   async findOrCreate(user: PartialUser, dto: CreateChatUserDto): Promise<string> {
+    // قبل از برگرداندن اتاق موجود چک می‌شود تا ورود به چت‌های قدیمی هم برای ارسال بسته باشد
+    await this.assertChatEnabled();
+
     const userId = user.id;
     const part = await this.db.messengerParticipant.findFirst({
       where: { user_id: userId, chatroom: { property_id: dto?.property_id } },
@@ -240,18 +257,21 @@ export class SharedChatService {
    * @returns
    */
   async canCreateChat(userId: number, dto: CreateChatUserDto): Promise<boolean> {
-    //limitation logic
+    await this.assertChatEnabled();
 
-    return true;
+    return !!(userId && dto?.property_id);
   }
 
   async deleteMessage(chatroomId: number, participantId: number, messageId: number): Promise<void> {
+    // در حالت Incident تاریخچه باید واقعاً فقط‌خواندنی بماند تا شواهد گفتگو حذف نشوند.
+    await this.assertChatEnabled();
+
     const message = await this.db.messengerMessages.findFirst({
       where: { chatroom_id: chatroomId, participant_id: participantId, id: messageId },
     });
 
     if (!message) throw new BadRequestException('CHAT4');
-    if (moment(message.created_at).diff(moment(), 'm') >= 1) throw new BadRequestException('CHAT4');
+    if (moment().diff(moment(message.created_at), 'm') >= 1) throw new BadRequestException('CHAT4');
 
     await this.db.messengerMessages.update({ where: { id: messageId }, data: { deleted_at: new Date() } });
   }
@@ -361,12 +381,14 @@ export class SharedChatService {
   ): Promise<void> {
     if (!room) return;
     if (!senderParticipantId) return;
+    // پیامک‌های صف‌شده قبل از خاموش شدن کلید نباید به میزبان برسند
+    if (!(await this.isChatEnabled())) return;
     //اگر اولین پیام بود یا به تازگی پیامی ارسال نکرده بود به میزبان پیامک میدیم
-    let mustSendSms = false;
+    let shouldSendSms = false;
 
-    if (!room.last_message) mustSendSms = true;
-    else if (moment().diff(room.last_message.created_at, 's') > 30 * 60) mustSendSms = true;
-    if (!mustSendSms) return;
+    if (!room.last_message) shouldSendSms = true;
+    else if (moment().diff(room.last_message.created_at, 's') > 30 * 60) shouldSendSms = true;
+    if (!shouldSendSms) return;
 
     const p = await this.db.property.findFirst({
       where: { id: room.property_id },

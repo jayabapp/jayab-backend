@@ -95,6 +95,9 @@ export class ChatUserController {
     const user = request.user;
 
     /* -------------------------------------------------------------------------- */
+    // کلید سراسری توقف چت: ارسال پیام/فایل برای هر دو طرف (مهمان و میزبان) متوقف می‌شود
+    await this.sharedChatService.assertChatEnabled();
+
     if (!dto.media_id && !dto.text) throw new BadRequestException('CHAT2');
 
     /* -------------------------------------------------------------------------- */
@@ -200,6 +203,7 @@ export class ChatUserController {
       recipient: chatroom.participants.recipient,
       is_recipient_online: isRecipientOnline,
       is_blocked: isBlocked,
+      is_chat_suspended: !(await this.sharedChatService.isChatEnabled()),
       property: {
         ...property,
         is_expired: chatroom.isPropertyExpired,

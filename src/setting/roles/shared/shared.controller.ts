@@ -19,7 +19,9 @@ export class SettingSharedController {
   async findAll(): Promise<SuccessResponseArgs> {
     const photoUpgradePrice = await this.settingAdminService.get(SettingKey.PROPERTY_PHOTO_UPGRADE_PRICE);
 
-    return { result: { photo_upgrade_price: photoUpgradePrice } };
+    const guestChatEnabled = await this.settingAdminService.isGuestChatEnabled();
+
+    return { result: { photo_upgrade_price: photoUpgradePrice, guest_chat_enabled: guestChatEnabled } };
   }
 
   @ApiOperation({ summary: 'Find robots.txt' })

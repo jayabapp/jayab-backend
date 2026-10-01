@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
 import { UpdatePropertyReserveUserDto } from './dto/update.dto';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
@@ -34,6 +35,7 @@ export class PropertyReserveUserService {
     private readonly smsService: SmsService,
     private readonly avanakService: AvanakService,
     private readonly configService: ConfigService,
+    private readonly setting: SettingAdminService,
   ) {
     this.ACTIVE_RESERVE_QUERY = {
       expired_at: null,
@@ -354,7 +356,8 @@ export class PropertyReserveUserService {
   /* --------------------------------- HELPERS -------------------------------- */
   async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
-    const isChatEnabled = item.property.is_chat_enabled;
+    // کلید سراسری توقف چت روی فلگ خود آگهی غالب است
+    const isChatEnabled = item.property.is_chat_enabled && (await this.setting.isGuestChatEnabled());
     const showCounter = item.status === PropertyReserveStatus.PENDING;
 
     return {

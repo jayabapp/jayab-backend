@@ -9,10 +9,13 @@ export enum SettingKey {
   JAYAB_MOBILE_FOR_TICKET_1 = 'JAYAB_MOBILE_FOR_TICKET_1',
   JAYAB_MOBILE_FOR_TICKET_2 = 'JAYAB_MOBILE_FOR_TICKET_2',
   PROPERTY_PHOTO_UPGRADE_PRICE = 'PROPERTY_PHOTO_UPGRADE_PRICE',
+  /** کلید سراسری چت مهمان–میزبان: 1 = فعال، 0 = متوقف */
+  GUEST_CHAT_ENABLED = 'GUEST_CHAT_ENABLED',
 }
 
 export enum SettingDataType {
   NUMBER = 'NUMBER',
   TEXT = 'TEXT',
   TEXT_AREA = 'TEXT_AREA',
+  BOOLEAN = 'BOOLEAN',
 }

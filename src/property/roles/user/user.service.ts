@@ -310,7 +310,10 @@ export class PropertyUserService {
       full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
     };
 
-    return { ...serialized, owner_info: ownerInfo };
+    // کلید سراسری توقف چت: وقتی خاموش است دکمه چت در فرانت نمایش داده نمی‌شود
+    const isChatEnabled = serialized.is_chat_enabled && (await this.setting.isGuestChatEnabled());
+
+    return { ...serialized, is_chat_enabled: isChatEnabled, owner_info: ownerInfo };
   }
 
   /**
