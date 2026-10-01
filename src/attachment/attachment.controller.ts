@@ -7,6 +7,7 @@ import { CreateAttachmentUserDto } from './dto/create-attachment-user.dto';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { AttachmentService } from './attachment.service';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
@@ -52,6 +53,7 @@ export class AttachmentController {
   constructor(
     private readonly attachmentService: AttachmentService,
     private readonly s3: S3ManagerService,
+    private readonly setting: SettingAdminService,
   ) {}
 
   @ApiOperation({ summary: 'Download a public property image as WebP' })
@@ -149,6 +151,7 @@ export class AttachmentController {
         break;
 
       case AttachmentUserFolder.CHAT:
+        if (!(await this.setting.isGuestChatEnabled())) throw new ForbiddenException('CHAT14');
         args = {
           file,
           folder: CHAT_MEDIA_FOLDER,

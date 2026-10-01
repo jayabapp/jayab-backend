@@ -15,6 +15,7 @@ import { RESERVE_MAX_NIGHTS } from 'src/property-reserve/common/constants/reserv
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { ConfigService } from '@nestjs/config';
 import { AvanakService } from 'src/sms/avanak.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
@@ -33,6 +34,7 @@ export class PropertyReserveUserService {
     private readonly avanakService: AvanakService,
     private readonly configService: ConfigService,
     private readonly propertyUserService: PropertyUserService,
+    private readonly setting: SettingAdminService,
   ) {
     this.ACTIVE_RESERVE_QUERY = {
       expired_at: null,
@@ -305,7 +307,7 @@ export class PropertyReserveUserService {
 
   async serializer(item: PropertyReserve & { property: Partial<Property> }): Promise<any> {
     const ttl = moment(item.created_at).add(RESERVE_TTL_MINUTES, 'minutes').diff(moment(), 's');
-    const isChatEnabled = item.property.is_chat_enabled;
+    const isChatEnabled = item.property.is_chat_enabled && (await this.setting.isGuestChatEnabled());
     const showCounter = item.status === PropertyReserveStatus.PENDING && ttl > 0;
     return {
       ...item,

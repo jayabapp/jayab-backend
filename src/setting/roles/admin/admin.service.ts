@@ -59,14 +59,40 @@ export class SettingAdminService {
         throw new UnprocessableEntityException('مقدار وارد شده صحیح نیست');
     }
 
+    if (setting.data_type === SettingDataType.BOOLEAN) {
+      if (dto.value !== '0' && dto.value !== '1') throw new UnprocessableEntityException('COMMON4');
+    }
+
     await this.db.setting.update({ where: { id: id }, data: { value: dto.value } });
 
     /**
      * delete setting cache
      */
     await this.cacheManager.del(`setting:${setting.key}`);
+    if (setting.key === SettingKey.GUEST_CHAT_ENABLED) this.guestChatMemo = null;
 
     return;
+  }
+
+  /**
+   * کلید سراسری چت مهمان–میزبان.
+   * عمداً از کش مشترک استفاده نمی‌کند (کش حافظه‌ای هر پروسس جداست و تا یک ساعت کهنه می‌ماند)؛
+   * فقط چند ثانیه در حافظه نگه داشته می‌شود تا خاموش‌شدن کلید سریع اعمال شود.
+   * اگر ردیف تنظیمات هنوز ساخته نشده باشد، چت فعال در نظر گرفته می‌شود.
+   */
+  private guestChatMemo: { value: boolean; expires_at: number } | null = null;
+  async isGuestChatEnabled(): Promise<boolean> {
+    const now = Date.now();
+    if (this.guestChatMemo && this.guestChatMemo.expires_at > now) return this.guestChatMemo.value;
+
+    const setting = await this.db.setting.findFirst({
+      where: { key: SettingKey.GUEST_CHAT_ENABLED },
+      select: { value: true },
+    });
+    const value = setting ? setting.value !== '0' : true;
+    this.guestChatMemo = { value, expires_at: now + 5000 };
+
+    return value;
   }
 
   /**

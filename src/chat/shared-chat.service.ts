@@ -1,7 +1,7 @@
 import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
 import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
 import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
 import { PartialParticipant } from './common/chat.interface';
 import { CreateChatUserDto } from './roles/user/dto/create.dto';
@@ -9,6 +9,7 @@ import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { FirebaseService } from 'src/firebase/firebase.service';
 import { SendMessageDto } from './common/dto/send-message.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
@@ -26,7 +27,16 @@ export class SharedChatService {
     private readonly db: PrismaService,
     private readonly fcmService: FirebaseService,
     private readonly smsService: SmsService,
+    private readonly setting: SettingAdminService,
   ) {}
+
+  async isChatEnabled(): Promise<boolean> {
+    return this.setting.isGuestChatEnabled();
+  }
+
+  async assertChatEnabled(): Promise<void> {
+    if (!(await this.isChatEnabled())) throw new ForbiddenException('CHAT14');
+  }
 
   /**
    *
@@ -35,6 +45,8 @@ export class SharedChatService {
    * @returns
    */
   async findOrCreate(user: PartialUser, dto: CreateChatUserDto): Promise<string> {
+    await this.assertChatEnabled();
+
     const userId = user.id;
     const part = await this.db.messengerParticipant.findFirst({
       where: { user_id: userId, chatroom: { property_id: dto?.property_id } },
@@ -241,18 +253,19 @@ export class SharedChatService {
    * @returns
    */
   async canCreateChat(userId: number, dto: CreateChatUserDto): Promise<boolean> {
-    //limitation logic
-
-    return true;
+    await this.assertChatEnabled();
+    return !!(userId && dto?.property_id);
   }
 
   async deleteMessage(chatroomId: number, participantId: number, messageId: number): Promise<void> {
+    await this.assertChatEnabled();
+
     const message = await this.db.messengerMessages.findFirst({
       where: { chatroom_id: chatroomId, participant_id: participantId, id: messageId },
     });
 
     if (!message) throw new BadRequestException('CHAT4');
-    if (moment(message.created_at).diff(moment(), 'm') >= 1) throw new BadRequestException('CHAT4');
+    if (moment().diff(moment(message.created_at), 'm') >= 1) throw new BadRequestException('CHAT4');
 
     await this.db.messengerMessages.update({ where: { id: messageId }, data: { deleted_at: new Date() } });
   }
@@ -362,6 +375,7 @@ export class SharedChatService {
   ): Promise<void> {
     if (!room) return;
     if (!senderParticipantId) return;
+    if (!(await this.isChatEnabled())) return;
     let mustSendSms = false;
     if (!room.last_message) mustSendSms = true;
     else if (moment().diff(room.last_message.created_at, 's') > 30 * 60) mustSendSms = true;

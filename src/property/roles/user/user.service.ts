@@ -351,7 +351,8 @@ export class PropertyUserService {
       full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
       since: item.owner.created_at,
     };
-    return { ...serialized, owner_info: ownerInfo, seo_links: seoLinks };
+    const isChatEnabled = serialized.is_chat_enabled && (await this.setting.isGuestChatEnabled());
+    return { ...serialized, is_chat_enabled: isChatEnabled, owner_info: ownerInfo, seo_links: seoLinks };
   }
 
   private async findSeoLinks(
