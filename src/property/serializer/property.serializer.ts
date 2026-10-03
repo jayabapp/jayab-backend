@@ -1,6 +1,6 @@
 import { PropertyBedroom, PropertyCalendar, PropertyDailyPrice, PropertyDescription } from '@prisma/client';
+import { Property, PropertyAuthorize, PropertyBadge, Subscription } from '@prisma/client';
 import { Attachment, City, PropertyImage, PropertyOption } from '@prisma/client';
-import { Property, PropertyAuthorize, PropertyBadge } from '@prisma/client';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
 import { ApproxLocation, buildApproxLocation } from '../common/helpers/approx-location.helper';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
@@ -38,6 +38,7 @@ export type PropertyJsonType = Property & {
   reserve_days?: ReserveDay[];
   status_number?: number;
   owner?: any;
+  subscriptions?: Array<Pick<Subscription, 'id'>>;
 };
 
 export type PropertyArrayResType = {
@@ -66,6 +67,7 @@ export type PropertyArrayResType = {
   is_authorized: boolean;
   has_blue_tick: boolean;
   is_promoted: boolean;
+  has_active_subscription: boolean;
   authorize_status: EnumList;
   blue_tick_status: EnumList;
   reserve_days?: ReserveDay[];
@@ -175,12 +177,6 @@ export class PropertySerializer {
     return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
-  /**
-   * کمترین نرخ شب مثبت و فعال؛ برای «شروع قیمت از» (FEATURE.md §4.5). پایه از
-   * نرخ روزهای هفته و در صورت وجود نرخ ارزان‌تر در بازهٔ تقویم بارگذاری‌شده
-   * (تاریخ‌های غیررزروشده) استفاده می‌شود؛ مقدار صفر/null و روز رزروشده وارد
-   * محاسبه نمی‌شود.
-   */
   private findMinimumPrice(dailyPrice: PropertyDailyPrice, calendar?: PropertyCalendar[]): number | null {
     const isPositive = (value: unknown): value is number => typeof value === 'number' && value > 0;
     const dailyValues = Object.values(dailyPrice ?? {}).filter(isPositive);
@@ -230,6 +226,10 @@ export class PropertySerializer {
     let single: PropertyJsonResType;
 
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
+    const hasActiveSubscription =
+      !!data.subscription_expired_at &&
+      startOfDate(data.subscription_expired_at).getTime() >= startOfToday().getTime() &&
+      (data.subscriptions === undefined || data.subscriptions.length > 0);
     const todayInPropertyCalendar = data.calendar?.find(
       (e) => moment(e.date).diff(startOfToday(), 'm') === 0,
     );
@@ -267,6 +267,7 @@ export class PropertySerializer {
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
       is_promoted: !!data.promoted_at,
+      has_active_subscription: hasActiveSubscription,
       favorite_count: data?.favorite_count,
       status_number: data.status,
       status: this.findStatus(remainingDays, data.status),

@@ -27,6 +27,7 @@ import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
 import { buildFuzzyCityQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { buildLocationSpans } from 'src/property/common/helpers/search-query-parser.helper';
 import { tokenizeSearchText } from 'src/property/common/helpers/search-text.helper';
 import { CancelingTypeList } from 'src/property/common/types/property-canceling-types.type';
@@ -248,6 +249,11 @@ export class PropertyUserService {
       daily_price: true,
       calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
       bedrooms: { select: { total_bedrooms: true } },
+      subscriptions: {
+        where: { status: SubscriptionStatus.SUCCESS, duration: { gt: 0 } },
+        select: { id: true },
+        take: 1,
+      },
       _count: { select: { property_images: true } },
     } satisfies Prisma.PropertyInclude;
 
@@ -335,6 +341,11 @@ export class PropertyUserService {
         bedrooms: true,
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+        subscriptions: {
+          where: { status: SubscriptionStatus.SUCCESS, duration: { gt: 0 } },
+          select: { id: true },
+          take: 1,
+        },
         description: true,
         assistants: { select: { assistant_full_name: true, is_owner: true } },
         owner: { select: { created_at: true, user: { select: { profile_image: true } } } },
@@ -411,6 +422,11 @@ export class PropertyUserService {
       daily_price: true,
       calendar: {
         where: { date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) } },
+      },
+      subscriptions: {
+        where: { status: SubscriptionStatus.SUCCESS, duration: { gt: 0 } },
+        select: { id: true },
+        take: 1,
       },
       _count: { select: { property_images: true } },
     };
@@ -1083,9 +1099,6 @@ export class PropertyUserService {
       extra_guest_fee_per_night: extraGuestFeePerNight,
       extra_guest_total: extraGuestTotal,
       cleaning_fee: cleaningFee,
-      // Cleaning is a conditional policy note (FEATURE.md §4.3), never summed
-      // into the reservation amount. `total` stays for callers still reading
-      // it and is kept equal to `stay_total`, not the old cleaning-inclusive sum.
       stay_total: rentTotal + extraGuestTotal,
       total: rentTotal + extraGuestTotal,
       canceling_type: cancelingType ? { id: `${cancelingType.id}`, title: cancelingType.title } : null,
