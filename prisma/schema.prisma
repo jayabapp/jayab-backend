@@ -236,6 +236,7 @@ model Content {
   show_in_sitemap  Boolean             @default(true)
   fields           Json?
   seo              Json?
+  translations     Json?
   form_id          Int?
   created_at       DateTime            @default(now())
   updated_at       DateTime            @updatedAt

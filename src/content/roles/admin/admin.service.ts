@@ -59,7 +59,12 @@ export class ContentAdminService {
     }
 
     const newContent = await this.db.content.create({
-      data: { ...omit(dto, 'attachments') },
+      data: {
+        ...omit(dto, ['attachments', 'translations']),
+        ...(dto.translations != null
+          ? { translations: JSON.parse(JSON.stringify(dto.translations)) as Prisma.InputJsonObject }
+          : {}),
+      },
     });
 
     /**create attachments */
@@ -85,10 +90,7 @@ export class ContentAdminService {
     perPage = 50,
     sortBy: ContentSort = 'date_desc',
   ): Promise<PaginatedResult<Content>> {
-    let orderBy: Prisma.ContentOrderByWithRelationInput[] = [
-      { created_at: 'desc' },
-      { id: 'desc' },
-    ];
+    let orderBy: Prisma.ContentOrderByWithRelationInput[] = [{ created_at: 'desc' }, { id: 'desc' }];
 
     if (sortBy === 'date_asc') orderBy = [{ created_at: 'asc' }, { id: 'asc' }];
     if (sortBy === 'view_desc') orderBy = [{ view_count: 'desc' }, { id: 'desc' }];
@@ -184,7 +186,12 @@ export class ContentAdminService {
 
     const updatedContent = await this.db.content.update({
       where: { id },
-      data: { ...omit(dto, 'attachments') },
+      data: {
+        ...omit(dto, ['attachments', 'translations']),
+        ...(dto.translations != null
+          ? { translations: JSON.parse(JSON.stringify(dto.translations)) as Prisma.InputJsonObject }
+          : {}),
+      },
     });
 
     await this.db.contentAttachment.deleteMany({ where: { content_id: id } });

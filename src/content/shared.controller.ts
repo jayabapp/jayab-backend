@@ -7,6 +7,7 @@ import { ContentSharedService } from './shared.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
 import { SHARED_ROUTE_GROUP } from 'src/content/common/route-group.constant';
 import { THREE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { ContentLocaleDto } from './dto/content-locale.dto';
 
 @ApiTags('Content - SHARED')
 @Controller(SHARED_ROUTE_GROUP)
@@ -33,8 +34,12 @@ export class ContentSharedController {
   @CacheTTL(THREE_MINUTES_TTL)
   @ApiOperation({ summary: 'Find One by key', description: '', operationId: 'contentSharedFindOneByKey' })
   @Get('by-key/:contentKey')
-  async findOneByKey(@Param('contentKey') contentKey: string): Promise<SuccessResponseArgs> {
-    const result = await this.contentSharedService.findOneByKey(contentKey);
+  async findOneByKey(
+    @Param('contentKey') contentKey: string,
+    @Query() dto: ContentLocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    // CacheInterceptor keys by the request URL, including the validated locale query.
+    const result = await this.contentSharedService.findOneByKey(contentKey, dto.locale);
     return { result };
   }
 

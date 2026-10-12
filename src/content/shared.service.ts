@@ -3,6 +3,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { FindAllContentSharedDto } from './dto/find-all.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ContentLocale } from './dto/content-locale.dto';
+import { localizeContent, LocalizedContent } from './serializer/content-locale.serializer';
 
 @Injectable()
 export class ContentSharedService {
@@ -114,7 +116,7 @@ export class ContentSharedService {
    * @param key
    * @returns
    */
-  async findOneByKey(key: string): Promise<Content> {
+  async findOneByKey(key: string, locale: ContentLocale = 'fa'): Promise<LocalizedContent<Content>> {
     const item = await this.db.content.findFirst({
       where: { key: `${key}`, AND: [this.publishedContentWhere()] },
       include: {
@@ -127,7 +129,7 @@ export class ContentSharedService {
     });
     if (!item) throw new NotFoundException('NOT_FOUND_CONTENT');
 
-    return item;
+    return localizeContent(item, locale);
   }
 
   /**
