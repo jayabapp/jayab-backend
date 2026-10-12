@@ -6,6 +6,7 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { FindAllCityUserDto } from './dto/find-all.dto';
 import { CitySharedService } from '../../shared.service';
 import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
 @ApiTags('Cities - USER')
 @Controller(CITY_USER_ROUTE_GROUP)
@@ -23,8 +24,11 @@ export class CityUserController {
 
   @ApiOperation({ summary: 'Find children', operationId: 'cityUserFindChildren' })
   @Get(':parentId')
-  async findChildren(@Param('parentId', ParseIntPipe) parentId: number): Promise<SuccessResponseArgs> {
-    const result = await this.citySharedService.findChildren(parentId);
+  async findChildren(
+    @Param('parentId', ParseIntPipe) parentId: number,
+    @Query() dto: LocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.citySharedService.findChildren(parentId, dto.locale);
     return { result };
   }
 }

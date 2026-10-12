@@ -44,6 +44,7 @@ import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { SmsService } from 'src/sms/sms.service';
 import { toAndArray } from 'src/property/common/helpers/property-search-query.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
+import { Locale } from 'src/common/dto/locale.dto';
 import { Redis } from 'ioredis';
 
 import randomstring from 'randomstring';
@@ -239,9 +240,9 @@ export class PropertyUserService {
 
     const include = {
       feature_image: true,
-      province: { select: { title: true } },
-      city: { select: { title: true } },
-      region: { select: { title: true } },
+      province: { select: { title: true, translations: true } },
+      city: { select: { title: true, translations: true } },
+      region: { select: { title: true, translations: true } },
       property_options: {
         where: { option: { deleted_at: null } },
         select: { option: { select: { title: true, group: true } } },
@@ -301,7 +302,7 @@ export class PropertyUserService {
       });
       const order = new Map(orderedPageIds.map((id, index) => [id, index]));
       pageData.sort((a, b) => order.get(a.id) - order.get(b.id));
-      const serialized = await this.propertySerializer.toArray(pageData, today, isAdvisor, false);
+      const serialized = await this.propertySerializer.toArray(pageData, today, isAdvisor, false, dto.locale);
       return { data: serialized, meta: priceMeta };
     }
     const list = await paginate()<PropertyJsonType, Prisma.PropertyFindManyArgs>(
@@ -313,13 +314,14 @@ export class PropertyUserService {
       },
       { page: dto.page, perPage: dto.per_page },
     );
-    const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor, false);
+    const serialized = await this.propertySerializer.toArray(list.data, today, isAdvisor, false, dto.locale);
     return { data: serialized, meta: list.meta };
   }
 
   async findOne(
     propertySlug: string,
     isAdvisor: boolean,
+    locale: Locale = 'fa',
   ): Promise<PropertyResType & { owner_info: any; seo_links: PropertySeoLinks }> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
@@ -331,9 +333,9 @@ export class PropertyUserService {
       include: {
         feature_image: true,
         property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' } },
-        province: { select: { title: true } },
-        city: { select: { title: true } },
-        region: { select: { title: true } },
+        province: { select: { title: true, translations: true } },
+        city: { select: { title: true, translations: true } },
+        region: { select: { title: true, translations: true } },
         property_options: {
           where: { option: { deleted_at: null } },
           select: { option: { select: { title: true, group: true, image: true } } },
@@ -355,7 +357,7 @@ export class PropertyUserService {
     if (!!item.deleted_at) throw new GoneException('GONE');
     if (item.status !== PropertyStatuses.PUBLISHED) throw new NotFoundException('NOT_FOUND');
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor);
+    const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor, false, locale);
     const seoLinks = await this.findSeoLinks(item.city_id, item.province_id, item.has_pool);
     const ownerInfo = {
       avatar: item.owner.user.profile_image,
@@ -405,7 +407,7 @@ export class PropertyUserService {
     return query(this.similarWhere(property, false));
   }
 
-  async findSimilar(propertyId: number, limit = 8): Promise<PropertyArrayResType[]> {
+  async findSimilar(propertyId: number, limit = 8, locale: Locale = 'fa'): Promise<PropertyArrayResType[]> {
     const property = await this.db.property.findFirst({
       where: { id: propertyId, ...this.validProperty() },
       select: { id: true, province_id: true, city_id: true, has_pool: true },
@@ -415,9 +417,9 @@ export class PropertyUserService {
     const include = {
       feature_image: true,
       property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' as const } },
-      province: { select: { title: true } },
-      city: { select: { title: true } },
-      region: { select: { title: true } },
+      province: { select: { title: true, translations: true } },
+      city: { select: { title: true, translations: true } },
+      region: { select: { title: true, translations: true } },
       bedrooms: true,
       daily_price: true,
       calendar: {
@@ -433,7 +435,7 @@ export class PropertyUserService {
     const items = await this.pickSimilar(property, limit, (where) =>
       this.db.property.findMany({ where, include, orderBy: { sort_order: 'desc' }, take: limit }),
     );
-    return this.propertySerializer.toArray(items, await this.dayHelper.today(), false, false);
+    return this.propertySerializer.toArray(items, await this.dayHelper.today(), false, false, locale);
   }
 
   async findSimilarCodes(property: SimilarSource, limit: number): Promise<string[]> {

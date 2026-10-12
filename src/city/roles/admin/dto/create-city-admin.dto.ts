@@ -1,16 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { _MinLength, _MaxLength, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { WithTitleTranslationsDto } from 'src/common/dto/title-translations.dto';
 import { IsOptional, Validate } from 'class-validator';
-import {
-  _MinLength,
-  _MaxLength,
-  _IsString,
-  _IsNotEmpty,
-  _IsInt,
-} from 'src/common/pipes/validator-translate.pipe';
+import { _IsNotEmpty, _IsInt } from 'src/common/pipes/validator-translate.pipe';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsExist } from 'src/common/validators/is-exists.validator';
+import { Type } from 'class-transformer';
 
-export class CreateCityAdminDto {
+export class CreateCityAdminDto extends WithTitleTranslationsDto {
   @ApiProperty({ required: true, example: 'عنوان تست' })
   @_MinLength(1)
   @_MaxLength(50)

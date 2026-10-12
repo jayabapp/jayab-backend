@@ -1,19 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsOptional } from 'class-validator';
-import {
-  _IsInt,
-  _IsNotEmpty,
-  _IsString,
-  _IsNumber,
-  _IsBoolean,
-  _IsEnum,
-  _Max,
-  _Length,
-} from 'src/common/pipes/validator-translate.pipe';
+import { _IsInt, _IsNotEmpty, _IsString, _IsEnum, _Length } from 'src/common/pipes/validator-translate.pipe';
+import { WithTitleTranslationsDto } from 'src/common/dto/title-translations.dto';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { Transform, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 
-export class CreatePropertyOptionAdminDto {
+export class CreatePropertyOptionAdminDto extends WithTitleTranslationsDto {
   @ApiProperty({ required: true, example: 'عنوان' })
   @_Length(1, 128)
   @_IsString()

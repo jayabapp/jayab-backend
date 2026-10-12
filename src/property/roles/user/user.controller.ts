@@ -2,11 +2,7 @@ import { ParseIntPipe, Put, Query, Req, UseGuards, UseInterceptors, Version } fr
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nestjs/common';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import {
-  ONE_MINUTE_TTL,
-  THREE_MINUTES_TTL,
-  TEN_MINUTES_TTL,
-} from 'src/common/utils/constants/cache-ttl.constant';
+import { THREE_MINUTES_TTL, TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { SearchSuggestionsSuccessResponseDto } from './dto/search-suggestion-response.dto';
 import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
@@ -18,9 +14,11 @@ import { SuccessResponseArgs } from 'src/common/interceptors/transform.intercept
 import { PropertyUserService } from './user.service';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
+import { ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
 import { RequestType } from 'src/common/interfaces/user.interface';
 import { InjectQueue } from '@nestjs/bull';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 import { Queue } from 'bull';
 
 @ApiTags('Property - USER')
@@ -52,8 +50,11 @@ export class PropertyUserController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(TEN_MINUTES_TTL)
   @Get(':propertyId/similar')
-  async findSimilar(@Param('propertyId', ParseIntPipe) propertyId: number): Promise<SuccessResponseArgs> {
-    const result = await this.propertyUserService.findSimilar(propertyId);
+  async findSimilar(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: LocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findSimilar(propertyId, 8, dto.locale);
     return { result };
   }
 
@@ -62,10 +63,11 @@ export class PropertyUserController {
   @Get(':propertySlug')
   async findOne(
     @Param('propertySlug') propertySlug: string,
+    @Query() dto: LocaleDto,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-    const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
+    const result = await this.propertyUserService.findOne(propertySlug, isAdvisor, dto.locale);
     return { result };
   }
 

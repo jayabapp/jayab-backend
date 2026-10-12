@@ -1,21 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsOptional } from 'class-validator';
-import { PaginationDto } from 'src/common/dto/pagination-page.dto';
-import {
-  _IsBoolean,
-  _IsIn,
-  _IsInt,
-  _IsNotEmpty,
-  _IsNumberString,
-  _IsString,
-  _Length,
-  _Max,
-  _Min,
-} from 'src/common/pipes/validator-translate.pipe';
+import { _IsInt, _IsNotEmpty, _IsNumberString, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { _IsBoolean, _IsIn, _Length, _Max, _Min } from 'src/common/pipes/validator-translate.pipe';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
+import { IntersectionType } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { PaginationDto } from 'src/common/dto/pagination-page.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
-export class FindAllPropertyUserDto extends PaginationDto {
+export class FindAllPropertyUserDto extends IntersectionType(PaginationDto, LocaleDto) {
   @ApiProperty({ title: 'سرچ', required: false })
   @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
@@ -28,7 +21,7 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @IsOptional()
   code?: string;
 
-  @ApiProperty({ required: false, example: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
+  @ApiProperty({ required: false, example: 'villa,ramsar,pool' })
   @_IsString()
   @IsOptional()
   keys?: string;

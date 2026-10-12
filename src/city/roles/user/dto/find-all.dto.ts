@@ -3,8 +3,9 @@ import { normalizePersianSearchText } from 'src/property/common/helpers/search-t
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
-export class FindAllCityUserDto {
+export class FindAllCityUserDto extends LocaleDto {
   @ApiProperty({ required: false, example: '' })
   @_IsString()
   @IsOptional()

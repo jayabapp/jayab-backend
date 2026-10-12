@@ -8,6 +8,10 @@ const migration = readFileSync(
   'utf8',
 );
 const editions = JSON.parse(migration.split('$translations$')[1]);
+const termsMigration = readFileSync(
+  join(__dirname, '../../../prisma/migrations/20261012060000_add_terms_translations/migration.sql'),
+  'utf8',
+);
 
 const base: Content = {
   id: 114,
@@ -74,5 +78,35 @@ describe('localized CMS content', () => {
     localizeContent(base, 'en');
     localizeContent(base, 'ar');
     expect(JSON.stringify(base)).toBe(before);
+  });
+
+  it.each(['ar', 'en'] as const)('serves all six sections of the seeded %s legal document', (locale) => {
+    const html = termsMigration.split(`$${locale}$`)[1];
+    const termsEdition = { ...editions[locale], html };
+    const result = localizeContent(
+      { ...base, key: 'terms', translations: { [locale]: termsEdition } },
+      locale,
+    );
+    expect(result.content_locale).toBe(locale);
+    expect(result.html.match(/<h2>/g)).toHaveLength(6);
+    const listLengths = [...result.html.matchAll(/<(?:ul|ol)>([\s\S]*?)<\/(?:ul|ol)>/g)].map(
+      (section) => (section[1].match(/<li>/g) ?? []).length,
+    );
+    expect(listLengths).toEqual([11, 11, 7, 6, 4, 17]);
+    expect(result.html).toContain(locale === 'en' ? 'no percentage or commission' : 'أي نسبة أو عمولة');
+    expect(result.html).toContain(
+      locale === 'en' ? 'competent judicial authorities' : 'الجهات القضائية المختصة',
+    );
+  });
+
+  it('does not publish an empty terms body as a complete translated edition', () => {
+    for (const html of ['', '<p><br></p>', '<p>&nbsp;</p>']) {
+      const result = localizeContent(
+        { ...base, key: 'terms', translations: { en: { ...editions.en, html } } },
+        'en',
+      );
+      expect(result.content_locale).toBe('fa');
+      expect(result.html).toBe(base.html);
+    }
   });
 });

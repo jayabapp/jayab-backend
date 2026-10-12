@@ -1,29 +1,20 @@
+import { AccessControlList, Content, ContentCategory, Prisma } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  AccessControlList,
-  Attachment,
-  Content,
-  ContentAttachment,
-  ContentCategory,
-  Prisma,
-} from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { CreateContentAdminDto } from './dto/create.dto';
-import { UpdateContentAdminDto, UpdateContentProductCategoryAdminDto } from './dto/update.dto';
+import { UpdateContentAdminDto } from './dto/update.dto';
+import { ContentTranslationsDto } from './dto/content-translations.dto';
+import { isEmpty, omit } from 'lodash';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { hasTermsBody } from '../../common/helpers/content-translations.helper';
 import {
-  AvailableAction,
-  Column,
   CreateProps,
-  FilterProps,
   OperatorItems,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
-import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
-import { isEmpty, omit } from 'lodash';
-import { slugify } from 'src/common/helpers/slugify';
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -32,27 +23,21 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/content/common/helpers/model-props-builder.helper';
+
 import type { ContentSort } from './dto/find-all.dto';
 
 @Injectable()
 export class ContentAdminService {
   constructor(private readonly db: PrismaService) {}
 
-  /**
-   * create
-   * @param dto
-   * @returns
-   */
   async create(dto: CreateContentAdminDto): Promise<Content> {
     const stdKey = dto.key?.trim()?.replace(/ /g, '');
-
+    this.validateTermsTranslations(stdKey, dto.translations);
     const isDuplicated = await this.db.content.findFirst({
       where: { OR: [{ key: stdKey }, { slug: dto.slug }] },
     });
     if (isDuplicated && stdKey && isDuplicated?.key === stdKey) throw new BadRequestException('CONTENT1');
     if (isDuplicated && isDuplicated?.slug === dto.slug) throw new BadRequestException('CONTENT2');
-
-    /**check attach */
     if (!isEmpty(dto.attachments)) {
       const count = await this.db.attachment.count({ where: { id: { in: dto.attachments } } });
       if (count != dto.attachments?.length) throw new BadRequestException('ATTACH3');
@@ -67,23 +52,14 @@ export class ContentAdminService {
       },
     });
 
-    /**create attachments */
     if (!isEmpty(dto.attachments)) {
       const attachs = [];
       dto.attachments.map((e) => attachs.push({ content_id: newContent.id, attachment_id: e }));
       await this.db.contentAttachment.createMany({ data: attachs });
     }
-
     return newContent;
   }
 
-  /**
-   * find all Content
-   * @param filers
-   * @param page
-   * @param perPage
-   * @returns
-   */
   async findAll(
     filters: Prisma.ContentWhereInput,
     page: number,
@@ -91,11 +67,9 @@ export class ContentAdminService {
     sortBy: ContentSort = 'date_desc',
   ): Promise<PaginatedResult<Content>> {
     let orderBy: Prisma.ContentOrderByWithRelationInput[] = [{ created_at: 'desc' }, { id: 'desc' }];
-
     if (sortBy === 'date_asc') orderBy = [{ created_at: 'asc' }, { id: 'asc' }];
     if (sortBy === 'view_desc') orderBy = [{ view_count: 'desc' }, { id: 'desc' }];
     if (sortBy === 'view_asc') orderBy = [{ view_count: 'asc' }, { id: 'asc' }];
-
     const list = await paginate()<
       Content & { category: ContentCategory & { parent: ContentCategory } },
       Prisma.ContentFindManyArgs
@@ -116,22 +90,11 @@ export class ContentAdminService {
     return { data: formattedList, meta: list.meta };
   }
 
-  /**
-   * find many
-   * this method used for selectable lists with less than 50 items
-   * @returns
-   */
   async findMany(): Promise<Content[]> {
     const list = await this.db.content.findMany();
     return list;
   }
 
-  /**
-   * find one by id
-   * this method is used in the findOne controller to include or select items
-   * @param id
-   * @returns
-   */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
     const item = await this.db.content.findFirst({
       where: { id },
@@ -150,26 +113,19 @@ export class ContentAdminService {
     return { showProps, actions };
   }
 
-  /**
-   * find by id
-   * @param id
-   * @returns
-   */
   async findById(id: number): Promise<Content> {
     const item = await this.db.content.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     return item;
   }
 
-  /**
-   * update
-   * @param id
-   * @param dto
-   * @returns
-   */
   async update(id: number, dto: UpdateContentAdminDto): Promise<Content> {
     const stdKey = dto.key?.trim()?.replace(/ /g, '');
+    if (dto.translations != null) {
+      const key =
+        dto.key ?? (await this.db.content.findUnique({ where: { id }, select: { key: true } }))?.key;
+      this.validateTermsTranslations(key, dto.translations);
+    }
 
     const isDuplicated = await this.db.content.findFirst({
       where: { OR: [{ key: stdKey }, { slug: dto.slug }], id: { not: id } },
@@ -177,10 +133,8 @@ export class ContentAdminService {
     if (isDuplicated && stdKey && isDuplicated?.key === stdKey) throw new BadRequestException('CONTENT1');
     if (isDuplicated && isDuplicated?.slug === dto.slug) throw new BadRequestException('CONTENT2');
 
-    /**check attach */
     if (!isEmpty(dto.attachments)) {
       const count = await this.db.attachment.count({ where: { id: { in: dto.attachments } } });
-
       if (count != dto.attachments?.length) throw new BadRequestException('ATTACH3');
     }
 
@@ -206,23 +160,23 @@ export class ContentAdminService {
     return updatedContent;
   }
 
-  /**
-   * remove
-   * @param id
-   */
   async remove(id: number): Promise<void> {
     await this.db.content.delete({ where: { id } });
     await this.db.contentAttachment.deleteMany({ where: { content_id: id } });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   HELPER                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * find model props
-   * @param rbac
-   * @returns
-   */
+  private validateTermsTranslations(
+    key: string | null | undefined,
+    translations?: ContentTranslationsDto,
+  ): void {
+    if (key !== 'terms' || !translations) return;
+    for (const locale of ['ar', 'en'] as const) {
+      if (translations[locale] && !hasTermsBody(translations[locale].html)) {
+        throw new BadRequestException('CONTENT_TERMS_BODY_REQUIRED');
+      }
+    }
+  }
+
   async findModelProps(rbac: AccessControlList): Promise<{
     filterProps: Array<CreateProps>;
     createProps: Array<CreateProps>;
@@ -239,11 +193,7 @@ export class ContentAdminService {
       id: e.id,
       title: e.parent ? `${e.title} ⬅ ${e.parent.title}` : e.title,
     }));
-
-    // ACTIONS
     const availableActions = allActionsBuilder(rbac);
-
-    // PROPS
     const filterProps = filterPropsBuilder(keys);
     const tableProps = tablePropsBuilder(availableActions);
     const createProps = createPropsBuilder(formattedCategories);

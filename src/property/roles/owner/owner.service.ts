@@ -111,6 +111,9 @@ export class PropertyOwnerService {
       region_id: dto.region_id || null,
       city_id: dto.city_id,
       title: dto.title,
+      ...(dto.translations != null
+        ? { translations: JSON.parse(JSON.stringify(dto.translations)) as Prisma.InputJsonObject }
+        : {}),
       slug,
       land_area: dto.land_area,
       building_area: dto.building_area,

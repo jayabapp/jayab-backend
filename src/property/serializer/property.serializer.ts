@@ -6,12 +6,15 @@ import { ApproxLocation, buildApproxLocation } from '../common/helpers/approx-lo
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
+import { localizePropertyText } from '../common/helpers/property-text.helper';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
+import { localizeTitle } from 'src/common/helpers/title-translations.helper';
 import { DayColumn } from 'src/common/helpers/day.helper';
 import { RentType } from '../common/types/property-rent-types.type';
 import { EnumList } from 'src/common/interfaces/model-props.interface';
 import { isEmpty } from 'lodash';
+import { Locale } from 'src/common/dto/locale.dto';
 
 import moment from 'moment-jalaali';
 
@@ -42,6 +45,7 @@ export type PropertyJsonType = Property & {
 };
 
 export type PropertyArrayResType = {
+  text_locales?: Partial<Record<'title' | 'city' | 'province' | 'region' | 'address', Locale>>;
   owner?: { id: number; mobile_number: string; full_name: string };
   id: number;
   code: string;
@@ -112,11 +116,12 @@ export class PropertySerializer {
     today: DayColumn,
     isAdvisor = false,
     isOwner: boolean,
+    locale: Locale = 'fa',
   ): Promise<Array<PropertyArrayResType>> {
     const res: PropertyArrayResType[] = [];
     for (const e of data) {
       res.push({
-        ...this.summarize(e, today, true, isAdvisor, isOwner),
+        ...this.summarize(e, today, true, isAdvisor, isOwner, locale),
       });
     }
     return res;
@@ -127,8 +132,9 @@ export class PropertySerializer {
     today: DayColumn,
     isAdvisor = false,
     isOwner = false,
+    locale: Locale = 'fa',
   ): Promise<PropertyResType> {
-    const res = { ...this.summarize(data, today, false, isAdvisor, isOwner) };
+    const res = { ...this.summarize(data, today, false, isAdvisor, isOwner, locale) };
     return res;
   }
 
@@ -221,9 +227,19 @@ export class PropertySerializer {
     isList: boolean,
     isAdvisor: boolean,
     isOwner: boolean,
+    locale: Locale = 'fa',
   ): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
+    const title = localizePropertyText(data.title, data.translations, 'title', locale);
+    const address = localizePropertyText(data.address, data.translations, 'address', locale);
+    const city = data.city?.title ? localizeTitle({ ...data.city, title: data.city.title }, locale) : null;
+    const province = data.province?.title
+      ? localizeTitle({ ...data.province, title: data.province.title }, locale)
+      : null;
+    const region = data.region?.title
+      ? localizeTitle({ ...data.region, title: data.region.title }, locale)
+      : null;
 
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
     const hasActiveSubscription =
@@ -237,7 +253,14 @@ export class PropertySerializer {
     const list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
-      title: data.title,
+      title: title.value,
+      text_locales: {
+        title: title.locale,
+        city: city?.title_locale,
+        province: province?.title_locale,
+        region: region?.title_locale,
+        ...(!isList && (data.is_location_visible || isOwner) ? { address: address.locale } : {}),
+      },
       slug: data.slug,
       owner: data?.owner
         ? {
@@ -254,9 +277,9 @@ export class PropertySerializer {
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
       bedrooms: data.bedrooms,
       has_pool: data.has_pool,
-      province: data.province?.title,
-      city: data.city?.title,
-      region: data?.region?.title,
+      province: province?.title,
+      city: city?.title,
+      region: region?.title,
       advisor_commission:
         !isAdvisor && !isOwner
           ? null
@@ -299,7 +322,7 @@ export class PropertySerializer {
         unit_per_floor: data.unit_per_floor,
         floor: data.floor,
         construction_year: data.construction_year,
-        address: data.is_location_visible || isOwner ? data.address : null,
+        address: data.is_location_visible || isOwner ? address.value : null,
         options: this.formatPropertyOptions(data.property_options, 'title'),
         option_items: this.formatPropertyOptionItems(data.property_options),
         property_descriptions: data.description,

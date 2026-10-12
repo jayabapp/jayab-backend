@@ -5,6 +5,7 @@ import { ResolveLandingLocationDto } from './dto/resolve-location.dto';
 import { LandingPage, Prisma } from '@prisma/client';
 import { groupBy, isEmpty } from 'lodash';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { localizeTitle } from 'src/common/helpers/title-translations.helper';
 
 @Injectable()
 export class LandingPageUserService {
@@ -18,11 +19,6 @@ export class LandingPageUserService {
     return url ? { url } : null;
   }
 
-  /**
-   * find all LandingPage
-   * @param dto
-   * @returns
-   */
   async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
     const q: Prisma.LandingPageWhereInput = { is_active: true };
     if (dto.placement === 'home') q['show_in_home'] = true;
@@ -30,19 +26,17 @@ export class LandingPageUserService {
 
     const list = await this.db.landingPage.findMany({
       where: q,
-      select: { url: true, title: true, image: true, position: true },
+      select: { url: true, title: true, image: true, position: true, translations: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });
 
-    const grouped = groupBy(list, 'position');
+    const grouped = groupBy(
+      list.map((item) => localizeTitle(item, dto.locale)),
+      'position',
+    );
     return grouped;
   }
 
-  /**
-   * find one landingPage
-   * @param landingPageId
-   * @returns
-   */
   async findOne(landingPageUrl: string): Promise<any> {
     const landing = await this.db.landingPage.findFirst({
       where: { url: landingPageUrl, is_active: true },

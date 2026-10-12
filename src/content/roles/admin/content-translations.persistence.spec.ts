@@ -8,6 +8,7 @@ describe('CMS translation persistence', () => {
   const db = {
     content: {
       findFirst: jest.fn().mockResolvedValue(null),
+      findUnique: jest.fn().mockResolvedValue({ key: 'terms' }),
       create: jest.fn().mockResolvedValue({ id: 114 }),
       update: jest.fn().mockResolvedValue({ id: 114 }),
     },
@@ -46,5 +47,28 @@ describe('CMS translation persistence', () => {
   it('lets an editor explicitly remove editions with an empty map', async () => {
     await service.update(114, plainToInstance(UpdateContentAdminDto, { ...body, translations: {} }));
     expect(db.content.update.mock.calls[0][0].data.translations).toEqual({});
+  });
+
+  it.each(['', '   ', '<p><br></p>', '<p>&nbsp;</p>'])(
+    'rejects an empty translated legal body: %s',
+    async (html) => {
+      const terms = { ...body, key: 'terms', translations: { en: { ...translation, html } } };
+      await expect(service.create(plainToInstance(CreateContentAdminDto, terms))).rejects.toThrow(
+        'CONTENT_TERMS_BODY_REQUIRED',
+      );
+      await expect(
+        service.update(11, plainToInstance(UpdateContentAdminDto, { ...terms, key: undefined })),
+      ).rejects.toThrow('CONTENT_TERMS_BODY_REQUIRED');
+      expect(db.content.create).not.toHaveBeenCalled();
+      expect(db.content.update).not.toHaveBeenCalled();
+    },
+  );
+
+  it('stores a complete terms edition independently from the Persian legal document', async () => {
+    const terms = { ...body, key: 'terms', html: '<p>قوانین اصلی</p>' };
+    await service.update(11, plainToInstance(UpdateContentAdminDto, terms));
+    const data = db.content.update.mock.calls[0][0].data;
+    expect(data.html).toBe(terms.html);
+    expect(data.translations.en.html).toBe(translation.html);
   });
 });

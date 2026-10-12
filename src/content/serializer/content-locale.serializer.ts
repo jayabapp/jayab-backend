@@ -1,5 +1,6 @@
 import { Content, Prisma } from '@prisma/client';
 import { ContentLocale } from '../dto/content-locale.dto';
+import { hasTermsBody } from '../common/helpers/content-translations.helper';
 
 const asObject = (value: Prisma.JsonValue): Prisma.JsonObject =>
   value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -19,6 +20,7 @@ export const localizeContent = <T extends Content>(
       (field) => typeof edition[field] === 'string' && (edition[field] as string).trim(),
     ) &&
     typeof edition.html === 'string' &&
+    (item.key !== 'terms' || hasTermsBody(edition.html)) &&
     ['metaTitle', 'metaDescription'].every(
       (field) => typeof seo[field] === 'string' && (seo[field] as string).trim(),
     );
@@ -31,7 +33,6 @@ export const localizeContent = <T extends Content>(
     small_text: edition.small_text as string,
     full_text: edition.full_text as string,
     html: edition.html as string,
-    // Canonical and sitemap settings belong to the page, not to a translation.
     seo: { ...asObject(item.seo), metaTitle: seo.metaTitle, metaDescription: seo.metaDescription },
     content_locale: locale,
   };

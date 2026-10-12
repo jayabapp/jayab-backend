@@ -30,15 +30,15 @@ describe('content locale request and cache isolation', () => {
     expect(response.body.result.content_locale).toBe('fa');
   });
 
-  it('caches English and Arabic under different URLs', async () => {
+  it.each(['homeContent', 'terms'])('caches %s English and Arabic under different URLs', async (key) => {
     for (const locale of ['en', 'ar', 'en']) {
       const response = await request(app.getHttpServer())
-        .get(`/contents/by-key/homeContent?locale=${locale}`)
+        .get(`/contents/by-key/${key}?locale=${locale}`)
         .expect(200);
       expect(response.body.result.content_locale).toBe(locale);
     }
-    expect(findOneByKey.mock.calls.filter((call) => call[1] === 'en')).toHaveLength(1);
-    expect(findOneByKey.mock.calls.filter((call) => call[1] === 'ar')).toHaveLength(1);
+    expect(findOneByKey.mock.calls.filter((call) => call[0] === key && call[1] === 'en')).toHaveLength(1);
+    expect(findOneByKey.mock.calls.filter((call) => call[0] === key && call[1] === 'ar')).toHaveLength(1);
   });
 
   it.each(['de', '', 'en-US', 'en&locale=ar'])('rejects unsupported/ambiguous locale %s', async (locale) => {

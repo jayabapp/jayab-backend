@@ -3,17 +3,12 @@ import {
   AvailableAction,
   Column,
   CreateProps,
-  FilterProps,
   ShowAction,
   ShowProps,
   TableProps,
 } from 'src/common/interfaces/model-props.interface';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
-import { PropertyOptionGroup, PropertyOptionGroupList } from '../property-option-groups.type';
+import { PropertyOptionGroupList } from '../property-option-groups.type';
 
-/* -------------------------------------------------------------------------- */
-/*                                    TYPES                                   */
-/* -------------------------------------------------------------------------- */
 enum RefEnum {
   image = 'image',
 }
@@ -22,12 +17,9 @@ type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
 type ModifiedColumn = Column & { key: ModelFields };
 type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 
-/* -------------------------------------------------------------------------- */
-/*                                    SHOW                                    */
-/* -------------------------------------------------------------------------- */
 export const showPropsBuilder = (item: PropertyOption & { image: Attachment }): Array<ShowProps> => {
   const props: Array<ShowProps> = [
-    // { state: 'id', title: 'شناسه', value: item.id, type: 'number' },
+    { state: 'translations', value: item.translations, type: 'object', isHidden: true },
     {
       state: 'group',
       title: 'گروه',
@@ -52,23 +44,10 @@ export const showPropsBuilder = (item: PropertyOption & { image: Attachment }): 
 
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (item: PropertyOption): Array<ShowAction> => {
-  const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
-    //  {
-    //    title: 'ایجاد محصول جدید',
-    //    route: '',
-    //  },
-  ];
-
+  const actions: Array<ShowAction> = [];
   return actions;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   CREATE                                   */
-/* -------------------------------------------------------------------------- */
 export const createPropsBuilder = (): Array<CreateProps> => {
   const createProps: Array<CreateProps> = [
     {
@@ -103,20 +82,10 @@ export const createPropsBuilder = (): Array<CreateProps> => {
       title: 'تصویر',
       options: { isMandatory: false, titleHint: '(اختیاری)' },
     },
-    // {
-    //   state: 'description',
-    //   type: 'input',
-    //   title: 'توضیحات',
-    //   options: { maxLength: 256, isMandatory: false, keyboard: 'text' },
-    // },
   ];
-
   return createProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                    TABLE                                   */
-/* -------------------------------------------------------------------------- */
 export const tablePropsBuilder = (availableActions: Array<AvailableAction>): ModifiedTableProps => {
   const tableProps: ModifiedTableProps = {
     model: 'propertyOption',
@@ -126,8 +95,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
       { id: 11, title: 'تصویر', key: 'image', cellType: 'image' },
       { id: 20, title: 'گروه', key: 'group', cellType: 'enum', enumList: PropertyOptionGroupList },
       { id: 30, title: 'ترتیب', key: 'sort', cellType: 'number' },
-      // { id: 90, title: 'تاریخ ایجاد', key: 'created_at', cellType: 'dateTime' },
-      // { id: 100, title: 'تاریخ به روزرسانی', key: 'updated_at', cellType: 'dateTime' },
     ],
     availableActions,
   };
@@ -135,9 +102,6 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
   return tableProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   FILTER                                   */
-/* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'عنوان', state: 'title', type: 'input' },
@@ -147,20 +111,14 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   return filterProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                ADMIN ACTIONS                               */
-/* -------------------------------------------------------------------------- */
 export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableAction> => {
   const allActions: Array<AvailableAction> = ['create', 'show', 'edit', 'delete', 'submit'];
   const availableActions: Array<AvailableAction> = [];
-
   for (const act of allActions) {
     if (act === 'create' && rbac.c) availableActions.push('create');
     if (act === 'show' && rbac.r) availableActions.push('show');
     if (act === 'edit' && rbac.u) availableActions.push('edit');
     if (act === 'delete' && rbac.d) availableActions.push('delete');
-    // if (act === 'submit' && rbac.u) availableActions.push('submit');
   }
-
   return availableActions;
 };
