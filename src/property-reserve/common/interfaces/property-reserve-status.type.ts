@@ -44,11 +44,6 @@ export const PropertyReserveStatusList: Array<EnumList> = [
 ];
 
 export const PropertyReserveGuestStatusTitle: Record<number, string> = {
-  [PropertyReserveStatus.PENDING]: 'ارسال‌شده برای میزبان',
-  [PropertyReserveStatus.OWNER_CALLED]: 'میزبان تماس گرفت',
+  [PropertyReserveStatus.PENDING]: 'در انتظار بررسی میزبان',
+  [PropertyReserveStatus.OWNER_CALLED]: 'مشاهده شده توسط میزبان',
 };
-
-// Overrides PENDING's guest-facing title once the host has actually opened the
-// request (owner_seen_at set) but hasn't called yet — "seen" and "called" are
-// distinct events and must not collapse into one label.
-export const PropertyReserveGuestSeenTitle = 'مشاهده شده توسط میزبان';

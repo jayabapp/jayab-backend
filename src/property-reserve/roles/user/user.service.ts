@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
 import { PropertyReserveGuestStatusTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
-import { PropertyReserveGuestSeenTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/constants/reserve.constant';
 import { FindAllPropertyReserveUserDto } from './dto/find-all.dto';
 import { CreatePropertyReserveUserDto } from './dto/create.dto';
@@ -11,7 +10,6 @@ import { PropertyReserveStatusList } from 'src/property-reserve/common/interface
 import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { PropertyUserService } from 'src/property/roles/user/user.service';
-import { RESERVE_MAX_NIGHTS } from 'src/property-reserve/common/constants/reserve.constant';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -80,7 +78,6 @@ export class PropertyReserveUserService {
     if (diff === 0) throw new UnprocessableEntityException('RESERVE1');
     if (diff < 0) throw new UnprocessableEntityException('RESERVE2');
     if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
-    if (diff > RESERVE_MAX_NIGHTS) throw new UnprocessableEntityException('RESERVE_MAX_NIGHTS');
 
     const reservedNights = await this.db.propertyCalendar.count({
       where: { property_id: property.id, is_reserved: true, date: { gte: dto.check_in, lt: dto.check_out } },
@@ -296,12 +293,12 @@ export class PropertyReserveUserService {
       await this.smsService.sendRecommendationLinks(reserve.user.mobile_number, links, p.title);
   }
 
-  private guestStatus(statusId: number, ownerSeenAt: Date | null) {
+  private guestStatus(statusId: number, ownerContactClicks: number) {
     const status = PropertyReserveStatusList.find((e) => e.id === statusId);
     const title = PropertyReserveGuestStatusTitle[statusId];
     if (!status || !title) return status;
-    if (statusId === PropertyReserveStatus.PENDING && ownerSeenAt)
-      return { ...status, title: PropertyReserveGuestSeenTitle };
+    if (statusId === PropertyReserveStatus.PENDING && ownerContactClicks > 0)
+      return { ...status, title: PropertyReserveGuestStatusTitle[PropertyReserveStatus.OWNER_CALLED] };
     return { ...status, title };
   }
 
@@ -316,7 +313,7 @@ export class PropertyReserveUserService {
       ttl_seconds: ttl > 0 ? ttl : 0,
       is_chat_enabled: isChatEnabled,
       is_answer_deadline_passed: ttl <= 0,
-      status: this.guestStatus(item.status, item.owner_seen_at),
+      status: this.guestStatus(item.status, item.owner_clicked_guest_mobile),
       is_subscription_expired: item.property.subscription_expired_at < startOfToday(),
     };
   }

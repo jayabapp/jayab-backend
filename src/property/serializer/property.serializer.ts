@@ -7,6 +7,7 @@ import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/pro
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 import { localizePropertyText } from '../common/helpers/property-text.helper';
+import { findMinimumNightlyPrice } from '../common/minimum-price.helper';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
 import { localizeTitle } from 'src/common/helpers/title-translations.helper';
@@ -183,17 +184,6 @@ export class PropertySerializer {
     return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
   }
 
-  private findMinimumPrice(dailyPrice: PropertyDailyPrice, calendar?: PropertyCalendar[]): number | null {
-    const isPositive = (value: unknown): value is number => typeof value === 'number' && value > 0;
-    const dailyValues = Object.values(dailyPrice ?? {}).filter(isPositive);
-    const calendarValues = (calendar ?? [])
-      .filter((entry) => !entry.is_reserved)
-      .map((entry) => entry.discounted_price ?? entry.price)
-      .filter(isPositive);
-    const candidates = [...dailyValues, ...calendarValues];
-    return candidates.length ? Math.min(...candidates) : null;
-  }
-
   private findImages(feature_image?: Attachment, attachments?: Attachment[]) {
     if (!feature_image && isEmpty(attachments)) return [];
     if (!feature_image && !isEmpty(attachments)) return attachments;
@@ -285,7 +275,7 @@ export class PropertySerializer {
           ? null
           : (todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission),
       today_price: this.findTodayPrice(todayInPropertyCalendar, today, data.daily_price),
-      minimum_price: this.findMinimumPrice(data.daily_price, data.calendar),
+      minimum_price: findMinimumNightlyPrice(data.daily_price, data.calendar),
       is_today_reserved: !!todayInPropertyCalendar?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,

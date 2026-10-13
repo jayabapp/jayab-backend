@@ -325,7 +325,7 @@ export class PropertyUserService {
   ): Promise<PropertyResType & { owner_info: any; seo_links: PropertySeoLinks }> {
     const code = this.checkSlug(propertySlug);
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
-      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+      date: { gte: startOfToday() },
     };
 
     const item = await this.db.property.findFirst({
@@ -1033,7 +1033,6 @@ export class PropertyUserService {
     if (nights === 0) throw new UnprocessableEntityException('RESERVE1');
     if (nights < 0) throw new UnprocessableEntityException('RESERVE2');
     if (moment().diff(dto.check_in, 'day') > 0) throw new UnprocessableEntityException('RESERVE3');
-    if (nights > 15) throw new UnprocessableEntityException('QUOTE_MAX_NIGHTS');
 
     const [property, calendar, peaks] = await Promise.all([
       this.db.property.findFirst({
