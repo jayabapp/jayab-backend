@@ -20,6 +20,11 @@ describe('content translation validation', () => {
     expect(await check({})).toEqual([]);
   });
 
+  it('accepts a title-only or title-and-text edition for short entries', async () => {
+    expect(await check({ en: { title: 'Villa rental in Rasht' } })).toEqual([]);
+    expect(await check({ ar: { title: 'ابدأ الربح', small_text: 'نص قصير' } })).toEqual([]);
+  });
+
   it('rejects missing fields, objects/arrays as text, and invalid nested SEO', async () => {
     for (const en of [
       {},

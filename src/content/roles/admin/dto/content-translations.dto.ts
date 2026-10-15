@@ -30,30 +30,36 @@ export class ContentTranslationDto {
   @_MaxLength(200)
   title: string;
 
-  @ApiProperty({ title: 'عنوان بخش محتوای صفحه' })
+  // The fields below are optional because short CMS entries (footer copy, link titles)
+  // have no body or SEO; the public serializer still requires every part the Persian uses.
+  @ApiProperty({ title: 'عنوان بخش محتوای صفحه', required: false })
   @Transform(trimText)
+  @IsOptional()
   @_IsString()
   @_IsNotEmpty()
   @_MaxLength(1000)
-  small_text: string;
+  small_text?: string;
 
-  @ApiProperty({ title: 'شعار بنر' })
+  @ApiProperty({ title: 'شعار بنر', required: false })
   @Transform(trimText)
+  @IsOptional()
   @_IsString()
   @_IsNotEmpty()
-  @_MaxLength(2000)
-  full_text: string;
+  @_MaxLength(10000)
+  full_text?: string;
 
-  @ApiProperty({ title: 'متن صفحه' })
+  @ApiProperty({ title: 'متن صفحه', required: false })
+  @IsOptional()
   @_IsString()
   @_MaxLength(200000)
-  html: string;
+  html?: string;
 
-  @ApiProperty({ title: 'سئو', type: ContentTranslationSeoDto })
+  @ApiProperty({ title: 'سئو', type: ContentTranslationSeoDto, required: false })
+  @IsOptional()
   @IsObject()
   @ValidateNested()
   @Type(() => ContentTranslationSeoDto)
-  seo: ContentTranslationSeoDto;
+  seo?: ContentTranslationSeoDto;
 }
 
 export class ContentTranslationsDto {

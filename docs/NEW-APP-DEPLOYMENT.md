@@ -14,8 +14,13 @@
 | 6 | `20260904150000_add_landing_location_indexes` | indexهای استان و شهرهای لندینگ | index-only؛ در ساعت کم‌ترافیک اجرا شود |
 | 7 | `20260920120000_add_reserve_quote_snapshot` | snapshot تعداد شب و مبلغ تقریبی درخواست | nullable؛ migration فقط ساخته شده و باید در deploy اجرا شود |
 | 8 | `20260923140000_add_banner_attachments` | جدول جدید `banner_attachments` (گالری چند تصویری بنر) + **data migration** که رکوردهای موجود بنر با `position = 'main_1'` را در یک رکورد ادغام می‌کند | یک بار روی داده‌های واقعی نوشتن انجام می‌دهد؛ جزئیات پایین همین سند |
+| 9 | `20261011090000_add_content_translations` | ستون nullable `contents.translations` + نسخهٔ انگلیسی و عربی `homeContent` | افزایشی؛ متن فارسی دست نمی‌خورد |
+| 10 | `20261012060000_add_terms_translations` | نسخهٔ انگلیسی و عربی قوانین (`terms`) | فقط وقتی متن فارسی با منبع ترجمه یکی باشد و ترجمه‌ای ثبت نشده باشد |
+| 11 | `20261012090000_add_home_section_title_translations` | ستون `translations` در `property_options` و `landing_pages` + عنوان‌های بخش‌های خانه | افزایشی |
+| 12 | `20261012100000_add_property_and_city_translations` | ستون `translations` در `cities` و `properties` + نام استان‌ها و شهرها | افزایشی |
+| 13 | `20261014120000_add_footer_content_translations` | فقط داده: نسخهٔ انگلیسی و عربی باکس «درآمدزایی با اقامتگاه» (`footerCallUs`)، «درباره ما» (`aboutUs`) و ۱۸ لینک «جستجوی سریع» فوتر | به ۹ وابسته است؛ رکوردی که قبلاً ترجمه شده بازنویسی نمی‌شود؛ لینک‌ها با عنوان فارسی در دستهٔ `footer-quick-search-links` پیدا می‌شوند و لینکِ ناهم‌نام بدون تغییر می‌ماند |
 
-Migrationها باید دقیقاً با همین ترتیب اجرا شوند. هیچ migration دیگری در اختلاف این branch با `main` وجود ندارد. تغییرات کیفیت و دانلود تصویر migration دیتابیس ندارند.
+Migrationها باید دقیقاً با همین ترتیب اجرا شوند. هیچ migration دیگری در اختلاف این branch با `main` وجود ندارد. بعد از migration شمارهٔ ۱۳، کش API محتوا (۳ دقیقه) و کش صفحه‌های Front (۱۰ دقیقه) باید منقضی شوند تا ترجمه‌ها دیده شوند. تغییرات کیفیت و دانلود تصویر migration دیتابیس ندارند.
 
 ## متغیرهای جدید Back
 

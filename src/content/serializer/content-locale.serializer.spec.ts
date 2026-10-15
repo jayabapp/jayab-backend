@@ -99,6 +99,87 @@ describe('localized CMS content', () => {
     );
   });
 
+  describe('footer editions seeded by the migration', () => {
+    const footerMigration = readFileSync(
+      join(__dirname, '../../../prisma/migrations/20261014120000_add_footer_content_translations/migration.sql'),
+      'utf8',
+    );
+    const blocks = footerMigration.split('$json$').filter((_, index) => index % 2 === 1).map((text) => JSON.parse(text));
+    const [callUs, about, ...links] = blocks;
+    const row = (fields: Partial<Content>): Content => ({ ...base, seo: {}, full_text: null, html: null, ...fields });
+
+    it.each(['en', 'ar'] as const)('publishes the %s host call box, About us and every quick-search link', (locale) => {
+      const callBox = localizeContent(
+        row({ key: 'footerCallUs', small_text: 'متن فارسی', translations: callUs }),
+        locale,
+      );
+      expect(callBox).toMatchObject({ content_locale: locale, title: callUs[locale].title });
+
+      const aboutUs = localizeContent(
+        row({ key: 'aboutUs', small_text: 'خلاصه', full_text: 'متن کامل', html: '<p>متن</p>', translations: about }),
+        locale,
+      );
+      expect(aboutUs.content_locale).toBe(locale);
+      expect(aboutUs.html).toBe(about[locale].html);
+
+      expect(links).toHaveLength(18);
+      for (const translations of links) {
+        const link = localizeContent(row({ key: null, small_text: null, translations }), locale);
+        expect(link.content_locale).toBe(locale);
+      }
+    });
+  });
+
+  describe('short entries without a body or SEO', () => {
+    const footerCopy: Content = {
+      ...base,
+      id: 21,
+      key: 'footerCallUs',
+      title: 'درآمدزایی با اقامتگاه شما شروع می‌شود!',
+      small_text: 'متن فارسی دعوت از میزبان',
+      full_text: null,
+      html: null,
+      seo: {},
+      translations: { en: { title: 'Start earning with your property!', small_text: 'Invite text' } },
+    };
+    const quickLink: Content = {
+      ...footerCopy,
+      id: 168,
+      key: null,
+      title: 'اجاره ویلا در رشت',
+      small_text: null,
+      translations: { en: { title: 'Villa rental in Rasht' } },
+    };
+
+    it('publishes an edition that translates every field the Persian entry uses', () => {
+      const copy = localizeContent(footerCopy, 'en');
+      expect(copy).toMatchObject({ title: 'Start earning with your property!', small_text: 'Invite text' });
+      expect(copy.content_locale).toBe('en');
+      expect(copy.html).toBeNull();
+      expect(copy.seo).toEqual({});
+
+      const link = localizeContent(quickLink, 'en');
+      expect(link).toMatchObject({ title: 'Villa rental in Rasht', content_locale: 'en' });
+    });
+
+    it('keeps Persian when a field the Persian entry uses is missing', () => {
+      const result = localizeContent({ ...footerCopy, translations: { en: { title: 'Only a title' } } }, 'en');
+      expect(result.content_locale).toBe('fa');
+      expect(result.title).toBe(footerCopy.title);
+    });
+
+    it('requires SEO only when the Persian entry has its own SEO', () => {
+      const withSeo = { ...quickLink, seo: { metaTitle: 'سئو', metaDescription: 'توضیحات' } };
+      expect(localizeContent(withSeo, 'en').content_locale).toBe('fa');
+    });
+
+    it('serves the untranslated language as Persian without exposing other editions', () => {
+      const result = localizeContent(quickLink, 'ar');
+      expect(result.content_locale).toBe('fa');
+      expect(result).not.toHaveProperty('translations');
+    });
+  });
+
   it('does not publish an empty terms body as a complete translated edition', () => {
     for (const html of ['', '<p><br></p>', '<p>&nbsp;</p>']) {
       const result = localizeContent(

@@ -1,3 +1,6 @@
+export const isFilledText = (value: unknown): value is string =>
+  typeof value === 'string' && !!value.trim();
+
 /** Empty editor markup is not a translated legal document. */
 export const hasTermsBody = (html: unknown): boolean =>
   typeof html === 'string' &&

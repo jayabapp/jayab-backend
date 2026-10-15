@@ -25,7 +25,9 @@ export class ContentSharedService {
    */
   async findAll(
     dto: FindAllContentSharedDto,
-  ): Promise<PaginatedResult<Content> & { subcategories: Array<ContentCategory & { image: Attachment }> }> {
+  ): Promise<
+    PaginatedResult<LocalizedContent<Content>> & { subcategories: Array<ContentCategory & { image: Attachment }> }
+  > {
     const { page, per_page: perPage, key } = dto;
     /**
      * check category
@@ -58,6 +60,9 @@ export class ContentSharedService {
             title: true,
             slug: true,
             small_text: true,
+            key: true,
+            seo: true,
+            translations: true,
             feature_image: true,
             view_count: true,
             created_at: true,
@@ -81,7 +86,11 @@ export class ContentSharedService {
       perPage,
     });
 
-    return { data: list.data, meta: list.meta, subcategories: category.child || [] };
+    return {
+      data: list.data.map((item) => localizeContent(item, dto.locale)),
+      meta: list.meta,
+      subcategories: category.child || [],
+    };
   }
 
   /**
