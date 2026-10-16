@@ -19,6 +19,7 @@
 | 11 | `20261012090000_add_home_section_title_translations` | ستون `translations` در `property_options` و `landing_pages` + عنوان‌های بخش‌های خانه | افزایشی |
 | 12 | `20261012100000_add_property_and_city_translations` | ستون `translations` در `cities` و `properties` + نام استان‌ها و شهرها | افزایشی |
 | 13 | `20261014120000_add_footer_content_translations` | فقط داده: نسخهٔ انگلیسی و عربی باکس «درآمدزایی با اقامتگاه» (`footerCallUs`)، «درباره ما» (`aboutUs`) و ۱۸ لینک «جستجوی سریع» فوتر | به ۹ وابسته است؛ رکوردی که قبلاً ترجمه شده بازنویسی نمی‌شود؛ لینک‌ها با عنوان فارسی در دستهٔ `footer-quick-search-links` پیدا می‌شوند و لینکِ ناهم‌نام بدون تغییر می‌ماند |
+| 14 | `20261016120000_add_property_description_and_host_translations` | ستون nullable `property_descriptions.translations` و `properties.host_translations` برای ترجمهٔ دستی توضیحات ملک و نام میزبان از پنل | افزایشی و بدون داده؛ ترجمهٔ گزینه‌های ملک (امکانات، قوانین، محیط) از «گزینه‌های ملک» در پنل وارد می‌شود |
 
 Migrationها باید دقیقاً با همین ترتیب اجرا شوند. هیچ migration دیگری در اختلاف این branch با `main` وجود ندارد. بعد از migration شمارهٔ ۱۳، کش API محتوا (۳ دقیقه) و کش صفحه‌های Front (۱۰ دقیقه) باید منقضی شوند تا ترجمه‌ها دیده شوند. تغییرات کیفیت و دانلود تصویر migration دیتابیس ندارند.
 

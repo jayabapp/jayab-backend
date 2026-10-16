@@ -26,6 +26,7 @@ import { PropertyAdminService } from './admin.service';
 import { FindAllPropertyAdminDto } from './dto/find-all.dto';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { UpdatePropertyTranslationsAdminDto } from './dto/update-translations.dto';
 import {
   FindAllPropertyPhotoUpgradeRequestAdminDto,
   UpdatePropertyPhotoUpgradeRequestItemAdminDto,
@@ -125,6 +126,25 @@ export class PropertyAdminController {
     );
 
     return { result, messageCode: 'UPDATE' };
+  }
+
+  @ApiOperation({ summary: 'Find translations (descriptions, host name, title, address)', description: '' })
+  @Get(':id/translations')
+  async findTranslations(@Param('id', ParseIntPipe) id: number): Promise<SuccessResponseArgs> {
+    const result = await this.propertyAdminService.findTranslations(id);
+
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Update translations (descriptions, host name, title, address)', description: '' })
+  @Put(':id/translations')
+  async updateTranslations(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePropertyTranslationsAdminDto,
+  ): Promise<SuccessResponseArgs> {
+    await this.propertyAdminService.updateTranslations(id, dto);
+
+    return { messageCode: 'UPDATE' };
   }
 
   @ApiOperation({ summary: 'Find One', description: '' })

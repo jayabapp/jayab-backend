@@ -494,6 +494,7 @@ model Rate {
 
 model Property {
   translations            Json?
+  host_translations       Json?
   id                      Int                           @id @default(autoincrement())
   code                    String                        @unique
   owner_id                Int
@@ -609,6 +610,7 @@ model OptionsOnProperty {
 }
 
 model PropertyDescription {
+  translations  Json?
   id            Int      @id @default(autoincrement())
   property_id   Int      @unique
   property_dscr String?

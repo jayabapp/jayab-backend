@@ -9,6 +9,8 @@ import { ShowAction, ShowProps, TableProps } from 'src/common/interfaces/model-p
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
 import { UpdatePartialPropertyAdminDto } from './dto/update-partial.dto';
 import { UpdatePropertyImagesAdminDto } from './dto/update.dto';
+import { UpdatePropertyTranslationsAdminDto } from './dto/update-translations.dto';
+import { cleanEditions, DESCRIPTION_FIELDS } from 'src/property/common/helpers/property-translations.helper';
 import { CreateProps, OperatorItems } from 'src/common/interfaces/model-props.interface';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertySerializer } from 'src/property/serializer/property.serializer';
@@ -128,6 +130,62 @@ export class PropertyAdminService {
     const showProps = showPropsBuilder(serialized);
     const actions = showActionBuilder(serializedItem, rbac);
     return { showProps, actions, item: serializedItem };
+  }
+
+  async findTranslations(id: number) {
+    const item = await this.db.property.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        address: true,
+        translations: true,
+        host_translations: true,
+        description: true,
+        assistants: { select: { assistant_full_name: true, is_owner: true }, orderBy: { is_owner: 'desc' } },
+      },
+    });
+    if (!item) throw new NotFoundException('NOT_FOUND');
+
+    const { translations: descriptionTranslations, ...descriptions } = item.description ?? {
+      translations: null,
+    };
+    return {
+      id: item.id,
+      code: item.code,
+      main: { fa: { title: item.title, address: item.address }, translations: item.translations },
+      descriptions: {
+        fa: DESCRIPTION_FIELDS.reduce((fa, field) => ({ ...fa, [field]: descriptions[field] ?? '' }), {}),
+        translations: descriptionTranslations,
+      },
+      host: { fa: item.assistants[0]?.assistant_full_name ?? '', translations: item.host_translations },
+    };
+  }
+
+  /** Each part replaces its stored editions; a part that is not sent stays untouched. */
+  async updateTranslations(id: number, dto: UpdatePropertyTranslationsAdminDto): Promise<void> {
+    const property = await this.db.property.findUnique({ where: { id }, select: { id: true } });
+    if (!property) throw new NotFoundException('NOT_FOUND');
+
+    const asJson = (value: Prisma.InputJsonObject | null) => value ?? Prisma.DbNull;
+    await this.db.$transaction(async (tx) => {
+      await tx.property.update({
+        where: { id },
+        data: {
+          ...(dto.main ? { translations: asJson(cleanEditions(dto.main, ['title', 'address'])) } : {}),
+          ...(dto.host ? { host_translations: asJson(cleanEditions(dto.host, ['name'])) } : {}),
+        },
+      });
+      if (dto.descriptions) {
+        const translations = asJson(cleanEditions(dto.descriptions, DESCRIPTION_FIELDS));
+        await tx.propertyDescription.upsert({
+          where: { property_id: id },
+          update: { translations },
+          create: { property_id: id, translations },
+        });
+      }
+    });
   }
 
   async findById(id: number): Promise<

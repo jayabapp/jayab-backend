@@ -45,6 +45,7 @@ import { SmsService } from 'src/sms/sms.service';
 import { toAndArray } from 'src/property/common/helpers/property-search-query.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { Locale } from 'src/common/dto/locale.dto';
+import { localizeHostName } from '../../common/helpers/property-translations.helper';
 import { Redis } from 'ioredis';
 
 import randomstring from 'randomstring';
@@ -338,7 +339,7 @@ export class PropertyUserService {
         region: { select: { title: true, translations: true } },
         property_options: {
           where: { option: { deleted_at: null } },
-          select: { option: { select: { title: true, group: true, image: true } } },
+          select: { option: { select: { id: true, title: true, group: true, image: true, translations: true } } },
         },
         bedrooms: true,
         daily_price: true,
@@ -359,9 +360,15 @@ export class PropertyUserService {
     const today = await this.dayHelper.today();
     const serialized = await this.propertySerializer.toJSON(item, today, isAdvisor, false, locale);
     const seoLinks = await this.findSeoLinks(item.city_id, item.province_id, item.has_pool);
+    const host = localizeHostName(
+      orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
+      item.host_translations,
+      locale,
+    );
     const ownerInfo = {
       avatar: item.owner.user.profile_image,
-      full_name: orderBy(item.assistants, 'is_owner', 'desc')?.[0]?.assistant_full_name,
+      full_name: host.value,
+      full_name_locale: host.locale,
       since: item.owner.created_at,
     };
     const isChatEnabled = serialized.is_chat_enabled && (await this.setting.isGuestChatEnabled());

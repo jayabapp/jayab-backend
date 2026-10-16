@@ -7,6 +7,7 @@ import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/pro
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
 import { localizePropertyText } from '../common/helpers/property-text.helper';
+import { DescriptionLocales, localizeDescriptions } from '../common/helpers/property-translations.helper';
 import { findMinimumNightlyPrice } from '../common/minimum-price.helper';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
@@ -23,7 +24,15 @@ type TodayPrice = { price: number; discounted_price: number | null; discount_per
 
 type ReserveDay = { day_number: number; is_reserved: boolean };
 
-export type PropertyOptionItem = { group: string; title: string; icon: Attachment | null };
+export type PropertyOptionItem = {
+  id: number | null;
+  group: string;
+  title: string;
+  /** Persian title, stable across locales; the Front keys icons and rules off it. */
+  canonical_title: string;
+  title_locale: Locale;
+  icon: Attachment | null;
+};
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -98,7 +107,8 @@ export type PropertyJsonResType = {
   address: string;
   options: object[];
   option_items: PropertyOptionItem[];
-  property_descriptions: PropertyDescription;
+  property_descriptions: Omit<PropertyDescription, 'translations'> | null;
+  description_locales: DescriptionLocales;
   rent_type: RentType;
   is_chat_enabled: boolean;
   reserve_days?: ReserveDay[];
@@ -139,7 +149,7 @@ export class PropertySerializer {
     return res;
   }
 
-  formatPropertyOptions(options: any, key: keyof PropertyOption): object[] {
+  formatPropertyOptions(options: any, key: keyof PropertyOption, locale: Locale = 'fa'): object[] {
     const arrayKeys: readonly string[] = [
       PropertyOptionGroup.ENTERTAINMENT,
       PropertyOptionGroup.COOL_HEAT,
@@ -152,22 +162,32 @@ export class PropertySerializer {
       const group = item.option?.group?.toLowerCase() || 'unknow_key';
       if (arrayKeys.includes(group.toUpperCase())) {
         list[group] = list[group] ?? [];
-        list[group].push(item.option[key]);
+        list[group].push(this.optionText(item.option, key, locale));
       } else {
-        list[group] = item.option[key];
+        list[group] = this.optionText(item.option, key, locale);
       }
       return list;
     }, {});
     return groupByOption;
   }
 
-  formatPropertyOptionItems(options: any): PropertyOptionItem[] {
+  private optionText(option: any, key: keyof PropertyOption, locale: Locale): unknown {
+    return key === 'title' && option.title ? localizeTitle(option, locale).title : option[key];
+  }
+
+  formatPropertyOptionItems(options: any, locale: Locale = 'fa'): PropertyOptionItem[] {
     if (isEmpty(options)) return [];
-    return options.map((item) => ({
-      group: item.option?.group?.toLowerCase() || 'unknow_key',
-      title: item.option?.title,
-      icon: item.option?.image ?? null,
-    }));
+    return options.map((item) => {
+      const localized = item.option?.title ? localizeTitle(item.option, locale) : null;
+      return {
+        id: item.option?.id ?? null,
+        group: item.option?.group?.toLowerCase() || 'unknow_key',
+        title: localized?.title ?? item.option?.title,
+        canonical_title: item.option?.title,
+        title_locale: localized?.title_locale ?? 'fa',
+        icon: item.option?.image ?? null,
+      };
+    });
   }
 
   private findTodayPrice(
@@ -295,6 +315,7 @@ export class PropertySerializer {
         : null,
     };
 
+    const descriptions = localizeDescriptions(data.description, locale);
     if (!isList)
       single = {
         admin_descriptions: data.admin_descriptions,
@@ -313,9 +334,10 @@ export class PropertySerializer {
         floor: data.floor,
         construction_year: data.construction_year,
         address: data.is_location_visible || isOwner ? address.value : null,
-        options: this.formatPropertyOptions(data.property_options, 'title'),
-        option_items: this.formatPropertyOptionItems(data.property_options),
-        property_descriptions: data.description,
+        options: this.formatPropertyOptions(data.property_options, 'title', locale),
+        option_items: this.formatPropertyOptionItems(data.property_options, locale),
+        property_descriptions: descriptions.value,
+        description_locales: descriptions.locales,
         rent_type: RentType.DAILY,
         is_chat_enabled: data.is_chat_enabled,
         check_in_hour: data.check_in_hour,
