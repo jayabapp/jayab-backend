@@ -27,6 +27,10 @@ const specificityScore = (landing: {
   Number(Boolean(landing.min_bedroom)) +
   Number(Boolean(landing.max_bedroom));
 
+/** Search results for a city (or province) — the fallback when no landing page covers it. */
+export const locationSearchPath = ({ cityId, provinceId }: LandingLocation): string | null =>
+  cityId ? `rooms?cities=${cityId}` : provinceId ? `rooms?provinces=${provinceId}` : null;
+
 export const findCanonicalLocationLanding = async (
   db: PrismaService,
   { cityId, hasPool, provinceId }: LandingLocation,

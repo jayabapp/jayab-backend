@@ -54,7 +54,8 @@ export class PropertyUserController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Query() dto: LocaleDto,
   ): Promise<SuccessResponseArgs> {
-    const result = await this.propertyUserService.findSimilar(propertyId, 8, dto.locale);
+    // The listing page shows two cards and links to the city page for the rest.
+    const result = await this.propertyUserService.findSimilar(propertyId, 2, dto.locale);
     return { result };
   }
 

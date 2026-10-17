@@ -12,7 +12,7 @@ import { buildMatchedOrder, buildSearchTokens } from 'src/property/common/helper
 import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
 import { MatchedEntry, ResolvedLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { UnprocessableEntityException } from '@nestjs/common';
-import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
+import { findCanonicalLocationLanding, locationSearchPath } from 'src/landing-page/common/canonical-landing.helper';
 import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
@@ -380,14 +380,15 @@ export class PropertyUserService {
     provinceId: number,
     hasPool: boolean,
   ): Promise<PropertySeoLinks> {
-    const cacheKey = `seo-links:${cityId}:${provinceId}:${hasPool ? 1 : 0}`;
+    const cacheKey = `seo-links:v2:${cityId}:${provinceId}:${hasPool ? 1 : 0}`;
     const cached = await this.redis.get(cacheKey);
     if (cached) return JSON.parse(cached) as PropertySeoLinks;
     const [villa, pool] = await Promise.all([
       findCanonicalLocationLanding(this.db, { cityId, provinceId, hasPool: false }),
       hasPool ? findCanonicalLocationLanding(this.db, { cityId, provinceId, hasPool: true }) : null,
     ]);
-    const links: PropertySeoLinks = { villa, pool };
+    // Most cities have no landing page yet; their villa link opens the city's search results.
+    const links: PropertySeoLinks = { villa: villa ?? locationSearchPath({ cityId, provinceId }), pool };
     await this.redis.set(cacheKey, JSON.stringify(links), 'EX', 60 * 60);
     return links;
   }
