@@ -1,4 +1,5 @@
 import { applyDecorators, UseInterceptors } from '@nestjs/common';
+import { IMAGE_UPLOAD_MAX_BYTES } from '../constants/image-processing.constant';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { fileMimetypeFilter } from '../filters/file-mimetype.filter';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -38,7 +39,7 @@ export function ApiImageFile(fileName = 'image', required = false): any {
       'gif',
     ),
     limits: {
-      fileSize: 1024 * 1024 * 30,
+      fileSize: IMAGE_UPLOAD_MAX_BYTES,
     },
   });
 }

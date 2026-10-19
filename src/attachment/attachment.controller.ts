@@ -46,6 +46,8 @@ import {
   BLOG_IMAGE_MAX_DIMENSION,
   PROPERTY_IMAGE_ENCODING_QUALITY,
   PROPERTY_IMAGE_MAX_DIMENSION,
+  PROFILE_IMAGE_MAX_DIMENSION,
+  DOCUMENT_IMAGE_MAX_DIMENSION,
 } from './constants/image-processing.constant';
 
 @ApiTags('📎 Attachment')
@@ -92,7 +94,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_PROFILE_FOLDER,
-          resizeWidth: 512,
+          resizeWidth: PROFILE_IMAGE_MAX_DIMENSION,
           resizeMode: 'square',
           userId: user.id,
         };
@@ -102,7 +104,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_SELFIE_FOLDER,
-          resizeWidth: 512,
+          resizeWidth: PROFILE_IMAGE_MAX_DIMENSION,
           resizeMode: 'square',
           userId: user.id,
         };
@@ -112,7 +114,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -122,7 +124,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_ADVISOR_DOCUMENT_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -145,7 +147,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -166,7 +168,11 @@ export class AttachmentController {
         break;
     }
 
-    const result = await this.attachmentService.createAttachment(args);
+    if (!args) throw new BadRequestException('FOLDER_NOT_FOUND');
+    const result = await this.attachmentService.createAttachment({
+      ...args,
+      lossless: createAttachmentUserDto.type !== AttachmentUserFolder.CHAT,
+    });
     return { result };
   }
 

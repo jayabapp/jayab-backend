@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AttachmentImagePropsType, AttachmentVoicePropsType } from './interfaces/attachment-props.type';
 import { DEFAULT_IMAGE_ENCODING_QUALITY, IMAGE_WEBP_OPTIONS } from './constants/image-processing.constant';
+import { IMAGE_UPLOAD_MAX_PIXELS, IMAGE_UPLOAD_MIN_DIMENSION } from './constants/image-processing.constant';
 import { Attachment, Prisma } from '@prisma/client';
 import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -76,21 +77,25 @@ export class AttachmentService {
       repository = 'attachment',
       alt,
       encodingQuality = DEFAULT_IMAGE_ENCODING_QUALITY,
+      lossless: isLossless = false,
     } = args;
-    const MIN_WIDTH = 32;
-    const MIN_HEIGHT = 32;
-
-    const image = sharp(file.buffer).rotate();
-    const largeImage = sharp(file.buffer).rotate();
-    const mediumImage = sharp(file.buffer).rotate();
-    const thumbImage = sharp(file.buffer).rotate();
-
-    const metadata = await image.metadata();
+    let metadata: sharp.Metadata;
+    try {
+      metadata = await sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).metadata();
+    } catch (error) {
+      if (error instanceof Error && /pixel limit/i.test(error.message))
+        throw new BadRequestException('ATTACH_IMAGE_PIXEL_LIMIT');
+      throw new BadRequestException('ATTACH_IMAGE_INVALID');
+    }
     const { width, height } = metadata;
+    if (!width || !height) throw new BadRequestException('ATTACH_IMAGE_INVALID');
+    if (width * height > IMAGE_UPLOAD_MAX_PIXELS) throw new BadRequestException('ATTACH_IMAGE_PIXEL_LIMIT');
+    if (width < IMAGE_UPLOAD_MIN_DIMENSION || height < IMAGE_UPLOAD_MIN_DIMENSION)
+      throw new BadRequestException('ATTACH2');
 
-    const isVertical = width >= height;
-
-    if (width < MIN_WIDTH || height < MIN_HEIGHT) throw new BadRequestException('ATTACH2');
+    const largeImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
+    const mediumImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
+    const thumbImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
     const resizeDimension: { width?: number; height?: number } =
       resizeMode == 'square'
         ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth) }
@@ -102,9 +107,7 @@ export class AttachmentService {
               ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth * 0.4) }
               : resizeMode == '1/4'
                 ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth * 0.25) }
-                : isVertical
-                  ? { width: width > resizeWidth ? Math.floor(resizeWidth) : Math.floor(width) }
-                  : { height: height > resizeWidth ? Math.floor(resizeWidth) : Math.floor(height) };
+                : { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth) };
 
     let resizeDimensionMedium = {};
     let resizeDimensionThumb = {};
@@ -121,7 +124,9 @@ export class AttachmentService {
     const largeName = `${fileName}`;
     const mediumName = `medium-${fileName}`;
     const thumbName = `thumb-${fileName}`;
-    const fitMode = ['square', '1/2', '2/3', '2/5'].includes(resizeMode) ? 'cover' : 'contain';
+    // Bound both axes after auto-orientation; a rotated phone photo must not
+    // bypass the longest-side limit or gain square padding in normal mode.
+    const fitMode = ['square', '1/2', '2/3', '2/5', '1/4'].includes(resizeMode) ? 'cover' : 'inside';
 
     const l = await largeImage
       .resize({
@@ -129,8 +134,11 @@ export class AttachmentService {
         fit: fitMode,
         withoutEnlargement: true,
       })
-      .webp({ quality: encodingQuality.large, ...IMAGE_WEBP_OPTIONS })
-      .toBuffer();
+      .webp({ quality: encodingQuality.large, ...IMAGE_WEBP_OPTIONS, lossless: isLossless })
+      .toBuffer()
+      .catch(() => {
+        throw new BadRequestException('ATTACH_IMAGE_INVALID');
+      });
 
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${largeName}`,
