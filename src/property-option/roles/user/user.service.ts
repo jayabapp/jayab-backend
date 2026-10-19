@@ -16,7 +16,7 @@ export class PropertyOptionUserService {
     });
 
     return groupBy(
-      list.map((item) => localizeTitle(item, dto.locale)),
+      list.map((item) => ({ ...localizeTitle(item, dto.locale), canonical_title: item.title })),
       'group',
     );
   }
