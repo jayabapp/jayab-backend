@@ -1,10 +1,9 @@
-import { IsNumber, Validate, IsObject, ValidateNested, ValidateIf, IsOptional, Max } from 'class-validator';
+import { IsNumber, Validate, ValidateIf, IsOptional, Max } from 'class-validator';
 import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
-import { PropertyTranslationsDto } from 'src/property/common/dto/property-translations.dto';
 import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
 import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
 import { ApiProperty } from '@nestjs/swagger';
@@ -55,13 +54,6 @@ export class DayDto {
 }
 
 export class UpdatePropertyStepOneOwnerDto {
-  @ApiProperty({ required: false, type: PropertyTranslationsDto })
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => PropertyTranslationsDto)
-  translations?: PropertyTranslationsDto;
-
   @ApiProperty({ required: true, title: 'نوع ملک', example: 7 })
   @Validate(IsCorrectPropertyOption, [PropertyOptionGroup.PROPERTY_TYPE])
   @_IsNotEmpty()

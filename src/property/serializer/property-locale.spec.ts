@@ -147,8 +147,8 @@ describe('property translation validation', () => {
   });
 });
 
-describe('owner and admin SSO translation persistence', () => {
-  it('preserves omitted editions, supports clearing, and builds the slug from Persian', async () => {
+describe('owner translation protection', () => {
+  it('ignores owner-supplied editions and builds the slug from Persian', async () => {
     const update = jest.fn().mockResolvedValue({});
     const db = {
       property: { update },
@@ -168,9 +168,9 @@ describe('owner and admin SSO translation persistence', () => {
     ]) {
       await service.updateInit(translatedPropertyFixture as Property, payload);
     }
-    expect(update.mock.calls[0][0].data).not.toHaveProperty('translations');
-    expect(update.mock.calls[1][0].data.translations).toEqual(translatedPropertyFixture.translations);
-    expect(update.mock.calls[2][0].data.translations).toEqual({});
+    for (const [call] of update.mock.calls) {
+      expect(call.data).not.toHaveProperty('translations');
+    }
     for (const [call] of update.mock.calls) {
       expect(call.data.title).toBe(dto.title);
       expect(call.data.address).toBe(dto.address);
