@@ -192,7 +192,6 @@ export class FindAllPropertyUserDto extends IntersectionType(PaginationDto, Loca
   checkout?: Date;
 
   @ApiProperty({ required: false, title: 'ممتاز' })
-  @Type(() => Boolean)
   @Transform(({ value }) => value == '1')
   @_IsBoolean()
   @IsOptional()
@@ -200,7 +199,6 @@ export class FindAllPropertyUserDto extends IntersectionType(PaginationDto, Loca
 
   @ApiProperty({ required: false, title: 'احراز شده' })
   @Transform(({ value }) => value == '1')
-  @Type(() => Boolean)
   @_IsBoolean()
   @IsOptional()
   is_authorized?: boolean;

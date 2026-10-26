@@ -17,9 +17,9 @@ import { buildPriceHistogram, PriceHistogram } from 'src/property/common/helpers
 import { MatchedEntry, ResolvedLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { Bbox, isInsideBbox, parseBbox } from 'src/property/common/helpers/bbox.helper';
 import { UnprocessableEntityException } from '@nestjs/common';
+import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
-import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
@@ -33,6 +33,7 @@ import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
 import { buildFuzzyCityQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { isExactPropertyCode } from 'src/property/common/helpers/search-text.helper';
+import { locationSearchPath } from 'src/landing-page/common/canonical-landing.helper';
 import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { buildLocationSpans } from 'src/property/common/helpers/search-query-parser.helper';
 import { tokenizeSearchText } from 'src/property/common/helpers/search-text.helper';
@@ -41,7 +42,6 @@ import { resolveNightPrice } from 'src/property/common/night-price.helper';
 import { LocationCandidate } from 'src/property/common/helpers/search-query-parser.helper';
 import { buildMapCacheKey } from 'src/property/common/helpers/map-cache-key.helper';
 import { localizeHostName } from '../../common/helpers/property-translations.helper';
-import { locationSearchPath } from 'src/landing-page/common/canonical-landing.helper';
 import { isEmpty, orderBy } from 'lodash';
 import { SearchableOption } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -151,7 +151,9 @@ export class PropertyUserService {
 
     if (code) query = { ...query, code };
     if (is_authorized) query = { ...query, is_authorized: true };
-    if (has_blue_tick) query = { ...query, has_blue_tick: true };
+    // An explicitly disabled canonical filter must win over the old alias.
+    const isPremiumRequested = has_blue_tick !== undefined ? !!has_blue_tick : is_premium === 1;
+    if (isPremiumRequested) query = { ...query, has_blue_tick: true };
 
     const citiesArray = parseQueryNumberArray(cities);
     const provincesArray = parseQueryNumberArray(provinces);
@@ -193,9 +195,6 @@ export class PropertyUserService {
     /* -------------------------------- تخفیف دار ------------------------------- */
     if (has_discount === 1)
       query = { ...query, calendar: { some: { date: startOfToday(), discount_percentage: { gt: 0 } } } };
-
-    /* ------------------------------ ملک های ویژه ------------------------------ */
-    if (is_premium === 1) query = { ...query, has_blue_tick: true };
 
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title, mode: 'insensitive' } };

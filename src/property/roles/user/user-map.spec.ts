@@ -90,6 +90,18 @@ const around = (lat: number, lng: number, half = 0.0004): string =>
   `${lng - half},${lat - half},${lng + half},${lat + half}`;
 
 describe('public location in the map and the list', () => {
+  it('gives an explicit canonical premium filter priority over its legacy alias', () => {
+    const { service } = setup([]);
+    expect(service.buildDiscoveryQuery({ is_premium: 1 }).has_blue_tick).toBe(true);
+    expect(service.buildDiscoveryQuery({ has_blue_tick: true, is_premium: 0 } as any).has_blue_tick).toBe(
+      true,
+    );
+    expect(
+      service.buildDiscoveryQuery({ has_blue_tick: false, is_premium: 1 } as any).has_blue_tick,
+    ).toBeUndefined();
+    expect(service.buildDiscoveryQuery({ has_blue_tick: 0, is_premium: 1 }).has_blue_tick).toBeUndefined();
+  });
+
   it('matches a hidden listing at its approximate point, never at its real one', async () => {
     const hidden = row(7, 36.7025, 52.6512, false);
     const approx = buildApproxLocation(7, hidden.lat, hidden.lng, SALT);
@@ -383,5 +395,61 @@ describe('listing cards carry the public location', () => {
     }
     expect(cards.find((card) => card.id === 7).public_location).toMatchObject({ precision: 'approximate' });
     expect(cards.find((card) => card.id === 8).public_location).toMatchObject({ precision: 'exact' });
+  });
+});
+
+describe('the map reads the same conditions as the list, for every kind of filter', () => {
+  const rows = [row(1, 36.7, 52.6, true), row(2, 36.71, 52.61, false)];
+  // The list narrows by ids twice over (the box, and a price range it resolves per day); what
+  // has to match is every other condition.
+  const withoutBoxNarrowing = (where: any) => {
+    const rest = { ...(where ?? {}) };
+    delete rest.id;
+    return { ...rest, AND: (where?.AND ?? []).filter((entry: any) => !entry?.id?.in) };
+  };
+
+  const filters: Array<[string, Record<string, unknown>]> = [
+    ['price range', { min_price: 1_000_000, max_price: 5_000_000 }],
+    ['stay dates', { checkin: '2030-05-01', checkout: '2030-05-04' }],
+    ['guests and rooms', { total_guests: 4, total_bedrooms: 2 }],
+    ['city and neighbourhood', { cities: '5', regions: '9' }],
+    ['province', { provinces: '3' }],
+    ['amenity groups', { property_type: '1,2', welfare: '4', kitchen: '7', pool_type: '2' }],
+    ['pool and discount', { has_pool: 1, has_discount: 1 }],
+    ['text search', { q: 'ویلا' }],
+  ];
+
+  it.each(filters)('uses the list conditions for %s', async (_name, filter) => {
+    const { service, db } = setup(rows);
+    const box = '52,36,53,37';
+
+    await service.findMap({ ...filter, bbox: box, zoom: 12 } as any);
+    const mapWhere = db.property.findMany.mock.calls[0][0].where;
+    db.property.findMany.mockClear();
+    await service.findAll({ ...filter, bbox: box, page: 1, per_page: 30 } as any);
+    // The list's first read is the same candidate read; its second is the page itself.
+    const listCandidateWhere = db.property.findMany.mock.calls[0][0].where;
+    const listPageWhere = db.property.findMany.mock.calls.at(-1)[0].where;
+
+    expect(withoutBoxNarrowing(mapWhere)).toEqual(withoutBoxNarrowing(listCandidateWhere));
+    expect(withoutBoxNarrowing(listPageWhere)).toEqual(withoutBoxNarrowing(mapWhere));
+    expect(mapWhere.status).toBe(PropertyStatuses.PUBLISHED);
+  });
+});
+
+describe('the map does not read once per listing', () => {
+  const many = Array.from({ length: 120 }, (_, index) =>
+    row(index + 1, 36.5 + index / 1000, 52.5 + index / 1000, index % 2 === 0),
+  );
+
+  it('answers the map, the histogram and the preview with a fixed number of reads', async () => {
+    const { service, db } = setup(many);
+    await service.findMap({ bbox: '52,36,53,37', zoom: 14 } as any);
+    await service.findPriceHistogram({ bbox: '52,36,53,37' } as any);
+    await service.findMapPreview(7, {} as any).catch(() => undefined);
+
+    // One candidate read per request and at most one for the preview, whatever the row count.
+    expect(db.property.findMany.mock.calls.length).toBeLessThanOrEqual(2);
+    expect(db.property.findFirst.mock.calls.length).toBeLessThanOrEqual(1);
   });
 });
