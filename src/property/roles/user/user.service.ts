@@ -1,26 +1,32 @@
 import { PropertyQuoteNightBreakdown, PropertyQuoteResType, PropertyQuoteUserDto } from './dto/quote.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
 import { GoneException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { PropertyMapUserDto, PropertyPriceHistogramUserDto } from './dto/map.dto';
 import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
 import { SearchCityListItem, SearchExtractResult } from './dto/search-extract-response.dto';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { resolveDisplayPrice, resolveTodayPrice } from 'src/property/common/effective-price.helper';
 import { PropertyArrayResType, PropertyJsonType } from 'src/property/serializer/property.serializer';
 import { DayColumn, resolveDayColumn, toDayKey } from 'src/common/helpers/day.helper';
 import { buildMatchedOrder, buildSearchTokens } from 'src/property/common/helpers/search-query-parser.helper';
+import { buildPublicLocation, PublicMapPoint } from 'src/property/common/helpers/public-location.helper';
 import { PropertyResType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { buildPriceHistogram, PriceHistogram } from 'src/property/common/helpers/price-histogram.helper';
 import { MatchedEntry, ResolvedLocation } from 'src/property/common/helpers/search-query-parser.helper';
+import { Bbox, isInsideBbox, parseBbox } from 'src/property/common/helpers/bbox.helper';
 import { UnprocessableEntityException } from '@nestjs/common';
-import { findCanonicalLocationLanding, locationSearchPath } from 'src/landing-page/common/canonical-landing.helper';
 import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
+import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
 import { applyPropertySearchScope } from 'src/property/common/helpers/property-search-query.helper';
 import { buildCitySuggestionQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { SEARCHABLE_OPTION_GROUPS } from 'src/property/common/helpers/search-query-parser.helper';
+import { buildMapItems, MapItem } from 'src/property/common/helpers/map-clustering.helper';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
 import { persianSearchVariants } from 'src/property/common/helpers/search-text.helper';
 import { SearchSuggestionType } from './dto/search-suggestion-response.dto';
@@ -33,6 +39,9 @@ import { tokenizeSearchText } from 'src/property/common/helpers/search-text.help
 import { CancelingTypeList } from 'src/property/common/types/property-canceling-types.type';
 import { resolveNightPrice } from 'src/property/common/night-price.helper';
 import { LocationCandidate } from 'src/property/common/helpers/search-query-parser.helper';
+import { buildMapCacheKey } from 'src/property/common/helpers/map-cache-key.helper';
+import { localizeHostName } from '../../common/helpers/property-translations.helper';
+import { locationSearchPath } from 'src/landing-page/common/canonical-landing.helper';
 import { isEmpty, orderBy } from 'lodash';
 import { SearchableOption } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
@@ -45,7 +54,6 @@ import { SmsService } from 'src/sms/sms.service';
 import { toAndArray } from 'src/property/common/helpers/property-search-query.helper';
 import { DayHelper } from 'src/common/helpers/day.helper';
 import { Locale } from 'src/common/dto/locale.dto';
-import { localizeHostName } from '../../common/helpers/property-translations.helper';
 import { Redis } from 'ioredis';
 
 import randomstring from 'randomstring';
@@ -57,8 +65,25 @@ const TITLE_CANDIDATE_LIMIT = 20;
 const FUZZY_CITY_SIMILARITY = 0.45;
 const FUZZY_MIN_WORD_LENGTH = 3;
 const TRIGRAM_RETRY_MS = 10 * 60 * 1000;
+const MAP_CACHE_TTL_SECONDS = 30;
 
 type PropertySeoLinks = { villa: string | null; pool: string | null };
+
+type MapCandidate = { id: number; slug: string; location: PublicMapPoint | null; price: number | null };
+
+export type PropertyMapResult = {
+  items: MapItem[];
+  meta: {
+    total: number;
+    returned_items: number;
+    bbox: Bbox;
+    zoom: number;
+    is_clustered: boolean;
+    is_truncated: false;
+    price_basis: 'today_nightly';
+    currency: 'toman';
+  };
+};
 type SimilarSource = Pick<Property, 'id' | 'province_id' | 'city_id' | 'has_pool'>;
 
 type ContactInfoCache = {
@@ -83,11 +108,10 @@ export class PropertyUserService {
     private readonly setting: SettingAdminService,
   ) {}
 
-  async findAll(
-    dto: FindAllPropertyUserDto,
-    isAdvisor: boolean = false,
+  buildDiscoveryQuery(
+    dto: Partial<FindAllPropertyUserDto>,
     propertyIds?: number[],
-  ): Promise<PaginatedResult<PropertyArrayResType>> {
+  ): Prisma.PropertyWhereInput {
     const {
       code,
       provinces,
@@ -111,8 +135,6 @@ export class PropertyUserService {
       has_discount,
       is_premium,
       title,
-      min_price,
-      max_price,
       max_building_area,
       min_building_area,
       min_commission,
@@ -123,8 +145,6 @@ export class PropertyUserService {
       has_blue_tick,
       is_authorized,
     } = dto;
-
-    const today = await this.dayHelper.today();
 
     //initial query
     let query: Prisma.PropertyWhereInput = this.validProperty();
@@ -180,9 +200,6 @@ export class PropertyUserService {
     /* ---------------------------------- title --------------------------------- */
     if (title) query = { ...query, title: { contains: title, mode: 'insensitive' } };
 
-    const hasPriceFilter = min_price !== undefined || max_price !== undefined;
-    const hasPriceSort = dto.sort_type === 'price_asc' || dto.sort_type === 'price_desc';
-
     /* ------------------------------ building area ----------------------------- */
     if (min_building_area >= 0 || max_building_area >= 0) {
       query = {
@@ -215,10 +232,24 @@ export class PropertyUserService {
         ].concat(query.AND || []),
       };
 
-    /* ---------------------------------- CALENDAR INCLUDE ---------------------------------- */
-    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
-      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
-    };
+    return query;
+  }
+
+  async findAll(
+    dto: FindAllPropertyUserDto,
+    isAdvisor: boolean = false,
+    propertyIds?: number[],
+  ): Promise<PaginatedResult<PropertyArrayResType>> {
+    const { min_price, max_price } = dto;
+
+    const today = await this.dayHelper.today();
+
+    let query = this.buildDiscoveryQuery(dto, propertyIds);
+    // A map box narrows the list to the same listings the map shows, before it is paginated.
+    if (dto.bbox !== undefined) query = await this.restrictToBbox(query, dto.bbox, today);
+
+    const hasPriceFilter = min_price !== undefined || max_price !== undefined;
+    const hasPriceSort = dto.sort_type === 'price_asc' || dto.sort_type === 'price_desc';
 
     /* -------------------------------- ORDER BY -------------------------------- */
 
@@ -239,25 +270,7 @@ export class PropertyUserService {
         break;
     }
 
-    const include = {
-      feature_image: true,
-      province: { select: { title: true, translations: true } },
-      city: { select: { title: true, translations: true } },
-      region: { select: { title: true, translations: true } },
-      property_options: {
-        where: { option: { deleted_at: null } },
-        select: { option: { select: { title: true, group: true } } },
-      },
-      daily_price: true,
-      calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
-      bedrooms: { select: { total_bedrooms: true } },
-      subscriptions: {
-        where: { status: SubscriptionStatus.SUCCESS, duration: { gt: 0 } },
-        select: { id: true },
-        take: 1,
-      },
-      _count: { select: { property_images: true } },
-    } satisfies Prisma.PropertyInclude;
+    const include = this.listInclude();
 
     let orderedPageIds: number[] = null;
     let priceMeta: PaginatedResult<PropertyArrayResType>['meta'] = null;
@@ -319,6 +332,185 @@ export class PropertyUserService {
     return { data: serialized, meta: list.meta };
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                     MAP                                    */
+  /* -------------------------------------------------------------------------- */
+
+  private parseBboxOrFail(raw: unknown): Bbox {
+    const bbox = parseBbox(raw);
+    if (!bbox) throw new BadRequestException('PROPERTY_MAP_BBOX_INVALID');
+    return bbox;
+  }
+
+  private async findCandidates(
+    query: Prisma.PropertyWhereInput,
+    today: DayColumn,
+    options: { bbox?: Bbox; minPrice?: number; maxPrice?: number } = {},
+  ): Promise<MapCandidate[]> {
+    const { bbox, minPrice, maxPrice } = options;
+    const hasPriceRange = minPrice !== undefined || maxPrice !== undefined;
+    const salt = this.config.get<string>('location.obfuscationSalt');
+
+    const rows = await this.db.property.findMany({
+      where: query,
+      select: {
+        id: true,
+        slug: true,
+        lat: true,
+        lng: true,
+        is_location_visible: true,
+        daily_price: true,
+        calendar: {
+          where: { date: startOfToday() },
+          select: { price: true, discounted_price: true, discount_percentage: true, effective_price: true },
+        },
+      },
+    });
+
+    const candidates: MapCandidate[] = [];
+    for (const row of rows) {
+      const location = buildPublicLocation(row, salt);
+      if (bbox && (!location || !isInsideBbox(location.lat, location.lng, bbox))) continue;
+      if (hasPriceRange && !isEffectivePriceInRange(getEffectiveTodayPrice(row, today), minPrice, maxPrice))
+        continue;
+      candidates.push({
+        id: row.id,
+        slug: row.slug,
+        location,
+        price: resolveDisplayPrice(resolveTodayPrice(row.calendar?.[0], today, row.daily_price)),
+      });
+    }
+    return candidates;
+  }
+
+  /** Limits a list query to the listings whose public location is inside the box. */
+  private async restrictToBbox(
+    query: Prisma.PropertyWhereInput,
+    rawBbox: unknown,
+    today: DayColumn,
+  ): Promise<Prisma.PropertyWhereInput> {
+    const bbox = this.parseBboxOrFail(rawBbox);
+    const located = await this.findCandidates(query, today, { bbox });
+    // AND rather than `id`, so it narrows an id filter that is already there (bookmarks).
+    return { ...query, AND: [...toAndArray(query.AND), { id: { in: located.map(({ id }) => id) } }] };
+  }
+
+  private async remember<T>(key: string, load: () => Promise<T>): Promise<T> {
+    try {
+      const hit = await this.redis.get(key);
+      if (hit) return JSON.parse(hit) as T;
+    } catch (error) {
+      this.logger.warn(`map cache read failed: ${(error as Error).message}`);
+    }
+    const value = await load();
+    try {
+      await this.redis.set(key, JSON.stringify(value), 'EX', MAP_CACHE_TTL_SECONDS);
+    } catch (error) {
+      this.logger.warn(`map cache write failed: ${(error as Error).message}`);
+    }
+    return value;
+  }
+
+  private mapCacheKey(
+    kind: 'map' | 'histogram',
+    dto: Partial<FindAllPropertyUserDto> & { zoom?: number },
+    bbox: Bbox | undefined,
+    today: DayColumn,
+  ): string {
+    return buildMapCacheKey({
+      kind,
+      filters: dto,
+      bbox,
+      zoom: dto.zoom,
+      locale: dto.locale,
+      priceDay: `${toDayKey(startOfToday())}:${today}`,
+      salt: this.config.get<string>('location.obfuscationSalt'),
+    });
+  }
+
+  async findMap(dto: PropertyMapUserDto): Promise<PropertyMapResult> {
+    const bbox = this.parseBboxOrFail(dto.bbox);
+    const today = await this.dayHelper.today();
+
+    return this.remember(this.mapCacheKey('map', dto, bbox, today), async () => {
+      const query = this.buildDiscoveryQuery(dto);
+      const located = await this.findCandidates(query, today, {
+        bbox,
+        minPrice: dto.min_price,
+        maxPrice: dto.max_price,
+      });
+      const items = buildMapItems(
+        located.map(({ id, slug, location, price }) => ({ id, slug, location, price })),
+        dto.zoom,
+      );
+      return {
+        items,
+        meta: {
+          total: located.length,
+          returned_items: items.length,
+          bbox,
+          zoom: dto.zoom,
+          is_clustered: items.some((item) => item.type === 'cluster'),
+          is_truncated: false as const,
+          price_basis: 'today_nightly' as const,
+          currency: 'toman' as const,
+        },
+      };
+    });
+  }
+
+  async findPriceHistogram(dto: PropertyPriceHistogramUserDto): Promise<PriceHistogram> {
+    const bbox = dto.bbox === undefined ? undefined : this.parseBboxOrFail(dto.bbox);
+    const today = await this.dayHelper.today();
+
+    return this.remember(this.mapCacheKey('histogram', dto, bbox, today), async () => {
+      const candidates = await this.findCandidates(this.buildDiscoveryQuery(dto), today, { bbox });
+      return buildPriceHistogram(candidates.map(({ price }) => price));
+    });
+  }
+
+  async findMapPreview(propertyId: number, locale: Locale = 'fa'): Promise<PropertyArrayResType> {
+    const property = await this.db.property.findFirst({
+      where: { id: propertyId, ...this.validProperty() },
+      include: this.listInclude(),
+    });
+    if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
+    const [card] = await this.propertySerializer.toArray(
+      [property as unknown as PropertyJsonType],
+      await this.dayHelper.today(),
+      false,
+      false,
+      locale,
+    );
+    return card;
+  }
+
+  /** What a list card needs from the database. The list and the map preview share it. */
+  private listInclude() {
+    const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
+      date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
+    };
+    return {
+      feature_image: true,
+      province: { select: { title: true, translations: true } },
+      city: { select: { title: true, translations: true } },
+      region: { select: { title: true, translations: true } },
+      property_options: {
+        where: { option: { deleted_at: null } },
+        select: { option: { select: { title: true, group: true } } },
+      },
+      daily_price: true,
+      calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
+      bedrooms: { select: { total_bedrooms: true } },
+      subscriptions: {
+        where: { status: SubscriptionStatus.SUCCESS, duration: { gt: 0 } },
+        select: { id: true },
+        take: 1,
+      },
+      _count: { select: { property_images: true } },
+    } satisfies Prisma.PropertyInclude;
+  }
+
   async findOne(
     propertySlug: string,
     isAdvisor: boolean,
@@ -339,7 +531,9 @@ export class PropertyUserService {
         region: { select: { title: true, translations: true } },
         property_options: {
           where: { option: { deleted_at: null } },
-          select: { option: { select: { id: true, title: true, group: true, image: true, translations: true } } },
+          select: {
+            option: { select: { id: true, title: true, group: true, image: true, translations: true } },
+          },
         },
         bedrooms: true,
         daily_price: true,

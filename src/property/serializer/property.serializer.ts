@@ -1,16 +1,20 @@
 import { PropertyBedroom, PropertyCalendar, PropertyDailyPrice, PropertyDescription } from '@prisma/client';
 import { Property, PropertyAuthorize, PropertyBadge, Subscription } from '@prisma/client';
 import { Attachment, City, PropertyImage, PropertyOption } from '@prisma/client';
+import { DescriptionLocales, localizeDescriptions } from '../common/helpers/property-translations.helper';
 import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
 import { ApproxLocation, buildApproxLocation } from '../common/helpers/approx-location.helper';
+import { buildPublicLocation, PublicMapPoint } from '../common/helpers/public-location.helper';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
+import { resolveTodayPrice, TodayPrice } from '../common/effective-price.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
-import { localizePropertyText } from '../common/helpers/property-text.helper';
-import { DescriptionLocales, localizeDescriptions } from '../common/helpers/property-translations.helper';
 import { findMinimumNightlyPrice } from '../common/minimum-price.helper';
+import { localizePropertyText } from '../common/helpers/property-text.helper';
+import { Injectable, Optional } from '@nestjs/common';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
+import { ConfigService } from '@nestjs/config';
 import { localizeTitle } from 'src/common/helpers/title-translations.helper';
 import { DayColumn } from 'src/common/helpers/day.helper';
 import { RentType } from '../common/types/property-rent-types.type';
@@ -20,18 +24,15 @@ import { Locale } from 'src/common/dto/locale.dto';
 
 import moment from 'moment-jalaali';
 
-type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
-
 type ReserveDay = { day_number: number; is_reserved: boolean };
 
 export type PropertyOptionItem = {
-  id: number | null;
   group: string;
   title: string;
-  /** Persian title, stable across locales; the Front keys icons and rules off it. */
-  canonical_title: string;
+  id: number | null;
   title_locale: Locale;
   icon: Attachment | null;
+  canonical_title: string;
 };
 
 export type PropertyJsonType = Property & {
@@ -75,6 +76,7 @@ export type PropertyArrayResType = {
   status: EnumList;
   advisor_commission: number;
   today_price: TodayPrice;
+  public_location: PublicMapPoint | null;
   minimum_price: number | null;
   is_today_reserved: boolean;
   remaining_days: number;
@@ -89,7 +91,6 @@ export type PropertyArrayResType = {
   favorite_count: number;
   created_at: Date;
   deleted_at: Date;
-  // rate:number;
 };
 
 export type PropertyJsonResType = {
@@ -121,7 +122,14 @@ export type PropertyJsonResType = {
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
 
+@Injectable()
 export class PropertySerializer {
+  constructor(@Optional() private readonly config?: ConfigService) {}
+
+  private get locationSalt(): string | undefined {
+    return this.config?.get<string>('location.obfuscationSalt') ?? process.env.LOCATION_OBFUSCATION_SALT;
+  }
+
   async toArray(
     data: PropertyJsonType[],
     today: DayColumn,
@@ -195,13 +203,7 @@ export class PropertySerializer {
     today: DayColumn,
     dailyPrice: PropertyDailyPrice,
   ): TodayPrice {
-    if (calendar?.effective_price)
-      return {
-        price: calendar.price,
-        discounted_price: calendar.discounted_price,
-        discount_percentage: calendar.discount_percentage,
-      };
-    return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
+    return resolveTodayPrice(calendar, today, dailyPrice);
   }
 
   private findImages(feature_image?: Attachment, attachments?: Attachment[]) {
@@ -295,6 +297,7 @@ export class PropertySerializer {
           ? null
           : (todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission),
       today_price: this.findTodayPrice(todayInPropertyCalendar, today, data.daily_price),
+      public_location: buildPublicLocation(data, this.locationSalt),
       minimum_price: findMinimumNightlyPrice(data.daily_price, data.calendar),
       is_today_reserved: !!todayInPropertyCalendar?.is_reserved,
       is_authorized: data.is_authorized,
@@ -326,7 +329,7 @@ export class PropertySerializer {
         approx_location:
           data.is_location_visible || isOwner
             ? null
-            : buildApproxLocation(data.id, data.lat, data.lng, process.env.LOCATION_OBFUSCATION_SALT),
+            : buildApproxLocation(data.id, data.lat, data.lng, this.locationSalt),
         land_area: data.land_area,
         building_area: data.building_area,
         floors: data.floors,

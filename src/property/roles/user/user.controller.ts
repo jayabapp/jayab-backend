@@ -1,10 +1,12 @@
+import { PropertyMapPreviewUserDto, PropertyMapUserDto, PropertyPriceHistogramUserDto } from './dto/map.dto';
 import { ParseIntPipe, Put, Query, Req, UseGuards, UseInterceptors, Version } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nestjs/common';
+import { PropertyMapResponseDto, PropertyPriceHistogramResponseDto } from './dto/map-response.dto';
 import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { THREE_MINUTES_TTL, TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { SearchSuggestionsSuccessResponseDto } from './dto/search-suggestion-response.dto';
+import { THREE_MINUTES_TTL, TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
 import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
 import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
@@ -41,8 +43,42 @@ export class PropertyUserController {
   ): Promise<SuccessResponseArgs> {
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const result = await this.propertyUserService.findAll(dto, isAdvisor);
-    const ids = result.data?.map((e) => e.id);
-    await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
+    if (!dto.count_only) {
+      const ids = result.data?.map((e) => e.id);
+      await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
+    }
+    return { result };
+  }
+
+  @ApiOperation({
+    summary: 'Map Points',
+    description: 'Pins and clusters for every located result in the box',
+  })
+  @ApiOkResponse({ type: PropertyMapResponseDto })
+  @Get('map')
+  async findMap(@Query() dto: PropertyMapUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findMap(dto);
+    return { result };
+  }
+
+  @ApiOperation({
+    summary: 'Price Histogram',
+    description: 'Distribution of tonight prices, ignoring the chosen price range',
+  })
+  @ApiOkResponse({ type: PropertyPriceHistogramResponseDto })
+  @Get('price-histogram')
+  async findPriceHistogram(@Query() dto: PropertyPriceHistogramUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findPriceHistogram(dto);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Map Preview', description: 'One card for a pin outside the loaded pages' })
+  @Get(':propertyId/map-preview')
+  async findMapPreview(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: PropertyMapPreviewUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findMapPreview(propertyId, dto.locale);
     return { result };
   }
 
@@ -54,7 +90,6 @@ export class PropertyUserController {
     @Param('propertyId', ParseIntPipe) propertyId: number,
     @Query() dto: LocaleDto,
   ): Promise<SuccessResponseArgs> {
-    // The listing page shows two cards and links to the city page for the rest.
     const result = await this.propertyUserService.findSimilar(propertyId, 2, dto.locale);
     return { result };
   }
