@@ -1,24 +1,14 @@
-import { Prisma } from '@prisma/client';
-import moment from 'moment-jalaali';
-import { startOfDate } from 'src/common/helpers/date.helper';
 import { FindAllPropertyAdminDto } from 'src/property/roles/admin/dto/find-all.dto';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
 import { filterPropsBuilder } from './model-props-builder.helper';
 import { PropertyStatuses } from '../types/property-status.type';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { startOfDate } from 'src/common/helpers/date.helper';
+import { Prisma } from '@prisma/client';
 
-/**
- * validate filters
- * @param dto
- * @returns
- */
+import moment from 'moment-jalaali';
+
 export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.PropertyWhereInput => {
   if (!filters) return {};
-
-  /**
-   * get items for checking fields and operators
-   * filter keys must be in items filerItems array
-   * filter field keys must be in items operators array
-   */
   const items = filterPropsBuilder();
   const fields = Object.keys(filters).filter((e) => filters[e]);
 
@@ -26,13 +16,8 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
   let query: Prisma.PropertyWhereInput = {};
 
   for (const field of fields) {
-    /**
-     * check filter keys
-     */
     const checkField = items.find((e) => e.state === field);
     if (!checkField && !['page', 'per_page', 'skip'].includes(field)) return;
-
-    //query
     switch (field) {
       case 'owner_id':
         query = { ...query, owner_id: +filters.owner_id };
@@ -75,17 +60,11 @@ export const filterValidator = (filters: FindAllPropertyAdminDto): Prisma.Proper
         query = {
           ...query,
           subscription_expired_at: { lt: startOfDate(moment().toDate()) },
-          // OR: [
-          //   { subscription_expired_at: { lt: startOfDate(moment().toDate()) } },
-          //   { subscription_expired_at: null },
-          // ],
         };
         break;
-
       case 'code':
         query = { ...query, code: filters.code };
         break;
-
       default:
         break;
     }

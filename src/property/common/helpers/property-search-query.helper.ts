@@ -3,10 +3,10 @@ import { isEmpty } from 'lodash';
 import { Prisma } from '@prisma/client';
 
 type PropertySearchScope = {
-  regions: number[];
-  cities: number[];
-  provinces: number[];
   q?: string;
+  cities: number[];
+  regions: number[];
+  provinces: number[];
 };
 
 export const toAndArray = (value: Prisma.PropertyWhereInput['AND']): Prisma.PropertyWhereInput[] =>
@@ -30,7 +30,6 @@ export const applyPropertySearchScope = (
       ...persianSearchVariants(word).map((variant) => ({
         title: { contains: variant, mode: Prisma.QueryMode.insensitive },
       })),
-      // A typed number may be a listing code; `code` is unique-indexed, so this stays cheap.
       ...(/^\d+$/.test(word) ? [{ code: word }] : []),
     ],
   }));

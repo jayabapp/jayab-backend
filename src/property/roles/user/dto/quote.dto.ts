@@ -1,6 +1,6 @@
+import { _IsDate, _IsInt, _IsNotEmpty, _Max, _Min } from 'src/common/pipes/validator-translate.pipe';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { _IsDate, _IsInt, _IsNotEmpty, _Max, _Min } from 'src/common/pipes/validator-translate.pipe';
 
 export class PropertyQuoteUserDto {
   @ApiProperty({ required: true, example: '2026-10-06T00:00:00.000Z' })
@@ -25,19 +25,19 @@ export class PropertyQuoteUserDto {
 
 export type PropertyQuoteNightBreakdown = {
   date: string;
+  is_peak: boolean;
   day_column: string;
   base_price: number;
   final_price: number;
   is_discounted: boolean;
-  is_peak: boolean;
 };
 
 export type PropertyQuoteResType = {
-  property_id: number;
-  check_in: string;
-  check_out: string;
   nights: number;
   guests: number;
+  check_in: string;
+  check_out: string;
+  property_id: number;
   is_available: boolean;
   unavailable_dates: string[];
   nights_breakdown: PropertyQuoteNightBreakdown[];
@@ -49,7 +49,6 @@ export type PropertyQuoteResType = {
   extra_guest_fee_per_night: number;
   extra_guest_total: number;
   cleaning_fee: number;
-  /** rent_total + extra_guest_total — the canonical reservation amount. */
   stay_total: number;
   /** @deprecated kept equal to `stay_total` for backward compatibility; cleaning_fee is never summed into it. */
   total: number;

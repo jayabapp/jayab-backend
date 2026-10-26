@@ -219,7 +219,6 @@ export const showPropsBuilder = (item: PropertyResType): Array<ShowProps> => {
 
     { type: 'break' },
     { state: 'images', title: 'عکس های ملک', value: item.images, type: 'image' },
-    // { state: 'media_ids', ref: 'media', value: item.media, type: 'image', isHidden: true },
 
     /* -------------------------------------------------------------------------- */
     { type: 'divider' },
