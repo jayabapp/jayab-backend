@@ -14,6 +14,8 @@ finance: {
   guest_paid, fee_amount, host_amount,       // from the snapshot
   canceled: { refund_amount, host_amount } | null,
   wallet_status: 'PENDING'│'AVAILABLE'│'ON_HOLD'│'PROCESSING'│'SETTLED'│'PARTIAL'│null,
+  stages: [{ seq, amount, release_at, bucket }],   // HW-2.5
+  handover: { guest_checked_in_at, complaint_window_ends_at, complaint_status } | null,  // HW-09
   release_at,
   host_bank_verified: boolean,               // yes/no only, never the IBAN
   refund: { status, amount } | null,         // GuestRefund, for 130 and 140
@@ -34,8 +36,11 @@ finance: {
 | مانده‌ها | جمع هر bucket برای همهٔ میزبانان، و فهرست ۲۰ میزبان با بیشترین «قابل تسویه» |
 | واریزهای بازه | حواله‌های `SETTLED` و بازگشت‌های `REFUNDED` با تاریخ واریز، حساب مبدأ، شمارهٔ پیگیری و مبلغ، برای تطبیق با صورت‌حساب بانک |
 | مغایرت‌ها | حواله‌ها و بازگشت‌های `PROCESSING` قدیمی‌تر از ۳ روز، «قابل تسویه» با شبای تأییدشده قدیمی‌تر از ۷ روز، `GuestRefund` در `AWAITING_INFO` قدیمی‌تر از ۳ روز |
+| گزارش‌های تحویل (HW-09) | تعداد گزارش به ازای هر ۱۰۰ رزرو، به تفکیک دسته و میزبان. میانهٔ زمان رسیدگی و تعداد گزارش‌های بیشتر از ۲۴ ساعت (D13). جمع بازگشت جزئی. نسبت «بدون اثر» و «رد». هدف کارفرما این است که پرونده‌های پشتیبانی زیاد نشوند. |
 | سلامت دفترکل | رزروهایی که جمع bucketهایشان با `host_amount` snapshot منهای اصلاحیه‌ها برابر نیست. باید همیشه خالی باشد و هر ردیف یعنی باگ. |
 | درآمد جایاب | جمع `fee_amount` snapshotهای بازه منهای اصلاحیه‌های لغو |
+| تفکیک منشأ پول رزروها | برای رزروهای بازه، `paid_by_gateway` و خرج‌های کیف پول به تفکیک منبع (شارژ شخصی، کارت هدیه، اعتبار سازمانی). بخش اعتبار سازمانی به «پول واقعی سازمان» و «تخفیف جایاب» تقسیم می‌شود، با نسبت `bonus_amount / amount` هر lot (تصویر کارفرما، بند ۱۷). |
+| بدهی کیف پول | جمع موجودی `AVAILABLE` و `HELD` همهٔ حساب‌های قابل خرج: تعهد جایاب به کاربران. اعتبار منقضی‌شدهٔ بازه جدا نمایش داده می‌شود. |
 
 **Panel:** برگهٔ «گزارش» در `Panel/app/settlements/page.tsx` با انتخاب بازهٔ جلالی و دکمهٔ دریافت Excel.
 

@@ -86,7 +86,14 @@ model SmsInbound {
 }
 ```
 
-روابط معکوس هم اضافه شوند: `Payment.reserve PropertyReserve?`، `Admin.supported_reserves` و `Admin.reserve_logs`. **جدول `turnovers` تغییری نمی‌کند.** سهم میزبان در دفترکل بستهٔ کیف پول ثبت می‌شود.
+```prisma
+model User {
+  // ...existing
+  locale String @default("fa") @db.VarChar(2) // fa | ar | en — language of SMS and notifications (XC-1)
+}
+```
+
+روابط معکوس هم اضافه شوند: `Payment.reserve PropertyReserve?`، `Admin.supported_reserves` و `Admin.reserve_logs`. ستون `User.locale` و middleware و endpoint آن (XC-1 در [`LANGUAGE-AND-THEME.md`](../LANGUAGE-AND-THEME.md)) همراه همین فاز ساخته می‌شوند، چون همهٔ پیامک‌های بسته به آن نیاز دارند. **جدول `turnovers` تغییری نمی‌کند.** سهم میزبان در دفترکل بستهٔ کیف پول ثبت می‌شود.
 
 داده‌ای که در همین migration درج می‌شود (الگوی `20261001120000_add_guest_chat_enabled_setting`):
 

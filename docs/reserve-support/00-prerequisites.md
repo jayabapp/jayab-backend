@@ -25,6 +25,7 @@
 | `SMS_IR_RESERVE_CLOSED_GUEST_TEMPLATE_ID` | مهمان | متأسفانه رزرو «#TITLE#» برای #DATE# ممکن نشد. |
 | `SMS_IR_RESERVE_CONTACT_TEMPLATE_ID` | هر دو طرف | شمارهٔ تماس #ROLE# برای رزرو «#TITLE#»: #PHONE# |
 
+- **سه زبان (XC-3):** هر قالب علاوه بر فارسی، نسخهٔ عربی و انگلیسی هم در SMS.ir ثبت شود و شناسه‌اش در `…_AR` و `…_EN` قرار بگیرد. اگر نسخه‌ای نبود، فارسی فرستاده می‌شود.
 - متن `RESERVE_CONFIRMED_HOST` عیناً از سند کیف پول آمده است. عبارت «شارژ حساب» نباید در هیچ متنی استفاده شود.
 - بعد از بسته شدن درخواست، پیامک «آگهی مشابه» با قالب موجود `SMS_IR_RECOMMENDED_PROPERTY_TEMPLATE_ID` فرستاده می‌شود.
 - **پیامک میزبان که باید به آن جواب بدهد قالب ندارد.** متنش در کد است (RS-2.1)، چون از خط اختصاصی با `send/bulk` فرستاده می‌شود.
@@ -37,7 +38,7 @@
 
 ## PRE-4 — نقش پشتیبان در Panel
 
-بعد از deploy فاز ۰۵، نقش «پشتیبان رزرو» در `/acl/roles` ساخته شود. این نقش روی ماژول `reserve-support` دسترسی r، c، u و v دارد. نوع‌های اعلان `ReserveNeedsFollowUp`، `ReservePaid` و `ReserveRefundRequired` هم برایش فعال شوند. این نقش هیچ دسترسی به ماژول‌های مالی بستهٔ کیف پول ندارد.
+بعد از deploy فاز ۰۵، نقش «پشتیبان رزرو» در `/acl/roles` ساخته شود. این نقش روی ماژول `reserve-support` دسترسی r، c، u و v دارد. نوع‌های اعلان `ReserveNeedsFollowUp`، `ReservePaid`، `ReserveRefundRequired` و `ReserveHandoverComplaint` (HW-09) هم برایش فعال شوند. این نقش هیچ دسترسی به ماژول‌های مالی بستهٔ کیف پول ندارد.
 
 ## خروجی‌ها
 

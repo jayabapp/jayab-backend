@@ -27,6 +27,8 @@ class PayPropertyReserveUserDto {
   - `payment.property_id` و `reserve.payment_id = payment.id`. پرداخت ناتمام قبلی جایگزین می‌شود.
   - لاگ `PAYMENT_STARTED`.
 
+**پرداخت از کیف پول:** این endpoint در OW-02 بستهٔ [`user-wallet-and-org`](../user-wallet-and-org/02-wallet-payment-in-booking.md) بدنهٔ `{ use_wallet, mode }` می‌گیرد. پرداخت کامل از کیف پول بدون درگاه مستقیم `onPaid` را صدا می‌زند. پرداخت ترکیبی بخش کیف پول را `HELD` و بقیه را از درگاه می‌گیرد. در این فاز فقط درگاه ساخته می‌شود، ولی امضای `onPaid(payment, walletParts = [])` از همین ابتدا پارامتر کیف پول را دارد.
+
 **ماژول‌ها:** `PropertyReserveUserModule` ماژول `PaymentUserModule` را import می‌کند. منطق کال‌بک در `ReservePaymentService` (`Back/src/property-reserve/common/services/`) داخل یک ماژول کوچک `ReservePaymentModule` است که `PaymentUserModule` را import **نمی‌کند**، ولی `WalletModule` (HW-02) را import می‌کند. ماژول پرداخت فقط همین ماژول کوچک را import می‌کند تا حلقه ساخته نشود.
 
 ---
@@ -53,7 +55,7 @@ case TurnoverType.PAY_RESERVE:
    - **در غیر این صورت:**
      - `[40, 70, 110] → 90` با `paid_at = now`. ورود از ۱۱۰ فقط وقتی مجاز است که `payment_id` همین پرداخت باشد، یعنی مهمان قبل از پایان ۱۰ دقیقه وارد درگاه شده و بعد از آن برگشته است.
      - اگر از ۷۰ آمده: `check_in`، `check_out`، `guests_count`، `nights` و `quoted_total` با مقادیر پیشنهاد جایگزین شوند و `host_share` و `commission` از روی آن دوباره محاسبه شوند. مقادیر قبلی در لاگ `OFFER_ACCEPTED` می‌مانند.
-     - **`WalletService.recordReserveCredit(reserve, payment, tx)` (HW-02):** snapshot مالی (مبلغ پرداختی، نرخ ۲۰٪، سهم جایاب، سهم میزبان، قانون کنسلی و پله‌هایش، زمان آزادسازی) و یک ردیف دفترکل «ثبت طلب» با کلید یکتای `reserve:{id}:credit` در وضعیت `PENDING`.
+     - **`WalletService.recordReserveCredit(reserve, payment, walletParts, tx)` (HW-2.4):** snapshot مالی (مبلغ پرداختی، نرخ ۲۰٪، سهم جایاب، سهم میزبان، قانون کنسلی و پله‌هایش، زمان آزادسازی و مهلت گزارش تحویل)، و برای هر مرحلهٔ تسویه یک ردیف «ثبت طلب» با کلید یکتای `reserve:{id}:credit:{seq}` در وضعیت `PENDING`. معمولاً یک مرحله است، و ۲۴ ساعت بعد از تحویل اقامتگاه قابل تسویه می‌شود (HW-2.5).
 2. **بعد از commit:**
    - شب‌ها در تقویم ثبت شوند: `PropertyCalendarOwnerService.bulkUpdateReserveStatus(propertyId, { is_reserved: true, days })` (`Back/src/property-calendar/roles/owner/owner.service.ts:140`). اگر شکست بخورد، رزرو ۹۰ همچنان در `findBlockedNights` حساب می‌شود و خطا لاگ می‌شود.
    - پیامک `RESERVE_CONFIRMED_GUEST` به مهمان و `RESERVE_CONFIRMED_HOST` به میزبان. متن میزبان همان متن سند کیف پول است.
@@ -108,7 +110,7 @@ case TurnoverType.PAY_RESERVE:
 | دو مهمان با درخواست هم‌پوشان، میزبان هر دو را تأیید می‌کند | دومی در `hostReply` به `DATES_TAKEN` می‌رود |
 | پرداخت از دو تب | دومی در `pay` خطای 409 می‌گیرد. اگر هر دو به درگاه رسیدند، دومی `ORPHAN_PAYMENT` و بازگشت وجه می‌شود. |
 | پرداخت ناموفق در درگاه | رزرو ۴۰ یا ۷۰ می‌ماند و مهمان تا پایان ۱۰ دقیقه دوباره پرداخت می‌کند. هیچ طلبی ثبت نمی‌شود. |
-| کال‌بک تکراری درگاه | `checkAuthority` رد می‌کند. اگر به هر دلیل به `onPaid` برسد، کلید یکتای `reserve:{id}:credit` طلب دوم نمی‌سازد. |
+| کال‌بک تکراری درگاه | `checkAuthority` رد می‌کند. اگر به هر دلیل به `onPaid` برسد، کلیدهای یکتای `reserve:{id}:credit:{seq}` طلب دوم نمی‌سازند. |
 | ثبت تقویم بعد از commit شکست بخورد | `findBlockedNights` رزرو ۹۰ را حساب می‌کند و خطا لاگ می‌شود |
 
 ## امنیت و کارایی

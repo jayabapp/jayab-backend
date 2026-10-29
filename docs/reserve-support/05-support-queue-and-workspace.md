@@ -50,6 +50,7 @@
 | `follow_up` (پیش‌فرض) | `status ∈ {50, 60, 70, 80}` | قدیمی‌ترین `escalated_at` یا `host_replied_at` اول | ارجاع‌های خودکار (`NO_REPLY_ESCALATED`) برچسب «بی‌پاسخ» دارند |
 | `awaiting_payment` | `status = 40` | نزدیک‌ترین `pay_deadline_at` اول | فقط‌خواندنی |
 | `to_call` | `status ∈ {90, 130, 140}` و `finalized_at = null` | قدیمی‌ترین اول | |
+| `complaints` | گزارش‌های تحویل `OPEN` و `AWAITING_FINANCE` (HW-9.3) | قدیمی‌ترین اول | بیشتر از ۲۴ ساعت قرمز می‌شود. تسویهٔ میزبان تا تصمیم پشتیبان متوقف است، پس این برگه اولویت دارد. |
 | `all` | `flow = 3` | جدیدترین اول | |
 
 پاسخ لیست شامل `counts` هر برگه هم هست.
@@ -167,13 +168,20 @@
 
 شماره‌ها `dir="ltr"` و قابل انتخاب باشند. بعد از هر اقدام جزئیات دوباره بارگذاری شود و خطای 409 یا 422 با پیام Back نمایش داده شود.
 
+**زبان و تم (XC-5):**
+- همهٔ متن‌های صف و میز کار از `Panel/dictionary/{fa,ar,en}.json` با namespace `reserveSupport` و `useT()` خوانده می‌شوند.
+- model-props برای ستون‌ها و وضعیت‌ها `title_key` برمی‌گرداند.
+- صفحه در تم روشن و تاریک NextUI بررسی می‌شود و رنگ وضعیت‌ها از رنگ‌های NextUI است.
+- رزروهایی که با اعتبار سازمانی پرداخت شده‌اند (OW-02) برچسب «سازمانی» با نام سازمان می‌گیرند.
+
 ---
 
 ## RS-5.7 — اعلان‌های Panel
 
 در `Panel/components/shared/Alert/index.tsx`:
-- سه مقدار `RESERVE_NEEDS_FOLLOW_UP = "ReserveNeedsFollowUp"`، `RESERVE_PAID = "ReservePaid"` و `RESERVE_REFUND_REQUIRED = "ReserveRefundRequired"` به enum `NotificationType` (خطوط ۱۰ تا ۱۹) اضافه شوند.
-- در `_findRoute` (خط ۶۷) هر سه به `/reserve-support/show/${notificationableId}` بروند.
+- چهار مقدار `RESERVE_NEEDS_FOLLOW_UP = "ReserveNeedsFollowUp"`، `RESERVE_PAID = "ReservePaid"`، `RESERVE_REFUND_REQUIRED = "ReserveRefundRequired"` و `RESERVE_HANDOVER_COMPLAINT = "ReserveHandoverComplaint"` (HW-9.2) به enum `NotificationType` (خطوط ۱۰ تا ۱۹) اضافه شوند.
+- در `_findRoute` (خط ۶۷) هر چهار به `/reserve-support/show/${notificationableId}` بروند.
+- **کارت گزارش تحویل:** میز کار برای رزرو ۹۰ کارت «گزارش مهمان دربارهٔ تحویل» و چهار تصمیم آن را دارد (HW-9.3).
 - اعلان «نیاز به پیگیری» نوع `warn` دارد. اعلان ارجاع خودکار عنوان «درخواست بی‌پاسخ — وعدهٔ ۲۱ دقیقه» می‌گیرد.
 
 ## RS-5.8 — روش رزرو آگهی در Panel

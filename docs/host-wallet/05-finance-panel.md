@@ -63,7 +63,7 @@
 }
 ```
 
-**داخل یک تراکنش با `pg_advisory_xact_lock(host_user_id)`:**
+**داخل یک تراکنش با قفل حساب `HOST_RECEIVABLE` میزبان (`pg_advisory_xact_lock(account_id)`):**
 - شبای میزبان باید `VERIFIED` باشد، وگرنه 422 با کد `SETTLEMENT_BANK_NOT_VERIFIED` (سند، بند ۱۴).
 - `amount = Σ allocations`.
 - هر `allocation.amount` از موجودی `AVAILABLE` همان رزرو که **همان لحظه** از دفترکل محاسبه می‌شود بیشتر نباشد، وگرنه 409 با کد `SETTLEMENT_EXCEEDS_AVAILABLE`.
@@ -95,7 +95,9 @@
 
 ## HW-5.6 — توقف و رفع توقف
 
-`PATCH /admin/settlements/reserves/:reserveId/hold` و `.../unhold` با بدنهٔ `{ reason }` که `WalletService.hold` و `unhold` (HW-2.4) را صدا می‌زنند. دلیل در صف و در جزئیات میزبان نمایش داده می‌شود. نمونه: «شکایت مهمان»، «اختلاف در تحویل اقامتگاه».
+`PATCH /admin/settlements/reserves/:reserveId/hold` و `.../unhold` با بدنهٔ `{ reason }` که `WalletService.hold` و `unhold` (HW-2.5) را صدا می‌زنند. دلیل در صف و در جزئیات میزبان نمایش داده می‌شود، مثلاً «اختلاف مالی».
+
+توقفی که منشأش گزارش تحویل مهمان است (HW-09) از این‌جا رفع نمی‌شود و `unhold` خطای 409 با `HOLD_BY_COMPLAINT` می‌دهد. چنین توقفی فقط با تصمیم پشتیبان یا تأیید مالی بازگشت (HW-9.3 و HW-9.4) برداشته می‌شود. صف `pending` برای هر رزرو مرحله‌ها و زمان آزادسازی هر مرحله را نمایش می‌دهد.
 
 ## HW-5.7 — سابقهٔ یک میزبان
 
@@ -110,6 +112,7 @@
 - تسویهٔ میزبان (`settlements`)
 - بازگشت وجه مهمان (`guest-refunds`، HW-06)
 - قوانین کنسلی (`cancellation-policies`، HW-01)
+- واریزهای سازمان‌ها (`org-payments`، OW-06): تأیید واریز بانکی فاکتور سازمان‌ها با همین الگوی دو نفره
 
 **صفحه‌ها** (چیدمان در بخش «طراحی صفحه‌ها» [Artifact](https://claude.ai/artifact/A4SqQ8eT37zewT9yyspNMs)، با NextUI و ظاهر فعلی Panel):
 

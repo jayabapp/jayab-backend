@@ -16,7 +16,7 @@
 
 `CancellationService.cancelPaidReserve(reserveId, by: 'GUEST' | 'HOST', actor, opts?: { iban?, holderName? })` در `Back/src/wallet/services/`:
 
-1. **پیش‌شرط‌ها:** `status = 90`، snapshot وجود دارد، و موجودی رزرو در `PROCESSING` یا `SETTLED` نیست. اگر هست، 409 با کد `CANCEL_AFTER_SETTLEMENT`. این حالت به رسیدگی دستی مالی ارجاع می‌شود. با آزادسازی بعد از خروج (D1) در عمل پیش نمی‌آید.
+1. **پیش‌شرط‌ها:** `status = 90`، snapshot وجود دارد، و موجودی رزرو در `PROCESSING` یا `SETTLED` نیست. اگر هست، 409 با کد `CANCEL_AFTER_SETTLEMENT`. این حالت به رسیدگی دستی مالی ارجاع می‌شود. در عمل پیش نمی‌آید، چون لغو فقط قبل از ساعت ورود ممکن است و اولین آزادسازی ۲۴ ساعت بعد از ورود است (HW-2.5). مشکل بعد از ورود از مسیر گزارش تحویل (HW-09) رسیدگی می‌شود، نه از لغو.
 2. **محاسبه:**
    - `by = 'GUEST'`: `computeCancellation({ tiers: snapshot.cancel_tiers, checkInAt: snapshot.check_in_at, now, guestPaid: snapshot.guest_paid, feePercent: snapshot.fee_percent })`. اگر `allowed = false` (ساعت ورود گذشته)، خطای 422 با کد `CANCEL_AFTER_CHECKIN`.
    - `by = 'HOST'` (D6): بازگشت صددرصدی، سهم میزبان صفر و سهم جایاب صفر.
@@ -24,7 +24,7 @@
    - `ReserveCancellation` با همهٔ اعداد محاسبه.
    - `ReserveFlowService.transition(90 → 140)` با `canceled_by` و لاگ `CANCELED_AFTER_PAYMENT`.
    - `WalletService.voidForCancellation(reserveId, snapshot.host_amount - newHostAmount)`: موجودی از `PENDING` (یا `AVAILABLE` اگر آزاد شده) به `VOID` با کلید `reserve:{id}:cancel`. بقیهٔ طلب سر جایش می‌ماند و در `release_at` اصلی آزاد می‌شود.
-   - اگر `refund > 0`: `GuestRefund` با `source = by === 'GUEST' ? 'CANCEL' : 'HOST_CANCEL'`. اگر شبا داده شده `READY`، وگرنه `AWAITING_INFO`.
+   - مبلغ بازگشتی طبق HW-6.6 بین «برگشت به کیف پول» و «برگشت به حساب بانکی» تقسیم می‌شود. بخش کیف پول همان لحظه به lotهای جدید برمی‌گردد. اگر `refund_to_bank > 0`، یک `GuestRefund` با `source = by === 'GUEST' ? 'CANCEL' : 'HOST_CANCEL'` و همین مبلغ ساخته می‌شود: اگر شبا داده شده `READY`، وگرنه `AWAITING_INFO`.
    - لاگ ممیزی `RESERVE_CANCELED`.
 4. **بعد از commit:**
    - شب‌های `[check_in, check_out)` با `bulkUpdateReserveStatus(propertyId, { is_reserved: false, days })` آزاد شوند.
@@ -95,6 +95,26 @@
   - لینک پیامک `?refund={id}` همان کارت را باز کند.
 - **میزبان:** کارت رزرو ۱۴۰ در رزروهای مالک «لغو توسط مهمان طبق قانون {نام} · سهم شما {مبلغ}» را نمایش دهد. کیف پول هم مبلغ اصلاح‌شده را نمایش می‌دهد (HW-4.1).
 - **متن‌ها:** در namespaceهای `reserve` و `wallet`.
+
+---
+
+## HW-6.6 — بازگشت بخشی که از کیف پول پرداخت شده بود
+
+کارفرما گفته است اعتبار کارت هدیه و اعتبار سازمانی «قابل نقد شدن نیست». پس پولی که از کیف پول خرج شده، هرگز به حساب بانکی برنمی‌گردد.
+
+**تقسیم مبلغ بازگشتی (`refund_amount`):**
+1. اول به منابع کیف پول به همان نسبتی که پرداخت شده بودند برمی‌گردد. نسبت از ردیف‌های `SPENT` با همین `reserve_id` خوانده می‌شود: اعتبار سازمانی، کارت هدیه و شارژ شخصی.
+2. فقط مازاد آن (سهم درگاه) به `GuestRefund` و حساب بانکی می‌رود.
+
+نمونه: رزرو ۱۴ میلیونی، ۵ میلیون از کارت هدیه و ۹ میلیون از درگاه، لغو با ۵۰٪ بازگشت (۷ میلیون). حدود ۲٫۵ میلیون به کیف پول کارت هدیه و ۴٫۵ میلیون به حساب بانکی برمی‌گردد. گرد کردن با درگاه تسویه می‌شود تا جمع دقیق بماند.
+
+**lot برگشتی:**
+- برای هر منبع یک lot جدید با `source = REFUND` در **همان حساب** (`USER_GIFT`، `EMPLOYEE_ORG_CREDIT` یا `USER_TOPUP`) ساخته می‌شود، با `ref` به lot اصلی و `move(null → AVAILABLE)` با کلید `reserve:{id}:refund:{lotId}`.
+- **انقضای lot برگشتی** برابر `max(انقضای lot اصلی، now + 30 روز)` است، تا اعتباری که نزدیک انقضا خرج شده، بعد از لغو فوراً نسوزد. شارژ شخصی انقضا ندارد.
+- `bonus_amount` lot برگشتی به همان نسبت lot اصلی است، تا تفکیک حسابداری حفظ شود.
+- تفکیک در `ReserveCancellation.refund_to_wallet` و `refund_to_bank` ذخیره می‌شود.
+
+**Front:** sheet لغو (HW-6.5) مبلغ را تفکیکی نمایش می‌دهد: «{x} تومان به کیف پول جایاب شما برمی‌گردد و {y} تومان به حساب بانکی.» فیلد شبا فقط وقتی `y > 0` باشد نمایش داده می‌شود.
 
 ---
 
