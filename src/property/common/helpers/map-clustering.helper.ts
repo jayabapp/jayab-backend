@@ -10,6 +10,7 @@ export type MapPointInput = {
   id: number;
   slug: string;
   price: number | null;
+  favorite_count: number;
   location: PublicMapPoint;
 };
 
@@ -19,6 +20,7 @@ export type MapPropertyItem = {
   type: 'property';
   currency: 'toman';
   price: number | null;
+  favorite_count: number;
   location: PublicMapPoint;
   price_basis: 'today_nightly';
 };
@@ -36,12 +38,13 @@ export type MapItem = MapPropertyItem | MapClusterItem;
 
 const round = (value: number): number => Number(value.toFixed(COORDINATE_DECIMALS));
 
-const toPropertyItem = ({ id, slug, location, price }: MapPointInput): MapPropertyItem => ({
+const toPropertyItem = ({ id, slug, location, price, favorite_count }: MapPointInput): MapPropertyItem => ({
   type: 'property',
   id,
   slug,
   location,
   price,
+  favorite_count,
   price_basis: 'today_nightly',
   currency: 'toman',
 });

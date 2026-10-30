@@ -5,6 +5,7 @@ const point = (id: number, lat: number, lng: number, price: number | null = 1_00
   slug: `p${id}`,
   location: { lat, lng, precision: 'approximate', radius_m: 700 },
   price,
+  favorite_count: 3,
 });
 
 /** A deterministic scatter inside Iran: no randomness, so a failure is reproducible. */
@@ -21,7 +22,7 @@ describe('buildMapItems', () => {
   it('keeps up to the cap as individual pins with the card price', () => {
     const items = buildMapItems([point(2, 35.7, 51.4, 4_000_000), point(1, 35.8, 51.5, null)], 10);
     expect(items.map((item) => item.type)).toEqual(['property', 'property']);
-    expect(items[0]).toMatchObject({ id: 1, price: null, price_basis: 'today_nightly', currency: 'toman' });
+    expect(items[0]).toMatchObject({ id: 1, price: null, favorite_count: 3, price_basis: 'today_nightly', currency: 'toman' });
     expect(items[1]).toMatchObject({ id: 2, price: 4_000_000 });
   });
 

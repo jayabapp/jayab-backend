@@ -69,7 +69,13 @@ const MAP_CACHE_TTL_SECONDS = 30;
 
 type PropertySeoLinks = { villa: string | null; pool: string | null };
 
-type MapCandidate = { id: number; slug: string; location: PublicMapPoint | null; price: number | null };
+type MapCandidate = {
+  id: number;
+  slug: string;
+  location: PublicMapPoint | null;
+  price: number | null;
+  favorite_count: number;
+};
 
 export type PropertyMapResult = {
   items: MapItem[];
@@ -358,6 +364,7 @@ export class PropertyUserService {
         lat: true,
         lng: true,
         is_location_visible: true,
+        favorite_count: true,
         daily_price: true,
         calendar: {
           where: { date: startOfToday() },
@@ -376,6 +383,7 @@ export class PropertyUserService {
         id: row.id,
         slug: row.slug,
         location,
+        favorite_count: row.favorite_count,
         price: resolveDisplayPrice(resolveTodayPrice(row.calendar?.[0], today, row.daily_price)),
       });
     }
@@ -439,7 +447,7 @@ export class PropertyUserService {
         maxPrice: dto.max_price,
       });
       const items = buildMapItems(
-        located.map(({ id, slug, location, price }) => ({ id, slug, location, price })),
+        located.map(({ id, slug, location, price, favorite_count }) => ({ id, slug, location, price, favorite_count })),
         dto.zoom,
       );
       return {

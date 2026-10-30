@@ -20,6 +20,7 @@ export class PropertyMapItemDto {
   @ApiPropertyOptional({ type: PublicMapPointDto }) location?: PublicMapPointDto;
   @ApiPropertyOptional({ nullable: true, description: 'Tonight: discounted price when there is one.' })
   price?: number | null;
+  @ApiPropertyOptional({ description: 'Hearts the listing has received.' }) favorite_count?: number;
   @ApiPropertyOptional({ enum: ['today_nightly'] }) price_basis?: 'today_nightly';
   @ApiPropertyOptional({ enum: ['toman'] }) currency?: 'toman';
   @ApiPropertyOptional({ description: 'Cluster centre.' }) lat?: number;

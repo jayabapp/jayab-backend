@@ -19,6 +19,7 @@ type Row = {
   lat: number | null;
   lng: number | null;
   is_location_visible: boolean | null;
+  favorite_count: number;
   daily_price: { normal: number };
   calendar: Array<Record<string, number | null>>;
 };
@@ -36,6 +37,7 @@ const row = (
   lat,
   lng,
   is_location_visible: visible,
+  favorite_count: 12,
   daily_price: { normal: 3_000_000 },
   calendar: [],
   ...extras,
@@ -131,6 +133,7 @@ describe('public location in the map and the list', () => {
     const result = await service.findMap({ bbox: around(36.7025, 52.6512), zoom: 15 } as any);
     expect(result.items[0]).toMatchObject({
       id: 3,
+      favorite_count: 12,
       location: { precision: 'exact', radius_m: 0, lat: 36.7025, lng: 52.6512 },
     });
   });
