@@ -1,21 +1,18 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { _IsInt, _IsNotEmpty, _IsNumberString, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { _IsBoolean, _IsIn, _Length, _Max, _Min } from 'src/common/pipes/validator-translate.pipe';
+import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
+import { IntersectionType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination-page.dto';
-import {
-  _IsBoolean,
-  _IsIn,
-  _IsInt,
-  _IsNotEmpty,
-  _IsNumberString,
-  _IsString,
-  _Max,
-  _Min,
-} from 'src/common/pipes/validator-translate.pipe';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
-export class FindAllPropertyUserDto extends PaginationDto {
+export class FindAllPropertyUserDto extends IntersectionType(PaginationDto, LocaleDto) {
   @ApiProperty({ title: 'سرچ', required: false })
+  @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
+  @_Length(2, 80)
   @IsOptional()
   q?: string;
 
@@ -24,7 +21,7 @@ export class FindAllPropertyUserDto extends PaginationDto {
   @IsOptional()
   code?: string;
 
-  @ApiProperty({ required: false, example: 'villa,ramsar,pool' }) //کلیدهای موجود در آدرس
+  @ApiProperty({ required: false, example: 'villa,ramsar,pool' })
   @_IsString()
   @IsOptional()
   keys?: string;
@@ -195,7 +192,6 @@ export class FindAllPropertyUserDto extends PaginationDto {
   checkout?: Date;
 
   @ApiProperty({ required: false, title: 'ممتاز' })
-  @Type(() => Boolean)
   @Transform(({ value }) => value == '1')
   @_IsBoolean()
   @IsOptional()
@@ -203,16 +199,36 @@ export class FindAllPropertyUserDto extends PaginationDto {
 
   @ApiProperty({ required: false, title: 'احراز شده' })
   @Transform(({ value }) => value == '1')
-  @Type(() => Boolean)
   @_IsBoolean()
   @IsOptional()
   is_authorized?: boolean;
+
+  @ApiProperty({
+    required: false,
+    title: 'محدوده نقشه',
+    description: 'west,south,east,north. Results are limited to listings whose public location is inside.',
+    example: '51.2,35.5,51.6,35.9',
+  })
+  @_IsString()
+  @IsOptional()
+  bbox?: string;
+
+  @ApiProperty({
+    required: false,
+    title: 'فقط شمارش',
+    description: 'Set to 1 when the request only needs meta.total, so no impression is recorded.',
+  })
+  @Type(() => Number)
+  @_IsIn([0, 1])
+  @IsOptional()
+  count_only?: number;
 }
 
 export class PropertySearchSuggestionUserDto {
   @ApiProperty({ required: true, title: '' })
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
   @_IsNotEmpty()
+  @_Length(2, 80)
   q: string;
 }

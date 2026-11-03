@@ -22,13 +22,13 @@ describe('SharedChatService', () => {
   it('rejects writes while the incident chat switch is disabled', async () => {
     setting.isGuestChatEnabled.mockResolvedValue(false);
 
-    await expect(service.assertChatEnabled()).rejects.toEqual(new ForbiddenException('CHAT13'));
+    await expect(service.assertChatEnabled()).rejects.toEqual(new ForbiddenException('CHAT14'));
   });
 
   it('does not allow a message to be deleted while chat is suspended', async () => {
     setting.isGuestChatEnabled.mockResolvedValue(false);
 
-    await expect(service.deleteMessage(1, 2, 3)).rejects.toEqual(new ForbiddenException('CHAT13'));
+    await expect(service.deleteMessage(1, 2, 3)).rejects.toEqual(new ForbiddenException('CHAT14'));
     expect(db.messengerMessages.findFirst).not.toHaveBeenCalled();
     expect(db.messengerMessages.update).not.toHaveBeenCalled();
   });

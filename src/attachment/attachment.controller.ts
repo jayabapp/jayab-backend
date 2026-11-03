@@ -1,3 +1,17 @@
+import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { AttachmentAdminFolder, AttachmentUserFolder } from './interfaces/attachment-folder.enum';
+import { ApiImageFile, ApiVideoFile } from './helpers/api-file.decorator';
+import { CreateAttachmentAdminDto } from './dto/create-attachment-admin.dto';
+import { AttachmentImagePropsType } from './interfaces/attachment-props.type';
+import { CreateAttachmentUserDto } from './dto/create-attachment-user.dto';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { AttachmentService } from './attachment.service';
+import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { ParseFile } from './pipes/parse-file.pipes';
 import {
   Controller,
   Post,
@@ -6,17 +20,15 @@ import {
   Req,
   Query,
   BadRequestException,
-  Delete,
   ForbiddenException,
+  Delete,
   Param,
   UnprocessableEntityException,
+  Get,
+  Header,
+  ParseIntPipe,
+  StreamableFile,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiImageFile, ApiVideoFile } from './helpers/api-file.decorator';
-import { ParseFile } from './pipes/parse-file.pipes';
-import { AttachmentService } from './attachment.service';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { RequestType } from 'src/common/interfaces/user.interface';
 import {
   CONTENT_FOLDER,
   BANNER_FOLDER,
@@ -29,14 +41,14 @@ import {
   CHAT_MEDIA_FOLDER,
   IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
 } from 'src/common/utils/constants/storage-folders';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { AdminJwtGuard } from 'src/auth/guards/jwt/admin-jwt.guard';
-import { AttachmentAdminFolder, AttachmentUserFolder } from './interfaces/attachment-folder.enum';
-import { CreateAttachmentAdminDto } from './dto/create-attachment-admin.dto';
-import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
-import { AttachmentImagePropsType } from './interfaces/attachment-props.type';
-import { CreateAttachmentUserDto } from './dto/create-attachment-user.dto';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import {
+  BLOG_IMAGE_ENCODING_QUALITY,
+  BLOG_IMAGE_MAX_DIMENSION,
+  PROPERTY_IMAGE_ENCODING_QUALITY,
+  PROPERTY_IMAGE_MAX_DIMENSION,
+  PROFILE_IMAGE_MAX_DIMENSION,
+  DOCUMENT_IMAGE_MAX_DIMENSION,
+} from './constants/image-processing.constant';
 
 @ApiTags('📎 Attachment')
 @Controller()
@@ -47,9 +59,19 @@ export class AttachmentController {
     private readonly setting: SettingAdminService,
   ) {}
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    USER                                    */
-  /* -------------------------------------------------------------------------- */
+  @ApiOperation({ summary: 'Download a public property image as WebP' })
+  @ApiProduces('image/webp')
+  @Header('Cache-Control', 'public, max-age=31536000, immutable')
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Get('attachments/:id/download')
+  async downloadPublicPropertyImage(@Param('id', ParseIntPipe) id: number): Promise<StreamableFile> {
+    const { contentLength, stream } = await this.attachmentService.getPublicPropertyImageDownload(id);
+    return new StreamableFile(stream, {
+      type: 'image/webp',
+      disposition: `attachment; filename="jayab-property-image-${id}.webp"`,
+      length: contentLength,
+    });
+  }
 
   @ApiOperation({
     description: 'آپلود عکس - کاربر',
@@ -72,7 +94,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_PROFILE_FOLDER,
-          resizeWidth: 512,
+          resizeWidth: PROFILE_IMAGE_MAX_DIMENSION,
           resizeMode: 'square',
           userId: user.id,
         };
@@ -82,7 +104,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_SELFIE_FOLDER,
-          resizeWidth: 512,
+          resizeWidth: PROFILE_IMAGE_MAX_DIMENSION,
           resizeMode: 'square',
           userId: user.id,
         };
@@ -92,7 +114,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_ADVISOR_NATIONAL_CARD_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -102,7 +124,7 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_ADVISOR_DOCUMENT_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -113,7 +135,8 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_PROPERTY_FOLDER,
-          resizeWidth: 1024,
+          encodingQuality: PROPERTY_IMAGE_ENCODING_QUALITY,
+          resizeWidth: PROPERTY_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
@@ -124,15 +147,14 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_PROPERTY_DOCS_FOLDER,
-          resizeWidth: 1024,
+          resizeWidth: DOCUMENT_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           userId: user.id,
         };
         break;
 
       case AttachmentUserFolder.CHAT:
-        // آپلود باید پیش از رسیدن به S3 متوقف شود؛ وگرنه فلگ فقط ارسال پیام را می‌بندد، نه هزینه‌ی ذخیره‌سازی را.
-        if (!(await this.setting.isGuestChatEnabled())) throw new ForbiddenException('CHAT13');
+        if (!(await this.setting.isGuestChatEnabled())) throw new ForbiddenException('CHAT14');
         args = {
           file,
           folder: CHAT_MEDIA_FOLDER,
@@ -146,13 +168,14 @@ export class AttachmentController {
         break;
     }
 
-    const result = await this.attachmentService.createAttachment(args);
+    if (!args) throw new BadRequestException('FOLDER_NOT_FOUND');
+    const result = await this.attachmentService.createAttachment({
+      ...args,
+      lossless: createAttachmentUserDto.type !== AttachmentUserFolder.CHAT,
+    });
     return { result };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    ADMIN                                   */
-  /* -------------------------------------------------------------------------- */
   @ApiOperation({ description: 'آپلود - ادمین', summary: 'ADMIN - Create attachment' })
   @ApiBearerAuth('admin-jwt')
   @UseGuards(AdminJwtGuard)
@@ -195,6 +218,16 @@ export class AttachmentController {
           adminId: admin.id,
         };
         break;
+      case AttachmentAdminFolder.BLOG:
+        args = {
+          file,
+          folder: CONTENT_FOLDER,
+          encodingQuality: BLOG_IMAGE_ENCODING_QUALITY,
+          resizeWidth: BLOG_IMAGE_MAX_DIMENSION,
+          resizeMode: 'normal',
+          adminId: admin.id,
+        };
+        break;
 
       case AttachmentAdminFolder.CATEGORY:
         args = {
@@ -210,7 +243,8 @@ export class AttachmentController {
         args = {
           file,
           folder: IMAGES_OWNER_PROPERTY_FOLDER,
-          resizeWidth: 1024,
+          encodingQuality: PROPERTY_IMAGE_ENCODING_QUALITY,
+          resizeWidth: PROPERTY_IMAGE_MAX_DIMENSION,
           resizeMode: 'normal',
           adminId: admin.id,
         };

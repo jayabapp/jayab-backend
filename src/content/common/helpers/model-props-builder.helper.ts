@@ -194,6 +194,13 @@ export const showPropsBuilder = (
       type: 'object',
       isHidden: true,
     },
+    {
+      state: 'translations',
+      title: 'ترجمه‌های محتوا',
+      value: item.translations,
+      type: 'object',
+      isHidden: true,
+    },
     { type: 'divider' },
     {
       state: 'html',

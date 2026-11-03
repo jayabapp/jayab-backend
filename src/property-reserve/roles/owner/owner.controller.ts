@@ -52,6 +52,15 @@ export class PropertyReserveOwnerController {
     return;
   }
 
+  @ApiOperation({ summary: 'Mark request card as seen by the owner', description: '' })
+  @Post(':propertyReserveId/events/mark-seen')
+  async markSeen(
+    @Param('propertyReserveId', ParseIntPipe) propertyReserveId: number,
+  ): Promise<SuccessResponseArgs> {
+    await this.propertyReserveOwnerService.markSeen(propertyReserveId);
+    return;
+  }
+
   @ApiOperation({ summary: 'Badge Count', description: '' })
   @Get('badge-count')
   async findBadgeCount(@Req() req: RequestType): Promise<SuccessResponseArgs> {

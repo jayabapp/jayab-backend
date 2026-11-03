@@ -1,19 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { _IsInt, _IsNotEmpty, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { _IsBoolean, _IsArray, _IsEnum } from 'src/common/pipes/validator-translate.pipe';
+import { WithTitleTranslationsDto } from 'src/common/dto/title-translations.dto';
 import { IsOptional, Validate } from 'class-validator';
-import {
-  _IsInt,
-  _IsNotEmpty,
-  _IsString,
-  _IsNumber,
-  _IsBoolean,
-  _IsArray,
-  _IsEnum,
-} from 'src/common/pipes/validator-translate.pipe';
-import { Transform, Type } from 'class-transformer';
-import { IsExist } from 'src/common/validators/is-exists.validator';
 import { LandingPagePosition } from 'src/landing-page/common/landing-position.enum';
+import { Transform, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsExist } from 'src/common/validators/is-exists.validator';
 
-export class CreateLandingPageAdminDto {
+export class CreateLandingPageAdminDto extends WithTitleTranslationsDto {
   @ApiProperty({ required: true, example: 'لورم ایپسوم متن ساختگی' })
   @_IsString()
   @_IsNotEmpty()
@@ -25,11 +19,6 @@ export class CreateLandingPageAdminDto {
   @Type(() => Number)
   @IsOptional()
   main_content_id: number;
-
-  // @ApiProperty({ required: false, example: 1 })
-  // @_IsArray()
-  // @IsOptional()
-  // related_contents: number[];
 
   @ApiProperty({ required: false, example: 1 })
   @_IsArray()

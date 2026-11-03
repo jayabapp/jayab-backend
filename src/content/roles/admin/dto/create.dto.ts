@@ -1,13 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsObject, IsOptional } from 'class-validator';
-import {
-  _IsInt,
-  _IsNotEmpty,
-  _IsString,
-  _IsBoolean,
-  _IsArray,
-} from 'src/common/pipes/validator-translate.pipe';
+import { IsDate, IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { _IsString, _IsBoolean, _IsArray } from 'src/common/pipes/validator-translate.pipe';
+import { ContentTranslationsDto } from './content-translations.dto';
+import { _IsInt, _IsNotEmpty } from 'src/common/pipes/validator-translate.pipe';
 import { Transform, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateContentAdminDto {
   @ApiProperty({ required: true, example: 'عنوان' })
@@ -100,6 +96,13 @@ export class CreateContentAdminDto {
   @IsOptional()
   @IsObject()
   seo: object;
+
+  @ApiProperty({ title: 'ترجمه‌های محتوا', required: false, type: ContentTranslationsDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ContentTranslationsDto)
+  translations?: ContentTranslationsDto;
 
   @ApiProperty({ title: 'ترتیب' })
   @Transform(({ value }) => (value === '' ? null : value))

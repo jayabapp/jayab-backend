@@ -1,52 +1,58 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { LandingPage, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { FindAllLandingPageUserDto } from './dto/find-all.dto';
-import { ContentSharedService } from 'src/content/shared.service';
+import { ResolveLandingLocationDto } from './dto/resolve-location.dto';
+import { LandingPage, Prisma } from '@prisma/client';
 import { groupBy, isEmpty } from 'lodash';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { localizeTitle } from 'src/common/helpers/title-translations.helper';
 
 @Injectable()
 export class LandingPageUserService {
-  constructor(
-    private readonly db: PrismaService,
-    private readonly contentSharedService: ContentSharedService,
-  ) {}
+  constructor(private readonly db: PrismaService) {}
 
-  /**
-   * find all LandingPage
-   * @param dto
-   * @returns
-   */
+  async resolveLocation(dto: ResolveLandingLocationDto): Promise<{ url: string } | null> {
+    const url = await findCanonicalLocationLanding(this.db, {
+      cityId: dto.city_id,
+      provinceId: dto.province_id,
+    });
+    return url ? { url } : null;
+  }
+
   async findAll(dto: FindAllLandingPageUserDto): Promise<Record<string, Array<Partial<LandingPage>>>> {
-    let q: Prisma.LandingPageWhereInput = { is_active: true };
+    const q: Prisma.LandingPageWhereInput = { is_active: true };
     if (dto.placement === 'home') q['show_in_home'] = true;
     else if (dto.placement === 'footer') q['show_in_footer'] = true;
 
     const list = await this.db.landingPage.findMany({
       where: q,
-      select: { url: true, title: true, image: true, position: true },
+      select: { url: true, title: true, image: true, position: true, translations: true },
       orderBy: { sort_order: { sort: 'asc', nulls: 'last' } },
     });
 
-    const grouped = groupBy(list, 'position');
+    const grouped = groupBy(
+      list.map((item) => localizeTitle(item, dto.locale)),
+      'position',
+    );
     return grouped;
   }
 
-  /**
-   * find one landingPage
-   * @param landingPageId
-   * @returns
-   */
   async findOne(landingPageUrl: string): Promise<any> {
     const landing = await this.db.landingPage.findFirst({
-      where: { url: landingPageUrl },
+      where: { url: landingPageUrl, is_active: true },
       include: {
         image: true,
         main_content: {
           include: {
             questions: {
               where: { is_publish: true },
-              select: { question: true, answer: true, updated_at: true },
+              select: {
+                id: true,
+                question: true,
+                answer: true,
+                updated_at: true,
+              },
+              orderBy: { id: 'asc' },
             },
           },
         },
@@ -55,7 +61,7 @@ export class LandingPageUserService {
 
     if (!landing) throw new NotFoundException('NOT_FOUND');
 
-    let options = {};
+    const options = {};
     if (!isEmpty(landing.options)) {
       const opt = await this.db.propertyOption.findMany({
         where: { id: { in: landing.options } },
@@ -77,6 +83,12 @@ export class LandingPageUserService {
         },
       });
     }
+    const province = landing.province_id
+      ? await this.db.city.findUnique({
+          where: { id: landing.province_id },
+          select: { id: true, title: true, slug: true },
+        })
+      : null;
 
     //find related landings
     let relatedLandings: any;
@@ -90,21 +102,24 @@ export class LandingPageUserService {
       });
     }
 
-    let result: Record<string, any> = {
+    const result: Record<string, any> = {
       query: {
         ...options,
       },
       content: landing.main_content,
+      cities,
+      location: province
+        ? { ...province, level: 'province' }
+        : cities.length === 1
+          ? { ...cities[0], level: 'city' }
+          : null,
       related_landings: relatedLandings,
     };
-
     if (landing.has_pool) result['query'] = { ...result['query'], has_pool: 1 };
     if (landing.min_discount_percentage > 0) result['query'] = { ...result['query'], has_discount: 1 };
     if (landing.is_premium) result['query'] = { ...result['query'], is_premium: 1 };
     if (landing.province_id) result['query'] = { ...result['query'], provinces: `${landing.province_id}` };
     else if (!isEmpty(cities)) result['query'] = { ...result['query'], cities: cities.map((e) => e.id) };
-
-    // console.dir(result);
     return result;
   }
 }

@@ -1,17 +1,20 @@
+import { _IsIn, _IsInt, _IsString, _Length, _Max } from 'src/common/pipes/validator-translate.pipe';
+import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
-import { PaginationDto } from 'src/common/dto/pagination-page.dto';
-import { _IsIn, _IsInt, _IsString, _Max } from 'src/common/pipes/validator-translate.pipe';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
-export class FindAllCityUserDto {
+export class FindAllCityUserDto extends LocaleDto {
   @ApiProperty({ required: false, example: '' })
   @_IsString()
   @IsOptional()
   cities: string;
 
   @ApiProperty({ required: false, example: '' })
+  @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()
+  @_Length(2, 80)
   @IsOptional()
   q: string;
 

@@ -1,21 +1,21 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { UAParser } from 'ua-parser-js';
-import { getModuleFromUrl } from '../helpers/get-url-module.helper';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, StreamableFile } from '@nestjs/common';
 import { Admin, PrismaClient } from '@prisma/client';
+import { getModuleFromUrl } from '../helpers/get-url-module.helper';
+import { Observable } from 'rxjs';
+import { UAParser } from 'ua-parser-js';
+import { map } from 'rxjs/operators';
+
 const prisma = new PrismaClient();
 
 export interface SuccessResponseArgs {
-  messageCode?: MessageType;
   result?: any;
-  // extra?: unknown;
+  messageCode?: MessageType;
 }
 
 export interface SuccessResponse {
+  data: any;
   status: 'successful';
   messages: { fa: unknown };
-  data: any;
 }
 
 type MessageType = keyof Messages;
@@ -25,11 +25,9 @@ export class TransformInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map(async (data: SuccessResponseArgs) => {
-        /* ----------------------------------- LOG ---------------------------------- */
-
-        // Create a log only for these methods: POST, PUT, PATCH, DELETE
+        if (data instanceof StreamableFile) return data;
         const request = context.switchToHttp().getRequest();
-        const targetModule = getModuleFromUrl(request.originalUrl); // required
+        const targetModule = getModuleFromUrl(request.originalUrl);
         const admin = request.user as Admin;
 
         if (admin && request.method !== 'GET' && targetModule && admin?.role_id) {
@@ -43,17 +41,17 @@ export class TransformInterceptor implements NestInterceptor {
               browser: parser.getBrowser()?.name,
               browser_ver: parser.getBrowser()?.major,
               ip_v4: request?.ip,
-              admin_id: admin.id, // required
-              module: targetModule, // required
-              path: request.route.path, // required
-              method: request.method, // required
-              className: context.getClass().name, // required
-              classMethod: context.getHandler().name, // required
+              admin_id: admin.id,
+              module: targetModule,
+              path: request.route.path,
+              method: request.method,
+              className: context.getClass().name,
+              classMethod: context.getHandler().name,
               param: request?.params,
               query: request?.query,
               body: request?.body,
               result_id: data?.result?.id,
-              status_code: response.statusCode, // required
+              status_code: response.statusCode,
             },
           });
         }

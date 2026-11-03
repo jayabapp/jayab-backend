@@ -1,40 +1,29 @@
-import { InjectQueue } from '@nestjs/bull';
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  // Delete,
-  Get,
-  Headers,
-  Param,
-  ParseIntPipe,
-  Put,
-  Query,
-  Req,
-  UseGuards,
-  Version,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Queue } from 'bull';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { PropertyMapPreviewUserDto, PropertyMapUserDto, PropertyPriceHistogramUserDto } from './dto/map.dto';
+import { ParseIntPipe, Put, Query, Req, UseGuards, UseInterceptors, Version } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, ForbiddenException, Get, Headers, Param } from '@nestjs/common';
+import { PropertyMapResponseDto, PropertyPriceHistogramResponseDto } from './dto/map-response.dto';
+import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
+import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
+import { SearchSuggestionsSuccessResponseDto } from './dto/search-suggestion-response.dto';
+import { THREE_MINUTES_TTL, TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { VIEW_COUNT_JOB, VIEW_COUNT_QUEUE } from 'src/property/processors/queue-name.constants';
+import { CALL_LOG_JOB, CALL_LOG_QUEUE } from 'src/property/processors/queue-name.constants';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { PropertyQuoteUserDto } from './dto/quote.dto';
+import { PropertyOwnerService } from '../owner/owner.service';
 import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { RequestType } from 'src/common/interfaces/user.interface';
+import { PropertyUserService } from './user.service';
 import { ProfileUserService } from 'src/profile/roles/user/profile-user.service';
 import { USER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
-import {
-  CALL_LOG_JOB,
-  CALL_LOG_QUEUE,
-  VIEW_COUNT_JOB,
-  VIEW_COUNT_QUEUE,
-} from 'src/property/processors/queue-name.constants';
-import { PropertyOwnerService } from '../owner/owner.service';
-import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
-import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/find-all.dto';
-import { PropertyUserService } from './user.service';
+import { ONE_MINUTE_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { InjectQueue } from '@nestjs/bull';
+import { LocaleDto } from 'src/common/dto/locale.dto';
+import { Queue } from 'bull';
 
 @ApiTags('Property - USER')
-// @UseGuards(UserJwtGuard)
-// @ApiBearerAuth('user-jwt')
 @Controller(USER_ROUTE_GROUP)
 export class PropertyUserController {
   constructor(
@@ -45,26 +34,63 @@ export class PropertyUserController {
     private readonly propertyOwnerService: PropertyOwnerService,
   ) {}
 
-  @ApiOperation({ summary: 'Find All', description: '' })
+  @ApiOperation({ summary: 'Find All', description: '', operationId: 'propertyUserFindAll' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get()
   async findAll(
     @Query() dto: FindAllPropertyUserDto,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
-    /**
-     * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
-     */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-
     const result = await this.propertyUserService.findAll(dto, isAdvisor);
+    if (!dto.count_only) {
+      const ids = result.data?.map((e) => e.id);
+      await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
+    }
+    return { result };
+  }
 
-    /**
-     * اپدیت تعداد بازدید آگهی ها
-     */
-    const ids = result.data?.map((e) => e.id);
-    await this.viewCountQueue.add(VIEW_COUNT_JOB, { propertyIds: ids });
+  @ApiOperation({
+    summary: 'Map Points',
+    description: 'Pins and clusters for every located result in the box',
+  })
+  @ApiOkResponse({ type: PropertyMapResponseDto })
+  @Get('map')
+  async findMap(@Query() dto: PropertyMapUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findMap(dto);
+    return { result };
+  }
 
+  @ApiOperation({
+    summary: 'Price Histogram',
+    description: 'Distribution of tonight prices, ignoring the chosen price range',
+  })
+  @ApiOkResponse({ type: PropertyPriceHistogramResponseDto })
+  @Get('price-histogram')
+  async findPriceHistogram(@Query() dto: PropertyPriceHistogramUserDto): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findPriceHistogram(dto);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Map Preview', description: 'One card for a pin outside the loaded pages' })
+  @Get(':propertyId/map-preview')
+  async findMapPreview(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: PropertyMapPreviewUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findMapPreview(propertyId, dto.locale);
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Find Similar Properties' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(TEN_MINUTES_TTL)
+  @Get(':propertyId/similar')
+  async findSimilar(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: LocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.findSimilar(propertyId, 2, dto.locale);
     return { result };
   }
 
@@ -73,14 +99,11 @@ export class PropertyUserController {
   @Get(':propertySlug')
   async findOne(
     @Param('propertySlug') propertySlug: string,
+    @Query() dto: LocaleDto,
     @Headers('authorization') authorization?: string,
   ): Promise<SuccessResponseArgs> {
-    /**
-     * اگر مشاور باشه دیتاهای بیشتری میبینه مثل روزهای پر و خالی
-     */
     const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
-
-    const result = await this.propertyUserService.findOne(propertySlug, isAdvisor);
+    const result = await this.propertyUserService.findOne(propertySlug, isAdvisor, dto.locale);
     return { result };
   }
 
@@ -93,13 +116,21 @@ export class PropertyUserController {
     @Query('year', ParseIntPipe) year: number,
     @Headers('authorization') authorization?: string,
   ) {
-    /**
-     * در توسعه فروردین ۴۰۵ مشاهده وضعیت رزرو برای همه باز شد
-     */
-    // const { isAdvisor } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     const property = await this.propertyUserService.findById(propertyId);
     const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, true);
 
+    return { result };
+  }
+
+  @ApiOperation({ summary: 'Quote', description: 'Estimated price and availability for a stay' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(ONE_MINUTE_TTL)
+  @Get(':propertyId/quote')
+  async quote(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Query() dto: PropertyQuoteUserDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.propertyUserService.quote(propertyId, dto);
     return { result };
   }
 
@@ -110,7 +141,6 @@ export class PropertyUserController {
     @Query('months', ParseIntPipe) months: number,
   ) {
     const result = await this.propertyUserService.findPropertyReservedDays(propertyId, months);
-
     return { result };
   }
 
@@ -134,29 +164,16 @@ export class PropertyUserController {
     @Query('action') action: 'view' | 'sms' | 'call',
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-
     const result = await this.propertyUserService.findContactInfo(propertySlug);
-
     if (result.list?.length > 0 && (action === 'call' || action === 'sms')) {
       const ownerMobile = result.owner.mobile;
       const propertyId = result.list[0]?.property_id;
       await this.callLogQueue.add(CALL_LOG_JOB, { propertyId, user, ownerMobile });
     }
-
     delete result.owner.mobile;
     return { result };
   }
 
-  // @ApiOperation({ summary: 'Duplicate', description: '' })
-  // @Post(':propertyId/duplicate')
-  // async duplicate(@Param('propertyId') propertyId: number): Promise<SuccessResponseArgs> {
-  //   const result = await this.propertyUserService.duplicate(propertyId);
-  //   return { result };
-  // }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                    SHARE                                   */
-  /* -------------------------------------------------------------------------- */
   @ApiOperation({ summary: 'Generate Advisor Share Link', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share/link')
@@ -167,16 +184,10 @@ export class PropertyUserController {
   ): Promise<SuccessResponseArgs> {
     const { isAdvisor, advisorId } = await this.profileUserService.checkUserIsActiveAdvisor(authorization);
     if (!isAdvisor) throw new ForbiddenException('FORBIDDEN');
-
     const result = await this.propertyUserService.generateAdvisorShare(propertyId, advisorId, dto);
     return { result };
   }
 
-  /**
-   * اطلاعات لینک رو رمز گشایی میکنه و دیتا رو برای سایت مشاوران برمیگردونه
-   * @param dto
-   * @returns
-   */
   @ApiOperation({ summary: 'Retrive Share Link Data', description: '' })
   @ApiHeader({ name: 'authorization', description: 'user-jwt', required: false })
   @Get(':propertyId/advisor-share')
@@ -184,8 +195,12 @@ export class PropertyUserController {
     const result = await this.propertyUserService.findAdvisorShareData(dto);
     return { result };
   }
-  /* ---------------------------- SEARCH SUGGESTION --------------------------- */
-  @ApiOperation({ summary: 'Search Suggestion', description: '' })
+
+  @ApiOperation({
+    summary: 'Search Suggestion',
+    description: '',
+    operationId: 'propertyUserSearchSuggestions',
+  })
   @Get('search/suggestions')
   async searchSuggestions(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestions(dto);
@@ -193,14 +208,21 @@ export class PropertyUserController {
   }
 
   @Version('2')
-  @ApiOperation({ summary: 'Search Suggestion V2', description: '' })
+  @ApiOperation({
+    summary: 'Search Suggestion V2',
+    description: '',
+    operationId: 'propertyUserSearchSuggestionsV2',
+  })
+  @ApiOkResponse({ type: SearchSuggestionsSuccessResponseDto })
   @Get('search/suggestions')
   async searchSuggestionsV2(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.searchSuggestionsV2(dto);
     return { result };
   }
 
-  @ApiOperation({ summary: 'Search', description: '' })
+  @ApiOperation({ summary: 'Search', description: '', operationId: 'propertyUserSearchExtract' })
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(THREE_MINUTES_TTL)
   @Get('search/extract')
   async search(@Query() dto: PropertySearchSuggestionUserDto): Promise<SuccessResponseArgs> {
     const result = await this.propertyUserService.search(dto);

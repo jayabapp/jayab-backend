@@ -1,18 +1,18 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, PageSeoAnalyze, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreatePageSeoAnalyzeAdminDto } from './dto/create.dto';
-import { UpdatePageSeoAnalyzeAdminDto } from './dto/update.dto';
-import {
-  CreateProps,
-  FilterProps,
-  OperatorItems,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { operators, operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ShowAction, ShowProps, TableProps } from 'src/common/interfaces/model-props.interface';
 import { type PaginatedResult, paginate } from 'src/common/helpers/paginator';
+import { CreateProps, OperatorItems } from 'src/common/interfaces/model-props.interface';
+import { PageSeoAnalyzeStatus } from 'src/page-seo-analyze/common/interfaces/scraper-status.enum';
+import { TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { operatorsList } from 'src/common/utils/constants/filter-operators.constant';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { XMLParser } from 'fast-xml-parser';
+import { __baseDir } from 'src/config/settings';
+import { isEmpty } from 'lodash';
+import { Cache } from 'cache-manager';
+
 import {
   allActionsBuilder,
   createPropsBuilder,
@@ -21,24 +21,17 @@ import {
   showPropsBuilder,
   tablePropsBuilder,
 } from 'src/page-seo-analyze/common/helpers/model-props-builder.helper';
-import { UpdatePartialPageSeoAnalyzeAdminDto } from './dto/update-partial.dto';
-import { __baseDir } from 'src/config/settings';
-import fs from 'fs/promises';
-import { XMLParser } from 'fast-xml-parser';
-import { PageSeoAnalyzeStatus } from 'src/page-seo-analyze/common/interfaces/scraper-status.enum';
-import { isEmpty } from 'lodash';
-import crypto from 'crypto';
+
 import scrape from 'src/page-seo-analyze/common/helpers/seo-scraper.helper';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { TEN_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import crypto from 'crypto';
+import fs from 'fs/promises';
 
 @Injectable()
 export class PageSeoAnalyzeAdminService {
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly db: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * این تابع اطلاعات پیج رو اپدیت میکنه
@@ -46,7 +39,6 @@ export class PageSeoAnalyzeAdminService {
    * @returns
    */
   async scrapAndCreateReport(pageId?: number): Promise<PageSeoAnalyze> {
-    /* ----------------------------- find next page ----------------------------- */
     let nextAnalyze: PageSeoAnalyze;
     if (pageId) nextAnalyze = await this.db.pageSeoAnalyze.findFirst({ where: { id: +pageId } });
     else
@@ -66,10 +58,7 @@ export class PageSeoAnalyzeAdminService {
       });
       return;
     }
-
     if (!nextAnalyze) return;
-
-    /* --------------------------------- scrape --------------------------------- */
     const scrapeResult = await scrape(nextAnalyze.url);
     if (!scrapeResult) {
       await this.db.pageSeoAnalyze.update({
@@ -115,9 +104,6 @@ export class PageSeoAnalyzeAdminService {
 
     await this.db.pageSeoLinkAnalyze.deleteMany({ where: { page_id: nextAnalyze.id } });
     await this.db.pageSeoLinkAnalyze.createMany({ data: createLink });
-
-    // console.log({ link: scrapeResult.internal_links });
-
     return;
   }
 
@@ -128,21 +114,14 @@ export class PageSeoAnalyzeAdminService {
   async syncSitemap(): Promise<PageSeoAnalyze> {
     const CACHE_KEY = 'sync:page:sitemap';
     if (await this.cacheManager.get(CACHE_KEY)) return;
-
     const path = __baseDir + '/storage/public/seo/sitemap.xml';
     const file = (await fs.readFile(path)).toString();
-    const parser = new XMLParser({
-      // ignoreAttributes: false,
-      // attributeNamePrefix: '',
-    });
-    let obj = parser.parse(file);
-
+    const parser = new XMLParser({});
+    const obj = parser.parse(file);
     const sitemap = obj?.urlset?.url;
     if (!sitemap || isEmpty(sitemap)) return;
-
     for (const item of sitemap) {
       if (!item.loc) continue;
-
       const urlSha1 = crypto.createHash('sha1').update(item.loc).digest('hex');
       await this.db.pageSeoAnalyze.upsert({
         where: { url_sha1: urlSha1 },
@@ -154,22 +133,14 @@ export class PageSeoAnalyzeAdminService {
         update: {},
       });
     }
-
-    //برای جلوگیری از کال شدن پشت هم
     await this.cacheManager.set(CACHE_KEY, 'wait', TEN_MINUTES_TTL);
     return;
   }
 
-  /**
-   * همه ایتم ها رو در صف بررسی قرار میدهیم
-   */
   async scrapeAll(): Promise<void> {
     await this.db.pageSeoAnalyze.updateMany({ data: { scraper_flag: PageSeoAnalyzeStatus.READY_TO_SCRAPE } });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    FETCH                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * find all PageSeoAnalyze
    * @param filers
@@ -185,7 +156,8 @@ export class PageSeoAnalyzeAdminService {
     const list = await paginate()<PageSeoAnalyze, Prisma.PageSeoAnalyzeFindManyArgs>(
       this.db.pageSeoAnalyze,
       {
-        where: filters, include: { links: true },
+        where: filters,
+        include: { links: true },
         orderBy: { id: 'asc' },
       },
       { page, perPage },
@@ -203,18 +175,14 @@ export class PageSeoAnalyzeAdminService {
   }
 
   /**
-   * find one pageSeoAnalyze
-   * this method is used in the findOne controller to include or select items
    * @param id
    * @returns
    */
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
     const item = await this.db.pageSeoAnalyze.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     const showProps = showPropsBuilder(item);
     const actions = showActionBuilder(item);
-
     return { showProps, actions };
   }
 
@@ -226,13 +194,9 @@ export class PageSeoAnalyzeAdminService {
   async findById(id: number): Promise<PageSeoAnalyze> {
     const item = await this.db.pageSeoAnalyze.findUnique({ where: { id } });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     return item;
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   HELPER                                   */
-  /* -------------------------------------------------------------------------- */
   /**
    * find model props
    * @param rbac
@@ -244,14 +208,10 @@ export class PageSeoAnalyzeAdminService {
     tableProps: TableProps;
     operators: Array<OperatorItems>;
   }> {
-    // ACTIONS
     const availableActions = allActionsBuilder(rbac);
-
-    // PROPS
     const filterProps = filterPropsBuilder();
     const tableProps = tablePropsBuilder(availableActions);
     const createProps = createPropsBuilder();
-
     return { operators: operatorsList, filterProps, createProps, tableProps };
   }
 }

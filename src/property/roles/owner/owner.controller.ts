@@ -257,7 +257,7 @@ export class PropertyOwnerController {
     @Query('year', ParseIntPipe) year: number,
   ) {
     const property = req.interceptor_data as PropertyInterceptorData;
-    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, false, true);
+    const result = await this.propertyOwnerService.findPropertyCalendar(property, month, year, true);
     // const peakDays =
     return { result };
   }

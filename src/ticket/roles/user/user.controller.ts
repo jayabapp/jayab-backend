@@ -1,19 +1,16 @@
 import { Controller, Get, Post, Body, UseGuards, Req, ParseIntPipe, Query, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateTicketDto } from '../../common/dto/create-ticket.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { ReplyTicketDto } from '../../common/dto/reply-ticket.dto';
-import { RequestType } from 'src/common/interfaces/user.interface';
-import { USER_TICKET_ROUTE_GROUP } from '../../common/route-group.constant';
-import { SocketService } from 'src/socket/socket.service';
-import { random } from 'lodash';
-import { TicketSharedService } from '../shared/ticket-shared.service';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { User } from '@prisma/client';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
+import { USER_TICKET_ROUTE_GROUP } from '../../common/route-group.constant';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { TicketSharedService } from '../shared/ticket-shared.service';
 import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { CreateTicketDto } from '../../common/dto/create-ticket.dto';
+import { ReplyTicketDto } from '../../common/dto/reply-ticket.dto';
 import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
 import { SmsService } from 'src/sms/sms.service';
+import { UserRole } from 'src/common/interfaces/role.enum';
 
 @ApiTags('Ticket - USER')
 @ApiBearerAuth('user-jwt')
@@ -26,7 +23,7 @@ export class TicketUserController {
     private readonly smsService: SmsService,
   ) {}
 
-  @ApiOperation({ summary: 'Create' })
+  @ApiOperation({ summary: 'Create', operationId: 'ticketUserCreate' })
   @Post()
   async create(@Req() request: RequestType, @Body() dto: CreateTicketDto): Promise<SuccessResponseArgs> {
     const userId = request.user.id;
@@ -48,7 +45,7 @@ export class TicketUserController {
     return { messageCode: 'TICKET_SUBMITED_SUCCESSFULLY' };
   }
 
-  @ApiOperation({ summary: 'Find all' })
+  @ApiOperation({ summary: 'Find all', operationId: 'ticketUserFindAll' })
   @Get()
   async findAll(
     @Req() request: RequestType,
@@ -60,7 +57,7 @@ export class TicketUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Find one', description: '' })
+  @ApiOperation({ summary: 'Find one', description: '', operationId: 'ticketUserFindOne' })
   @Get(':id')
   async findOne(
     @Req() request: RequestType,
@@ -72,7 +69,7 @@ export class TicketUserController {
     return { result };
   }
 
-  @ApiOperation({ summary: 'Reply', description: '' })
+  @ApiOperation({ summary: 'Reply', description: '', operationId: 'ticketUserReply' })
   @Post(':id')
   async replyTicket(
     @Req() request: RequestType,

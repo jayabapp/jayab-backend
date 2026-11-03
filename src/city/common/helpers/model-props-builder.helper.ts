@@ -10,9 +10,6 @@ import {
 } from 'src/common/interfaces/model-props.interface';
 import { operators } from 'src/common/utils/constants/filter-operators.constant';
 
-/* -------------------------------------------------------------------------- */
-/*                                    TYPES                                   */
-/* -------------------------------------------------------------------------- */
 enum RefEnum {}
 type ModelFields = keyof typeof RefEnum | keyof typeof Prisma.CityScalarFieldEnum;
 type ModifiedFilterProps = FilterProps;
@@ -24,6 +21,7 @@ type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 /* -------------------------------------------------------------------------- */
 export const showPropsBuilder = (item: City & { image: Attachment }): Array<ShowProps> => {
   const props: Array<ShowProps> = [
+    { state: 'translations', value: item.translations, type: 'object', isHidden: true },
     {
       state: 'title',
       title: 'عنوان',
@@ -63,23 +61,10 @@ export const showPropsBuilder = (item: City & { image: Attachment }): Array<Show
 
 /* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (): Array<ShowAction> => {
-  const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
-    //  {
-    //    title: 'ایجاد محصول جدید',
-    //    route: '',
-    //  },
-  ];
-
+  const actions: Array<ShowAction> = [];
   return actions;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   CREATE                                   */
-/* -------------------------------------------------------------------------- */
 export const createPropsBuilder = (): Array<CreateProps> => {
   const createProps: Array<CreateProps> = [
     {
@@ -138,9 +123,6 @@ export const filterPropsBuilder = (): ModifiedFilterProps[] => {
   return filterProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                ADMIN ACTIONS                               */
-/* -------------------------------------------------------------------------- */
 export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableAction> => {
   const allActions: Array<AvailableAction> = ['create', 'show', 'edit', 'delete', 'submit'];
   const availableActions: Array<AvailableAction> = [];
@@ -150,7 +132,6 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
     if (act == 'show' && rbac.r) availableActions.push('show');
     if (act == 'edit' && rbac.u) availableActions.push('edit');
     if (act == 'delete' && rbac.d) availableActions.push('delete');
-    // if (act == 'submit' && rbac.u) availableActions.push('submit');
   }
 
   return availableActions;

@@ -1,0 +1,56 @@
+import { _IsDate, _IsInt, _IsNotEmpty, _Max, _Min } from 'src/common/pipes/validator-translate.pipe';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+export class PropertyQuoteUserDto {
+  @ApiProperty({ required: true, example: '2026-10-06T00:00:00.000Z' })
+  @_IsDate()
+  @Type(() => Date)
+  @_IsNotEmpty()
+  check_in: Date;
+
+  @ApiProperty({ required: true, example: '2026-10-08T00:00:00.000Z' })
+  @_IsDate()
+  @Type(() => Date)
+  @_IsNotEmpty()
+  check_out: Date;
+
+  @ApiProperty({ required: true, example: 2 })
+  @_IsInt()
+  @Type(() => Number)
+  @_Min(1)
+  @_Max(50)
+  guests: number;
+}
+
+export type PropertyQuoteNightBreakdown = {
+  date: string;
+  is_peak: boolean;
+  day_column: string;
+  base_price: number;
+  final_price: number;
+  is_discounted: boolean;
+};
+
+export type PropertyQuoteResType = {
+  nights: number;
+  guests: number;
+  check_in: string;
+  check_out: string;
+  property_id: number;
+  is_available: boolean;
+  unavailable_dates: string[];
+  nights_breakdown: PropertyQuoteNightBreakdown[];
+  rent_total: number;
+  discount_total: number;
+  std_capacity: number;
+  max_capacity: number;
+  extra_guests: number;
+  extra_guest_fee_per_night: number;
+  extra_guest_total: number;
+  cleaning_fee: number;
+  stay_total: number;
+  /** @deprecated kept equal to `stay_total` for backward compatibility; cleaning_fee is never summed into it. */
+  total: number;
+  canceling_type: { id: string; title: string } | null;
+};

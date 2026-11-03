@@ -1,33 +1,39 @@
-import {
-  Attachment,
-  City,
-  Owner,
-  Property,
-  PropertyAuthorize,
-  PropertyBadge,
-  PropertyBedroom,
-  PropertyCalendar,
-  PropertyDailyPrice,
-  PropertyDescription,
-  PropertyImage,
-  PropertyOption,
-  User,
-} from '@prisma/client';
-import { isEmpty } from 'lodash';
-import moment from 'moment-jalaali';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { DayColumn } from 'src/common/helpers/day.helper';
-import { EnumList } from 'src/common/interfaces/model-props.interface';
+import { PropertyBedroom, PropertyCalendar, PropertyDailyPrice, PropertyDescription } from '@prisma/client';
+import { Property, PropertyAuthorize, PropertyBadge, Subscription } from '@prisma/client';
+import { Attachment, City, PropertyImage, PropertyOption } from '@prisma/client';
+import { DescriptionLocales, localizeDescriptions } from '../common/helpers/property-translations.helper';
+import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
+import { ApproxLocation, buildApproxLocation } from '../common/helpers/approx-location.helper';
+import { buildPublicLocation, PublicMapPoint } from '../common/helpers/public-location.helper';
 import { PropertyAuthorizeStatusesList } from 'src/property-authorize/common/property-authorize-status.type';
+import { resolveTodayPrice, TodayPrice } from '../common/effective-price.helper';
+import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { PropertyBadgeStatusList } from 'src/property-badge/common/property-badge-status.type';
+import { findMinimumNightlyPrice } from '../common/minimum-price.helper';
+import { localizePropertyText } from '../common/helpers/property-text.helper';
+import { Injectable, Optional } from '@nestjs/common';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
 import { CancelingTypeList } from '../common/types/property-canceling-types.type';
+import { ConfigService } from '@nestjs/config';
+import { localizeTitle } from 'src/common/helpers/title-translations.helper';
+import { DayColumn } from 'src/common/helpers/day.helper';
 import { RentType } from '../common/types/property-rent-types.type';
-import { PropertyStatuses, PropertyStatusesList } from '../common/types/property-status.type';
+import { EnumList } from 'src/common/interfaces/model-props.interface';
+import { isEmpty } from 'lodash';
+import { Locale } from 'src/common/dto/locale.dto';
 
-type TodayPrice = { price: number; discounted_price: number | null; discount_percentage: number | null };
+import moment from 'moment-jalaali';
 
 type ReserveDay = { day_number: number; is_reserved: boolean };
+
+export type PropertyOptionItem = {
+  group: string;
+  title: string;
+  id: number | null;
+  title_locale: Locale;
+  icon: Attachment | null;
+  canonical_title: string;
+};
 
 export type PropertyJsonType = Property & {
   feature_image?: Attachment;
@@ -36,19 +42,21 @@ export type PropertyJsonType = Property & {
   city: Partial<City>;
   region?: Partial<City>;
   _count?: { property_images?: number };
-  property_options?: any[]; //مالک نیازی به این دیتا ندارد
-  bedrooms?: Partial<PropertyBedroom>; //مالک نیازی به این دیتا ندارد
-  daily_price?: PropertyDailyPrice; //مالک نیازی به این دیتا ندارد
-  description?: PropertyDescription; //مالک نیازی به این دیتا ندارد
+  property_options?: any[];
+  bedrooms?: Partial<PropertyBedroom>;
+  daily_price?: PropertyDailyPrice;
+  description?: PropertyDescription;
   property_authorize?: PropertyAuthorize;
   blue_tick?: PropertyBadge;
   calendar?: PropertyCalendar[];
   reserve_days?: ReserveDay[];
   status_number?: number;
   owner?: any;
+  subscriptions?: Array<Pick<Subscription, 'id'>>;
 };
 
 export type PropertyArrayResType = {
+  text_locales?: Partial<Record<'title' | 'city' | 'province' | 'region' | 'address', Locale>>;
   owner?: { id: number; mobile_number: string; full_name: string };
   id: number;
   code: string;
@@ -68,11 +76,14 @@ export type PropertyArrayResType = {
   status: EnumList;
   advisor_commission: number;
   today_price: TodayPrice;
+  public_location: PublicMapPoint | null;
+  minimum_price: number | null;
   is_today_reserved: boolean;
   remaining_days: number;
   is_authorized: boolean;
   has_blue_tick: boolean;
   is_promoted: boolean;
+  has_active_subscription: boolean;
   authorize_status: EnumList;
   blue_tick_status: EnumList;
   reserve_days?: ReserveDay[];
@@ -80,13 +91,13 @@ export type PropertyArrayResType = {
   favorite_count: number;
   created_at: Date;
   deleted_at: Date;
-  // rate:number;
 };
 
 export type PropertyJsonResType = {
   owner?: { id: number; mobile_number: string; full_name: string };
   latitude: number;
   longitude: number;
+  approx_location: ApproxLocation | null;
   land_area: number;
   building_area: number;
   floors: number;
@@ -96,7 +107,9 @@ export type PropertyJsonResType = {
   daily_price: PropertyDailyPrice;
   address: string;
   options: object[];
-  property_descriptions: PropertyDescription;
+  option_items: PropertyOptionItem[];
+  property_descriptions: Omit<PropertyDescription, 'translations'> | null;
+  description_locales: DescriptionLocales;
   rent_type: RentType;
   is_chat_enabled: boolean;
   reserve_days?: ReserveDay[];
@@ -109,20 +122,27 @@ export type PropertyJsonResType = {
 
 export type PropertyResType = PropertyArrayResType & PropertyJsonResType;
 
+@Injectable()
 export class PropertySerializer {
+  constructor(@Optional() private readonly config?: ConfigService) {}
+
+  private get locationSalt(): string | undefined {
+    return this.config?.get<string>('location.obfuscationSalt') ?? process.env.LOCATION_OBFUSCATION_SALT;
+  }
+
   async toArray(
     data: PropertyJsonType[],
     today: DayColumn,
     isAdvisor = false,
     isOwner: boolean,
+    locale: Locale = 'fa',
   ): Promise<Array<PropertyArrayResType>> {
     const res: PropertyArrayResType[] = [];
     for (const e of data) {
       res.push({
-        ...this.summarize(e, today, true, isAdvisor, isOwner),
+        ...this.summarize(e, today, true, isAdvisor, isOwner, locale),
       });
     }
-
     return res;
   }
 
@@ -131,12 +151,13 @@ export class PropertySerializer {
     today: DayColumn,
     isAdvisor = false,
     isOwner = false,
+    locale: Locale = 'fa',
   ): Promise<PropertyResType> {
-    const res = { ...this.summarize(data, today, false, isAdvisor, isOwner) };
+    const res = { ...this.summarize(data, today, false, isAdvisor, isOwner, locale) };
     return res;
   }
 
-  formatPropertyOptions(options: any, key: keyof PropertyOption): object[] {
+  formatPropertyOptions(options: any, key: keyof PropertyOption, locale: Locale = 'fa'): object[] {
     const arrayKeys: readonly string[] = [
       PropertyOptionGroup.ENTERTAINMENT,
       PropertyOptionGroup.COOL_HEAT,
@@ -149,13 +170,32 @@ export class PropertySerializer {
       const group = item.option?.group?.toLowerCase() || 'unknow_key';
       if (arrayKeys.includes(group.toUpperCase())) {
         list[group] = list[group] ?? [];
-        list[group].push(item.option[key]);
+        list[group].push(this.optionText(item.option, key, locale));
       } else {
-        list[group] = item.option[key];
+        list[group] = this.optionText(item.option, key, locale);
       }
       return list;
     }, {});
     return groupByOption;
+  }
+
+  private optionText(option: any, key: keyof PropertyOption, locale: Locale): unknown {
+    return key === 'title' && option.title ? localizeTitle(option, locale).title : option[key];
+  }
+
+  formatPropertyOptionItems(options: any, locale: Locale = 'fa'): PropertyOptionItem[] {
+    if (isEmpty(options)) return [];
+    return options.map((item) => {
+      const localized = item.option?.title ? localizeTitle(item.option, locale) : null;
+      return {
+        id: item.option?.id ?? null,
+        group: item.option?.group?.toLowerCase() || 'unknow_key',
+        title: localized?.title ?? item.option?.title,
+        canonical_title: item.option?.title,
+        title_locale: localized?.title_locale ?? 'fa',
+        icon: item.option?.image ?? null,
+      };
+    });
   }
 
   private findTodayPrice(
@@ -163,22 +203,9 @@ export class PropertySerializer {
     today: DayColumn,
     dailyPrice: PropertyDailyPrice,
   ): TodayPrice {
-    if (calendar?.effective_price)
-      return {
-        price: calendar.price,
-        discounted_price: calendar.discounted_price,
-        discount_percentage: calendar.discount_percentage,
-      };
-
-    return { price: dailyPrice?.[today], discounted_price: null, discount_percentage: null };
+    return resolveTodayPrice(calendar, today, dailyPrice);
   }
 
-  /**
-   * حالتهای مختلف وجود تصاویر آگهی
-   * @param feature_image
-   * @param attachments
-   * @returns
-   */
   private findImages(feature_image?: Attachment, attachments?: Attachment[]) {
     if (!feature_image && isEmpty(attachments)) return [];
     if (!feature_image && !isEmpty(attachments)) return attachments;
@@ -212,19 +239,40 @@ export class PropertySerializer {
     isList: boolean,
     isAdvisor: boolean,
     isOwner: boolean,
+    locale: Locale = 'fa',
   ): PropertyResType {
     if (!data) return;
     let single: PropertyJsonResType;
+    const title = localizePropertyText(data.title, data.translations, 'title', locale);
+    const address = localizePropertyText(data.address, data.translations, 'address', locale);
+    const city = data.city?.title ? localizeTitle({ ...data.city, title: data.city.title }, locale) : null;
+    const province = data.province?.title
+      ? localizeTitle({ ...data.province, title: data.province.title }, locale)
+      : null;
+    const region = data.region?.title
+      ? localizeTitle({ ...data.region, title: data.region.title }, locale)
+      : null;
 
     const remainingDays = moment(data.subscription_expired_at).diff(moment.now(), 'days') + 1;
+    const hasActiveSubscription =
+      !!data.subscription_expired_at &&
+      startOfDate(data.subscription_expired_at).getTime() >= startOfToday().getTime() &&
+      (data.subscriptions === undefined || data.subscriptions.length > 0);
     const todayInPropertyCalendar = data.calendar?.find(
       (e) => moment(e.date).diff(startOfToday(), 'm') === 0,
     );
 
-    let list: PropertyArrayResType = {
+    const list: PropertyArrayResType = {
       id: data.id,
       code: data.code,
-      title: data.title,
+      title: title.value,
+      text_locales: {
+        title: title.locale,
+        city: city?.title_locale,
+        province: province?.title_locale,
+        region: region?.title_locale,
+        ...(!isList && (data.is_location_visible || isOwner) ? { address: address.locale } : {}),
+      },
       slug: data.slug,
       owner: data?.owner
         ? {
@@ -241,25 +289,26 @@ export class PropertySerializer {
       total_bedrooms: data.bedrooms?.total_bedrooms || 0,
       bedrooms: data.bedrooms,
       has_pool: data.has_pool,
-      province: data.province?.title,
-      city: data.city?.title,
-      region: data?.region?.title,
+      province: province?.title,
+      city: city?.title,
+      region: region?.title,
       advisor_commission:
         !isAdvisor && !isOwner
           ? null
           : (todayInPropertyCalendar?.advisor_commission ?? data.advisor_commission),
       today_price: this.findTodayPrice(todayInPropertyCalendar, today, data.daily_price),
+      public_location: buildPublicLocation(data, this.locationSalt),
+      minimum_price: findMinimumNightlyPrice(data.daily_price, data.calendar),
       is_today_reserved: !!todayInPropertyCalendar?.is_reserved,
       is_authorized: data.is_authorized,
       has_blue_tick: data.has_blue_tick,
       is_promoted: !!data.promoted_at,
+      has_active_subscription: hasActiveSubscription,
       favorite_count: data?.favorite_count,
       status_number: data.status,
-      //اگر زمان باقیمانده کمتر از صفر است و وضعیت در انتظار پرداخت است یعنی آگهی تازه ثبت شده پس پیام متفاوتی نشون میدیم
       status: this.findStatus(remainingDays, data.status),
       created_at: data.created_at,
       deleted_at: data.deleted_at,
-      //owner
       remaining_days: !remainingDays || remainingDays < 0 ? 0 : remainingDays,
       authorize_status: data.hasOwnProperty('property_authorize')
         ? PropertyAuthorizeStatusesList.find((e) => e.id === data.property_authorize?.status)
@@ -269,6 +318,7 @@ export class PropertySerializer {
         : null,
     };
 
+    const descriptions = localizeDescriptions(data.description, locale);
     if (!isList)
       single = {
         admin_descriptions: data.admin_descriptions,
@@ -276,29 +326,35 @@ export class PropertySerializer {
         daily_price: data.daily_price || null,
         latitude: data.is_location_visible || isOwner ? data.lat : null,
         longitude: data.is_location_visible || isOwner ? data.lng : null,
+        approx_location:
+          data.is_location_visible || isOwner
+            ? null
+            : buildApproxLocation(data.id, data.lat, data.lng, this.locationSalt),
         land_area: data.land_area,
         building_area: data.building_area,
         floors: data.floors,
         unit_per_floor: data.unit_per_floor,
         floor: data.floor,
         construction_year: data.construction_year,
-        address: data.address,
-        options: this.formatPropertyOptions(data.property_options, 'title'),
-        property_descriptions: data.description,
+        address: data.is_location_visible || isOwner ? address.value : null,
+        options: this.formatPropertyOptions(data.property_options, 'title', locale),
+        option_items: this.formatPropertyOptionItems(data.property_options, locale),
+        property_descriptions: descriptions.value,
+        description_locales: descriptions.locales,
         rent_type: RentType.DAILY,
         is_chat_enabled: data.is_chat_enabled,
         check_in_hour: data.check_in_hour,
         check_out_hour: data.check_out_hour,
       };
 
-    let reserveDays: ReserveDay[] = [];
+    const reserveDays: ReserveDay[] = [];
     for (let i = 0; i < 7; i++) {
       const date = startOfDate(moment().add(i, 'day').toDate());
       const calendar = data.calendar.find((e) => moment(e.date).isSame(date));
       reserveDays.push({ day_number: moment(date).day(), is_reserved: Boolean(calendar?.is_reserved) });
     }
 
-    let res: PropertyResType = { ...list, ...single, reserve_days: reserveDays || [] };
+    const res: PropertyResType = { ...list, ...single, reserve_days: reserveDays || [] };
     return res;
   }
 }

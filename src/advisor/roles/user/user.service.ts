@@ -1,15 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Advisor, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateAdvisorUserDto } from './dto/create.dto';
-import { UpdateAdvisorUserDto } from './dto/update.dto';
 import { FindAllAdvisorUserDto } from './dto/find-all.dto';
-import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
-import moment from 'moment-jalaali';
-import { AddRateUserDto } from '../admin/dto/create.dto';
 import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe';
+import { Advisor, Prisma } from '@prisma/client';
+import { cursorPaginate } from 'src/common/helpers/cursor-paginator';
+import { AddRateUserDto } from '../admin/dto/create.dto';
+import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class AdvisorUserService {
@@ -36,10 +35,7 @@ export class AdvisorUserService {
       const cities = parseQueryNumberArray(dto.cities);
       query = { ...query, cities: { some: { id: { in: cities } } } };
     }
-
     if (dto.province_id) query = { ...query, cities: { some: { parent_id: dto.province_id } } };
-
-    /*  */
     const list = await cursorPaginate()<
       Advisor & { cities: { title: string }[] },
       Prisma.AdvisorFindManyArgs
@@ -75,7 +71,7 @@ export class AdvisorUserService {
    * @returns
    */
   async findOne(userId: number, advisorId: number): Promise<Partial<Advisor>> {
-    let item = await this.db.advisor.findFirst({
+    const item = await this.db.advisor.findFirst({
       where: { id: advisorId, status: AdvisorStatus.APPROVED },
       select: {
         id: true,
@@ -164,18 +160,14 @@ export class AdvisorUserService {
 
     await this.db.$transaction(async (tx) => {
       await tx.rate.update({ where: { id: userRate.id }, data: dto });
-
-      /*  */
       const rates = await tx.rate.aggregate({
         where: { advisor_id: advisorId },
         _avg: { advisor_responsibility: true, response_speed_and_followup: true, advisor_behavior: true },
       });
-
       const behaviorRate = Math.ceil(rates._avg.advisor_behavior);
       const responsibilityRate = Math.ceil(rates._avg.advisor_responsibility);
       const speedAndFollowUpRate = Math.ceil(rates._avg.response_speed_and_followup);
       const usersSatisfaction = Math.ceil((behaviorRate + responsibilityRate + speedAndFollowUpRate) / 3);
-
       await tx.advisor.update({
         where: { id: advisorId },
         data: {

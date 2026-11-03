@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AccessControlList, Attachment, Banner, Prisma } from '@prisma/client';
+import { isEmpty, omit } from 'lodash';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBannerAdminDto } from './dto/create.dto';
 import { UpdateBannerAdminDto } from './dto/update.dto';
@@ -50,7 +51,18 @@ export class BannerAdminService {
    * @returns
    */
   async create(dto: CreateBannerAdminDto): Promise<Banner> {
-    const newBanner = await this.db.banner.create({ data: dto });
+    if (!isEmpty(dto.attachments)) {
+      const count = await this.db.attachment.count({ where: { id: { in: dto.attachments } } });
+      if (count != dto.attachments?.length) throw new BadRequestException('ATTACH3');
+    }
+
+    const newBanner = await this.db.banner.create({ data: omit(dto, 'attachments') });
+
+    if (!isEmpty(dto.attachments)) {
+      const attachs = dto.attachments.map((e) => ({ banner_id: newBanner.id, attachment_id: e }));
+      await this.db.bannerAttachment.createMany({ data: attachs });
+    }
+
     return newBanner;
   }
 
@@ -64,7 +76,15 @@ export class BannerAdminService {
   async findAll(filters: object, page: number, perPage = 50): Promise<PaginatedResult<Banner>> {
     const list = await paginate()<Banner, Prisma.BannerFindManyArgs>(
       this.db.banner,
-      { where: filters, include: { image: true, image_sm: true, property: true } },
+      {
+        where: filters,
+        include: {
+          image: true,
+          image_sm: true,
+          property: true,
+          attachments: { include: { attachment: true } },
+        },
+      },
       { page, perPage },
     );
 
@@ -90,7 +110,13 @@ export class BannerAdminService {
   async findOne(id: number): Promise<{ showProps: ShowProps[]; actions?: ShowAction[] }> {
     const item = await this.db.banner.findUnique({
       where: { id },
-      include: { category: true, image: true, image_sm: true, property: true },
+      include: {
+        category: true,
+        image: true,
+        image_sm: true,
+        property: true,
+        attachments: { include: { attachment: true } },
+      },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
 
@@ -120,10 +146,23 @@ export class BannerAdminService {
    */
   async update(id: number, dto: UpdateBannerAdminDto): Promise<Banner> {
     if (!dto.property_id) dto.property_id = null;
+
+    if (!isEmpty(dto.attachments)) {
+      const count = await this.db.attachment.count({ where: { id: { in: dto.attachments } } });
+      if (count != dto.attachments?.length) throw new BadRequestException('ATTACH3');
+    }
+
     const item = await this.db.banner.update({
       where: { id },
-      data: dto,
+      data: omit(dto, 'attachments'),
     });
+
+    await this.db.bannerAttachment.deleteMany({ where: { banner_id: id } });
+
+    if (!isEmpty(dto.attachments)) {
+      const attachs = dto.attachments.map((e) => ({ banner_id: id, attachment_id: e }));
+      await this.db.bannerAttachment.createMany({ data: attachs });
+    }
 
     return item;
   }

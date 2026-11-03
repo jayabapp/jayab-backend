@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { Attachment, Content, ContentCategory, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PaginatedResult, paginate } from 'src/common/helpers/paginator';
-import { ContentSort, FindAllContentSharedDto } from './dto/find-all.dto';
+import { FindAllContentSharedDto } from './dto/find-all.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { ContentLocale } from './dto/content-locale.dto';
+import { localizeContent, LocalizedContent } from './serializer/content-locale.serializer';
 
 @Injectable()
 export class ContentSharedService {
@@ -24,7 +25,9 @@ export class ContentSharedService {
    */
   async findAll(
     dto: FindAllContentSharedDto,
-  ): Promise<PaginatedResult<Content> & { subcategories: Array<ContentCategory & { image: Attachment }> }> {
+  ): Promise<
+    PaginatedResult<LocalizedContent<Content>> & { subcategories: Array<ContentCategory & { image: Attachment }> }
+  > {
     const { page, per_page: perPage, key } = dto;
     /**
      * check category
@@ -36,13 +39,9 @@ export class ContentSharedService {
       },
     });
     if (!category) throw new NotFoundException('دسته بندی مورد نظر یافت نشد');
-
-    /**
-     * query
-     */
     const andWhere: Prisma.ContentWhereInput[] = [
       this.publishedContentWhere(),
-      { category: { OR: [{ id: category.id }, { parent_id: category.id }] } },
+      { category_id: { in: [category.id, ...category.child.map((item) => item.id)] } },
     ];
     if (dto.q && typeof dto.q === 'string') {
       const titles = dto.q.split(' ').filter(Boolean);
@@ -50,27 +49,48 @@ export class ContentSharedService {
       titles.map((e) => {
         titleQuery.push({ title: { contains: e, mode: 'insensitive' } });
       });
-
       if (titleQuery.length) andWhere.push({ OR: titleQuery });
     }
 
-    const query: Prisma.ContentFindManyArgs = {
-      where: { AND: andWhere },
-      include: {
-        category: { include: { parent: true, image: true } },
-        feature_image: true,
-        attachments: { include: { attachment: true } },
-        video: true,
-      },
-      orderBy: [{ order: { sort: 'asc', nulls: 'last' } }, { created_at: 'desc' }],
-    };
+    const query: Prisma.ContentFindManyArgs = dto.summary
+      ? {
+          where: { AND: andWhere },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            small_text: true,
+            key: true,
+            seo: true,
+            translations: true,
+            feature_image: true,
+            view_count: true,
+            created_at: true,
+            category: { select: { id: true, title: true, slug: true } },
+          },
+          orderBy: [{ order: { sort: 'asc', nulls: 'last' } }, { created_at: 'desc' }],
+        }
+      : {
+          where: { AND: andWhere },
+          include: {
+            category: { include: { parent: true, image: true } },
+            feature_image: true,
+            attachments: { include: { attachment: true } },
+            video: true,
+          },
+          orderBy: [{ order: { sort: 'asc', nulls: 'last' } }, { created_at: 'desc' }],
+        };
 
     const list = await paginate()<Content, Prisma.ContentFindManyArgs>(this.db.content, query, {
       page,
       perPage,
     });
 
-    return { data: list.data, meta: list.meta, subcategories: category.child || [] };
+    return {
+      data: list.data.map((item) => localizeContent(item, dto.locale)),
+      meta: list.meta,
+      subcategories: category.child || [],
+    };
   }
 
   /**
@@ -105,7 +125,7 @@ export class ContentSharedService {
    * @param key
    * @returns
    */
-  async findOneByKey(key: string): Promise<Content> {
+  async findOneByKey(key: string, locale: ContentLocale = 'fa'): Promise<LocalizedContent<Content>> {
     const item = await this.db.content.findFirst({
       where: { key: `${key}`, AND: [this.publishedContentWhere()] },
       include: {
@@ -118,7 +138,7 @@ export class ContentSharedService {
     });
     if (!item) throw new NotFoundException('NOT_FOUND_CONTENT');
 
-    return item;
+    return localizeContent(item, locale);
   }
 
   /**
@@ -127,7 +147,7 @@ export class ContentSharedService {
    * @returns
    */
   async findOneBySlug(slug: string): Promise<Content> {
-    const item = await this.db.content.update({
+    const item = await this.db.content.findFirst({
       where: { slug, AND: [this.publishedContentWhere()] },
       include: {
         category: {
@@ -141,10 +161,11 @@ export class ContentSharedService {
         video: true,
         forms: { orderBy: { sort_order: { sort: 'asc', nulls: 'last' } } },
       },
-      data: { view_count: { increment: 1 } },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
+    void this.db.content
+      .update({ where: { id: item.id }, data: { view_count: { increment: 1 } } })
+      .catch(() => undefined);
     return item;
   }
 
@@ -180,7 +201,6 @@ export class ContentSharedService {
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     return item;
   }
 }

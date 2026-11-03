@@ -1,13 +1,16 @@
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PassportStrategy } from '@nestjs/passport';
-import Redis from 'ioredis';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { getUserInfoCacheManagerKey } from 'src/common/helpers/cache-manager-key.constant';
-import { PartialUser } from 'src/common/interfaces/user.interface';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { MAX_ACTIVE_DEVICES } from 'src/common/utils/constants/constants';
+import { TestAccessService } from 'src/test-access/test-access.service';
+import { PassportStrategy } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectRedis } from '@liaoliaots/nestjs-redis';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+import TokenPayload from 'src/auth/common/interface/token-payload.interface';
+
+import Redis from 'ioredis';
 
 @Injectable()
 export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
@@ -15,6 +18,7 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     private readonly db: PrismaService,
     private configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
+    private readonly testAccessService: TestAccessService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -22,22 +26,36 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
     });
   }
 
-  public async validate(payload: { id: number; jwtLevel: number }): Promise<PartialUser> {
-    const CACHE_KEY = getUserInfoCacheManagerKey(payload.id);
+  public async validate(payload: TokenPayload): Promise<PartialUser> {
+    // Only a token signed by the admin panel's own SSO endpoints carries this
+    // claim (never accepted from client input) — it bypasses the test-access
+    // allowlist below and nothing else. Ban status, jwt level and every other
+    // check in this method still run normally for an impersonated session.
+    const isAdminImpersonation = payload.purpose === 'admin_impersonation';
 
-    /* -------------------------------------------------------------------------- */
-    // check the token key in cache
+    if (this.testAccessService.isEnabled() && !isAdminImpersonation) {
+      const accessUser = await this.db.user.findUnique({
+        where: { id: payload.id },
+        select: { mobile_number: true },
+      });
+      if (!accessUser) throw new UnauthorizedException();
+      if (!(await this.testAccessService.isAllowed(accessUser.mobile_number)))
+        throw new UnauthorizedException('TEST_ACCESS_DENIED');
+    }
+
+    const jwtLevel = payload.jwtLevel ?? 0;
+    const CACHE_KEY = getUserInfoCacheManagerKey(payload.id);
     const cacheData: string = await this.redis.get(CACHE_KEY);
 
     if (cacheData) {
       const decodedCacheData = Buffer.from(cacheData, 'base64').toString('utf-8');
       const userDataFromCache: PartialUser = JSON.parse(decodedCacheData);
-      this.isUserAuthenticated(userDataFromCache.jwt_level, payload?.jwtLevel);
+      this.isUserAuthenticated(userDataFromCache.jwt_level, jwtLevel);
       return userDataFromCache;
     }
 
     const user = await this.db.user.findFirst({
-      where: { id: payload.id, jwt_level: { lt: payload.jwtLevel + MAX_ACTIVE_DEVICES } },
+      where: { id: payload.id, jwt_level: { lt: jwtLevel + MAX_ACTIVE_DEVICES } },
       select: {
         id: true,
         mobile_number: true,
@@ -49,10 +67,10 @@ export class UserJwtStrategy extends PassportStrategy(Strategy, 'user-jwt') {
         jwt_level: true,
       },
     });
+    if (!user) throw new UnauthorizedException();
 
-    this.isUserAuthenticated(user.jwt_level, payload?.jwtLevel);
+    this.isUserAuthenticated(user.jwt_level, jwtLevel);
 
-    /* -------------------------------------------------------------------------- */
     const base64String = Buffer.from(JSON.stringify(user)).toString('base64');
     await this.redis.set(CACHE_KEY, base64String, 'EX', 60);
     return user;

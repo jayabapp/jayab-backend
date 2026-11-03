@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional } from 'class-validator';
-import { _ArrayNotEmpty, _IsEnum } from 'src/common/pipes/validator-translate.pipe';
 import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { _ArrayNotEmpty } from 'src/common/pipes/validator-translate.pipe';
+import { ApiProperty } from '@nestjs/swagger';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
-export class FindAllPropertyOptionUserDto {
+export class FindAllPropertyOptionUserDto extends LocaleDto {
   @ApiProperty({
     required: true,
     example: ['PROPERTY_TYPE', 'ACCESS'],

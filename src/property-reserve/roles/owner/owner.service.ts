@@ -113,6 +113,19 @@ export class PropertyReserveOwnerService {
   /*                                    EVENT                                   */
   /* -------------------------------------------------------------------------- */
   /**
+   * اولین بازشدن واقعی کارت درخواست توسط میزبان. idempotent: فقط وقتی
+   * owner_seen_at هنوز خالی است ثبت می‌شود، رویدادهای بعدی no-op هستند و
+   * timestamp اول را overwrite نمی‌کنند.
+   * @param reserveId
+   */
+  async markSeen(reserveId: number): Promise<void> {
+    await this.db.propertyReserve.updateMany({
+      where: { id: reserveId, owner_seen_at: null },
+      data: { owner_seen_at: new Date() },
+    });
+  }
+
+  /**
    * ارسال پیامک به ادمین
    * @param reserveId
    * @returns

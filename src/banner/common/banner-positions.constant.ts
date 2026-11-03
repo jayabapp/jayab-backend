@@ -7,7 +7,12 @@ export enum BannerPosition {
   Advisor = 'advisor',
 }
 export const BannerPositionList: EnumList[] = [
-  { id: BannerPosition.MAIN_1, title: 'بالای صفحه اصلی', hex: '#4f46e5', sub_title: 'بنر اصلی' },
+  {
+    id: BannerPosition.MAIN_1,
+    title: 'اسلایدر هیرو (بالای صفحه اصلی)',
+    hex: '#4f46e5',
+    sub_title: 'بنر اصلی',
+  },
   {
     id: BannerPosition.MAIN_2,
     title: 'تبلیغات بین آگهی',

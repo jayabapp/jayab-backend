@@ -1,23 +1,24 @@
-import { InjectQueue } from '@nestjs/bull';
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
 import { Attachment, MessengerMessages, Prisma } from '@prisma/client';
-import { Queue } from 'bull';
-import moment from 'moment-jalaali';
 import { CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import { startOfToday } from 'src/common/helpers/date.helper';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
+import { PartialParticipant } from './common/chat.interface';
+import { CreateChatUserDto } from './roles/user/dto/create.dto';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { PartialUser } from 'src/common/interfaces/user.interface';
 import { FirebaseService } from 'src/firebase/firebase.service';
+import { SendMessageDto } from './common/dto/send-message.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+import { InjectQueue } from '@nestjs/bull';
 import { SmsService } from 'src/sms/sms.service';
 import { v7 as uuid } from 'uuid';
-import { PartialParticipant } from './common/chat.interface';
-import { SendMessageDto } from './common/dto/send-message.dto';
-import { CHAT_MESSAGE_SMS_JOB, CHAT_MESSAGE_SMS_QUEUE } from './processors/queue-name.constants';
-import { BlockParticipantUserDto } from './roles/user/dto/blacklist.dto';
-import { CreateChatUserDto } from './roles/user/dto/create.dto';
+import { UserRole } from 'src/common/interfaces/role.enum';
+import { Queue } from 'bull';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class SharedChatService {
@@ -29,16 +30,12 @@ export class SharedChatService {
     private readonly setting: SettingAdminService,
   ) {}
 
-  /**
-   * کلید سراسری توقف چت (حالت Incident).
-   * وقتی خاموش است هیچ پیام جدیدی (نه مهمان و نه میزبان) و هیچ چت جدیدی ساخته نمی‌شود.
-   */
   async isChatEnabled(): Promise<boolean> {
     return this.setting.isGuestChatEnabled();
   }
 
   async assertChatEnabled(): Promise<void> {
-    if (!(await this.isChatEnabled())) throw new ForbiddenException('CHAT13');
+    if (!(await this.isChatEnabled())) throw new ForbiddenException('CHAT14');
   }
 
   /**
@@ -48,7 +45,6 @@ export class SharedChatService {
    * @returns
    */
   async findOrCreate(user: PartialUser, dto: CreateChatUserDto): Promise<string> {
-    // قبل از برگرداندن اتاق موجود چک می‌شود تا ورود به چت‌های قدیمی هم برای ارسال بسته باشد
     await this.assertChatEnabled();
 
     const userId = user.id;
@@ -258,12 +254,10 @@ export class SharedChatService {
    */
   async canCreateChat(userId: number, dto: CreateChatUserDto): Promise<boolean> {
     await this.assertChatEnabled();
-
     return !!(userId && dto?.property_id);
   }
 
   async deleteMessage(chatroomId: number, participantId: number, messageId: number): Promise<void> {
-    // در حالت Incident تاریخچه باید واقعاً فقط‌خواندنی بماند تا شواهد گفتگو حذف نشوند.
     await this.assertChatEnabled();
 
     const message = await this.db.messengerMessages.findFirst({
@@ -300,7 +294,7 @@ export class SharedChatService {
       where: { user_id: userId },
     });
 
-    return item?.unread_count || 0;
+    return Number(item?.unread_count ?? 0);
   }
 
   /**
@@ -381,25 +375,17 @@ export class SharedChatService {
   ): Promise<void> {
     if (!room) return;
     if (!senderParticipantId) return;
-    // پیامک‌های صف‌شده قبل از خاموش شدن کلید نباید به میزبان برسند
     if (!(await this.isChatEnabled())) return;
-    //اگر اولین پیام بود یا به تازگی پیامی ارسال نکرده بود به میزبان پیامک میدیم
-    let shouldSendSms = false;
-
-    if (!room.last_message) shouldSendSms = true;
-    else if (moment().diff(room.last_message.created_at, 's') > 30 * 60) shouldSendSms = true;
-    if (!shouldSendSms) return;
-
+    let mustSendSms = false;
+    if (!room.last_message) mustSendSms = true;
+    else if (moment().diff(room.last_message.created_at, 's') > 30 * 60) mustSendSms = true;
+    if (!mustSendSms) return;
     const p = await this.db.property.findFirst({
       where: { id: room.property_id },
       select: { title: true, owner: { select: { user: { select: { id: true, mobile_number: true } } } } },
     });
-
     const sender = await this.db.messengerParticipant.findFirst({ where: { id: senderParticipantId } });
-
-    //اگر ارسال کننده پیام خود میزبان بود پیامک نمیفرستیم
     if (sender.user_id === p.owner.user.id) return;
-
     await this.smsService.sendChatHintToOwner(p.owner.user.mobile_number, p.title, room.uuid);
     return;
   }

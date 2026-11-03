@@ -1,12 +1,12 @@
-import { Global, Inject, Injectable } from '@nestjs/common';
-import { countBy } from 'lodash';
-import moment from 'moment-jalaali';
-import { PrismaService } from 'src/prisma/prisma.service';
-
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { DayDto } from 'src/property/roles/owner/dto/update-property.dto';
 import { nDaysLaterDate, startOfToday } from './date.helper';
+import { Global, Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { countBy } from 'lodash';
+import { DayDto } from 'src/property/roles/owner/dto/update-property.dto';
+import { Cache } from 'cache-manager';
+
+import moment from 'moment-jalaali';
 
 export enum DayColumn {
   normal = 'normal',
@@ -14,6 +14,27 @@ export enum DayColumn {
   thursday = 'thursday',
   friday = 'friday',
   peak = 'peak',
+}
+
+export function toDayKey(date: Date): string {
+  return moment(date).format('YYYY-MM-DD');
+}
+
+export function resolveWeekdayColumn(date: Date): DayColumn {
+  switch (moment(date).isoWeekday()) {
+    case 3:
+      return DayColumn.wednesday;
+    case 4:
+      return DayColumn.thursday;
+    case 5:
+      return DayColumn.friday;
+    default:
+      return DayColumn.normal;
+  }
+}
+
+export function resolveDayColumn(date: Date, peakDayKeys: Set<string>): DayColumn {
+  return peakDayKeys.has(toDayKey(date)) ? DayColumn.peak : resolveWeekdayColumn(date);
 }
 
 @Global()
@@ -29,68 +50,24 @@ export class DayHelper {
    * @returns
    */
   public async today(): Promise<DayColumn> {
-    // const today: number = moment(startOfToday()).weekday();
-    const today: number = moment(startOfToday()).isoWeekday();
-
     if (await this.findPeak(this.todayUnix())) return DayColumn.peak;
-
-    let column: DayColumn;
-    switch (today) {
-      case 3:
-        column = DayColumn.wednesday;
-        break;
-      case 4:
-        column = DayColumn.thursday;
-        break;
-      case 5:
-        column = DayColumn.friday;
-        break;
-
-      default:
-        column = DayColumn.normal;
-        break;
-    }
-    // console.log(column);
-
-    return column;
+    return resolveWeekdayColumn(startOfToday());
   }
 
   public async daysRange(
     startDate: Date,
     duration: number,
   ): Promise<{ requestedDays: DayColumn[]; daysCount: object }> {
-    let columns: DayColumn[] = [];
+    const columns: DayColumn[] = [];
 
     for (let i = 0; i < duration; i++) {
       const day = moment(nDaysLaterDate(startDate, i));
       const dayUnix = day.unix();
-
       if (await this.findPeak(dayUnix)) {
         columns.push(DayColumn.peak);
         continue;
       }
-
-      const dayNumber: number = day.isoWeekday();
-      // const dayNumber: number = day.weekday();
-
-      let column: DayColumn;
-      switch (dayNumber) {
-        case 3:
-          column = DayColumn.wednesday;
-          break;
-        case 4:
-          column = DayColumn.thursday;
-          break;
-        case 5:
-          column = DayColumn.friday;
-          break;
-
-        default:
-          column = DayColumn.normal;
-          break;
-      }
-      // console.log(column);
-      columns.push(column);
+      columns.push(resolveWeekdayColumn(day.toDate()));
     }
     const obj = {
       requestedDays: columns,
@@ -104,19 +81,6 @@ export class DayHelper {
     return moment(startOfToday()).unix();
   };
 
-  // dayUnix = (date: DayDto, duration = 0): number => {
-  //   const jDate = `${date.year}/${date.month}/${date.day}`;
-  //   let gerogian = moment(jDate, 'jYYYY/jMM/jDD').toDate();
-
-  //   const dayUnix = DateTime.fromJSDate(gerogian).plus({ day: duration }).toUnixInteger();
-  //   return dayUnix;
-  // };
-
-  // dayUnixByUnix = (timestamp: number, duration = 0): number => {
-  //   const dayUnix = DateTime.fromSeconds(Math.trunc(timestamp)).plus({ day: duration }).toUnixInteger();
-  //   return dayUnix;
-  // };
-
   tsToJalaliObject = (timestamp: number): DayDto => {
     return {
       day: +moment.unix(timestamp).format('jDD'),
@@ -127,14 +91,10 @@ export class DayHelper {
 
   async findPeak(unix: number) {
     const inCache = await this.cacheManager.get(`peak-${unix}`);
-
     if (inCache == '1') return true;
     if (inCache == '0') return false;
-
     const isPeak = await this.db.peakDay.findFirst({ where: { timestamp: unix } });
     if (isPeak) {
-      // console.log('is peak');
-
       await this.cacheManager.set(`peak-${unix}`, '1', 2 * 60 * 60);
       return true;
     }

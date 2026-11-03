@@ -157,7 +157,7 @@ const Num2persian = (input) => {
   // Declare Parts
   let decimalPart = "";
   let integerPart = input;
-  let pointIndex = input.indexOf(".");
+  const pointIndex = input.indexOf(".");
   // Check for float numbers form string and split Int/Dec
   if (pointIndex > -1) {
     integerPart = input.substring(0, pointIndex);

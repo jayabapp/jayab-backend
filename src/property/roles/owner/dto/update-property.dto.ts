@@ -1,22 +1,18 @@
+import { IsNumber, Validate, ValidateIf, IsOptional, Max } from 'class-validator';
+import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
+import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
+import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
+import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
+import { Transform } from 'class-transformer';
+import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
+import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
 import { ApiProperty } from '@nestjs/swagger';
-// import { CANCELING_TYPE, PropertyOptionGroup, RentType } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
-import {
-  IsNumber,
-  Validate,
-  IsObject,
-  ValidateNested,
-  ValidateIf,
-  IsOptional,
-  ArrayMaxSize,
-  Max,
-  ArrayUnique,
-  IsEnum,
-  ArrayContains,
-} from 'class-validator';
+import { RentType } from 'src/property/common/types/property-rent-types.type';
+import { IsPrice } from 'src/common/validators/price-validator.decorator';
+import { IsExist } from 'src/common/validators/is-exists.validator';
+
 import {
   _ArrayMaxSize,
-  _ArrayMinSize,
   _ArrayNotEmpty,
   _IsArray,
   _IsBoolean,
@@ -34,16 +30,8 @@ import {
   _Min,
   _MinLength,
 } from 'src/common/pipes/validator-translate.pipe';
+
 import moment from 'moment-jalaali';
-import { IsCorrectPropertyOption } from 'src/common/validators/is-correct-prop-opts.validator';
-import { IsExist } from 'src/common/validators/is-exists.validator';
-import { PropertyOptionGroup } from 'src/property-option/common/property-option-groups.type';
-import { RentType } from 'src/property/common/types/property-rent-types.type';
-import { normalizePropertyPrice } from 'src/property/common/normalize-price.helper';
-import { IsPrice } from 'src/common/validators/price-validator.decorator';
-import { CancelingType } from 'src/property/common/types/property-canceling-types.type';
-import { IsMobileNumber } from 'src/common/validators/is-mobile-number.validator';
-import { TextInputValidator, TextInputValidatorType } from 'src/common/validators/text-input.validator';
 
 export class DayDto {
   @_IsNotEmpty()
@@ -142,12 +130,6 @@ export class UpdatePropertyStepOneOwnerDto {
   @_IsNotEmpty()
   ownership: number;
 
-  // @ApiProperty({ required: true, title: 'کشور' })
-  // @_IsInt()
-  // @Validate(IsExist, ['city', 'id'])
-  // @_IsNotEmpty()
-  // country_id: number;
-
   @ApiProperty({ required: true, title: 'استان', example: 5 })
   @_IsInt()
   @Validate(IsExist, ['city', 'id', { parent_id: null }])
@@ -211,11 +193,6 @@ export class UpdatePropertyMediaOwnerDto {
   @_IsInt()
   @_IsNotEmpty()
   feature_image_id: number;
-
-  // @ApiProperty({ required: true, title: 'ویدیو' })
-  // @_IsInt()
-  // @IsOptional()
-  // video_id: number;
 }
 
 export class UpdatePropertyEnvOwnerDto {
@@ -387,15 +364,6 @@ export class UpdatePropertyPriceOwnerDto {
   @_IsNotEmpty()
   advisor_commission: number;
 
-  // @ApiProperty({ enum: RentType, required: true, title: 'نوع اجاره', example: [RentType.DAILY] })
-  // // @Transform(({ value }) => value.map(e=> e.toUpperCase()))
-  // @_IsArray()
-  // @IsEnum(RentType, { each: true })
-  // @ArrayContains([RentType.DAILY])
-  // @_IsNotEmpty()
-  // rent_type: RentType[];
-
-  //DAILY
   @ApiProperty({ required: true, title: 'عادی', example: 1000000 })
   @Transform((e) => normalizePropertyPrice(e.value))
   @Validate(IsPrice, [RentType.DAILY])

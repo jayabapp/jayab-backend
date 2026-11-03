@@ -1,43 +1,101 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Attachment, Prisma } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import sharp from 'sharp';
-import md5 from 'crypto-js/md5';
-import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AttachmentImagePropsType, AttachmentVoicePropsType } from './interfaces/attachment-props.type';
+import { DEFAULT_IMAGE_ENCODING_QUALITY, IMAGE_WEBP_OPTIONS } from './constants/image-processing.constant';
+import { IMAGE_UPLOAD_MAX_PIXELS, IMAGE_UPLOAD_MIN_DIMENSION } from './constants/image-processing.constant';
+import { Attachment, Prisma } from '@prisma/client';
+import { S3ManagerService } from 'src/s3-manager/s3-manager.service';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { VIDEO_FOLDER } from 'src/common/utils/constants/storage-folders';
-import fs from 'fs/promises';
 import { __baseDir } from 'src/config/settings';
+import { Readable } from 'stream';
+
+import sharp from 'sharp';
+import md5 from 'crypto-js/md5';
+import fs from 'fs/promises';
 
 @Injectable()
 export class AttachmentService {
+  private static readonly IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+  private readonly logger = new Logger(AttachmentService.name);
+
   constructor(
     private readonly db: PrismaService,
     private readonly s3ManagerService: S3ManagerService,
   ) {}
 
   /* ---------------------------------- IMAGE --------------------------------- */
+  async getPublicPropertyImageDownload(id: number): Promise<{
+    contentLength?: number;
+    stream: Readable;
+  }> {
+    const attachment = await this.db.attachment.findFirst({
+      where: {
+        id,
+        deleted_at: null,
+        type: 1,
+        OR: [
+          {
+            feature_image: {
+              some: { status: PropertyStatuses.PUBLISHED, deleted_at: null },
+            },
+          },
+          {
+            property_images: {
+              some: {
+                property: {
+                  status: PropertyStatuses.PUBLISHED,
+                  deleted_at: null,
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { name: true, path: true },
+    });
+    if (!attachment) throw new NotFoundException('NOT_FOUND');
+
+    const object = await this.s3ManagerService.getObject(`${attachment.path}/${attachment.name}`);
+    if (!object.Body) throw new NotFoundException('NOT_FOUND');
+
+    return {
+      contentLength: object.ContentLength,
+      stream: object.Body as Readable,
+    };
+  }
+
   async createAttachment(args: AttachmentImagePropsType): Promise<Attachment> {
-    const { file, folder, resizeWidth, resizeMode, adminId, userId, repository = 'attachment', alt } = args;
-
-    // const storagePath = STORAGE_PUBLIC + folder;
-    const MIN_WIDTH = 32;
-    const MIN_HEIGHT = 32;
-
-    const image = sharp(file.buffer).rotate();
-    const largeImage = sharp(file.buffer).rotate();
-    // const mediumImage = sharp(file.buffer).rotate();
-    // const thumbImage = sharp(file.buffer).rotate();
-
-    const metadata = await image.metadata();
+    const {
+      file,
+      folder,
+      resizeWidth,
+      resizeMode,
+      adminId,
+      userId,
+      repository = 'attachment',
+      alt,
+      encodingQuality = DEFAULT_IMAGE_ENCODING_QUALITY,
+      lossless: isLossless = false,
+    } = args;
+    let metadata: sharp.Metadata;
+    try {
+      metadata = await sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).metadata();
+    } catch (error) {
+      if (error instanceof Error && /pixel limit/i.test(error.message))
+        throw new BadRequestException('ATTACH_IMAGE_PIXEL_LIMIT');
+      throw new BadRequestException('ATTACH_IMAGE_INVALID');
+    }
     const { width, height } = metadata;
+    if (!width || !height) throw new BadRequestException('ATTACH_IMAGE_INVALID');
+    if (width * height > IMAGE_UPLOAD_MAX_PIXELS) throw new BadRequestException('ATTACH_IMAGE_PIXEL_LIMIT');
+    if (width < IMAGE_UPLOAD_MIN_DIMENSION || height < IMAGE_UPLOAD_MIN_DIMENSION)
+      throw new BadRequestException('ATTACH2');
 
-    const isVertical = width >= height;
-
-    if (width < MIN_WIDTH || height < MIN_HEIGHT) throw new BadRequestException('ATTACH2');
-    // if (resizeMode == 'square' && width != height) throw new BadGatewayException('ATTACH1');
-
+    const largeImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
+    const mediumImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
+    const thumbImage = sharp(file.buffer, { limitInputPixels: IMAGE_UPLOAD_MAX_PIXELS }).rotate();
     const resizeDimension: { width?: number; height?: number } =
       resizeMode == 'square'
         ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth) }
@@ -49,9 +107,7 @@ export class AttachmentService {
               ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth * 0.4) }
               : resizeMode == '1/4'
                 ? { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth * 0.25) }
-                : isVertical
-                  ? { width: width > resizeWidth ? Math.floor(resizeWidth) : Math.floor(width) }
-                  : { height: height > resizeWidth ? Math.floor(resizeWidth) : Math.floor(height) };
+                : { width: Math.floor(resizeWidth), height: Math.floor(resizeWidth) };
 
     let resizeDimensionMedium = {};
     let resizeDimensionThumb = {};
@@ -64,75 +120,94 @@ export class AttachmentService {
       resizeDimensionThumb = { ...resizeDimensionThumb, height: Math.floor(resizeDimension.height / 4) };
     }
 
-    // console.log({ resizeDimension, resizeDimensionMedium, resizeDimensionThumb });
-
-    /**
-     * Create file name
-     */
-    const hashOriginalName = md5(file.originalname).toString().substring(3, 9);
     const fileName = `${uuidv4()}-${new Date().getTime()}-${width}x${height}.webp`;
     const largeName = `${fileName}`;
     const mediumName = `medium-${fileName}`;
     const thumbName = `thumb-${fileName}`;
-    const fitMode = ['square', '1/2', '2/3', '2/5'].includes(resizeMode) ? 'cover' : 'contain';
+    // Bound both axes after auto-orientation; a rotated phone photo must not
+    // bypass the longest-side limit or gain square padding in normal mode.
+    const fitMode = ['square', '1/2', '2/3', '2/5', '1/4'].includes(resizeMode) ? 'cover' : 'inside';
 
-    /**
-     * resize image
-     */
     const l = await largeImage
       .resize({
         ...resizeDimension,
         fit: fitMode,
-        // background: { r: 0, g: 0, b: 0, alpha: 0 },
+        withoutEnlargement: true,
       })
-      .webp()
-      .toBuffer();
+      .webp({ quality: encodingQuality.large, ...IMAGE_WEBP_OPTIONS, lossless: isLossless })
+      .toBuffer()
+      .catch(() => {
+        throw new BadRequestException('ATTACH_IMAGE_INVALID');
+      });
 
-    // const m = await mediumImage
-    //   .resize({
-    //     ...resizeDimensionMedium,
-    //     fit: fitMode,
-    //   })
-    //   .webp()
-    //   .toBuffer();
-
-    // const t = await thumbImage
-    //   .resize({
-    //     ...resizeDimensionThumb,
-    //     fit: fitMode,
-    //   })
-    //   .webp()
-    //   .toBuffer();
-
-    /**
-     * save to S3
-     */
-
-    //original
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${largeName}`,
       buffer: l,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: 'image/webp',
     });
 
-    //medium
-    // await this.s3ManagerService.uploadObject({
-    //   fullPath: `${folder}/${mediumName}`,
-    //   buffer: m,
-    //   fs: mainOnS3.fs,
-    // });
+    let mediumKey: string | null = null;
+    let thumbnailKey: string | null = null;
 
-    // //thumbnail
-    // await this.s3ManagerService.uploadObject({
-    //   fullPath: `${folder}/${thumbName}`,
-    //   buffer: t,
-    //   fs: mainOnS3.fs,
-    // });
+    try {
+      const m = await mediumImage
+        .resize({
+          ...resizeDimensionMedium,
+          fit: fitMode,
+          withoutEnlargement: true,
+        })
+        .webp({ quality: encodingQuality.medium, ...IMAGE_WEBP_OPTIONS })
+        .toBuffer();
+
+      const mediumOnS3 = await this.s3ManagerService.uploadObject({
+        fullPath: `${folder}/${mediumName}`,
+        buffer: m,
+        cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+        contentType: 'image/webp',
+        fs: mainOnS3.fs,
+      });
+
+      if (mediumOnS3?.bucket) mediumKey = mediumName;
+    } catch (error) {
+      this.logger.warn(
+        `Medium derivative upload failed for ${fileName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    try {
+      const t = await thumbImage
+        .resize({
+          ...resizeDimensionThumb,
+          fit: fitMode,
+          withoutEnlargement: true,
+        })
+        .webp({ quality: encodingQuality.thumbnail, ...IMAGE_WEBP_OPTIONS })
+        .toBuffer();
+
+      const thumbOnS3 = await this.s3ManagerService.uploadObject({
+        fullPath: `${folder}/${thumbName}`,
+        buffer: t,
+        cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+        contentType: 'image/webp',
+        fs: mainOnS3.fs,
+      });
+
+      if (thumbOnS3?.bucket) thumbnailKey = thumbName;
+    } catch (error) {
+      this.logger.warn(
+        `Thumbnail derivative upload failed for ${fileName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
 
     let updateData: Prisma.AttachmentUncheckedCreateInput = {
       name: largeName,
-      medium: null,
-      thumbnail: null,
-      // meta: (metadata || {}) as Prisma.JsonValue,
+      medium: mediumKey,
+      thumbnail: thumbnailKey,
       bucket: mainOnS3.bucket,
       end_point: mainOnS3.end_point,
       alt: alt,
@@ -143,16 +218,11 @@ export class AttachmentService {
     if (repository == 'attachment')
       updateData = { ...updateData, admin_id: adminId || null, user_id: userId || null };
 
-    //Save to DB
     let data: Attachment;
     if (repository == 'attachment')
       data = await this.db.attachment.create({
         data: updateData,
       });
-    // else
-    //   data = await this.db.messengerMedia.create({
-    //     data: updateData,
-    //   });
 
     return data;
   }
@@ -169,11 +239,13 @@ export class AttachmentService {
     const { width, height } = metadata;
 
     const hashOriginalName = md5(file.originalname).toString().substring(3, 9);
-    const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.webp`;
+    const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}-${width}x${height}.gif`;
 
     const uploadedObj = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: 'image/gif',
     });
 
     const data = await this.db.attachment.create({
@@ -198,12 +270,11 @@ export class AttachmentService {
     const mime = file.mimetype.split('/')[1];
     const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}.${mime}`;
 
-    /**
-     * save to S3
-     */
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: file.mimetype || 'application/octet-stream',
     });
     let updateData: Prisma.AttachmentUncheckedCreateInput = {
       name: fileName,
@@ -220,11 +291,6 @@ export class AttachmentService {
       data = await this.db.attachment.create({
         data: updateData,
       });
-    // else
-    //   data = await this.db.messengerMedia.create({
-    //     data: updateData,
-    //   });
-
     return data;
   }
 
@@ -234,12 +300,11 @@ export class AttachmentService {
     const mime = file.mimetype.split('/')[1];
     const fileName = `${uuidv4()}-${hashOriginalName}-${new Date().getTime()}.${mime}`;
 
-    /**
-     * save to S3
-     */
     const mainOnS3 = await this.s3ManagerService.uploadObject({
       fullPath: `${folder}/${fileName}`,
       buffer: file.buffer,
+      cacheControl: AttachmentService.IMMUTABLE_CACHE_CONTROL,
+      contentType: file.mimetype || 'application/octet-stream',
     });
 
     const createData: Prisma.AttachmentUncheckedCreateInput = {
@@ -298,33 +363,17 @@ export class AttachmentService {
     adminId?: number;
   }): Promise<void> {
     try {
-      const { fileName, file, thumbFile, folder, adminId, userId } = args;
+      const { fileName, file, thumbFile } = args;
 
-      // const storagePath = STORAGE_PUBLIC + folder;
-      const MIN_WIDTH = 32;
-      const MIN_HEIGHT = 32;
-
-      const image = sharp(file);
       const largeImage = sharp(file);
       const mediumImage = sharp(file);
       const thumbImage = sharp(thumbFile);
-
-      const metadata = await image.metadata();
-      const { width, height } = metadata;
-
-      /**
-       * Create file name
-       */
 
       const name = `${fileName.replace('.jpg', '.webp')}`;
       const largeName = `${name}`;
       const mediumName = `medium-v1-${name}`;
       const thumbName = `thumbnail-${name}`;
       const fitMode = 'contain';
-
-      /**
-       * resize image
-       */
       const l = await largeImage.webp().toBuffer();
 
       const m = await mediumImage
@@ -341,45 +390,6 @@ export class AttachmentService {
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${largeName}`, l);
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${mediumName}`, m);
       await fs.writeFile(`${__baseDir}/storage/v1/ownerwebp/${thumbName}`, t);
-      /**
-       * save to S3
-       */
-
-      //original
-      // const mainOnS3 = await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${largeName}`,
-      //   buffer: l,
-      // });
-
-      //medium
-      // await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${mediumName}`,
-      //   buffer: m,
-      //   fs: mainOnS3.fs,
-      // });
-
-      // //thumbnail
-      // await this.s3ManagerService.uploadObject({
-      //   fullPath: `${folder}/${thumbName}`,
-      //   buffer: t,
-      //   fs: mainOnS3.fs,
-      // });
-
-      // let updateData: Prisma.AttachmentUncheckedCreateInput = {
-      //   name: largeName,
-      //   medium: mediumName,
-      //   thumbnail: thumbName,
-      //   // meta: (metadata || {}) as Prisma.JsonValue,
-      //   bucket: mainOnS3.bucket,
-      //   end_point: mainOnS3.end_point,
-      //   alt: '',
-      //   type: 1,
-      //   path: folder,
-      // };
-
-      // const data = await this.db.attachment.create({
-      //   data: { ...updateData, admin_id: adminId || null, user_id: userId || null },
-      // });
     } catch (error) {
       console.log(error);
     }

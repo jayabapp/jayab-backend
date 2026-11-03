@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 const configValidations = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
   DATABASE_URL: Joi.string().required(),
   WEBSITE_URL: Joi.string().required(),
   ADVISOR_SHARE_URL: Joi.string().required(),
@@ -8,10 +9,6 @@ const configValidations = Joi.object({
   PAYMENT_CALLBACK_URL: Joi.string().required(),
   PAYMENT_BASE_URL: Joi.string().required(),
   ZARINPAL_MERCHANT: Joi.string().required(),
-  // PAYMENT_BASE_URL: Joi.string().required(),
-  // REDIS_HOST: Joi.string().required(),
-  // REDIS_PORT: Joi.string().required(),
-  // REDIS_PASSWORD: Joi.optional(),
 
   USER_SECRET: Joi.string().required(),
   USER_EXPIRE: Joi.string().required(),
@@ -46,6 +43,24 @@ const configValidations = Joi.object({
   AVANAK_RESERVE_OWNER_MESSAGE_ID: Joi.string().required(),
 
   MAX_OTP_ATTEMPTS: Joi.string().required(),
+  TEST_ACCESS_ENABLED: Joi.string().valid('0', '1').default('0'),
+  TEST_TEAM_LEAD_MOBILE: Joi.when('TEST_ACCESS_ENABLED', {
+    is: '1',
+    then: Joi.when('NODE_ENV', {
+      is: 'production',
+      then: Joi.string()
+        .pattern(/^09\d{9}$/)
+        .required(),
+      otherwise: Joi.string()
+        .pattern(/^09\d{9}$/)
+        .allow('')
+        .optional(),
+    }),
+    otherwise: Joi.string()
+      .pattern(/^09\d{9}$/)
+      .allow('')
+      .optional(),
+  }),
 
   S3_FS1_ENDPOINT: Joi.string().required(),
   S3_FS1_ACCESS_KEY: Joi.string().required(),
@@ -57,6 +72,12 @@ const configValidations = Joi.object({
   APP_LOGO: Joi.string().required(),
 
   ADVISOR_SHARE_LINK_SECRET: Joi.string().required(),
+
+  LOCATION_OBFUSCATION_SALT: Joi.when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(16).required(),
+    otherwise: Joi.string().min(16).allow('').optional(),
+  }),
 });
 
 export default configValidations;
