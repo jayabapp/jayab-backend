@@ -120,7 +120,45 @@ export class HostTranslationsDto {
   en?: HostEditionDto;
 }
 
+/** Corrected Persian originals. A field that is not sent is left as it is. */
+export class PersianTextAdminDto {
+  @ApiProperty({ required: false })
+  @Transform(trim)
+  @_IsString()
+  @_MaxLength(200)
+  @IsOptional()
+  title?: string;
+
+  @ApiProperty({ required: false })
+  @Transform(trim)
+  @_IsString()
+  @_MaxLength(1000)
+  @IsOptional()
+  address?: string;
+
+  @ApiProperty({ required: false })
+  @Transform(trim)
+  @_IsString()
+  @_MaxLength(64)
+  @IsOptional()
+  host_name?: string;
+
+  @ApiProperty({ required: false, type: DescriptionEditionDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => DescriptionEditionDto)
+  descriptions?: DescriptionEditionDto;
+}
+
 export class UpdatePropertyTranslationsAdminDto {
+  @ApiProperty({ required: false, type: PersianTextAdminDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PersianTextAdminDto)
+  fa?: PersianTextAdminDto;
+
   @ApiProperty({ required: false, type: PropertyTranslationsDto })
   @IsOptional()
   @IsObject()

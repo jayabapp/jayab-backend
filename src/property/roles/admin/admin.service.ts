@@ -24,6 +24,7 @@ import { DayHelper } from 'src/common/helpers/day.helper';
 import { AdminType } from 'src/common/interfaces/user.interface';
 
 import { issueImpersonationToken } from 'src/auth/common/helpers/impersonation-token.helper';
+import { slugify } from 'src/common/helpers/slugify';
 import moment from 'moment-jalaali';
 
 import {
@@ -163,27 +164,56 @@ export class PropertyAdminService {
     };
   }
 
-  /** Each part replaces its stored editions; a part that is not sent stays untouched. */
+  /**
+   * Each part replaces its stored editions; a part that is not sent stays untouched.
+   * `fa` corrects the Persian originals the owner typed: a blank title, address or host
+   * name is ignored (those are required), a blank description clears that description.
+   */
   async updateTranslations(id: number, dto: UpdatePropertyTranslationsAdminDto): Promise<void> {
-    const property = await this.db.property.findUnique({ where: { id }, select: { id: true } });
+    const property = await this.db.property.findUnique({ where: { id }, select: { id: true, code: true } });
     if (!property) throw new NotFoundException('NOT_FOUND');
 
     const asJson = (value: Prisma.InputJsonObject | null) => value ?? Prisma.DbNull;
+    const fa = dto.fa;
+    const faDescriptions = Object.fromEntries(
+      DESCRIPTION_FIELDS.filter((field) => fa?.descriptions?.[field] !== undefined).map((field) => [
+        field,
+        fa.descriptions[field] || null,
+      ]),
+    );
     await this.db.$transaction(async (tx) => {
       await tx.property.update({
         where: { id },
         data: {
           ...(dto.main ? { translations: asJson(cleanEditions(dto.main, ['title', 'address'])) } : {}),
           ...(dto.host ? { host_translations: asJson(cleanEditions(dto.host, ['name'])) } : {}),
+          // Same slug rule as the owner's edit; the site finds a listing by the code prefix.
+          ...(fa?.title ? { title: fa.title, slug: `${property.code}-${slugify(fa.title)}` } : {}),
+          ...(fa?.address ? { address: fa.address } : {}),
         },
       });
-      if (dto.descriptions) {
-        const translations = asJson(cleanEditions(dto.descriptions, DESCRIPTION_FIELDS));
+      if (dto.descriptions || Object.keys(faDescriptions).length) {
+        const translations = dto.descriptions
+          ? { translations: asJson(cleanEditions(dto.descriptions, DESCRIPTION_FIELDS)) }
+          : {};
         await tx.propertyDescription.upsert({
           where: { property_id: id },
-          update: { translations },
-          create: { property_id: id, translations },
+          update: { ...faDescriptions, ...translations },
+          create: { property_id: id, ...faDescriptions, ...translations },
         });
+      }
+      if (fa?.host_name) {
+        // The host card shows the first assistant, the owner first.
+        const host = await tx.propertyOwnerAssistant.findFirst({
+          where: { property_id: id },
+          orderBy: { is_owner: 'desc' },
+          select: { id: true },
+        });
+        if (host)
+          await tx.propertyOwnerAssistant.update({
+            where: { id: host.id },
+            data: { assistant_full_name: fa.host_name },
+          });
       }
     });
   }
