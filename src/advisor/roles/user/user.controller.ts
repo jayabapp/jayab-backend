@@ -1,29 +1,16 @@
-import {
-  Body,
-  Controller,
-  // Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { USER_ROUTE_GROUP } from 'src/advisor/common/route-group.constant';
-import { AdvisorUserService } from './user.service';
-import { CreateAdvisorUserDto } from './dto/create.dto';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UpdateAdvisorUserDto } from './dto/update.dto';
-import { FindAllAdvisorUserDto } from './dto/find-all.dto';
-import { AddRateUserDto } from '../admin/dto/create.dto';
-import { RequestType } from 'src/common/interfaces/user.interface';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { FindAllAdvisorUserDto } from './dto/find-all.dto';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { AdvisorUserService } from './user.service';
 import { FIVE_MINUTES_TTL } from 'src/common/utils/constants/cache-ttl.constant';
+import { USER_ROUTE_GROUP } from 'src/advisor/common/route-group.constant';
+import { AddRateUserDto } from '../admin/dto/create.dto';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { LocaleDto } from 'src/common/dto/locale.dto';
 
 @ApiTags('Advisor - USER')
 @Controller(USER_ROUTE_GROUP)
@@ -46,9 +33,10 @@ export class AdvisorUserController {
   async findOne(
     @Req() req: RequestType,
     @Param('advisorId', ParseIntPipe) advisorId: number,
+    @Query() dto: LocaleDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-    const result = await this.advisorUserService.findOne(user.id, advisorId);
+    const result = await this.advisorUserService.findOne(user.id, advisorId, dto.locale);
     return { result };
   }
 
@@ -61,11 +49,7 @@ export class AdvisorUserController {
     @Param('advisorId', ParseIntPipe) advisorId: number,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-
-    /*  */
     const advisor = await this.advisorUserService.findById(user.id, advisorId);
-
-    /*  */
     await this.advisorUserService.initRate(user.id, advisor.id);
     return {};
   }
@@ -80,11 +64,7 @@ export class AdvisorUserController {
     @Body() dto: AddRateUserDto,
   ): Promise<SuccessResponseArgs> {
     const user = req.user;
-
-    /*  */
     const advisor = await this.advisorUserService.findById(user.id, advisorId);
-
-    /*  */
     await this.advisorUserService.addRate(user.id, advisor.id, dto);
     return { messageCode: 'CREATE' };
   }

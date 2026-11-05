@@ -46,6 +46,7 @@ import { isEmpty, orderBy } from 'lodash';
 import { SearchableOption } from 'src/property/common/helpers/search-query-parser.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { ConfigService } from '@nestjs/config';
+import { localizedName } from 'src/city/common/helpers/city-locale.helper';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
@@ -447,7 +448,13 @@ export class PropertyUserService {
         maxPrice: dto.max_price,
       });
       const items = buildMapItems(
-        located.map(({ id, slug, location, price, favorite_count }) => ({ id, slug, location, price, favorite_count })),
+        located.map(({ id, slug, location, price, favorite_count }) => ({
+          id,
+          slug,
+          location,
+          price,
+          favorite_count,
+        })),
         dto.zoom,
       );
       return {
@@ -903,51 +910,80 @@ export class PropertyUserService {
     const words = tokenizeSearchText(q);
     if (isEmpty(words)) return { cities: [], landings: [], properties: [], items: [] };
 
+    const locale = dto.locale ?? 'fa';
     const cityMatches = await this.db.$queryRaw<any[]>(this.cityQueryBuilder(words, CITY_SUGGESTION_LIMIT));
     const cities = await Promise.all(
-      cityMatches.map(async (city) => {
-        const url = await findCanonicalLocationLanding(this.db, {
-          cityId:
-            city.level === SearchSuggestionType.REGION
-              ? Number(city.parent_id)
-              : city.level === SearchSuggestionType.CITY
-                ? Number(city.id)
-                : undefined,
-          provinceId: city.level === SearchSuggestionType.PROVINCE ? Number(city.id) : undefined,
-        });
-        return { ...city, target: url ? `/${url}` : undefined };
-      }),
+      cityMatches.map(
+        async ({
+          translations,
+          parent_translations: parentTranslations,
+          grandparent_translations: grandparentTranslations,
+          ...city
+        }) => {
+          const url = await findCanonicalLocationLanding(this.db, {
+            cityId:
+              city.level === SearchSuggestionType.REGION
+                ? Number(city.parent_id)
+                : city.level === SearchSuggestionType.CITY
+                  ? Number(city.id)
+                  : undefined,
+            provinceId: city.level === SearchSuggestionType.PROVINCE ? Number(city.id) : undefined,
+          });
+          return {
+            ...city,
+            title: localizedName(city.title, translations, locale),
+            parent_title: city.parent_title && localizedName(city.parent_title, parentTranslations, locale),
+            grandparent_title:
+              city.grandparent_title &&
+              localizedName(city.grandparent_title, grandparentTranslations, locale),
+            target: url ? `/${url}` : undefined,
+          };
+        },
+      ),
     );
+    // Persian spellings, or an English or Arabic name the admin has entered.
+    const titleQuery = words.map((word) => ({
+      OR: [
+        ...persianSearchVariants(word).map((variant) => ({
+          title: { contains: variant, mode: 'insensitive' as const },
+        })),
+        ...(['en', 'ar'] as const).flatMap((language) =>
+          persianSearchVariants(word).map((form) => ({
+            translations: { path: [language, 'title'], string_contains: form, mode: 'insensitive' as const },
+          })),
+        ),
+      ],
+    }));
 
-    const [landings, properties] = await Promise.all([
+    const [landingRows, propertyRows] = await Promise.all([
       this.db.landingPage.findMany({
         where: {
           is_active: true,
           main_content_id: { not: null },
-          AND: words.map((word) => ({
-            OR: persianSearchVariants(word).map((variant) => ({
-              title: { contains: variant, mode: 'insensitive' as const },
-            })),
-          })),
+          AND: titleQuery,
         },
-        select: { id: true, title: true, url: true },
+        select: { id: true, title: true, url: true, translations: true },
         orderBy: [{ title: 'asc' }, { id: 'asc' }],
         take: 5,
       }),
       this.db.property.findMany({
         where: {
           ...this.validProperty(),
-          AND: words.map((word) => ({
-            OR: persianSearchVariants(word).map((variant) => ({
-              title: { contains: variant, mode: 'insensitive' as const },
-            })),
-          })),
+          AND: titleQuery,
         },
-        select: { id: true, title: true, slug: true, code: true },
+        select: { id: true, title: true, slug: true, code: true, translations: true },
         orderBy: [{ title: 'asc' }, { id: 'asc' }],
         take: 5,
       }),
     ]);
+    const landings = landingRows.map(({ translations, ...landing }) => ({
+      ...landing,
+      title: localizedName(landing.title, translations, locale),
+    }));
+    const properties = propertyRows.map(({ translations, ...property }) => ({
+      ...property,
+      title: localizedName(property.title ?? '', translations, locale),
+    }));
 
     return {
       cities,
@@ -986,7 +1022,7 @@ export class PropertyUserService {
   async search(dto: PropertySearchSuggestionUserDto): Promise<SearchExtractResult> {
     const startedAt = Date.now();
     const query = normalizePersianSearchText(dto.q);
-    const result = await this.extractSearchFilters(query);
+    const result = await this.extractSearchFilters(query, dto.locale);
     this.logger.debug(
       `search/extract q="${query}" filters=${JSON.stringify(result.client_query)} ` +
         `order=${result.matched_order.join(',')} ignored=${result.ignored_terms.join(',')} ` +
@@ -995,7 +1031,7 @@ export class PropertyUserService {
     return result;
   }
 
-  private async extractSearchFilters(query: string): Promise<SearchExtractResult> {
+  private async extractSearchFilters(query: string, locale: Locale = 'fa'): Promise<SearchExtractResult> {
     if (isExactPropertyCode(query)) {
       const property = await this.db.property.findFirst({
         where: { code: query, ...this.validProperty() },
@@ -1090,7 +1126,7 @@ export class PropertyUserService {
       order.push({ key: 'q', position: residual[0].position });
     }
 
-    const citiesList = await this.buildSearchCitiesList(clientQuery);
+    const citiesList = await this.buildSearchCitiesList(clientQuery, locale);
     const landingUrl =
       citiesList.length === 1 && !clientQuery.q && !clientQuery.regions
         ? await findCanonicalLocationLanding(this.db, {
@@ -1115,13 +1151,37 @@ export class PropertyUserService {
     if (spans.length === 0) return [];
     const titles = [...new Set(spans.flatMap((span) => persianSearchVariants(span.text)))];
     const rows = await this.db.city.findMany({
-      where: { deleted_at: null, title: { in: titles, notIn: ['استخر'] } },
-      select: { id: true, title: true, parent_id: true, parent: { select: { parent_id: true } } },
+      where: {
+        deleted_at: null,
+        title: { notIn: ['استخر'] },
+        OR: [
+          { title: { in: titles, mode: 'insensitive' } },
+          ...(['en', 'ar'] as const).flatMap((language) =>
+            titles.map((title) => ({
+              translations: { path: [language, 'title'], equals: title, mode: 'insensitive' as const },
+            })),
+          ),
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        translations: true,
+        parent_id: true,
+        parent: { select: { parent_id: true } },
+      },
     });
 
     return spans.flatMap((span) =>
       rows
-        .filter((row) => normalizePersianSearchText(row.title) === span.text)
+        .filter((row) =>
+          (['fa', 'en', 'ar'] as const).some(
+            (language) =>
+              normalizePersianSearchText(
+                localizedName(row.title, row.translations, language),
+              ).toLowerCase() === span.text.toLowerCase(),
+          ),
+        )
         .map((row) => ({
           id: row.id,
           title: row.title,
@@ -1197,6 +1257,7 @@ export class PropertyUserService {
 
   private async buildSearchCitiesList(
     clientQuery: Record<string, string | number>,
+    locale: Locale = 'fa',
   ): Promise<SearchCityListItem[]> {
     const ids = [
       ...parseQueryNumberArray(String(clientQuery.provinces || '')),
@@ -1210,18 +1271,28 @@ export class PropertyUserService {
       select: {
         id: true,
         title: true,
+        translations: true,
         parent_id: true,
-        parent: { select: { id: true, title: true, parent: { select: { id: true, title: true } } } },
+        parent: {
+          select: {
+            id: true,
+            title: true,
+            translations: true,
+            parent: { select: { id: true, title: true, translations: true } },
+          },
+        },
       },
     });
 
     return records.map((city) => ({
       id: city.id,
-      title: city.title,
+      title: localizedName(city.title, city.translations, locale),
       parent_id: city.parent_id,
       level: city.parent?.parent ? 'region' : city.parent_id ? 'city' : 'province',
-      parent_title: city.parent?.title,
-      grandparent_title: city.parent?.parent?.title,
+      parent_title: city.parent && localizedName(city.parent.title, city.parent.translations, locale),
+      grandparent_title:
+        city.parent?.parent &&
+        localizedName(city.parent.parent.title, city.parent.parent.translations, locale),
       grandparent_id: city.parent?.parent?.id,
     }));
   }

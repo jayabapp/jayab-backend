@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { localizePlaces, PLACE_TITLE_SELECT } from 'src/city/common/helpers/city-locale.helper';
 import { PropertyReserve, Prisma, Property } from '@prisma/client';
 import { PropertyReserveGuestStatusTitle } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { GUEST_RESERVE_VISIBILITY_HOURS } from 'src/property-reserve/common/constants/reserve.constant';
@@ -10,16 +11,17 @@ import { PropertyReserveStatusList } from 'src/property-reserve/common/interface
 import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
 import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
 import { PropertyUserService } from 'src/property/roles/user/user.service';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
 import { ConfigService } from '@nestjs/config';
 import { AvanakService } from 'src/sms/avanak.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
 import { PartialUser } from 'src/common/interfaces/user.interface';
 import { SmsService } from 'src/sms/sms.service';
 import { isEmpty } from 'lodash';
+import { Locale } from 'src/common/dto/locale.dto';
 
 import moment from 'moment-jalaali';
 
@@ -132,9 +134,9 @@ export class PropertyReserveUserService {
             has_pool: true,
             feature_image: true,
             subscription_expired_at: true,
-            province: { select: { title: true } },
-            city: { select: { title: true } },
-            region: { select: { title: true } },
+            province: PLACE_TITLE_SELECT,
+            city: PLACE_TITLE_SELECT,
+            region: PLACE_TITLE_SELECT,
           },
         },
       },
@@ -143,7 +145,7 @@ export class PropertyReserveUserService {
 
     const formatted = [];
     for (const item of list) {
-      const obj = await this.serializer(item);
+      const obj = await this.serializer({ ...item, property: localizePlaces(item.property, dto.locale) });
       formatted.push(obj);
     }
     return formatted;
@@ -158,7 +160,7 @@ export class PropertyReserveUserService {
     return item;
   }
 
-  async findOne(propertyReserveId: number, userId: number): Promise<PropertyReserve> {
+  async findOne(propertyReserveId: number, userId: number, locale: Locale = 'fa'): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
       include: {
@@ -170,16 +172,16 @@ export class PropertyReserveUserService {
             has_pool: true,
             feature_image: true,
             subscription_expired_at: true,
-            province: { select: { title: true } },
-            city: { select: { title: true } },
-            region: { select: { title: true } },
+            province: PLACE_TITLE_SELECT,
+            city: PLACE_TITLE_SELECT,
+            region: PLACE_TITLE_SELECT,
           },
         },
       },
     });
     if (!item) throw new NotFoundException('NOT_FOUND');
     if (item.user_id !== userId) throw new ForbiddenException('RESERVE4');
-    const serialized = await this.serializer(item);
+    const serialized = await this.serializer({ ...item, property: localizePlaces(item.property, locale) });
     return serialized;
   }
 

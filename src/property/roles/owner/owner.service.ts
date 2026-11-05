@@ -24,6 +24,7 @@ import { PartialUser } from 'src/common/interfaces/user.interface';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { slugify } from 'src/common/helpers/slugify';
+import { Locale } from 'src/common/dto/locale.dto';
 import { Redis } from 'ioredis';
 import {
   UpdatePropertyBedroomOwnerDto,
@@ -471,7 +472,7 @@ export class PropertyOwnerService {
     return result.paymentUrl;
   }
 
-  async findAll(ownerId: number): Promise<Array<PropertyArrayResType>> {
+  async findAll(ownerId: number, locale: Locale = 'fa'): Promise<Array<PropertyArrayResType>> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
     };
@@ -480,9 +481,9 @@ export class PropertyOwnerService {
       where: { owner_id: ownerId, status: { gt: PropertyStatuses.IN_PROCESS } },
       include: {
         feature_image: true,
-        province: { select: { title: true } },
-        city: { select: { title: true } },
-        region: { select: { title: true } },
+        province: { select: { title: true, translations: true } },
+        city: { select: { title: true, translations: true } },
+        region: { select: { title: true, translations: true } },
         property_options: true,
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
@@ -495,11 +496,11 @@ export class PropertyOwnerService {
     });
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toArray(list, today, false, true);
+    const serialized = await this.propertySerializer.toArray(list, today, false, true, locale);
     return serialized;
   }
 
-  async findOne(propertyId: number): Promise<PropertyResType> {
+  async findOne(propertyId: number, locale: Locale = 'fa'): Promise<PropertyResType> {
     const calendarDateQuery: Prisma.PropertyCalendarWhereInput = {
       date: { gte: startOfToday(), lt: startOfDate(moment().add(8, 'days').toDate()) },
     };
@@ -508,9 +509,9 @@ export class PropertyOwnerService {
       include: {
         feature_image: true,
         property_images: { include: { attachment: true }, orderBy: { sort_order: 'asc' } },
-        province: { select: { title: true } },
-        city: { select: { title: true } },
-        region: { select: { title: true } },
+        province: { select: { title: true, translations: true } },
+        city: { select: { title: true, translations: true } },
+        region: { select: { title: true, translations: true } },
         daily_price: true,
         calendar: { where: calendarDateQuery, orderBy: { date: 'asc' } },
         property_authorize: true,
@@ -521,7 +522,7 @@ export class PropertyOwnerService {
     if (!item) throw new NotFoundException('PROPERTY_NOT_FOUND');
 
     const today = await this.dayHelper.today();
-    const serialized = await this.propertySerializer.toJSON(item, today, false, true);
+    const serialized = await this.propertySerializer.toJSON(item, today, false, true, locale);
 
     return serialized;
   }

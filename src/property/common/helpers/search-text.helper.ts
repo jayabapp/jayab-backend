@@ -16,6 +16,9 @@ export const normalizePersianSearchText = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
+export const normalizeTranslatedSearchText = (value: string): string =>
+  normalizePersianSearchText(value).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه');
+
 export const tokenizeSearchText = (value: string): string[] =>
   normalizePersianSearchText(value)
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')

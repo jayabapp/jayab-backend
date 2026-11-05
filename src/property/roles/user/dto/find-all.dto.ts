@@ -224,7 +224,7 @@ export class FindAllPropertyUserDto extends IntersectionType(PaginationDto, Loca
   count_only?: number;
 }
 
-export class PropertySearchSuggestionUserDto {
+export class PropertySearchSuggestionUserDto extends LocaleDto {
   @ApiProperty({ required: true, title: '' })
   @Transform(({ value }) => normalizePersianSearchText(value))
   @_IsString()

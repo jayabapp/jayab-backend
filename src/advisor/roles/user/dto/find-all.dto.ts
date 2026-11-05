@@ -1,10 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsArray, IsInt, IsOptional } from 'class-validator';
 import { PaginationCursorDto } from 'src/common/dto/pagination-cursor.dto';
-import { _IsArray, _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { _IsInt, _IsString } from 'src/common/pipes/validator-translate.pipe';
+import { IntersectionType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
+import { LocaleDto } from 'src/common/dto/locale.dto';
+import { Type } from 'class-transformer';
 
-export class FindAllAdvisorUserDto extends PaginationCursorDto {
+export class FindAllAdvisorUserDto extends IntersectionType(PaginationCursorDto, LocaleDto) {
   @ApiProperty({ required: false, example: 'مقاله' })
   @_IsString()
   @IsOptional()

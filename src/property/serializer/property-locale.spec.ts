@@ -1,4 +1,4 @@
-import { DayColumn } from 'src/common/helpers/day.helper';
+import { DayColumn, DayHelper } from 'src/common/helpers/day.helper';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Property } from '@prisma/client';
@@ -148,6 +148,21 @@ describe('property translation validation', () => {
 });
 
 describe('owner translation protection', () => {
+  it.each(['fa', 'en', 'ar'] as const)('localizes owner property details in %s', async (locale) => {
+    const findFirst = jest.fn().mockResolvedValue(translatedPropertyFixture);
+    const db = { property: { findFirst } } as unknown as PrismaService;
+    const dayHelper = { today: jest.fn().mockResolvedValue(DayColumn.normal) } as unknown as DayHelper;
+    const service = new PropertyOwnerService(null, db, null, null, new PropertySerializer(), dayHelper, null);
+
+    const result = await service.findOne(17, locale);
+
+    expect(result.city).toBe(locale === 'en' ? 'Tehran' : locale === 'ar' ? 'طهران' : 'تهران');
+    expect(result.province).toBe(result.city);
+    expect(result.region).toBe(locale === 'en' ? 'Punak' : 'پونک');
+    expect(findFirst.mock.calls[0][0].include.city.select.translations).toBe(true);
+    expect(JSON.stringify(result)).not.toContain('translations');
+  });
+
   it('ignores owner-supplied editions and builds the slug from Persian', async () => {
     const update = jest.fn().mockResolvedValue({});
     const db = {

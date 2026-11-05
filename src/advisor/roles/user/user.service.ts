@@ -4,9 +4,11 @@ import { parseQueryNumberArray } from 'src/common/helpers/parse-query-array.pipe
 import { Advisor, Prisma } from '@prisma/client';
 import { cursorPaginate } from 'src/common/helpers/cursor-paginator';
 import { AddRateUserDto } from '../admin/dto/create.dto';
+import { localizedName } from 'src/city/common/helpers/city-locale.helper';
 import { AdvisorStatus } from 'src/advisor/common/advisor-status.type';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { startOfToday } from 'src/common/helpers/date.helper';
+import { Locale } from 'src/common/dto/locale.dto';
 
 import moment from 'moment-jalaali';
 
@@ -14,13 +16,7 @@ import moment from 'moment-jalaali';
 export class AdvisorUserService {
   constructor(private readonly db: PrismaService) {}
 
-  /**
-   * find all Advisor
-   * @param dto
-   * @returns
-   */
   async findAll(dto: FindAllAdvisorUserDto): Promise<any> {
-    /*  */
     let query: Prisma.AdvisorWhereInput = {
       status: AdvisorStatus.APPROVED,
       is_special: true,
@@ -37,7 +33,7 @@ export class AdvisorUserService {
     }
     if (dto.province_id) query = { ...query, cities: { some: { parent_id: dto.province_id } } };
     const list = await cursorPaginate()<
-      Advisor & { cities: { title: string }[] },
+      Advisor & { cities: { title: string; translations: Prisma.JsonValue }[] },
       Prisma.AdvisorFindManyArgs
     >(
       this.db.advisor,
@@ -48,7 +44,7 @@ export class AdvisorUserService {
           created_at: true,
           users_satisfaction: true,
           owners_satisfaction: true,
-          cities: { select: { title: true } },
+          cities: { select: { title: true, translations: true } },
           user: { select: { full_name: true, referral_code: true, profile_image: true } },
         },
         orderBy: { created_at: 'asc' },
@@ -59,18 +55,13 @@ export class AdvisorUserService {
     const result = list.data.map((e) => ({
       ...e,
       work_history_in_month: moment(moment()).diff(e.created_at, 'months') || 1,
-      cities: e.cities.map((c) => c.title),
+      cities: e.cities.map((c) => localizedName(c.title, c.translations, dto.locale)),
     }));
 
     return result;
   }
 
-  /**
-   * find one advisor
-   * @param advisorId
-   * @returns
-   */
-  async findOne(userId: number, advisorId: number): Promise<Partial<Advisor>> {
+  async findOne(userId: number, advisorId: number, locale: Locale = 'fa'): Promise<Partial<Advisor>> {
     const item = await this.db.advisor.findFirst({
       where: { id: advisorId, status: AdvisorStatus.APPROVED },
       select: {
@@ -81,7 +72,7 @@ export class AdvisorUserService {
         response_speed_and_followup: true,
         advisor_behavior: true,
         advisor_responsibility: true,
-        cities: { select: { title: true } },
+        cities: { select: { title: true, translations: true } },
         user: {
           select: {
             id: true,
@@ -96,16 +87,14 @@ export class AdvisorUserService {
 
     if (!item) throw new NotFoundException('NOT_FOUND');
 
-    /*  */
     let result = {
       ...item,
-      cities: item.cities.map((c) => c.title),
+      cities: item.cities.map((c) => localizedName(c.title, c.translations, locale)),
       work_history_in_month: moment(moment()).diff(item.created_at, 'months') || 1,
       can_user_add_rate: null,
       user_rate: null,
     };
 
-    /*  */
     const userRate = await this.db.rate.findUnique({
       where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
       select: { advisor_responsibility: true, response_speed_and_followup: true, advisor_behavior: true },
@@ -116,11 +105,6 @@ export class AdvisorUserService {
     return result;
   }
 
-  /**
-   * find by id
-   * @param advisorId
-   * @returns
-   */
   async findById(userId: number, advisorId: number): Promise<Advisor> {
     const item = await this.db.advisor.findFirst({
       where: { id: advisorId, status: AdvisorStatus.APPROVED },
@@ -131,11 +115,6 @@ export class AdvisorUserService {
     return item;
   }
 
-  /**
-   * find one by national code
-   * @param nationalCode
-   * @returns
-   */
   async findOneByNationalCode(advisorId: number, nationalCode: string): Promise<Advisor> {
     let query: Prisma.AdvisorWhereInput = { national_code: nationalCode };
     if (advisorId) query = { ...query, id: { not: advisorId } };
@@ -152,12 +131,10 @@ export class AdvisorUserService {
   }
 
   async addRate(userId: number, advisorId: number, dto: AddRateUserDto): Promise<void> {
-    /*  */
     const userRate = await this.db.rate.findUnique({
       where: { user_id_advisor_id: { user_id: userId, advisor_id: advisorId } },
     });
     if (!userRate) throw new BadRequestException('RATE1');
-
     await this.db.$transaction(async (tx) => {
       await tx.rate.update({ where: { id: userRate.id }, data: dto });
       const rates = await tx.rate.aggregate({

@@ -3,7 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { getQueueToken } from '@nestjs/bull';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { localizeCityTree } from './city-locale.helper';
+import { localizeCityTree, localizedName, localizePlaces } from './city-locale.helper';
 import { CityUserController } from '../../roles/user/user.controller';
 import { CitySharedService } from '../../shared.service';
 import { CityAdminService } from '../../roles/admin/city-admin.service';
@@ -131,6 +131,116 @@ describe('public property and city locale API contracts', () => {
     await request(app.getHttpServer()).get(path).expect(200);
     for (const locale of ['de', '', 'en-US', 'en&locale=ar']) {
       await request(app.getHttpServer()).get(`${path}?locale=${locale}`).expect(422);
+    }
+  });
+});
+
+describe('place names on reservations, advisors and owner listings', () => {
+  const tehran = { title: 'تهران', translations: { en: { title: 'Tehran' }, ar: { title: 'طهران' } } };
+
+  it('swaps every place on an item and keeps Persian for missing editions', () => {
+    const item = localizePlaces(
+      { code: '1', province: tehran, city: tehran, region: { title: 'پونک', translations: null } },
+      'en',
+    );
+    expect(item.province.title).toBe('Tehran');
+    expect(item.city.title).toBe('Tehran');
+    expect(item.region.title).toBe('پونک');
+    expect(JSON.stringify(item)).not.toContain('translations');
+    expect(localizePlaces({ city: tehran }, 'fa').city.title).toBe('تهران');
+  });
+
+  it('reads a name straight from a translations column', () => {
+    expect(localizedName('تهران', tehran.translations, 'ar')).toBe('طهران');
+    expect(localizedName('تهران', null, 'en')).toBe('تهران');
+  });
+});
+
+describe('localized city names in search', () => {
+  const tehran = {
+    id: 2,
+    title: 'تهران',
+    translations: { en: { title: 'Tehran' }, ar: { title: 'طهران' } },
+    parent_id: 1,
+    parent: {
+      id: 1,
+      title: 'تهران',
+      translations: { en: { title: 'Tehran' }, ar: { title: 'طهران' } },
+      parent_id: null,
+      parent: null,
+    },
+  };
+
+  it.each(['fa', 'en', 'ar'] as const)('localizes %s suggestion labels and their parents', async (locale) => {
+    const service = new PropertyUserService(
+      null,
+      {
+        $queryRaw: jest.fn().mockResolvedValue([
+          {
+            id: tehran.id,
+            title: tehran.title,
+            translations: tehran.translations,
+            parent_id: tehran.parent_id,
+            grandparent_id: null,
+            level: 'city',
+            parent_title: tehran.parent.title,
+            parent_translations: tehran.parent.translations,
+            grandparent_title: '',
+            grandparent_translations: null,
+          },
+        ]),
+        property: { findMany: jest.fn().mockResolvedValue([]) },
+        landingPage: { findMany: jest.fn().mockResolvedValue([]) },
+      } as unknown as PrismaService,
+      null,
+      null,
+      null,
+      null,
+      null,
+    );
+
+    const result = await service.searchSuggestionsV2({ q: 'tehr', locale });
+    const title = locale === 'en' ? 'Tehran' : locale === 'ar' ? 'طهران' : 'تهران';
+
+    expect(result.cities[0]).toMatchObject({ id: 2, title, parent_title: title });
+    expect(result.items[0]).toMatchObject({
+      id: 2,
+      label: title,
+      parentLabel: title,
+      target: '/rooms?cities=2',
+    });
+    expect(JSON.stringify(result)).not.toContain('translations');
+  });
+
+  it.each([
+    ['fa', 'تهران', 'تهران'],
+    ['en', 'tEhRaN', 'Tehran'],
+    ['ar', 'طهران', 'طهران'],
+  ] as const)('resolves %s search text to city IDs and translated labels', async (locale, q, title) => {
+    const cityFindMany = jest.fn().mockResolvedValue([tehran]);
+    const service = new PropertyUserService(
+      null,
+      {
+        city: { findMany: cityFindMany },
+        propertyOption: { findMany: jest.fn().mockResolvedValue([]) },
+        landingPage: { findMany: jest.fn().mockResolvedValue([]) },
+      } as unknown as PrismaService,
+      null,
+      null,
+      null,
+      null,
+      null,
+    );
+
+    const result = await service.search({ q, locale });
+
+    expect(result.client_query).toEqual({ cities: '2' });
+    expect(result.cities_list[0]).toMatchObject({ id: 2, title, parent_title: title });
+    expect(JSON.stringify(result)).not.toContain('translations');
+    if (locale !== 'fa') {
+      expect(cityFindMany.mock.calls[0][0].where.OR).toContainEqual({
+        translations: { path: [locale, 'title'], equals: q, mode: 'insensitive' },
+      });
     }
   });
 });

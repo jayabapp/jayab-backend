@@ -1,36 +1,22 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  // Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-  Put,
-  Query,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { BadRequestException, Put, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AttachmentService } from 'src/attachment/attachment.service';
-import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
-import { OwnerGuard } from 'src/auth/guards/owner.guard';
-import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
-import { UserRole } from 'src/common/interfaces/role.enum';
-import { RequestType } from 'src/common/interfaces/user.interface';
-import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import { OwnerUpdatePropertyInterceptor } from 'src/property/common/interceptors/owner-property.interceptor';
+import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
 import { NotificationSharedService } from 'src/notification/roles/shared/shared.service';
-import {
-  OwnerUpdatePropertyInterceptor,
-  PropertyInterceptorData,
-} from 'src/property/common/interceptors/owner-property.interceptor';
+import { PropertyInterceptorData } from 'src/property/common/interceptors/owner-property.interceptor';
+import { PropertyOwnerService } from './owner.service';
+import { SuccessResponseArgs } from 'src/common/interceptors/transform.interceptor';
+import { NotificationTypes } from 'src/firebase/constants/notif-types';
+import { AttachmentService } from 'src/attachment/attachment.service';
 import { OWNER_ROUTE_GROUP } from 'src/property/common/route-group.constant';
 import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { FindLastInitPropertyOwnerDto } from './dto/find-last-init.dto';
-import { PaySubscriptionPropertyOwnerDto } from './dto/pay-subscription.dto';
+import { UserJwtGuard } from 'src/auth/guards/jwt/user-jwt.guard';
+import { RequestType } from 'src/common/interfaces/user.interface';
+import { OwnerGuard } from 'src/auth/guards/owner.guard';
+import { LocaleDto } from 'src/common/dto/locale.dto';
+import { UserRole } from 'src/common/interfaces/role.enum';
 import {
   UpdatePropertyBedroomOwnerDto,
   UpdatePropertyCommissionOwnerDto,
@@ -43,7 +29,6 @@ import {
   UpdatePropertyStepOneOwnerDto,
   UpdatePropertyTermsOwnerDto,
 } from './dto/update-property.dto';
-import { PropertyOwnerService } from './owner.service';
 
 @ApiTags('Property - OWNER')
 @UseGuards(UserJwtGuard, OwnerGuard)
@@ -102,13 +87,7 @@ export class PropertyOwnerController {
   ) {
     const user = req.user;
     const property = req.interceptor_data as PropertyInterceptorData;
-
-    // check images and video
-    // await this.attachmentService.validateFileOwner(dto.images, user.id, 1);//TODO: uncomment
     if (!dto.images.includes(dto.feature_image_id)) throw new BadRequestException('PROPERTY_IMAGES1');
-    // if (dto.video_id) await this.attachmentService.validateFileOwner([dto.video_id], user.id, 2);
-
-    //
     await this.propertyOwnerService.updateMedia(property, dto);
     return { messageCode: 'CREATE' };
   }
@@ -221,29 +200,24 @@ export class PropertyOwnerController {
   ) {
     const user = req.user;
     const property = req.interceptor_data as PropertyInterceptorData;
-
-    //
     const result = await this.propertyOwnerService.paySubscription(user, property, dto);
     return { result };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    FIND                                    */
-  /* -------------------------------------------------------------------------- */
   @ApiOperation({ summary: 'Find All' })
   @Get()
-  async findAll(@Req() req: RequestType) {
+  async findAll(@Req() req: RequestType, @Query() dto: LocaleDto) {
     const user = req.user;
     //
-    const result = await this.propertyOwnerService.findAll(user.owner_id);
+    const result = await this.propertyOwnerService.findAll(user.owner_id, dto.locale);
     return { result };
   }
 
   @ApiOperation({ summary: 'Find One' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Get(':propertyId')
-  async findOne(@Param('propertyId', ParseIntPipe) propertyId: number, @Req() req: RequestType) {
-    const result = await this.propertyOwnerService.findOne(propertyId);
+  async findOne(@Param('propertyId', ParseIntPipe) propertyId: number, @Query() dto: LocaleDto) {
+    const result = await this.propertyOwnerService.findOne(propertyId, dto.locale);
     return { result };
   }
 
@@ -274,9 +248,6 @@ export class PropertyOwnerController {
     return { result: { statistics: result } };
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   DELETE                                   */
-  /* -------------------------------------------------------------------------- */
   @ApiOperation({ summary: 'Delete' })
   @UseInterceptors(OwnerUpdatePropertyInterceptor)
   @Delete(':propertyId')

@@ -1,21 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PropertyReserve, Prisma, Property, User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { FindAllPropertyReserveOwnerDto } from './dto/find-all.dto';
 import { type CursorPaginatedResult, cursorPaginate } from 'src/common/helpers/cursor-paginator';
-import moment from 'moment-jalaali';
-import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
-import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
-import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
-import {
-  PropertyReserveStatus,
-  PropertyReserveStatusList,
-} from 'src/property-reserve/common/interfaces/property-reserve-status.type';
-import { SmsService } from 'src/sms/sms.service';
-import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { PropertyJsonType, PropertySerializer } from 'src/property/serializer/property.serializer';
+import { localizePlaces, PLACE_TITLE_SELECT } from 'src/city/common/helpers/city-locale.helper';
+import { FindAllPropertyReserveOwnerDto } from './dto/find-all.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PropertyReserve, Prisma, User } from '@prisma/client';
+import { PropertyReserveStatusList } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import { PropertyReserveStatus } from 'src/property-reserve/common/interfaces/property-reserve-status.type';
+import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
+import { RESERVE_TTL_MINUTES } from 'src/property-reserve/common/constants/reserve.constant';
+import { maskedUserMobile } from 'src/common/helpers/masked-user-mobile.helper';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
+import { SmsService } from 'src/sms/sms.service';
+import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
 import { DayHelper } from 'src/common/helpers/day.helper';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class PropertyReserveOwnerService {
@@ -27,12 +27,6 @@ export class PropertyReserveOwnerService {
     private readonly dayHelper: DayHelper,
   ) {}
 
-  /**
-   * find all PropertyReserve
-   * درخواست های سی روز گذشته مالک
-   * @param dto
-   * @returns
-   */
   async findAll(
     dto: FindAllPropertyReserveOwnerDto,
     ownerId: number,
@@ -51,9 +45,9 @@ export class PropertyReserveOwnerService {
           property: {
             include: {
               feature_image: true,
-              province: { select: { title: true } },
-              city: { select: { title: true } },
-              region: { select: { title: true } },
+              province: PLACE_TITLE_SELECT,
+              city: PLACE_TITLE_SELECT,
+              region: PLACE_TITLE_SELECT,
             },
           },
           user: { select: { mobile_number: true, full_name: true } },
@@ -77,47 +71,26 @@ export class PropertyReserveOwnerService {
         guest_mobile: guestMobile,
         status: PropertyReserveStatusList.find((e) => e.id === item.status),
         is_subscription_expired: isPropertyExpired,
-        property: item.property,
+        property: localizePlaces(item.property, dto.locale),
       });
     }
     return { data: formatted };
   }
 
-  /**
-   * find one propertyReserve
-   * @param propertyReserveId
-   * @returns
-   */
   async findOne(propertyReserveId: number): Promise<PropertyReserve> {
     const item = await this.db.propertyReserve.findFirst({
       where: { id: propertyReserveId },
     });
-
     if (!item) throw new NotFoundException('NOT_FOUND');
-
     return item;
   }
 
-  /**
-   * تعداد درخواست فعال برای بج سمت کلاینت
-   * @param ownerId
-   * @returns
-   */
   async countAllActive(ownerId: number): Promise<number> {
     return await this.db.propertyReserve.count({
       where: { property: { owner_id: ownerId }, expired_at: null, canceled_at: null },
     });
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                    EVENT                                   */
-  /* -------------------------------------------------------------------------- */
-  /**
-   * اولین بازشدن واقعی کارت درخواست توسط میزبان. idempotent: فقط وقتی
-   * owner_seen_at هنوز خالی است ثبت می‌شود، رویدادهای بعدی no-op هستند و
-   * timestamp اول را overwrite نمی‌کنند.
-   * @param reserveId
-   */
   async markSeen(reserveId: number): Promise<void> {
     await this.db.propertyReserve.updateMany({
       where: { id: reserveId, owner_seen_at: null },
@@ -125,11 +98,6 @@ export class PropertyReserveOwnerService {
     });
   }
 
-  /**
-   * ارسال پیامک به ادمین
-   * @param reserveId
-   * @returns
-   */
   async clickGuestMobile(reserveId: number): Promise<void> {
     const reserve = await this.db.propertyReserve.update({
       where: { id: reserveId },
@@ -145,7 +113,6 @@ export class PropertyReserveOwnerService {
 
     const isPropertyExpired = reserve.property.subscription_expired_at < startOfToday();
 
-    //تا دوبار پیامک میفرستیم
     if (reserve.owner_clicked_guest_mobile < 3 && isPropertyExpired) {
       const adminMobile = await this.setting.get(SettingKey.JAYAB_MOBILE_FOR_ANNOUNCEMENTS);
       if (adminMobile)

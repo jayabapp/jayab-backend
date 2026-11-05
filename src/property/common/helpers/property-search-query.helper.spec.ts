@@ -76,4 +76,13 @@ describe('property search query helpers', () => {
     expect(query.values).toContain(`%${payload}%`);
     expect(query.values).toContain(3);
   });
+
+  it('also finds a place by its English or Arabic name, hamza or not', () => {
+    const english = buildCitySuggestionQuery(['tehran'], 5);
+    expect(english.strings.join('')).toContain("translations->'en'->>'title'");
+    expect(english.values).toContain('%tehran%');
+
+    const arabic = buildCitySuggestionQuery(['أصفهان'], 5);
+    expect(arabic.values).toContain('%اصفهان%');
+  });
 });
