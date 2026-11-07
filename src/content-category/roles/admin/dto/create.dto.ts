@@ -1,13 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsAlpha, IsObject, IsOptional, Validate } from 'class-validator';
-import {
-  _IsInt,
-  _IsNotEmpty,
-  _IsString,
-  _IsNumber,
-  _IsBoolean,
-} from 'src/common/pipes/validator-translate.pipe';
+import { IsObject, IsOptional, Validate, ValidateNested } from 'class-validator';
+import { _IsInt, _IsNotEmpty, _IsString, _IsBoolean } from 'src/common/pipes/validator-translate.pipe';
+import { TextTranslationsDto } from 'src/common/dto/text-translations.dto';
 import { Transform, Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsExist } from 'src/common/validators/is-exists.validator';
 
 export class CreateContentCategoryAdminDto {
@@ -19,7 +14,6 @@ export class CreateContentCategoryAdminDto {
   @ApiProperty({ required: true, example: 'terms' })
   @Transform(({ value }) => value?.trim()?.replace(/ /g, ''))
   @_IsString()
-  // @IsAlpha()
   @_IsNotEmpty()
   key: string;
 
@@ -54,4 +48,11 @@ export class CreateContentCategoryAdminDto {
   @IsOptional()
   @IsObject()
   seo: object;
+
+  @ApiProperty({ required: false, type: TextTranslationsDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => TextTranslationsDto)
+  translations?: TextTranslationsDto;
 }

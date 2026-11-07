@@ -1,15 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Property, SubscriptionPlan } from '@prisma/client';
-import { PartialUser } from 'src/common/interfaces/user.interface';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { PropertyStatuses } from 'src/property/common/types/property-status.type';
-import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { FindAllSubscriptionPlanUserDto } from './dto/find-all.dto';
-import moment from 'moment-jalaali';
-import { startOfToday } from 'src/common/helpers/date.helper';
-import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { Property, SubscriptionPlan } from '@prisma/client';
+import { SubscriptionPlanGroup } from 'src/subscription-plan/common/subscription-plan-group.type';
 import { SettingAdminService } from 'src/setting/roles/admin/admin.service';
-import { SettingKey } from 'src/setting/common/interfaces/settings.interface';
+import { localizeTextFields } from 'src/common/helpers/title-translations.helper';
+import { SubscriptionStatus } from 'src/subscription/common/subscription-status.type';
+import { PLAN_TEXT_FIELDS } from 'src/subscription-plan/common/subscription-plan-translations.constant';
+import { PropertyStatuses } from 'src/property/common/types/property-status.type';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { startOfToday } from 'src/common/helpers/date.helper';
+import { PartialUser } from 'src/common/interfaces/user.interface';
+
+import moment from 'moment-jalaali';
 
 @Injectable()
 export class SubscriptionPlanUserService {
@@ -18,11 +20,6 @@ export class SubscriptionPlanUserService {
     private readonly setting: SettingAdminService,
   ) {}
 
-  /**
-   * find all SubscriptionPlan
-   * @param dto
-   * @returns
-   */
   async findAll(
     user: PartialUser,
     dto: FindAllSubscriptionPlanUserDto,
@@ -36,12 +33,6 @@ export class SubscriptionPlanUserService {
       });
 
       if (!property) throw new NotFoundException('PROPERTY_NOT_FOUND');
-      // if (property.status === PropertyStatuses.PUBLISHED) canPromote = true;
-      /**
-       * ۱۴۰۴/۱۲/۱۳
-       * اگر تا حالا اشتراکی نخریده بود نمیتونه نردبان کنه
-       * شرط بالا برای قبل از این تغییر بود
-       */
 
       const subscriptionCounts = await this.db.subscription.count({
         where: { property_id: dto.property_id, status: SubscriptionStatus.SUCCESS },
@@ -64,49 +55,37 @@ export class SubscriptionPlanUserService {
         ribbon_bg_color: true,
         ribbon_title: true,
         ribbon_title_color: true,
+        translations: true,
       },
       orderBy: { sort: { sort: 'asc', nulls: 'last' } },
     });
-
-    return { list, can_promote: canPromote };
+    return {
+      list: list.map((plan) => localizeTextFields(plan, PLAN_TEXT_FIELDS, dto.locale)),
+      can_promote: canPromote,
+    };
   }
 
-  /**
-   * find one subscriptionPlan
-   * @param subscriptionPlanId
-   * @returns
-   */
   async findOne(
     subscriptionPlanId: number,
     isPromote = false,
     isSpecialAdvisor = false,
   ): Promise<SubscriptionPlan> {
     const item = await this.db.subscriptionPlan.findFirst({ where: { id: subscriptionPlanId } });
-
     if (!item) throw new NotFoundException('SUBSCRIPTION_PLAN_NOT_FOUND');
     if (isPromote && !item.is_promote) throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND2');
     if (isSpecialAdvisor && item.group !== SubscriptionPlanGroup.ADVISOR)
       throw new BadRequestException('SUBSCRIPTION_PLAN_NOT_FOUND2');
-
     return item;
   }
 
-  /**
-   *
-   * @param subscriptionPlanId
-   * @param propertySortOrder
-   */
   async checkCanBuyPromote(
     promoteId: number,
     subscriptionId: number,
     property: Property,
   ): Promise<SubscriptionPlan | null> {
     if (property.status !== PropertyStatuses.PUBLISHED) return;
-
-    //اگر منقضی بود باید همزمان اشتراک هم بخرد
     if (moment(property.subscription_expired_at).isBefore(startOfToday()) && !subscriptionId)
       throw new BadRequestException('BUY_SUBSCRIPTION2');
-
     const promote = await this.findOne(promoteId, true);
 
     return promote;

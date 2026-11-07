@@ -204,6 +204,7 @@ model ContentCategory {
   parent_id       Int?
   description     String?
   html            String?
+  translations    Json?
   show_in_sitemap Boolean           @default(true)
   created_at      DateTime          @default(now())
   updated_at      DateTime          @updatedAt
@@ -792,6 +793,7 @@ model SubscriptionPlan {
   ribbon_bg_color     String?   @db.VarChar
   ribbon_title        String?   @db.VarChar
   ribbon_title_color  String?   @db.VarChar
+  translations        Json?
 
   @@map("subscription_plans")
 }

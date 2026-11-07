@@ -1,25 +1,7 @@
-import {
-  AccessControlList,
-  Attachment,
-  Content,
-  ContentAttachment,
-  ContentCategory,
-  Prisma,
-} from '@prisma/client';
-import {
-  AvailableAction,
-  Column,
-  CreateProps,
-  FilterProps,
-  ShowAction,
-  ShowProps,
-  TableProps,
-} from 'src/common/interfaces/model-props.interface';
-import { operators } from 'src/common/utils/constants/filter-operators.constant';
+import { AccessControlList, Attachment, ContentCategory, Prisma } from '@prisma/client';
+import { AvailableAction, Column, CreateProps } from 'src/common/interfaces/model-props.interface';
+import { ShowAction, ShowProps, TableProps } from 'src/common/interfaces/model-props.interface';
 
-/* -------------------------------------------------------------------------- */
-/*                                    TYPES                                   */
-/* -------------------------------------------------------------------------- */
 enum RefEnum {
   image = 'image',
   parent = 'parent',
@@ -29,9 +11,6 @@ type ModifiedFilterProps = CreateProps & { isHidden?: boolean };
 type ModifiedColumn = Column & { key: ModelFields };
 type ModifiedTableProps = TableProps & { columns: ModifiedColumn[] };
 
-/* -------------------------------------------------------------------------- */
-/*                                    SHOW                                    */
-/* -------------------------------------------------------------------------- */
 export const showPropsBuilder = (
   item: ContentCategory & {
     image: Attachment;
@@ -113,30 +92,17 @@ export const showPropsBuilder = (
       value: item.html,
       type: 'html',
     },
+    { state: 'translations', value: item.translations, type: 'object', isHidden: true },
   ];
 
   return props;
 };
 
-/* --------------------------------- ACTIONS -------------------------------- */
 export const showActionBuilder = (): Array<ShowAction> => {
-  const actions: Array<ShowAction> = [
-    //  {
-    //    title: 'لیست محصولات',
-    //    route: `/business-products?page=1&filters=filters%5Bbusiness_id%5D%5Bequals%5D=${item.id}`,
-    //  },
-    //  {
-    //    title: 'ایجاد محصول جدید',
-    //    route: '',
-    //  },
-  ];
-
+  const actions: Array<ShowAction> = [];
   return actions;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   CREATE                                   */
-/* -------------------------------------------------------------------------- */
 export const createPropsBuilder = (formattedCategories: any): Array<CreateProps> => {
   const createProps: Array<CreateProps> = [
     {
@@ -213,21 +179,14 @@ export const tablePropsBuilder = (availableActions: Array<AvailableAction>): Mod
   return tableProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                   FILTER                                   */
-/* -------------------------------------------------------------------------- */
 export const filterPropsBuilder = (keys?: any): ModifiedFilterProps[] => {
   const filterProps: Array<ModifiedFilterProps> = [
     { title: 'عنوان', state: 'title', type: 'input' },
     { title: 'کلید', state: 'key', type: 'input' },
   ];
-
   return filterProps;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                ADMIN ACTIONS                               */
-/* -------------------------------------------------------------------------- */
 export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableAction> => {
   const allActions: Array<AvailableAction> = ['create', 'show', 'edit', 'delete', 'submit'];
   const availableActions: Array<AvailableAction> = [];
@@ -237,8 +196,6 @@ export const allActionsBuilder = (rbac: AccessControlList): Array<AvailableActio
     if (act == 'show' && rbac.r) availableActions.push('show');
     if (act == 'edit' && rbac.u) availableActions.push('edit');
     if (act == 'delete' && rbac.d) availableActions.push('delete');
-    // if (act == 'submit' && rbac.u) availableActions.push('submit');
   }
-
   return availableActions;
 };

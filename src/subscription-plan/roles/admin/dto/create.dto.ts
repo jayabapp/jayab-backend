@@ -1,6 +1,7 @@
+import { IsObject, IsOptional, ValidateNested } from 'class-validator';
+import { TextTranslationsDto } from 'src/common/dto/text-translations.dto';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsOptional } from 'class-validator';
 import {
   _IsBoolean,
   _IsEnum,
@@ -65,6 +66,13 @@ class CommonDto {
   @_IsString()
   @IsOptional()
   description: string;
+
+  @ApiProperty({ required: false, type: TextTranslationsDto })
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => TextTranslationsDto)
+  translations?: TextTranslationsDto;
 }
 export class CreateSubscriptionPlanAdminDto extends CommonDto {
   @ApiProperty({ required: true, example: 'گروه' })

@@ -59,8 +59,11 @@ export class ContentSharedController {
     operationId: 'contentSharedFindOneCategory',
   })
   @Get('category/:categoryKey')
-  async findOneCategory(@Param('categoryKey') categoryKey: string): Promise<SuccessResponseArgs> {
-    const result = await this.contentSharedService.findOneCategory(categoryKey);
+  async findOneCategory(
+    @Param('categoryKey') categoryKey: string,
+    @Query() dto: ContentLocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.contentSharedService.findOneCategory(categoryKey, dto.locale);
     return { result };
   }
 
@@ -70,8 +73,11 @@ export class ContentSharedController {
     operationId: 'contentSharedFindOneCategoryBySlug',
   })
   @Get('category/by-slug/:categorySlug')
-  async findOneCategoryBySlug(@Param('categorySlug') categorySlug: string): Promise<SuccessResponseArgs> {
-    const result = await this.contentSharedService.findOneCategoryBySlug(categorySlug);
+  async findOneCategoryBySlug(
+    @Param('categorySlug') categorySlug: string,
+    @Query() dto: ContentLocaleDto,
+  ): Promise<SuccessResponseArgs> {
+    const result = await this.contentSharedService.findOneCategoryBySlug(categorySlug, dto.locale);
     return { result };
   }
 }
