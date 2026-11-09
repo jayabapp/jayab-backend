@@ -1,4 +1,5 @@
 import { persianSearchVariants, tokenizeSearchText } from './search-text.helper';
+import { persianTitleKey, translatedTitleKey } from './search-text.helper';
 import { normalizeTranslatedSearchText } from './search-text.helper';
 import { isEmpty } from 'lodash';
 import { Prisma } from '@prisma/client';
@@ -57,6 +58,54 @@ export const buildFuzzyCityQuery = (terms: string[], threshold: number): Prisma.
   WHERE c.title != 'استخر'
   ORDER BY t.term, similarity(c.title, t.term) DESC, LENGTH(c.title), c.id
 `;
+
+/** A pool word, not a place: never read it as a location even though a neighbourhood is named so. */
+export const EXCLUDED_LOCATION_TITLE = 'استخر';
+
+const DIGITS_FROM = '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩';
+const DIGITS_TO = '01234567890123456789';
+// Zero-width non-joiner/joiner and direction marks; translate() drops characters it has no target for.
+const INVISIBLE = '\u200c\u200d\u200e\u200f';
+// Space, tab, line feed, carriage return and no-break space: deleted, not collapsed.
+const WHITESPACE = '\u0020\u0009\u000a\u000d\u00a0';
+const PERSIAN_FOLD = { from: `يىك${DIGITS_FROM}${INVISIBLE}${WHITESPACE}`, to: `ییک${DIGITS_TO}` };
+const TRANSLATED_FOLD = { from: `يىكأإآة${DIGITS_FROM}${INVISIBLE}${WHITESPACE}`, to: `ییکاااه${DIGITS_TO}` };
+
+const foldedTitleSql = (column: Prisma.Sql, fold: { from: string; to: string }): Prisma.Sql =>
+  Prisma.sql`lower(translate(${column}, ${fold.from}, ${fold.to}))`;
+
+const withoutSpaces = (key: string): string => key.split(' ').join('');
+
+export const buildLocationCandidateQuery = (spanTexts: string[]): Prisma.Sql | null => {
+  const keys = (toKey: (text: string) => string): string[] =>
+    [...new Set(spanTexts.map((text) => withoutSpaces(toKey(text))))].filter(Boolean);
+  const persianKeys = keys(persianTitleKey);
+  const translatedKeys = keys(translatedTitleKey);
+  if (persianKeys.length === 0 || translatedKeys.length === 0) return null;
+
+  return Prisma.sql`
+    SELECT k.id, k.title, k.translations, k.parent_id, p.parent_id AS grandparent_id
+    FROM (
+      SELECT
+        c.id,
+        c.title,
+        c.translations,
+        c.parent_id,
+        ${foldedTitleSql(Prisma.sql`c.title`, PERSIAN_FOLD)} AS title_key,
+        ${foldedTitleSql(Prisma.sql`c.translations->'en'->>'title'`, TRANSLATED_FOLD)} AS en_key,
+        ${foldedTitleSql(Prisma.sql`c.translations->'ar'->>'title'`, TRANSLATED_FOLD)} AS ar_key
+      FROM cities c
+      WHERE c.deleted_at IS NULL
+    ) k
+    LEFT JOIN cities p ON p.id = k.parent_id
+    WHERE k.title_key <> ${withoutSpaces(persianTitleKey(EXCLUDED_LOCATION_TITLE))}
+      AND (
+        k.title_key = ANY(ARRAY[${Prisma.join(persianKeys)}]::text[])
+        OR k.en_key = ANY(ARRAY[${Prisma.join(translatedKeys)}]::text[])
+        OR k.ar_key = ANY(ARRAY[${Prisma.join(translatedKeys)}]::text[])
+      )
+  `;
+};
 
 const translatedTitlesSql = (alias: string): Prisma.Sql =>
   Prisma.raw(

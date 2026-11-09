@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { applyPropertySearchScope, buildCitySuggestionQuery } from './property-search-query.helper';
 import { buildFuzzyCityQuery } from './property-search-query.helper';
+import { buildLocationCandidateQuery, EXCLUDED_LOCATION_TITLE } from './property-search-query.helper';
 
 describe('property search query helpers', () => {
   it('matches each word separately instead of the whole phrase', () => {
@@ -75,6 +76,38 @@ describe('property search query helpers', () => {
     expect(query.strings.join('')).not.toContain(payload);
     expect(query.values).toContain(`%${payload}%`);
     expect(query.values).toContain(3);
+  });
+
+  describe('location candidate query', () => {
+    it('has nothing to run without spans', () => {
+      expect(buildLocationCandidateQuery([])).toBeNull();
+    });
+
+    it('reads translated names as text and never applies ILIKE to jsonb', () => {
+      const sql = buildLocationCandidateQuery(['Ramsar', 'رامسر'])!.strings.join('');
+
+      expect(sql).toContain("c.translations->'en'->>'title'");
+      expect(sql).toContain("c.translations->'ar'->>'title'");
+      expect(sql).not.toMatch(/ILIKE|#>/i);
+    });
+
+    it('binds folded, space-free span text and the excluded pool word as values', () => {
+      const payload = "رامسر';drop--";
+      const query = buildLocationCandidateQuery(['RAMSAR', 'كرج', 'بندر عباس', payload])!;
+
+      expect(query.strings.join('')).not.toContain(payload);
+      expect(query.values).toEqual(
+        expect.arrayContaining(['ramsar', 'کرج', 'بندرعباس', payload, EXCLUDED_LOCATION_TITLE]),
+      );
+    });
+
+    it('keeps three comparisons however many spans and spellings there are', () => {
+      const comparisons = (texts: string[]): number =>
+        buildLocationCandidateQuery(texts)!.strings.join('').split('= ANY(').length - 1;
+
+      expect(comparisons(['رامسر'])).toBe(3);
+      expect(comparisons(['اجاره', 'خانه', 'ویلای', 'رامسر', 'خانه ویلای', 'ویلای رامسر', 'RAMSAR'])).toBe(3);
+    });
   });
 
   it('also finds a place by its English or Arabic name, hamza or not', () => {

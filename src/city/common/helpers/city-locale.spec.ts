@@ -217,11 +217,19 @@ describe('localized city names in search', () => {
     ['en', 'tEhRaN', 'Tehran'],
     ['ar', 'طهران', 'طهران'],
   ] as const)('resolves %s search text to city IDs and translated labels', async (locale, q, title) => {
-    const cityFindMany = jest.fn().mockResolvedValue([tehran]);
+    const locationRow = {
+      id: tehran.id,
+      title: tehran.title,
+      translations: tehran.translations,
+      parent_id: tehran.parent_id,
+      grandparent_id: null,
+    };
+    const queryRaw = jest.fn().mockResolvedValue([locationRow]);
     const service = new PropertyUserService(
       null,
       {
-        city: { findMany: cityFindMany },
+        $queryRaw: queryRaw,
+        city: { findMany: jest.fn().mockResolvedValue([tehran]) },
         propertyOption: { findMany: jest.fn().mockResolvedValue([]) },
         landingPage: { findMany: jest.fn().mockResolvedValue([]) },
       } as unknown as PrismaService,
@@ -237,10 +245,10 @@ describe('localized city names in search', () => {
     expect(result.client_query).toEqual({ cities: '2' });
     expect(result.cities_list[0]).toMatchObject({ id: 2, title, parent_title: title });
     expect(JSON.stringify(result)).not.toContain('translations');
-    if (locale !== 'fa') {
-      expect(cityFindMany.mock.calls[0][0].where.OR).toContainEqual({
-        translations: { path: [locale, 'title'], equals: q, mode: 'insensitive' },
-      });
-    }
+    // The lookup reads each translation as text: an `equals`+`insensitive` Prisma JSON filter
+    // became `jsonb ILIKE`, which PostgreSQL rejects (42883) and which a mocked client cannot catch.
+    const sql = queryRaw.mock.calls[0][0].strings.join('');
+    expect(sql).toContain(`translations->'${locale === 'fa' ? 'en' : locale}'->>'title'`);
+    expect(sql).not.toMatch(/ILIKE/i);
   });
 });

@@ -1,5 +1,5 @@
 import { PropertyOptionGroup } from '../../../property-option/common/property-option-groups.type';
-import { tokenizeSearchText } from './search-text.helper';
+import { persianTitleKey, tokenizeSearchText, translatedTitleKey } from './search-text.helper';
 
 export type SearchToken = {
   word: string;
@@ -20,6 +20,16 @@ export type LocationCandidate = {
   parent_id: number | null;
   grandparent_id: number | null;
 };
+
+export type LocationRow = {
+  id: number;
+  title: string;
+  translations: unknown;
+  parent_id: number | null;
+  grandparent_id: number | null;
+};
+
+export type LocationSpan = { text: string; start: number; end: number };
 
 export type ResolvedLocation = {
   ids: number[];
@@ -70,6 +80,7 @@ export const SEARCH_STOPWORDS = new Set([
 export const SEARCH_SYNONYMS: Record<string, string> = {
   بیلیار: 'بیلیارد',
   ویلایی: 'ویلا',
+  ویلای: 'ویلا',
   سوییت: 'سوئیت',
   'لب دریا': 'ساحلی',
   'کنار دریا': 'ساحلی',
@@ -156,6 +167,37 @@ export const buildLocationSpans = (
   return spans;
 };
 
+const translatedTitle = (translations: unknown, language: 'en' | 'ar'): string => {
+  const edition = translations && typeof translations === 'object' ? translations[language] : undefined;
+  return edition && typeof edition === 'object' && typeof edition.title === 'string' ? edition.title : '';
+};
+
+const toId = (value: number | null): number | null => (value === null ? null : Number(value));
+
+/** Pairs each span with the places whose Persian name, or English or Arabic translation, it spells. */
+export const matchLocationRows = (spans: LocationSpan[], rows: LocationRow[]): LocationCandidate[] =>
+  spans.flatMap((span) => {
+    const persian = persianTitleKey(span.text);
+    const translated = translatedTitleKey(span.text);
+    return rows
+      .filter(
+        (row) =>
+          persianTitleKey(row.title) === persian ||
+          (['en', 'ar'] as const).some((language) => {
+            const name = translatedTitle(row.translations, language);
+            return !!name && translatedTitleKey(name) === translated;
+          }),
+      )
+      .map((row) => ({
+        id: Number(row.id),
+        title: row.title,
+        parent_id: toId(row.parent_id),
+        grandparent_id: toId(row.grandparent_id),
+        start: span.start,
+        end: span.end,
+      }));
+  });
+
 export const detectPool = (
   tokens: SearchToken[],
 ): { value: 0 | 1; position: number; consumed: number[] } | null => {
@@ -212,15 +254,17 @@ export const resolveLocation = (candidates: LocationCandidate[]): ResolvedLocati
   const key = LEVEL_KEY[level];
   const picked: LocationCandidate[] = [primary];
   const ancestors: LocationCandidate[] = [];
+  const repeats: LocationCandidate[] = [];
   for (const candidate of ranked.slice(1)) {
-    const taken = [...picked, ...ancestors];
+    const taken = [...picked, ...ancestors, ...repeats];
     if (taken.some((entry) => overlaps(entry, candidate))) continue;
     if (isAncestorOf(candidate, primary)) ancestors.push(candidate);
-    else if (levelOf(candidate) === level && !picked.some((entry) => entry.id === candidate.id))
-      picked.push(candidate);
+    else if (levelOf(candidate) !== level) continue;
+    else if (picked.some((entry) => entry.id === candidate.id)) repeats.push(candidate);
+    else picked.push(candidate);
   }
 
-  const consumed = [...picked, ...ancestors].flatMap((candidate) =>
+  const consumed = [...picked, ...ancestors, ...repeats].flatMap((candidate) =>
     Array.from({ length: candidate.end - candidate.start + 1 }, (_, offset) => candidate.start + offset),
   );
 

@@ -3,6 +3,7 @@ import { FindAllPropertyUserDto, PropertySearchSuggestionUserDto } from './dto/f
 import { GoneException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PropertyMapUserDto, PropertyPriceHistogramUserDto } from './dto/map.dto';
 import { getEffectiveTodayPrice, isEffectivePriceInRange } from 'src/property/common/effective-price.helper';
+import { LocationRow, LocationSpan, matchLocationRows } from 'src/property/common/helpers/search-query-parser.helper';
 import { FindAdvisorShareDto, GenerateAdvisorShareDto } from './dto/advisor-share.dto';
 import { Prisma, Property, PropertyOwnerAssistant } from '@prisma/client';
 import { SearchCityListItem, SearchExtractResult } from './dto/search-extract-response.dto';
@@ -20,6 +21,7 @@ import { UnprocessableEntityException } from '@nestjs/common';
 import { findCanonicalLocationLanding } from 'src/landing-page/common/canonical-landing.helper';
 import { detectPool, resolveLocation } from 'src/property/common/helpers/search-query-parser.helper';
 import { matchOptions, residualWords } from 'src/property/common/helpers/search-query-parser.helper';
+import { buildLocationCandidateQuery } from 'src/property/common/helpers/property-search-query.helper';
 import { normalizePersianSearchText } from 'src/property/common/helpers/search-text.helper';
 import { startOfDate, startOfToday } from 'src/common/helpers/date.helper';
 import { paginate, PaginatedResult } from 'src/common/helpers/paginator';
@@ -1145,52 +1147,10 @@ export class PropertyUserService {
     };
   }
 
-  private async findLocationCandidates(
-    spans: { text: string; start: number; end: number }[],
-  ): Promise<LocationCandidate[]> {
-    if (spans.length === 0) return [];
-    const titles = [...new Set(spans.flatMap((span) => persianSearchVariants(span.text)))];
-    const rows = await this.db.city.findMany({
-      where: {
-        deleted_at: null,
-        title: { notIn: ['استخر'] },
-        OR: [
-          { title: { in: titles, mode: 'insensitive' } },
-          ...(['en', 'ar'] as const).flatMap((language) =>
-            titles.map((title) => ({
-              translations: { path: [language, 'title'], equals: title, mode: 'insensitive' as const },
-            })),
-          ),
-        ],
-      },
-      select: {
-        id: true,
-        title: true,
-        translations: true,
-        parent_id: true,
-        parent: { select: { parent_id: true } },
-      },
-    });
-
-    return spans.flatMap((span) =>
-      rows
-        .filter((row) =>
-          (['fa', 'en', 'ar'] as const).some(
-            (language) =>
-              normalizePersianSearchText(
-                localizedName(row.title, row.translations, language),
-              ).toLowerCase() === span.text.toLowerCase(),
-          ),
-        )
-        .map((row) => ({
-          id: row.id,
-          title: row.title,
-          parent_id: row.parent_id,
-          grandparent_id: row.parent?.parent_id ?? null,
-          start: span.start,
-          end: span.end,
-        })),
-    );
+  private async findLocationCandidates(spans: LocationSpan[]): Promise<LocationCandidate[]> {
+    const query = buildLocationCandidateQuery(spans.map((span) => span.text));
+    if (!query) return [];
+    return matchLocationRows(spans, await this.db.$queryRaw<LocationRow[]>(query));
   }
 
   private async findFuzzyLocation(

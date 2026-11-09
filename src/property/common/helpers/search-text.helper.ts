@@ -19,6 +19,11 @@ export const normalizePersianSearchText = (value: string): string =>
 export const normalizeTranslatedSearchText = (value: string): string =>
   normalizePersianSearchText(value).replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه');
 
+export const persianTitleKey = (value: string): string => normalizePersianSearchText(value).toLowerCase();
+
+export const translatedTitleKey = (value: string): string =>
+  normalizeTranslatedSearchText(value).toLowerCase();
+
 export const tokenizeSearchText = (value: string): string[] =>
   normalizePersianSearchText(value)
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')

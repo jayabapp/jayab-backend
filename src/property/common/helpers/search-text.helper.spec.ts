@@ -3,7 +3,9 @@ import {
   persianSearchVariants,
   SEARCH_QUERY_MAX_WORDS,
   isExactPropertyCode,
+  persianTitleKey,
   tokenizeSearchText,
+  translatedTitleKey,
 } from './search-text.helper';
 
 describe('search text helpers', () => {
@@ -19,6 +21,14 @@ describe('search text helpers', () => {
 
   it('builds a backward-compatible Arabic character variant', () => {
     expect(persianSearchVariants('کیش')).toContain('كيش');
+  });
+
+  it('builds place-name comparison keys that ignore letter forms, joiners, spacing and case', () => {
+    const zwnj = String.fromCharCode(0x200c);
+    expect(persianTitleKey(` اسلام${zwnj}شهر  `)).toBe('اسلامشهر');
+    expect(persianTitleKey('كرج')).toBe(persianTitleKey('کرج'));
+    expect(translatedTitleKey(' RAMSAR ')).toBe('ramsar');
+    expect(translatedTitleKey('أصفهان')).toBe(translatedTitleKey('اصفهان'));
   });
 
   it('recognizes property codes written with Persian digits', () => {

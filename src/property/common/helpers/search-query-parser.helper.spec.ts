@@ -5,6 +5,8 @@ import {
   buildSearchTokens,
   detectPool,
   LocationCandidate,
+  LocationRow,
+  matchLocationRows,
   matchOptions,
   residualWords,
   resolveLocation,
@@ -140,5 +142,82 @@ describe('search query parser', () => {
   it('never builds a location span across a stopword or a consumed word', () => {
     const spans = buildLocationSpans(buildSearchTokens('ویلا در بندر عباس'), new Set([0]));
     expect(spans.map((span) => span.text)).toEqual(['بندر', 'بندر عباس', 'عباس']);
+  });
+
+  it('reads the "villa of" form of villa as the villa type', () => {
+    const tokens = buildSearchTokens('ویلای رامسر');
+    const options = matchOptions(tokens, new Set(), OPTIONS);
+
+    expect(options).toEqual([expect.objectContaining({ key: 'property_type', ids: [3], positions: [0] })]);
+  });
+});
+
+describe('location rows', () => {
+  const RAMSAR = 81;
+  const MAZANDARAN = 34;
+  const ramsar: LocationRow = {
+    id: RAMSAR,
+    title: 'رامسر',
+    translations: { en: { title: 'Ramsar' }, ar: { title: 'رامسر' } },
+    parent_id: MAZANDARAN,
+    grandparent_id: null,
+  };
+  const span = (text: string, start = 0, end = start): { text: string; start: number; end: number } => ({
+    text,
+    start,
+    end,
+  });
+
+  it.each(['رامسر', 'Ramsar', 'RAMSAR', 'ramsar'])('matches %s to the city', (text) => {
+    expect(matchLocationRows([span(text)], [ramsar])).toEqual([
+      { id: RAMSAR, title: 'رامسر', parent_id: MAZANDARAN, grandparent_id: null, start: 0, end: 0 },
+    ]);
+  });
+
+  it('matches across Arabic letter forms, joiners and stored spacing', () => {
+    const zwnj = String.fromCharCode(0x200c);
+    const row = (id: number, title: string, translations: unknown = null): LocationRow => ({
+      id,
+      title,
+      translations,
+      parent_id: 1,
+      grandparent_id: null,
+    });
+
+    expect(matchLocationRows([span('کرج')], [row(1, 'كرج ')])).toHaveLength(1);
+    expect(matchLocationRows([span('اسلامشهر')], [row(2, `اسلام${zwnj}شهر`)])).toHaveLength(1);
+    expect(matchLocationRows([span('أصفهان')], [row(3, 'اصفهان', { ar: { title: 'أصفهان' } })])).toHaveLength(1);
+  });
+
+  it('ignores partial and unknown names and tolerates malformed translations', () => {
+    const malformed: LocationRow[] = [
+      { ...ramsar, id: 1, title: 'یک', translations: { en: 'Ramsar', ar: null } },
+      { ...ramsar, id: 2, title: 'دو', translations: ['Ramsar'] },
+      { ...ramsar, id: 3, title: 'سه', translations: { en: { title: 42 } } },
+    ];
+
+    expect(matchLocationRows([span('رام')], [ramsar])).toEqual([]);
+    expect(matchLocationRows([span('ناشناخته')], [ramsar])).toEqual([]);
+    expect(matchLocationRows([span('Ramsar')], malformed)).toEqual([]);
+    expect(matchLocationRows([], [ramsar])).toEqual([]);
+  });
+
+  it('consumes a place typed twice instead of leaving the repeat as title text', () => {
+    const tokens = buildSearchTokens('  رامسر   رامسر ');
+    const location = resolveLocation(matchLocationRows(buildLocationSpans(tokens), [ramsar]));
+
+    expect(location).toMatchObject({ key: 'cities', ids: [RAMSAR] });
+    expect(residualWords(tokens, new Set(location.consumed))).toEqual([]);
+  });
+
+  it('keeps the city and leaves rent words and unknown words for the caller', () => {
+    const tokens = buildSearchTokens('اجاره خانه ویلای رامسر!');
+    const location = resolveLocation(matchLocationRows(buildLocationSpans(tokens), [ramsar]));
+
+    expect(location).toMatchObject({ key: 'cities', ids: [RAMSAR], consumed: [3] });
+    const options = matchOptions(tokens, new Set(location.consumed), OPTIONS);
+    expect(options.map((match) => match.key)).toEqual(['property_type']);
+    const consumed = new Set([...location.consumed, ...options.flatMap((match) => match.positions)]);
+    expect(residualWords(tokens, consumed).map(({ word }) => word)).toEqual(['خانه']);
   });
 });
