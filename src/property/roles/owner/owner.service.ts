@@ -92,16 +92,26 @@ export class PropertyOwnerService {
         attachments: initProp.property_images.map((propertyImage: any) => propertyImage.attachment),
       } as any;
 
-    let code: string;
-    do {
-      code = `${random(10_000, 99_999).toString()}`;
-    } while (await this.db.property.findUnique({ where: { code } }));
+    return this.db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`owner-init-property:${ownerId}`}))`;
 
-    const newProp = await this.db.property.create({
-      data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
-      include,
+      const created = await tx.property.findFirst({ where: query, include });
+      if (created)
+        return {
+          ...created,
+          attachments: created.property_images.map((propertyImage: any) => propertyImage.attachment),
+        } as any;
+
+      let code: string;
+      do {
+        code = `${random(10_000, 99_999).toString()}`;
+      } while (await tx.property.findUnique({ where: { code } }));
+
+      return tx.property.create({
+        data: { owner_id: ownerId, status: PropertyStatuses.INIT, code },
+        include,
+      });
     });
-    return newProp;
   }
 
   async updateInit(property: Property, dto: UpdatePropertyStepOneOwnerDto): Promise<void> {

@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -29,11 +29,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
           : 'Internal server error';
     }
 
-    /* -------------------------------------------------------------------------- */
-    /*                                   LOGGER                                   */
-    /* -------------------------------------------------------------------------- */
-
-    console.log('/* -------------------------------------------------------------------------- */');
     let data = `[${request.method}]: ${request.url} - ${statusCode}`;
 
     if (!isNotFoundPage) {
@@ -48,9 +43,6 @@ stacktrace: ${![422, 404, 401].includes(statusCode) ? exception.stack : null}
 
     this.logger.error(data);
 
-    /* -------------------------------------------------------------------------- */
-    /*                                  RESPONSE                                  */
-    /* -------------------------------------------------------------------------- */
     response.status(statusCode).json({
       status: 'failed',
       statusCode: statusCode,
@@ -126,7 +118,8 @@ const failedMessages = {
 
   SUBSCRIPTION1: 'اشتراک فعالی یافت نشد',
   REGISTER1: 'این درخواست قبلا توسط شما انجام شده',
-  REGISTER2: 'کد ملی توسط شخص دیگری ثبت شده است',
+  REGISTER2:
+    'این کد ملی قبلاً با حساب دیگری ثبت‌نام شده است. اگر ثبت‌نام را قبلاً با شماره دیگری شروع کرده‌اید، با همان شماره وارد شوید؛ در غیر این صورت با پشتیبانی تماس بگیرید.',
   REGISTER3: 'اکانت شما تایید شده است و امکان ویرایش اطلاعات را ندارید',
   REGISTER4: 'کد معرف برای ثبت مشاور ویژه الزامی است',
   REGISTER5: 'کد معرف اشتباه است',
